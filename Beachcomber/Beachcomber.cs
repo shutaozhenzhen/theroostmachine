@@ -20,35 +20,35 @@ public static class Beachcomber
         foreach (Type entityType in loadableEntities)
             knownUnknownProperties[entityType] = new List<string>();
 
-        ///natively, verb doesn't have "comments" property - let's add it just to show off/test
-        MarkPropertyAsKnown(typeof(Verb), "comments");
-
         storage = new Dictionary<IEntityWithId, Dictionary<string, object>>();
 
         var harmony = new Harmony("beachcomber");
         var original = typeof(AbstractEntity<Element>).GetMethod("PopUnknownKeysToLog", BindingFlags.NonPublic | BindingFlags.Instance);
         var patched = typeof(Beachcomber).GetMethod("KnowUnknown", BindingFlags.NonPublic | BindingFlags.Static);
         harmony.Patch(original, prefix: new HarmonyMethod(patched));
+
+        ///natively, verbs don't have "comments" property - let's add it just for test/show off
+        MarkPropertyAsOwned(typeof(Verb), "comments");
     }
 
     private static void KnowUnknown(IEntityWithId __instance, Hashtable ___UnknownProperties)
     {
-        List<string> known_properties = knownUnknownProperties[__instance.GetType()];
-        Hashtable properties_to_check = new Hashtable(___UnknownProperties);
-
-        foreach (DictionaryEntry property in properties_to_check)
-            if (known_properties.Contains(property.Key.ToString()))
+        Hashtable propertiesToComb = new Hashtable(___UnknownProperties);
+        List<string> propertiesToClaim = knownUnknownProperties[__instance.GetType()];
+        
+        foreach (string propertyName in propertiesToComb.Keys)
+            if (propertiesToClaim.Contains(propertyName))
             {
                 if (storage.ContainsKey(__instance) == false)
                     storage[__instance] = new Dictionary<string, object>();
-                storage[__instance].Add(property.Key.ToString(), property.Value);
+                storage[__instance].Add(propertyName, propertiesToComb[propertyName]);
 
-                ___UnknownProperties.Remove(property.Key);
-                NoonUtility.Log(String.Concat("Known-Unknown property '", property.Key, "' for '", __instance.Id, "' ", __instance.GetType().Name));
+                ___UnknownProperties.Remove(propertyName);
+                NoonUtility.Log(String.Concat("Known-Unknown property '", propertyName, "' for '", __instance.Id, "' ", __instance.GetType().Name));
             }
     }
 
-    public static void MarkPropertyAsKnown(Type entityType, string property_name)
+    public static void MarkPropertyAsOwned(Type entityType, string property_name)
     {
         knownUnknownProperties[entityType].Add(property_name);
     }
