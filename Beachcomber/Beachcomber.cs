@@ -7,18 +7,19 @@ using HarmonyLib;
 
 using SecretHistories.Fucine;
 using SecretHistories.Entities;
+using SecretHistories.Fucine.DataImport;
 
 
 public static class Beachcomber
 {
-    public static Dictionary<Type, List<string>> knownUnknownProperties;
+    public static Dictionary<Type, Dictionary<string, Type>> knownUnknownProperties;
     public static Dictionary<IEntityWithId, Dictionary<string, object>> storage;
 
     public static void Initialise()
     {
-        knownUnknownProperties = new Dictionary<Type, List<string>>();
+        knownUnknownProperties = new Dictionary<Type, Dictionary<string, Type>>();
         foreach (Type entityType in loadableEntities)
-            knownUnknownProperties[entityType] = new List<string>();
+            knownUnknownProperties[entityType] = new Dictionary<string, Type>();
 
         storage = new Dictionary<IEntityWithId, Dictionary<string, object>>();
 
@@ -28,29 +29,43 @@ public static class Beachcomber
         harmony.Patch(original, prefix: new HarmonyMethod(patched));
 
         ///natively, verbs don't have "comments" property - let's add it just for test/show off
-        MarkPropertyAsOwned(typeof(Verb), "comments");
+        MarkPropertyAsOwned(typeof(Verb), "comments", typeof(PhonyFucineClass));
     }
 
     private static void KnowUnknown(IEntityWithId __instance, Hashtable ___UnknownProperties)
     {
         Hashtable propertiesToComb = new Hashtable(___UnknownProperties);
-        List<string> propertiesToClaim = knownUnknownProperties[__instance.GetType()];
-        
+        Dictionary<string, Type> propertiesToClaim = knownUnknownProperties[__instance.GetType()];
+
         foreach (string propertyName in propertiesToComb.Keys)
-            if (propertiesToClaim.Contains(propertyName))
+            if (propertiesToClaim.ContainsKey(propertyName))
             {
-                if (storage.ContainsKey(__instance) == false)
-                    storage[__instance] = new Dictionary<string, object>();
-                storage[__instance].Add(propertyName, propertiesToComb[propertyName]);
+                FormatAndStoreProperty(__instance, propertyName, propertiesToComb[propertyName]);
 
                 ___UnknownProperties.Remove(propertyName);
                 NoonUtility.Log(String.Concat("Known-Unknown property '", propertyName, "' for '", __instance.Id, "' ", __instance.GetType().Name));
             }
     }
 
-    public static void MarkPropertyAsOwned(Type entityType, string property_name)
+    public static void FormatAndStoreProperty(IEntityWithId entity, string propertyName, object propertyValue)
     {
-        knownUnknownProperties[entityType].Add(property_name);
+        if (storage.ContainsKey(entity) == false)
+            storage[entity] = new Dictionary<string, object>();
+
+        Type propertyType = knownUnknownProperties[entity.GetType()][propertyName];
+        if (propertyValue.GetType() == typeof(EntityData))
+        {
+            propertyValue = FactoryInstantiator.CreateEntity(propertyType, propertyValue as EntityData, new ContentImportLog());
+        }
+        else
+            propertyValue = Convert.ChangeType(propertyValue, propertyType);
+
+        storage[entity].Add(propertyName, propertyValue);
+    }
+
+    public static void MarkPropertyAsOwned(Type entityType, string propertyName, Type propertyType)
+    {
+        knownUnknownProperties[entityType].Add(propertyName, propertyType);
     }
 
     public static T GetProperty<T>(this IEntityWithId owner, string property)
@@ -79,4 +94,24 @@ public static class Beachcomber
                                                         typeof(SphereSpec), 
                                                         typeof(Verb),
                                                       };
+}
+
+
+public class PhonyFucineClass : AbstractEntity<PhonyFucineClass>
+{
+    [FucineValue(DefaultValue = "")]
+    public string label { get; set; }
+    [FucineList]
+    public List<string> list { get; set; }
+    [FucineDict]
+    public Dictionary<string, int> dict { get; set; }
+
+    public PhonyFucineClass(EntityData importDataForEntity, ContentImportLog log)
+        : base(importDataForEntity, log)
+    {
+    }
+
+    protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
+    {
+    }
 }
