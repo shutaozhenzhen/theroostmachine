@@ -34,7 +34,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Beachcomber.cs" />
-    <Compile Include="Class1.cs" />
+    <Compile Include="ExampleCustomClass.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

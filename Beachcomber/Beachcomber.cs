@@ -16,10 +16,6 @@ public static class Beachcomber
 
     public static void Initialise()
     {
-        knownUnknownProperties = new Dictionary<Type, Dictionary<string, Type>>();
-        foreach (Type entityType in loadableEntities)
-            knownUnknownProperties[entityType] = new Dictionary<string, Type>();
-
         storage = new Dictionary<IEntityWithId, Dictionary<string, object>>();
 
         var harmony = new Harmony("beachcomber");
@@ -28,7 +24,7 @@ public static class Beachcomber
         harmony.Patch(original, prefix: new HarmonyMethod(patched));
 
         ///natively, verbs don't have "comments" property - let's add it just for test/show off
-        MarkPropertyAsOwned(typeof(Verb), "comments", typeof(Dictionary<string, PhonyFucineClass>));
+        MarkPropertyAsOwned(typeof(Verb), "comments", typeof(string));
     }
 
     private static void KnowUnknown(IEntityWithId __instance, Hashtable ___UnknownProperties, ContentImportLog log)
@@ -57,6 +53,13 @@ public static class Beachcomber
 
     public static void MarkPropertyAsOwned(Type entityType, string propertyName, Type propertyType)
     {
+        if (knownUnknownProperties == null)
+        {
+            knownUnknownProperties = new Dictionary<Type, Dictionary<string, Type>>();
+            foreach (Type vanillaType in loadableEntities)
+                knownUnknownProperties[vanillaType] = new Dictionary<string, Type>();
+        }
+
         knownUnknownProperties[entityType].Add(propertyName, propertyType);
     }
 
@@ -87,7 +90,6 @@ public static class Beachcomber
                                                         typeof(Verb),
                                                       };
 }
-
 
 
 namespace LoadTools
