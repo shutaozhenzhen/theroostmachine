@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Linq;
 
 using HarmonyLib;
 
@@ -89,19 +88,7 @@ public static class Beachcomber
                                                       };
 }
 
-//example class - needs to have constructor and OnPostImportForSpecificEntity()
-public class PhonyFucineClass : AbstractEntity<PhonyFucineClass>
-{
-    [FucineValue(DefaultValue = "")]
-    public string label { get; set; }
-    [FucineList]
-    public List<string> list { get; set; }
-    [FucineDict]
-    public Dictionary<string, int> dict { get; set; }
 
-    public PhonyFucineClass(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
-    protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
-}
 
 namespace LoadTools
 {
