@@ -2,13 +2,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Linq;
 
 using HarmonyLib;
 
 using SecretHistories.Fucine;
 using SecretHistories.Entities;
 using SecretHistories.Fucine.DataImport;
-
 
 public static class Beachcomber
 {
@@ -29,10 +29,10 @@ public static class Beachcomber
         harmony.Patch(original, prefix: new HarmonyMethod(patched));
 
         ///natively, verbs don't have "comments" property - let's add it just for test/show off
-        MarkPropertyAsOwned(typeof(Verb), "comments", typeof(PhonyFucineClass));
+        MarkPropertyAsOwned(typeof(Verb), "comments", typeof(Dictionary<string, PhonyFucineClass>));
     }
 
-    private static void KnowUnknown(IEntityWithId __instance, Hashtable ___UnknownProperties)
+    private static void KnowUnknown(IEntityWithId __instance, Hashtable ___UnknownProperties, ContentImportLog log)
     {
         Hashtable propertiesToComb = new Hashtable(___UnknownProperties);
         Dictionary<string, Type> propertiesToClaim = knownUnknownProperties[__instance.GetType()];
@@ -40,27 +40,20 @@ public static class Beachcomber
         foreach (string propertyName in propertiesToComb.Keys)
             if (propertiesToClaim.ContainsKey(propertyName))
             {
-                FormatAndStoreProperty(__instance, propertyName, propertiesToComb[propertyName]);
-
+                log.LogInfo(String.Format("Known-Unknown property '{0}' for '{1}' {2}", propertyName, __instance.Id, __instance.GetType().Name));
+                FormatAndStoreProperty(__instance, propertyName, propertiesToComb[propertyName], propertiesToClaim[propertyName], log);
                 ___UnknownProperties.Remove(propertyName);
-                NoonUtility.Log(String.Concat("Known-Unknown property '", propertyName, "' for '", __instance.Id, "' ", __instance.GetType().Name));
             }
     }
 
-    public static void FormatAndStoreProperty(IEntityWithId entity, string propertyName, object propertyValue)
+    private static void FormatAndStoreProperty(IEntityWithId entity, string propertyName, object propertyValue, Type propertyType, ContentImportLog log)
     {
         if (storage.ContainsKey(entity) == false)
             storage[entity] = new Dictionary<string, object>();
 
-        Type propertyType = knownUnknownProperties[entity.GetType()][propertyName];
-        if (propertyValue.GetType() == typeof(EntityData))
-        {
-            propertyValue = FactoryInstantiator.CreateEntity(propertyType, propertyValue as EntityData, new ContentImportLog());
-        }
-        else
-            propertyValue = Convert.ChangeType(propertyValue, propertyType);
-
-        storage[entity].Add(propertyName, propertyValue);
+        object value = LoadTools.QuickImporter.LoadValue(entity, propertyName, propertyValue, propertyType, log);
+        if (value != null)
+            storage[entity].Add(propertyName, value);
     }
 
     public static void MarkPropertyAsOwned(Type entityType, string propertyName, Type propertyType)
@@ -96,7 +89,7 @@ public static class Beachcomber
                                                       };
 }
 
-
+//example class - needs to have constructor and OnPostImportForSpecificEntity()
 public class PhonyFucineClass : AbstractEntity<PhonyFucineClass>
 {
     [FucineValue(DefaultValue = "")]
@@ -106,12 +99,100 @@ public class PhonyFucineClass : AbstractEntity<PhonyFucineClass>
     [FucineDict]
     public Dictionary<string, int> dict { get; set; }
 
-    public PhonyFucineClass(EntityData importDataForEntity, ContentImportLog log)
-        : base(importDataForEntity, log)
-    {
-    }
+    public PhonyFucineClass(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
+    protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
+}
 
-    protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
+namespace LoadTools
+{
+    public static class QuickImporter
     {
+        public static object LoadValue(IEntityWithId baseEntity, string propertyName, object valueData, Type propertyType, ContentImportLog log)
+        {
+            object propertyValue = null;
+
+            if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(List<>))
+                propertyValue = LoadTools.QuickImporter.LoadList(baseEntity, propertyName, valueData, propertyType, log);
+            else if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+                propertyValue = LoadTools.QuickImporter.LoadDictionary(baseEntity, propertyName, valueData, propertyType, log);
+            else if (propertyType.Namespace == "System")
+                propertyValue = Convert.ChangeType(valueData, propertyType);
+            else
+                propertyValue = FactoryInstantiator.CreateEntity(propertyType, valueData as EntityData, log);
+
+            if (propertyValue == null)
+                log.LogWarning(String.Format("Failed to load custom property '{0}' for '{1}' {2}", propertyName, baseEntity.Id, baseEntity.GetType().Name));
+
+            return propertyValue;
+        }
+
+        public static IList LoadList(IEntityWithId baseEntity, string propertyName, object data, Type listType, ContentImportLog log)
+        {
+            ArrayList dataList = data as ArrayList;
+            if (dataList == null)
+            {
+                log.LogWarning(String.Format("'{0}' list in '{1}' {2} is wrong format, skip loading", propertyName, baseEntity.Id, baseEntity.GetType().Name));
+                return null;
+            }
+
+            IList list = FactoryInstantiator.CreateObjectWithDefaultConstructor(listType) as IList;
+            Type expectedEntryType = listType.GetGenericArguments()[0];
+
+            if (expectedEntryType.IsGenericType && expectedEntryType.GetGenericTypeDefinition() == typeof(List<>))
+            {
+                foreach (ArrayList entry in dataList)
+                    list.Add(LoadList(baseEntity, propertyName, entry, expectedEntryType, log));
+            }
+            else if (expectedEntryType.IsGenericType && expectedEntryType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+                foreach (EntityData entry in dataList)
+                    list.Add(LoadDictionary(baseEntity, propertyName, entry, expectedEntryType, log));
+            else if (expectedEntryType.Namespace == "System")
+                foreach (object entry in dataList)
+                    list.Add(Convert.ChangeType(entry.ToString(), expectedEntryType));
+            else
+                foreach (EntityData entry in dataList)
+                    list.Add(FactoryInstantiator.CreateEntity(expectedEntryType, entry, log));
+
+            return list;
+        }
+
+        public static IDictionary LoadDictionary(IEntityWithId baseEntity, string propertyName, object data, Type dictionaryType, ContentImportLog log)
+        {
+            EntityData entityData = data as EntityData;
+            if (entityData == null)
+            {
+                log.LogWarning(String.Format("'{0}' dictionary in '{1}' {2} is wrong format, skip loading", propertyName, baseEntity.Id, baseEntity.GetType().Name));
+                return null;
+            }
+
+            IDictionary dictionary = FactoryInstantiator.CreateObjectWithDefaultConstructor(dictionaryType) as IDictionary;
+            Type dictionaryKeyType = dictionaryType.GetGenericArguments()[0];
+            Type dictionaryValueType = dictionaryType.GetGenericArguments()[1];
+
+            if (dictionaryValueType.IsGenericType && dictionaryValueType.GetGenericTypeDefinition() == typeof(List<>))
+                foreach (DictionaryEntry dictionaryEntry in entityData.ValuesTable)
+                {
+                    IList list = LoadList(baseEntity, dictionaryEntry.Key.ToString(), dictionaryEntry.Value as ArrayList, dictionaryValueType, log);
+                    dictionary.Add(Convert.ChangeType(dictionaryEntry.Key.ToString(), dictionaryKeyType), list);
+                }
+            else if (dictionaryValueType.IsGenericType && dictionaryValueType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+                foreach (DictionaryEntry dictionaryEntry in entityData.ValuesTable)
+                {
+                    IDictionary nestedDictionary = LoadDictionary(baseEntity, dictionaryEntry.Key.ToString(), dictionaryEntry.Value as EntityData, dictionaryValueType, log);
+                    dictionary.Add(Convert.ChangeType(dictionaryEntry.Key.ToString(), dictionaryKeyType), nestedDictionary);
+                }
+            else if (dictionaryValueType.Namespace == "System")
+                foreach (DictionaryEntry dictionaryEntry in entityData.ValuesTable)
+                    dictionary.Add(Convert.ChangeType(dictionaryEntry.Key.ToString(), dictionaryKeyType), Convert.ChangeType(dictionaryEntry.Value.ToString(), dictionaryValueType));
+            else
+                foreach (DictionaryEntry dictionaryEntry in entityData.ValuesTable)
+                {
+                    IEntityWithId entity = FactoryInstantiator.CreateEntity(dictionaryValueType, dictionaryEntry.Value as EntityData, log);
+                    dictionary.Add(Convert.ChangeType(dictionaryEntry.Key.ToString(), dictionaryKeyType), entity);
+                }
+
+
+            return dictionary;
+        }
     }
 }
