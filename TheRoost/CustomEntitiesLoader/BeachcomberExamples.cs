@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using SecretHistories.Fucine;
 using SecretHistories.Fucine.DataImport;
 
-namespace Hoard.Examples
+using TheRoost.Invocations;
+
+namespace TheRoost.Examples
 {
-    //example class - needs to have constructor and OnPostImportForSpecificEntity()
+    //example class - needs to have constructor and OnPostImportForSpecificEntity(); otherwise will not load
     [FucineImportable("phony")]
     public class PhonyFucineClass : AbstractEntity<PhonyFucineClass>
     {
@@ -21,14 +23,19 @@ namespace Hoard.Examples
         public PhonyFucineClass(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
 
-        void ExampleRegister()
+        void Examples()
         {
-            //to add custom class
-            Beachcomber.InfectFucineWith<PhonyFucineClass>();
-            //to add custom property
-            Beachcomber.ClaimProperty<SecretHistories.Entities.Verb>("someProperty", typeof(string));
-            //even on the custom class
-            Beachcomber.ClaimProperty<PhonyFucineClass>("someProperty", typeof(string));
+            //to add a custom property
+            TheRoost.ClaimProperty<SecretHistories.Entities.Verb>("someProperty", typeof(string));
+
+            //to add a custom class
+            TheRoost.InfectFucineWith<PhonyFucineClass>();
+
+            //to add a custom property for a custom class
+            TheRoost.ClaimProperty<PhonyFucineClass>("someProperty", typeof(int));
+
+            //to get the property's value
+            this.RetrieveProperty<int>("someProperty");
         }
     }
 }

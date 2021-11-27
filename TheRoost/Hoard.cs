@@ -1,25 +1,28 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
-using System.IO;
-
-using HarmonyLib;
+using System.Linq;
 
 using SecretHistories.Fucine;
-using SecretHistories.Entities;
 using SecretHistories.Fucine.DataImport;
-using SecretHistories.UI;
 
 using UnityEngine;
 
-
-namespace Hoard.Tools
+namespace TheRoost.Hoard
 {
+
+    public struct FucineInt
+    {
+        string expression;
+        public FucineInt(string expression) { this.expression = expression; }
+        public static implicit operator int(FucineInt fucinevalue) { return int.Parse(fucinevalue.expression); }
+    }
+
     public static class Importer
     {
         public static object LoadValue(IEntityWithId baseEntity, object valueData, Type propertyType, ContentImportLog log)
         {
+            
             object propertyValue = null;
 
             if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(List<>))
@@ -32,7 +35,7 @@ namespace Hoard.Tools
                 propertyValue = FactoryInstantiator.CreateEntity(propertyType, valueData as EntityData, log);
 
             if (propertyValue == null)
-                log.LogWarning(String.Format("Failed to load custom property for '{0}' {1}", baseEntity.Id, baseEntity.GetType().Name));
+                TheRoost.Sing("Failed to load custom property for '{0}' {1}", baseEntity.Id, baseEntity.GetType().Name);
 
             return propertyValue;
         }
@@ -42,7 +45,7 @@ namespace Hoard.Tools
             ArrayList dataList = data as ArrayList;
             if (dataList == null)
             {
-                log.LogWarning(String.Format("Custom property list in '{0}' {1} is wrong format, skip loading", baseEntity.Id, baseEntity.GetType().Name));
+                TheRoost.Sing("List in '{0}' {1} is wrong format, skip loading", baseEntity.Id, baseEntity.GetType().Name);
                 return null;
             }
 
@@ -72,7 +75,7 @@ namespace Hoard.Tools
             EntityData entityData = data as EntityData;
             if (entityData == null)
             {
-                log.LogWarning(String.Format("'{0}' dictionary in '{0}' {1} is wrong format, skip loading", baseEntity.Id, baseEntity.GetType().Name));
+                TheRoost.Sing("Dictionary in '{0}' {1} is wrong format, skip loading", baseEntity.Id, baseEntity.GetType().Name);
                 return null;
             }
 
@@ -109,16 +112,17 @@ namespace Hoard.Tools
 
     public class Delayer : MonoBehaviour
     {
-        public static Delayer Schedule(MethodInfo action, object actor = null, object[] parameters = null)
+        public static Delayer Schedule(System.Reflection.MethodInfo action, object actor = null, object[] parameters = null)
         {
             GameObject gameObject = new GameObject();
+            DontDestroyOnLoad(gameObject);
             Delayer delayer = gameObject.AddComponent<Delayer>();
             delayer.StartCoroutine(delayer.ExecuteDelayed(action, actor, parameters));
 
             return delayer;
         }
 
-        public IEnumerator ExecuteDelayed(MethodInfo action, object actor, object[] parameters)
+        public IEnumerator ExecuteDelayed(System.Reflection.MethodInfo action, object actor, object[] parameters)
         {
             yield return new WaitForEndOfFrame();
             action.Invoke(actor, parameters);
