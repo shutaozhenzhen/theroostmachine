@@ -14,7 +14,7 @@ using UnityEngine.Events;
 using UnityEngine.InputSystem;
 using TMPro;
 
-namespace TheRoost.Invocations
+namespace TheRoost
 {
     internal class Vagabond : MonoBehaviour
     {
@@ -24,12 +24,13 @@ namespace TheRoost.Invocations
                 return;
 
             var harmony = new Harmony("theroost.vagabond");
-            var original = typeof(NotificationWindow).GetMethod("SetDetails", BindingFlags.Public | BindingFlags.Instance);
-            var patched = typeof(VagabondExtensions).GetMethod("ShowNotificationWithVagabondIntervention", BindingFlags.NonPublic | BindingFlags.Static);
+            var original = typeof(MenuScreenController).GetMethod("InitialiseServices", BindingFlags.NonPublic | BindingFlags.Instance);
+            var patched = typeof(Vagabond).GetMethod("SetInterface", BindingFlags.NonPublic | BindingFlags.Static);
             harmony.Patch(original, prefix: new HarmonyMethod(patched));
 
-            original = typeof(MenuScreenController).GetMethod("InitialiseServices", BindingFlags.NonPublic | BindingFlags.Instance);
-            patched = typeof(Vagabond).GetMethod("SetInterface", BindingFlags.NonPublic | BindingFlags.Static);
+            //gotta do that litte favour for the Twins since they are static class and are inconvenient to initialise (aesthetically)
+            original = typeof(NotificationWindow).GetMethod("SetDetails", BindingFlags.Public | BindingFlags.Instance);
+            patched = typeof(Twins).GetMethod("ShowNotificationWithIntervention", BindingFlags.NonPublic | BindingFlags.Static);
             harmony.Patch(original, prefix: new HarmonyMethod(patched));
         }
 
@@ -201,7 +202,7 @@ namespace TheRoost.Invocations
             return result;
         }
 
-        public GameObject console;
+        GameObject console;
         void Update()
         {
             if (Keyboard.current.backquoteKey.wasPressedThisFrame)
@@ -213,66 +214,24 @@ namespace TheRoost.Invocations
         }
     }
 
-}
-
-namespace TheRoost
-{
-    public static class VagabondExtensions
+    public class Delayer : MonoBehaviour
     {
-        public static GameObject FindInChildren(this GameObject go, string targetName, bool nested = false)
+        public static Delayer Schedule(System.Reflection.MethodInfo action, object actor = null, object[] parameters = null)
         {
-            Transform transform = go.transform;
-            for (int n = 0; n < transform.childCount; n++)
-                if (String.Equals(transform.GetChild(n).name, targetName, StringComparison.OrdinalIgnoreCase))
-                    return transform.GetChild(n).gameObject;
-                else if (nested)
-                {
-                    GameObject nestedFound = FindInChildren(transform.GetChild(n).gameObject, targetName, true);
-                    if (nestedFound != null)
-                        return nestedFound;
-                }
+            GameObject gameObject = new GameObject();
+            DontDestroyOnLoad(gameObject);
+            Delayer delayer = gameObject.AddComponent<Delayer>();
+            delayer.StartCoroutine(delayer.ExecuteDelayed(action, actor, parameters));
 
-            return null;
+            return delayer;
         }
 
-        public static void SetBabelLabel(this Babelfish babelfish, string locLabel)
+        public IEnumerator ExecuteDelayed(System.Reflection.MethodInfo action, object actor, object[] parameters)
         {
-            if (babelfish == null)
-            {
-                TheRoost.Sing("No Babelfish component on the GameObject '{0}'", babelfish.gameObject.name);
-                return;
-            }
-
-            typeof(Babelfish).GetField("locLabel", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(babelfish, locLabel);
-            babelfish.SetValuesForCurrentCulture();
-        }
-
-        public static bool vagabondIntervenes = false;
-        public static Sprite vagabondInterventionSprite;
-        public static float vagabondInterventionDuration;
-        public static void ShowNotificationWindow(this Notifier notifier, string title, string description, Sprite image, float duration, bool duplicatesAllowed = true)
-        {
-            vagabondIntervenes = true;
-            vagabondInterventionSprite = image;
-            vagabondInterventionDuration = duration;
-            notifier.ShowNotificationWindow(title, description, duplicatesAllowed);
-            vagabondIntervenes = false;
-            vagabondInterventionSprite = null;
-            vagabondInterventionDuration = -1;
-        }
-
-        private static void ShowNotificationWithVagabondIntervention(NotificationWindow __instance, ref Image ___artwork)
-        {
-            if (VagabondExtensions.vagabondIntervenes)
-            {
-                if (vagabondInterventionDuration > 0)
-                {
-                    __instance.CancelInvoke("Hide");
-                    __instance.SetDuration(vagabondInterventionDuration);
-                }
-                if (vagabondInterventionSprite != null)
-                    ___artwork.sprite = VagabondExtensions.vagabondInterventionSprite;
-            }
+            yield return new WaitForEndOfFrame();
+            action.Invoke(actor, parameters);
+            Destroy(this.gameObject);
         }
     }
+
 }

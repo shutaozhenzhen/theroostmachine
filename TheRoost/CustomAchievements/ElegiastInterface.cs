@@ -13,7 +13,9 @@ using TMPro;
 using SecretHistories.UI;
 using SecretHistories.Services;
 
-namespace TheRoost.Invocations
+using TheRoost.Entities;
+
+namespace TheRoost
 {
     internal class AchievementInterfaceManager
     {
@@ -235,7 +237,7 @@ namespace TheRoost.Invocations
         Dictionary<string, List<GameObject>> sortedAchievements = new Dictionary<string, List<GameObject>>();
         Dictionary<string, int> hiddenInCategory = new Dictionary<string, int>();
         List<string> categories = new List<string>();
-        public void SetAchievements(CultureChangedArgs dontMindMe)
+        void SetAchievements(CultureChangedArgs dontMindMe)
         {
             achievementTemplate.SetActive(true);
 
@@ -331,7 +333,7 @@ namespace TheRoost.Invocations
         }
 
         int currentCategory = 0;
-        public void NextCategory()
+        void NextCategory()
         {
             SoundManager.PlaySfx("UIButtonClick");
             currentCategory++;
@@ -340,7 +342,7 @@ namespace TheRoost.Invocations
             SetCategory(categories[currentCategory]);
         }
 
-        public void PrevCategory()
+        void PrevCategory()
         {
             SoundManager.PlaySfx("UIButtonClick");
             currentCategory--;
@@ -349,7 +351,7 @@ namespace TheRoost.Invocations
             SetCategory(categories[currentCategory]);
         }
 
-        public void SetCategory(string category)
+        void SetCategory(string category)
         {
             for (var n = 0; n < achievementsContainer.childCount; n++)
                 achievementsContainer.GetChild(n).gameObject.SetActive(false);

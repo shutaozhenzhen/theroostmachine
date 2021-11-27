@@ -39,6 +39,7 @@
     <Compile Include="CustomEntitiesLoader\Beachcomber.cs" />
     <Compile Include="CommandLine\Vagabond.cs" />
     <Compile Include="CustomEntitiesLoader\BeachcomberExamples.cs" />
+    <Compile Include="Extensions\Twins.cs" />
     <Compile Include="Hoard.cs" />
     <Compile Include="MainHall.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

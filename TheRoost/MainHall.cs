@@ -2,10 +2,9 @@
 using System.Reflection;
 
 using UnityEngine;
-using SecretHistories.Fucine;
 
-using TheRoost.Invocations;
-using TheRoost.Hoard;
+
+using TheRoost;
 
 internal static class TheRoostMachine
 {
@@ -50,21 +49,6 @@ namespace TheRoost
                 str += (obj == null ? "null" : obj.ToString()) + ' ';
 
             NoonUtility.LogWarning(str);
-        }
-
-        public static void ClaimProperty<T>(string propertyName, Type propertyType) where T : AbstractEntity<T>
-        {
-            Beachcomber.ClaimProperty<T>(propertyName, propertyType);
-        }
-
-        public static T RetrieveProperty<T>(this IEntityWithId owner, string propertyName)
-        {
-            return Beachcomber.RetrieveProperty<T>(owner, propertyName);
-        }
-
-        public static void InfectFucineWith<T>() where T : AbstractEntity<T>
-        {
-            Beachcomber.InfectFucineWith<T>();
         }
     }
 }

@@ -12,17 +12,17 @@ using SecretHistories.UI;
 using SecretHistories.Services;
 using SecretHistories.Constants;
 
-using TheRoost;
-
 using UnityEngine;
 
-namespace TheRoost.Invocations
+using TheRoost.Entities;
+
+namespace TheRoost
 {
-    internal class Elegiast
+    public class Elegiast
     {
         private static Dictionary<string, string> unlocks;
 
-        const string propertyThatUnlocks = "unlockAchievement";
+        const string propertyThatUnlocks = "elegiastUnlock";
         const string datafile = "customachievements.json";
         const string achievementDataFormat = "\"{0}\": \"{1}\",\n";
         const string achievementUnlockLabel = "ACH_UNLOCKED";
@@ -34,9 +34,9 @@ namespace TheRoost.Invocations
             if (TheRoostMachine.alreadyAssembled)
                 return;
 
-            TheRoost.InfectFucineWith<VanillaAchievement>();
-            TheRoost.InfectFucineWith<CustomAchievement>();
-            TheRoost.ClaimProperty<SecretHistories.Entities.Recipe>(propertyThatUnlocks, typeof(List<string>));
+            Beachcomber.InfectFucineWith<VanillaAchievement>();
+            Beachcomber.InfectFucineWith<CustomAchievement>();
+            Beachcomber.ClaimProperty<SecretHistories.Entities.Recipe>(propertyThatUnlocks, typeof(List<string>));
 
             LoadAllUnlocks();
 

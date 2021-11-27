@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using SecretHistories.Fucine;
 using UnityEngine;
-using TheRoost.Invocations;
 
-namespace TheRoost
+using TheRoost;
+
+namespace TheRoost.Entities
 {
     public interface IFucineAchievement
     {
