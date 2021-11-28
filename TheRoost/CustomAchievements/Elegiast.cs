@@ -76,12 +76,12 @@ namespace TheRoost
             CustomAchievement achievement = Watchman.Get<Compendium>().GetEntityById<CustomAchievement>(id);
             if (achievement == null)
             {
-                TheRoost.Sing("Attempt to unlock achievement '{0}' - no such achievement exists", id);
+                Twins.Sing("Attempt to unlock achievement '{0}' - no such achievement exists", id);
                 return false;
             }
             else if (isUnlocked(achievement))
             {
-                TheRoost.Sing("Attempt to unlock achievement '{0}' - but it is already unlocked", id);
+                Twins.Sing("Attempt to unlock achievement '{0}' - but it is already unlocked", id);
                 return false;
             }
 
@@ -157,7 +157,7 @@ namespace TheRoost
                 }
                 catch
                 {
-                    TheRoost.Sing("Malformed entry in {0}, deleting", datafile);
+                    Twins.Sing("Malformed entry in {0}, deleting", datafile);
                 }
 
             return dictionary;
@@ -182,7 +182,7 @@ namespace TheRoost
                     SteamRemoteStorage.FileDelete(datafile);
                 else
                     SteamRemoteStorage.FileWrite(datafile, bytes, bytes.Length);
-                TheRoost.Sing("Succesfully pushed achievement info on the cloud storage");
+                Twins.Sing("Succesfully pushed achievement info on the cloud storage");
 
             }
             else if (storefront.IsAvailable(StoreClient.Gog))
@@ -229,7 +229,7 @@ namespace TheRoost
             }
             catch
             {
-                TheRoost.Sing("Malformed entry in {0}, deleting", datafile);
+                Twins.Sing("Malformed entry in {0}, deleting", datafile);
                 return string.Empty;
             }
         }
@@ -260,19 +260,19 @@ namespace TheRoost
             if (achievement == "all")
             {
                 unlocks.Clear();
-                TheRoost.Sing("a l l  c u s t o m  a c h i e v e m e n t s  w e r e  r e s e t", achievement);
+                Twins.Sing("a l l  c u s t o m  a c h i e v e m e n t s  w e r e  r e s e t", achievement);
                 TrySyncAchievementStorages();
                 return;
             }
 
             if (unlocks.ContainsKey(achievement) == false)
             {
-                TheRoost.Sing("Trying to reset achievement '{0}', but it's not unlocked, try checking 'achievements.cloud' and 'achievements.local' commands", achievement);
+                Twins.Sing("Trying to reset achievement '{0}', but it's not unlocked, try checking 'achievements.cloud' and 'achievements.local' commands", achievement);
                 return;
             }
 
             unlocks.Remove(achievement);
-            TheRoost.Sing("Deleted achievement '{0}' from the local storage", achievement);
+            Twins.Sing("Deleted achievement '{0}' from the local storage", achievement);
             TrySyncAchievementStorages();
         }
 

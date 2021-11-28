@@ -40,7 +40,7 @@
     <Compile Include="CommandLine\Vagabond.cs" />
     <Compile Include="CustomEntitiesLoader\BeachcomberExamples.cs" />
     <Compile Include="Extensions\Twins.cs" />
-    <Compile Include="Hoard.cs" />
+    <Compile Include="TestingGrounds\ContextAwareProperties.cs" />
     <Compile Include="MainHall.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

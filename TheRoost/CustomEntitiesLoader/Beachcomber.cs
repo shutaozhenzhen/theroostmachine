@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Linq;
-using System.IO;
 
 using HarmonyLib;
 
@@ -45,7 +44,7 @@ namespace TheRoost
             Type entityType = typeof(T);
             if (entityType.GetCustomAttribute(typeof(FucineImportable), false) == null)
             {
-                TheRoost.Sing("Trying to claim '{0}' of {1}s, but {1} has no FucineImportable attribute and will not be loaded.", propertyName, entityType.Name);
+                Twins.Sing("Trying to claim '{0}' of {1}s, but {1} has no FucineImportable attribute and will not be loaded.", propertyName, entityType.Name);
                 return;
             }
 
@@ -145,7 +144,7 @@ namespace TheRoost
                 propertyValue = FactoryInstantiator.CreateEntity(propertyType, valueData as EntityData, log);
 
             if (propertyValue == null)
-                TheRoost.Sing("Failed to load custom property for '{0}' {1}", baseEntity.Id, baseEntity.GetType().Name);
+                Twins.Sing("Failed to load custom property for '{0}' {1}", baseEntity.Id, baseEntity.GetType().Name);
 
             return propertyValue;
         }
@@ -155,7 +154,7 @@ namespace TheRoost
             ArrayList dataList = data as ArrayList;
             if (dataList == null)
             {
-                TheRoost.Sing("List in '{0}' {1} is wrong format, skip loading", baseEntity.Id, baseEntity.GetType().Name);
+                Twins.Sing("List in '{0}' {1} is wrong format, skip loading", baseEntity.Id, baseEntity.GetType().Name);
                 return null;
             }
 
@@ -185,7 +184,7 @@ namespace TheRoost
             EntityData entityData = data as EntityData;
             if (entityData == null)
             {
-                TheRoost.Sing("Dictionary in '{0}' {1} is wrong format, skip loading", baseEntity.Id, baseEntity.GetType().Name);
+                Twins.Sing("Dictionary in '{0}' {1} is wrong format, skip loading", baseEntity.Id, baseEntity.GetType().Name);
                 return null;
             }
 

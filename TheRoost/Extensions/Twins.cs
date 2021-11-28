@@ -13,6 +13,23 @@ namespace TheRoost
 {
     public static class Twins
     {
+        public delegate void ServicesInitialised();
+        public static ServicesInitialised onServicesInitialized;
+
+        public static void Sing(string wrapMessage, params object[] data)
+        {
+            NoonUtility.LogWarning(String.Format(wrapMessage, data));
+        }
+
+        public static void Sing(params object[] data)
+        {
+            var str = string.Empty;
+            foreach (object obj in data)
+                str += (obj == null ? "null" : obj.ToString()) + ' ';
+
+            NoonUtility.LogWarning(str);
+        }
+
         public static GameObject FindInChildren(this GameObject go, string targetName, bool nested = false)
         {
             Transform transform = go.transform;
@@ -33,7 +50,7 @@ namespace TheRoost
         {
             if (babelfish == null)
             {
-                TheRoost.Sing("No Babelfish component on the GameObject '{0}'", babelfish.gameObject.name);
+                Twins.Sing("No Babelfish component on the GameObject '{0}'", babelfish.gameObject.name);
                 return;
             }
 

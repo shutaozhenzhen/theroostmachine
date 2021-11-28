@@ -34,8 +34,19 @@ namespace TheRoost
             harmony.Patch(original, prefix: new HarmonyMethod(patched));
         }
 
+        GameObject console;
+        void Update()
+        {
+            if (Keyboard.current.backquoteKey.wasPressedThisFrame)
+                if (GameObject.FindObjectOfType<DebugTools>() == null)
+                    Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
+        }
+
         private static void SetInterface()
         {
+            //another little favour
+            Twins.onServicesInitialized.Invoke();
+
             Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
             var debugCanvas = GameObject.Find("SecretHistoryLogMessageEntry(Clone)").GetComponentInParent<Canvas>().transform;
 
@@ -81,57 +92,70 @@ namespace TheRoost
 
         private static void ExecuteCommand(string text)
         {
+            string[] command = text.Split();
+
+            switch (command[0])
+            {
+                case "/achievements": AchievementCommand(command); break;
+                case "/goinfo": GameObjectCommand(command); break;
+                case "/goset": GameObjectCommand(command); break;
+                case "/compendium": GameObjectCommand(command); break;
+                default: Twins.Sing("Unknown command"); break;
+            }
+        }
+
+        static void AchievementCommand(string[] command)
+        {
             try
             {
-                string[] command = text.Split();
-
-                if (command[0] == "achievements.cloud" || command[0] == "achievements.local" || command[0] == "achievements.all")
+                string data = string.Empty;
+                switch (command[1])
                 {
-                    string data;
-
-                    if (command[0] == "achievements.cloud")
-                        data = Elegiast.ReadableCloudData();
-                    else if (command[0] == "achievements.local")
-                        data = Elegiast.ReadableLocalData();
-                    else
-                        data = Elegiast.ReadableAll();
-
-                    if (command.Length == 1)
-                        TheRoost.Sing(data);
-                    else
-                        TheRoost.Sing(data.Contains("\"" + command[1] + "\""));
-                    return;
-                }
-                else if (command[0] == "achievements.reset")
-                {
-                    Elegiast.ClearAchievement(command[1]);
-                    return;
+                    case "reset": Elegiast.ClearAchievement(command[2]); return;
+                    case "cloud": data = Elegiast.ReadableCloudData(); break;
+                    case "local": Elegiast.ReadableCloudData(); break;
+                    case "all": Elegiast.ReadableAll(); break;
                 }
 
+                if (command.Length == 2)
+                    Twins.Sing(data);
+                else
+                    Twins.Sing("Checking achievement '{0}' presence: {1}", command[2], data.Contains("\"" + command[2] + "\""));
+            }
+            catch
+            {
+                Twins.Sing("Error during executing achievement command");
+            }
+        }
+
+        static void GameObjectCommand(string[] command)
+        {
+            try
+            {
                 string[] entityPath = command[0].Split('.');
                 object entity = GetEntity(entityPath);
                 if (entity == null)
                 {
                     if (entityPath.Length == 1)
-                        TheRoost.Sing("No GameObject '{0}' found", entityPath[0]);
+                        Twins.Sing("No GameObject '{0}' found", entityPath[0]);
                     else if (entityPath.Length == 2)
-                        TheRoost.Sing("No Component '{0}' found on {1}", entityPath[1], entityPath[0]);
+                        Twins.Sing("No Component '{0}' found on {1}", entityPath[1], entityPath[0]);
                 }
 
                 if (command.Length == 1)
                 {
                     if (entity.GetType() == typeof(GameObject))
-                        TheRoost.Sing((entity as GameObject).name, ((GameObject)entity).GetComponents(typeof(Component)));
+                        Twins.Sing((entity as GameObject).name, ((GameObject)entity).GetComponents(typeof(Component)));
                     else
                         foreach (PropertyInfo property in entity.GetType().GetProperties())
-                            TheRoost.Sing(property.Name, property.GetValue(entity));
+                            Twins.Sing(property.Name, property.GetValue(entity));
                     return;
                 }
 
                 PropertyInfo targetProperty = entity.GetType().GetProperty(command[1]);
                 if (command.Length == 2) //no value specified, just return property
                 {
-                    TheRoost.Sing(targetProperty.GetValue(entity));
+                    Twins.Sing(targetProperty.GetValue(entity));
                     return;
                 }
 
@@ -144,7 +168,7 @@ namespace TheRoost
             }
             catch
             {
-                TheRoost.Sing("Error during executing command");
+                Twins.Sing("Error during executing gameobject command");
             }
         }
 
@@ -159,7 +183,7 @@ namespace TheRoost
             else if (property.PropertyType.IsValueType)
                 return Convert.ChangeType(value, property.PropertyType);
 
-            TheRoost.Sing("Can't convert value {0} into {1}", value, property.PropertyType.Name);
+            Twins.Sing("Can't convert value {0} into {1}", value, property.PropertyType.Name);
             return null;
         }
 
@@ -194,23 +218,12 @@ namespace TheRoost
                 result = result.GetType().GetProperty(path[n]).GetValue(result);
                 if (result == null)
                 {
-                    TheRoost.Sing("No property '{0}' found", path[n]);
+                    Twins.Sing("No property '{0}' found", path[n]);
                     break;
                 }
             }
 
             return result;
-        }
-
-        GameObject console;
-        void Update()
-        {
-            if (Keyboard.current.backquoteKey.wasPressedThisFrame)
-            {
-                //console.SetActive(!console.activeSelf);
-                if (GameObject.FindObjectOfType<DebugTools>() == null)
-                    Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
-            }
         }
     }
 
