@@ -28,15 +28,13 @@ namespace TheRoost
             if (TheRoostMachine.alreadyAssembled)
                 return;
 
-            var harmony = new Harmony("theroost.beachcomber");
+            TheRoostMachine.Patch(
+                original: typeof(AbstractEntity<Element>).GetMethod("PopUnknownKeysToLog", BindingFlags.NonPublic | BindingFlags.Instance),
+                prefix: typeof(Beachcomber).GetMethod("KnowUnknown", BindingFlags.NonPublic | BindingFlags.Static));
 
-            var original = typeof(AbstractEntity<Element>).GetMethod("PopUnknownKeysToLog", BindingFlags.NonPublic | BindingFlags.Instance);
-            var patched = typeof(Beachcomber).GetMethod("KnowUnknown", BindingFlags.NonPublic | BindingFlags.Static);
-            harmony.Patch(original, prefix: new HarmonyMethod(patched));
-
-            original = typeof(CompendiumLoader).GetMethod("PopulateCompendium");
-            patched = typeof(Beachcomber).GetMethod("CuckooTranspiler", BindingFlags.NonPublic | BindingFlags.Static);
-            harmony.Patch(original, transpiler: new HarmonyMethod(patched));
+            TheRoostMachine.Patch(
+                original: typeof(CompendiumLoader).GetMethod("PopulateCompendium"),
+                transpiler: typeof(Beachcomber).GetMethod("CuckooTranspiler", BindingFlags.NonPublic | BindingFlags.Static));
         }
 
         public static void ClaimProperty<T>(string propertyName, Type propertyType) where T : AbstractEntity<T>

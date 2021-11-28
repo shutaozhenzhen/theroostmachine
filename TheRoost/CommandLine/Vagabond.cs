@@ -23,15 +23,14 @@ namespace TheRoost
             if (TheRoostMachine.alreadyAssembled)
                 return;
 
-            var harmony = new Harmony("theroost.vagabond");
-            var original = typeof(MenuScreenController).GetMethod("InitialiseServices", BindingFlags.NonPublic | BindingFlags.Instance);
-            var patched = typeof(Vagabond).GetMethod("SetInterface", BindingFlags.NonPublic | BindingFlags.Static);
-            harmony.Patch(original, prefix: new HarmonyMethod(patched));
+            TheRoostMachine.Patch(
+                original: typeof(MenuScreenController).GetMethod("InitialiseServices", BindingFlags.NonPublic | BindingFlags.Instance),
+                prefix: typeof(Vagabond).GetMethod("SetInterface", BindingFlags.NonPublic | BindingFlags.Static));
 
             //gotta do that litte favour for the Twins since they are static class and are inconvenient to initialise (aesthetically)
-            original = typeof(NotificationWindow).GetMethod("SetDetails", BindingFlags.Public | BindingFlags.Instance);
-            patched = typeof(Twins).GetMethod("ShowNotificationWithIntervention", BindingFlags.NonPublic | BindingFlags.Static);
-            harmony.Patch(original, prefix: new HarmonyMethod(patched));
+            TheRoostMachine.Patch(
+                original: typeof(NotificationWindow).GetMethod("SetDetails", BindingFlags.Public | BindingFlags.Instance),
+                prefix: typeof(Twins).GetMethod("ShowNotificationWithIntervention", BindingFlags.NonPublic | BindingFlags.Static));
         }
 
         GameObject console;
@@ -45,7 +44,8 @@ namespace TheRoost
         private static void SetInterface()
         {
             //another little favour
-            Twins.onServicesInitialized.Invoke();
+            if (Twins.onServicesInitialized != null)
+                Twins.onServicesInitialized.Invoke();
 
             Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
             var debugCanvas = GameObject.Find("SecretHistoryLogMessageEntry(Clone)").GetComponentInParent<Canvas>().transform;
@@ -100,8 +100,14 @@ namespace TheRoost
                 case "/goinfo": GameObjectCommand(command); break;
                 case "/goset": GameObjectCommand(command); break;
                 case "/compendium": GameObjectCommand(command); break;
+                case "/test": TestMethod(command); break;
                 default: Twins.Sing("Unknown command"); break;
             }
+        }
+
+        static void TestMethod(string[] commad)
+        {
+            Nowhere.TheWorld.Test();
         }
 
         static void AchievementCommand(string[] command)

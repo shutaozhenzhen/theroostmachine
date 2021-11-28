@@ -8,6 +8,7 @@ using SecretHistories.Fucine;
 
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 namespace TheRoost
 {
@@ -18,7 +19,10 @@ namespace TheRoost
 
         public static void Sing(string wrapMessage, params object[] data)
         {
-            NoonUtility.LogWarning(String.Format(wrapMessage, data));
+            if (data.Length > 0)
+                NoonUtility.LogWarning(String.Format(wrapMessage, data));
+            else
+                NoonUtility.LogWarning(wrapMessage);
         }
 
         public static void Sing(params object[] data)
@@ -57,7 +61,6 @@ namespace TheRoost
             typeof(Babelfish).GetField("locLabel", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(babelfish, locLabel);
             babelfish.SetValuesForCurrentCulture();
         }
-
 
         public static bool intervention = false;
         public static Sprite interventionSprite;

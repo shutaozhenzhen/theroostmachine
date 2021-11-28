@@ -75,6 +75,7 @@ namespace TheRoost
 
             TextMeshProUGUI fancypancy = myOverlay.FindInChildren("HintText", true).GetComponent<TextMeshProUGUI>();
             fancypancy.fontStyle = FontStyles.Italic;
+            fancypancy.gameObject.SetActive(false);
             fancypancy.gameObject.AddComponent<Babelfish>();
             fancypancy.GetComponent<Babelfish>().SetBabelLabel("ACH_FANCYPANCY_QUOTE");
             fancypancy.gameObject.SetActive(true);
@@ -193,11 +194,17 @@ namespace TheRoost
 
             TextMeshProUGUI title = achievementTemplate.FindInChildren("modtitle", true).GetComponent<TextMeshProUGUI>();
             title.name = "title";
-
-            title.gameObject.AddComponent<Babelfish>().SetBabelLabel(string.Empty); //babelfish so font correctly switches on culture change; errors without a label
             TextMeshProUGUI description = achievementTemplate.FindInChildren("moddescription", true).GetComponent<TextMeshProUGUI>();
-            description.gameObject.AddComponent<Babelfish>().SetBabelLabel(string.Empty); //look above
             description.name = "description";
+
+            title.gameObject.SetActive(false);
+            description.gameObject.SetActive(false);
+            //babelfish so font correctly switches on culture change; needs a label though, errs without
+            title.gameObject.AddComponent<Babelfish>().SetBabelLabel(string.Empty);
+            description.gameObject.AddComponent<Babelfish>().SetBabelLabel(string.Empty);
+            title.gameObject.SetActive(true);
+            description.gameObject.SetActive(true);
+
             title.alignment = TextAlignmentOptions.BottomLeft;
             title.fontSizeMax = title.fontSize;
             title.fontSizeMin = 1;

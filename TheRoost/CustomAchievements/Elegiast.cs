@@ -11,6 +11,7 @@ using Galaxy.Api;
 using SecretHistories.UI;
 using SecretHistories.Services;
 using SecretHistories.Constants;
+using SecretHistories.Core;
 
 using UnityEngine;
 
@@ -34,21 +35,19 @@ namespace TheRoost
             if (TheRoostMachine.alreadyAssembled)
                 return;
 
+            TheRoostMachine.Patch(
+                original: typeof(RecipeCompletionEffectCommand).GetMethod("RunRecipeEffects", BindingFlags.NonPublic | BindingFlags.Instance),
+                prefix: typeof(Elegiast).GetMethod("UnlockAchievements", BindingFlags.NonPublic | BindingFlags.Static));
+
+            TheRoostMachine.Patch(
+                original: typeof(MenuScreenController).GetMethod("InitialiseServices", BindingFlags.NonPublic | BindingFlags.Instance),
+                prefix: typeof(AchievementInterfaceManager).GetMethod("CreateInterface", BindingFlags.NonPublic | BindingFlags.Static));
+
             Beachcomber.InfectFucineWith<VanillaAchievement>();
             Beachcomber.InfectFucineWith<CustomAchievement>();
             Beachcomber.ClaimProperty<SecretHistories.Entities.Recipe>(propertyThatUnlocks, typeof(List<string>));
 
             LoadAllUnlocks();
-
-            var harmony = new Harmony("theroost.elegiast");
-
-            var original = typeof(SecretHistories.Core.RecipeCompletionEffectCommand).GetMethod("RunRecipeEffects", BindingFlags.NonPublic | BindingFlags.Instance);
-            var patched = typeof(Elegiast).GetMethod("UnlockAchievements", BindingFlags.NonPublic | BindingFlags.Static);
-            harmony.Patch(original, prefix: new HarmonyMethod(patched));
-
-            original = typeof(MenuScreenController).GetMethod("InitialiseServices", BindingFlags.NonPublic | BindingFlags.Instance);
-            patched = typeof(AchievementInterfaceManager).GetMethod("CreateInterface", BindingFlags.NonPublic | BindingFlags.Static);
-            harmony.Patch(original, prefix: new HarmonyMethod(patched));
 
             if (Watchman.Get<SecretHistories.Services.StorefrontServicesProvider>().IsAvailable(StoreClient.Gog))
             {
