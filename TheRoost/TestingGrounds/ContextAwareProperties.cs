@@ -115,12 +115,12 @@ namespace TheRoostManchine
             return result;
         }
 
-        public static int Evaluate<T>(Expression expression)
+        public static T Evaluate<T>(Expression expression)
         {
             for (int n = 0; n < expression.Parameters.Count; n++)
                 expression.Parameters[ToLetter(n)] = ((FucineReference)expression.Parameters[ToLetter(n)]).value;
 
-            return (int)expression.Evaluate();
+            return (T)Convert.ChangeType(expression.Evaluate(),typeof(T));
         }
 
         static FucineReference CreateReference(string[] reference)
