@@ -10,7 +10,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-namespace TheRoost
+namespace TheRoostManchine
 {
     public static class Twins
     {
@@ -29,9 +29,7 @@ namespace TheRoost
         {
             var str = string.Empty;
             foreach (object obj in data)
-                str += (obj == null ? "null" : obj.ToString()) + ' ';
-
-            NoonUtility.LogWarning(str);
+                NoonUtility.LogWarning((obj == null ? "null" : obj.ToString()));
         }
 
         public static GameObject FindInChildren(this GameObject go, string targetName, bool nested = false)
@@ -90,14 +88,24 @@ namespace TheRoost
             }
         }
 
-        public static void ClaimProperty<T>(string propertyName, Type propertyType) where T : AbstractEntity<T>
+        public static Delayer Schedule(MethodInfo action, object actor = null, object[] parameters = null)
         {
-            Beachcomber.ClaimProperty<T>(propertyName, propertyType);
-        }
+            GameObject gameObject = new GameObject();
+            GameObject.DontDestroyOnLoad(gameObject);
+            Delayer delayer = gameObject.AddComponent<Delayer>();
+            delayer.StartCoroutine(delayer.ExecuteDelayed(action, actor, parameters));
 
-        public static T RetrieveProperty<T>(this IEntityWithId owner, string propertyName)
+            return delayer;
+        }
+    }
+
+    public class Delayer : MonoBehaviour
+    {
+        public IEnumerator ExecuteDelayed(System.Reflection.MethodInfo action, object actor, object[] parameters)
         {
-            return Beachcomber.RetrieveProperty<T>(owner, propertyName);
+            yield return new WaitForEndOfFrame();
+            action.Invoke(actor, parameters);
+            Destroy(this.gameObject);
         }
     }
 }

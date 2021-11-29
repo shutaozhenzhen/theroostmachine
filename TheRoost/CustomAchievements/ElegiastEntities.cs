@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using SecretHistories.Fucine;
 using UnityEngine;
 
-using TheRoost;
+using TheRoostManchine;
 
-namespace TheRoost.Entities
+namespace TheRoostManchine.Entities
 {
     public interface IFucineAchievement
     {

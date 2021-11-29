@@ -2,9 +2,9 @@
 using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 
 using HarmonyLib;
+using NCalc;
 
 using SecretHistories.Core;
 using SecretHistories.Entities;
@@ -12,20 +12,14 @@ using SecretHistories.Fucine;
 using SecretHistories.Fucine.DataImport;
 using SecretHistories.UI;
 
-using TheRoost;
+using TheRoostManchine;
 
-namespace TheRoost.Nowhere
+namespace TheRoostManchine
 {
     internal class TheWorld
     {
         static AspectsDictionary currentLocal;
-
-        public static void Test()
-        {
-            List<ContextAware> list = Watchman.Get<Compendium>().GetEntitiesAsList<ContextAware>();
-            Twins.Sing((int)list[0].intValue[0]);
-        }
-
+        static string myTestProperty = "effectsButBetter";
         static void Invoke()
         {
             TheRoostMachine.Patch(
@@ -33,18 +27,20 @@ namespace TheRoost.Nowhere
                 prefix: typeof(TheWorld).GetMethod("SetLocalScope", BindingFlags.NonPublic | BindingFlags.Static),
                 postfix: typeof(TheWorld).GetMethod("ResetLocalScope", BindingFlags.NonPublic | BindingFlags.Static));
 
-            Beachcomber.InfectFucineWith<ContextAware>();
+            TheRoostMachine.Patch(
+                original: typeof(RecipeCompletionEffectCommand).GetMethod("RunRecipeEffects", BindingFlags.NonPublic | BindingFlags.Instance),
+                prefix: typeof(TheWorld).GetMethod("RunBetterEffects", BindingFlags.NonPublic | BindingFlags.Static));
+
+            Vagabond.AddTest("exp", Test);
+            Beachcomber.ClaimProperty<Recipe>(myTestProperty, typeof(Dictionary<string, FucineInt>));
         }
 
-        public static Func<string, AspectsDictionary> GetContextReference(string tag)
+        static void RunBetterEffects(SecretHistories.Core.RecipeCompletionEffectCommand __instance, SecretHistories.Spheres.Sphere sphere)
         {
-            switch (tag)
-            {
-                case "extant": return GetExtantAspects;
-                case "table": return GetTableAspects;
-                case "default": return GetLocalAspects;
-                default: return GetVerbAspects;
-            }
+            Dictionary<string, FucineInt> effects = Beachcomber.RetrieveProperty<Dictionary<string, FucineInt>>(__instance.Recipe, myTestProperty);
+            if (effects != null)
+                foreach (KeyValuePair<string, FucineInt> effect in effects)
+                    sphere.ModifyElementQuantity(effect.Key, effect.Value, new Context(Context.ActionSource.SituationEffect));
         }
 
         static void SetLocalScope(Situation situation)
@@ -54,132 +50,146 @@ namespace TheRoost.Nowhere
 
         static void ResetLocalScope()
         {
-            TheWorld.currentLocal = GetTableAspects(string.Empty);
+            TheWorld.currentLocal = Watchman.Get<HornedAxe>().GetAspectsInContext(null).AspectsOnTable;
         }
 
-        public static AspectsDictionary GetExtantAspects(string useless)
+        static void Test(string[] command)
         {
-            return Watchman.Get<HornedAxe>().GetAspectsInContext(null).AspectsExtant;
+            FucineInt value = command[0];
+            Twins.Sing(value);
         }
 
-        public static AspectsDictionary GetTableAspects(string useless)
+        public static int GetExtantAspects(string unused, string elementId)
         {
-            return Watchman.Get<HornedAxe>().GetAspectsInContext(null).AspectsOnTable;
+            AspectsDictionary extant = Watchman.Get<HornedAxe>().GetAspectsInContext(null).AspectsExtant;
+            return extant.ContainsKey(elementId) ? extant[elementId] : 0;
         }
 
-        public static AspectsDictionary GetLocalAspects(string id)
+        public static int GetTableAspects(string unused, string elementId)
         {
-            return currentLocal;
+            AspectsDictionary table = Watchman.Get<HornedAxe>().GetAspectsInContext(null).AspectsOnTable;
+            return table.ContainsKey(elementId) ? table[elementId] : 0;
         }
 
-        public static AspectsDictionary GetVerbAspects(string id)
+        public static int GetLocalAspects(string unused, string elementId)
+        {
+            return currentLocal.ContainsKey(elementId) ? currentLocal[elementId] : 0;
+        }
+
+        public static int GetVerbAspects(string verbId, string elementId)
         {
             HornedAxe horned = Watchman.Get<HornedAxe>();
-            var situations = horned.GetSituationsWithVerbOfActionId(id);
+            var situations = horned.GetSituationsWithVerbOfActionId(verbId);
+
             foreach (Situation situation in situations)
-                return situation.GetAspects(true);
+            {
+                AspectsDictionary aspectsInVerb = situation.GetAspects(true);
+                return aspectsInVerb.ContainsKey(elementId) ? aspectsInVerb[elementId] : 0;
+            }
 
-            return new AspectsDictionary();
-        }
-
-        public static T Evaluate<T>(string expression, FucineReference[] references)
-        {
-            StringBuilder builder = new StringBuilder(expression, expression.Length + references.Length * 3);
-            for (var n = 0; n < references.Length; n++)
-                builder.Replace(ToLetter(n), references[n].value.ToString());
-
-            string result = builder.ToString();
-            var evaluator = new NCalc.Expression(result, NCalc.EvaluateOptions.None);
-            object value = evaluator.Evaluate();
-
-            Twins.Sing("{0} = {1} = {2}", expression, result, value);
-
-            return (T)Convert.ChangeType(value, typeof(T));
-        }
-
-        private const char referenceSeparator = '@';
-        private const char scopeSeparator = '#';
-        public static string ParseReferences(string expression, out FucineReference[] references)
-        {
-            string[] split = expression.Split(referenceSeparator);
-            List<FucineReference> referencesList = new List<FucineReference>();
-            int referencesCount = 0;
-
-            for (var n = 0; n < split.Length; n++)
-                if (split[n].Length > 0 && Char.IsLetter(split[n][0]))
-                {
-                    referencesList.Add(new FucineReference(split[n].Split(scopeSeparator)));
-                    split[n] = ToLetter(referencesCount);
-                    referencesCount++;
-                }
-
-            references = referencesList.ToArray();
-            return string.Concat(split);
-        }
-
-        public static string ToLetter(int number)
-        {
-            return ((char)(number + 65)).ToString();
+            return 0;
         }
     }
 
-    public class FucineInt : AbstractEntity<FucineInt>
+    [AttributeUsage(AttributeTargets.Struct)]
+    public class FucineExpression : Attribute
     {
-        [FucineValue]
-        public string expression { get; set; }
-        FucineReference[] references;
-        public static implicit operator int(FucineInt me) { return TheWorld.Evaluate<int>(me.expression, me.references); }
+        const char referenceSeparator = '@';
+        const char scopeSeparator = '#';
 
-        public FucineInt(EntityData importDataForEntity, ContentImportLog log)
-            : base(importDataForEntity, log)
+        public static Expression ParseAndCompile(string expression)
         {
-            expression = TheWorld.ParseReferences(expression, out references);
+            string[] expressionParts = expression.Split(referenceSeparator);
+            Dictionary<string, object> parameters = new Dictionary<string, object>();
+            int referencesCount = 0;
+            for (var n = 0; n < expressionParts.Length; n++)
+                if (expressionParts[n].Length > 0 && Char.IsLetter(expressionParts[n][0]))
+                {
+                    parameters[ToLetter(referencesCount)] = CreateReference(expressionParts[n].Split(scopeSeparator));
+                    expressionParts[n] = ToLetter(referencesCount);
+                    referencesCount++;
+                }
+
+            Expression result = new Expression(Expression.Compile(String.Concat(expressionParts), false));
+            result.Parameters = parameters;
+            return result;
         }
-        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
+
+        public static int Evaluate<T>(Expression expression)
+        {
+            for (int n = 0; n < expression.Parameters.Count; n++)
+                expression.Parameters[ToLetter(n)] = ((FucineReference)expression.Parameters[ToLetter(n)]).value;
+
+            return (int)expression.Evaluate();
+        }
+
+        static FucineReference CreateReference(string[] reference)
+        {
+            if (reference.Length == 1)
+                return new FucineReference(ContextGetterByTag("default"), string.Empty, reference[0]);
+            else if (reference.Length == 2)
+                return new FucineReference(ContextGetterByTag(reference[0]), string.Empty, reference[1]);
+            else if (reference.Length == 3)
+                return new FucineReference(ContextGetterByTag(reference[0]), reference[1], reference[2]);
+
+            Twins.Sing("Malformed reference {0}", String.Concat(reference));
+            return new FucineReference(null, string.Empty, string.Empty);
+        }
+
+        static string ToLetter(int number)
+        {
+            return ((char)(number + 65)).ToString();
+        }
+
+        public static Func<string, string, int> ContextGetterByTag(string tag)
+        {
+            switch (tag)
+            {
+                case "extant": return TheWorld.GetExtantAspects;
+                case "table": return TheWorld.GetTableAspects;
+                case "default": return TheWorld.GetLocalAspects;
+                case "verb": return TheWorld.GetVerbAspects;
+                default: throw new Exception("Unknown context tag " + tag);
+            }
+        }
+    }
+
+    [FucineExpression]
+    public struct FucineInt
+    {
+        Expression expression;
+        public readonly string originalExpression;
+
+        public FucineInt(string expression)
+        {
+            this.expression = FucineExpression.ParseAndCompile(expression);
+            this.originalExpression = expression;
+        }
+        public static implicit operator int(FucineInt me)
+        {
+            //Twins.Sing(me.originalExpression);
+
+            return FucineExpression.Evaluate<int>(me.expression);
+        }
+
+        public static implicit operator string(FucineInt me) { return ((int)me).ToString(); }
+        public override string ToString() { return (string)this; }
+        public static implicit operator FucineInt(string expression) { return new FucineInt(expression); }
     }
 
     public struct FucineReference
     {
-        readonly Func<string, AspectsDictionary> contextRef;
-        readonly string element;
+        readonly Func<string, string, int> getcontext;
+        readonly string contextId;
+        readonly string elementId;
+        public int value { get { return getcontext.Invoke(contextId, elementId); } }
 
-        public FucineReference(string[] reference)
+        public static implicit operator int(FucineReference me) { return me.getcontext.Invoke(me.contextId, me.elementId); }
+        public FucineReference(Func<string, string, int> getcontext, string contextId, string elementId)
         {
-            if (reference.Length == 1) //scope isnt defined
-            {
-                this.contextRef = TheWorld.GetContextReference("default");
-                this.element = reference[0];
-            }
-            else if (reference.Length == 2)
-            {
-                this.contextRef = TheWorld.GetContextReference(reference[0]);
-                this.element = reference[1];
-            }
-            else
-            {
-                Twins.Sing("Malformed reference {0}", String.Concat(reference));
-                this.contextRef = null;
-                this.element = string.Empty;
-            }
+            this.getcontext = getcontext;
+            this.contextId = contextId;
+            this.elementId = elementId;
         }
-
-        public int value
-        {
-            get
-            {
-                AspectsDictionary context = contextRef.Invoke(element);
-                return context.ContainsKey(element) ? context[element] : 0;
-            }
-        }
-    }
-
-    [FucineImportable("context")]
-    public class ContextAware : AbstractEntity<ContextAware>
-    {
-        [FucineList]
-        public List<FucineInt> intValue { get; set; }
-
-        public ContextAware(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
-        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
     }
 }

@@ -13,9 +13,9 @@ using TMPro;
 using SecretHistories.UI;
 using SecretHistories.Services;
 
-using TheRoost.Entities;
+using TheRoostManchine.Entities;
 
-namespace TheRoost
+namespace TheRoostManchine
 {
     internal class AchievementInterfaceManager
     {

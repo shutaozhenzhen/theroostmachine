@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Linq;
 
 using HarmonyLib;
 
@@ -14,7 +15,7 @@ using UnityEngine.Events;
 using UnityEngine.InputSystem;
 using TMPro;
 
-namespace TheRoost
+namespace TheRoostManchine
 {
     internal class Vagabond : MonoBehaviour
     {
@@ -33,6 +34,19 @@ namespace TheRoost
                 prefix: typeof(Twins).GetMethod("ShowNotificationWithIntervention", BindingFlags.NonPublic | BindingFlags.Static));
         }
 
+        static Dictionary<string, Action<string[]>> testMethods = new Dictionary<string, Action<string[]>>();
+        public static void AddTest(string reference, Action<string[]> method)
+        {
+            testMethods.Add(reference, method);
+        }
+        static void InvokeTest(string[] command)
+        {
+            string[] arguments = new string[command.Length - 2];
+            Array.Copy(command, 2, arguments, 0, command.Length - 2);
+            testMethods[command[1]].Invoke(arguments);
+        }
+
+
         GameObject console;
         void Update()
         {
@@ -41,54 +55,7 @@ namespace TheRoost
                     Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
         }
 
-        private static void SetInterface()
-        {
-            //another little favour
-            if (Twins.onServicesInitialized != null)
-                Twins.onServicesInitialized.Invoke();
 
-            Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
-            var debugCanvas = GameObject.Find("SecretHistoryLogMessageEntry(Clone)").GetComponentInParent<Canvas>().transform;
-
-            var console = new GameObject("AuxConsole", typeof(Vagabond), typeof(RectTransform), typeof(Image), typeof(TMP_InputField));
-            GameObject.FindObjectOfType<SecretHistories.Services.SecretHistory>().gameObject.AddComponent<Vagabond>().console = console;
-
-            console.GetComponent<Image>().color = debugCanvas.GetComponentsInChildren<Image>()[1].color;
-
-            var consoleT = console.GetComponent<RectTransform>();
-            consoleT.SetParent(debugCanvas.GetChild(0));
-            consoleT.pivot = new Vector2(0.5f, 1f);
-            consoleT.anchorMin = new Vector2(0.13f, 0f);
-            consoleT.anchorMax = new Vector2(0.85f, 0f);
-            consoleT.sizeDelta = new Vector2(0, 30);
-            consoleT.anchoredPosition = new Vector2(0, 2);
-            consoleT.localScale = Vector2.one;
-
-            GameObject button = GameObject.Instantiate(GameObject.Find("SecretHistoryLogMessageEntry(Clone)").gameObject, consoleT);
-            RectTransform textT = button.GetComponent<RectTransform>();
-            textT.localScale = Vector3.one;
-            textT.pivot = Vector2.one / 2;
-            textT.anchorMin = Vector2.zero;
-            textT.anchorMax = Vector2.one;
-            textT.anchoredPosition = new Vector2(10, 0);
-            textT.sizeDelta = Vector2.zero;
-
-            TextMeshProUGUI text = textT.gameObject.GetComponent<TextMeshProUGUI>();
-            text.alignment = TextAlignmentOptions.MidlineLeft;
-            text.fontSizeMin = 1;
-            text.fontSizeMax = text.fontSize;
-            text.enableAutoSizing = true;
-
-            TMP_InputField consoleI = console.GetComponent<TMP_InputField>();
-            consoleI.targetGraphic = console.GetComponent<Image>();
-            consoleI.textComponent = text;
-            consoleI.text = "...";
-
-            consoleI.onSubmit = new TMP_InputField.SubmitEvent();
-            consoleI.onSubmit.AddListener(new UnityEngine.Events.UnityAction<string>(ExecuteCommand));
-
-            Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
-        }
 
         private static void ExecuteCommand(string text)
         {
@@ -100,14 +67,9 @@ namespace TheRoost
                 case "/goinfo": GameObjectCommand(command); break;
                 case "/goset": GameObjectCommand(command); break;
                 case "/compendium": GameObjectCommand(command); break;
-                case "/test": TestMethod(command); break;
+                case "/test": InvokeTest(command); break;
                 default: Twins.Sing("Unknown command"); break;
             }
-        }
-
-        static void TestMethod(string[] commad)
-        {
-            Nowhere.TheWorld.Test();
         }
 
         static void AchievementCommand(string[] command)
@@ -128,9 +90,9 @@ namespace TheRoost
                 else
                     Twins.Sing("Checking achievement '{0}' presence: {1}", command[2], data.Contains("\"" + command[2] + "\""));
             }
-            catch
+            catch (Exception ex)
             {
-                Twins.Sing("Error during executing achievement command");
+                Twins.Sing(ex);
             }
         }
 
@@ -172,9 +134,9 @@ namespace TheRoost
                 object value = ConvertValue(string_value, targetProperty);
                 targetProperty.SetValue(entity, value);
             }
-            catch
+            catch (Exception ex)
             {
-                Twins.Sing("Error during executing gameobject command");
+                Twins.Sing(ex);
             }
         }
 
@@ -231,26 +193,54 @@ namespace TheRoost
 
             return result;
         }
-    }
 
-    public class Delayer : MonoBehaviour
-    {
-        public static Delayer Schedule(System.Reflection.MethodInfo action, object actor = null, object[] parameters = null)
+        private static void SetInterface()
         {
-            GameObject gameObject = new GameObject();
-            DontDestroyOnLoad(gameObject);
-            Delayer delayer = gameObject.AddComponent<Delayer>();
-            delayer.StartCoroutine(delayer.ExecuteDelayed(action, actor, parameters));
+            //another little favour
+            if (Twins.onServicesInitialized != null)
+                Twins.onServicesInitialized.Invoke();
 
-            return delayer;
-        }
+            Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
+            var debugCanvas = GameObject.Find("SecretHistoryLogMessageEntry(Clone)").GetComponentInParent<Canvas>().transform;
 
-        public IEnumerator ExecuteDelayed(System.Reflection.MethodInfo action, object actor, object[] parameters)
-        {
-            yield return new WaitForEndOfFrame();
-            action.Invoke(actor, parameters);
-            Destroy(this.gameObject);
+            var console = new GameObject("AuxConsole", typeof(Vagabond), typeof(RectTransform), typeof(Image), typeof(TMP_InputField));
+            GameObject.FindObjectOfType<SecretHistories.Services.SecretHistory>().gameObject.AddComponent<Vagabond>().console = console;
+
+            console.GetComponent<Image>().color = debugCanvas.GetComponentsInChildren<Image>()[1].color;
+
+            var consoleT = console.GetComponent<RectTransform>();
+            consoleT.SetParent(debugCanvas.GetChild(0));
+            consoleT.pivot = new Vector2(0.5f, 1f);
+            consoleT.anchorMin = new Vector2(0.13f, 0f);
+            consoleT.anchorMax = new Vector2(0.85f, 0f);
+            consoleT.sizeDelta = new Vector2(0, 30);
+            consoleT.anchoredPosition = new Vector2(0, 2);
+            consoleT.localScale = Vector2.one;
+
+            GameObject button = GameObject.Instantiate(GameObject.Find("SecretHistoryLogMessageEntry(Clone)").gameObject, consoleT);
+            RectTransform textT = button.GetComponent<RectTransform>();
+            textT.localScale = Vector3.one;
+            textT.pivot = Vector2.one / 2;
+            textT.anchorMin = Vector2.zero;
+            textT.anchorMax = Vector2.one;
+            textT.anchoredPosition = new Vector2(10, 0);
+            textT.sizeDelta = Vector2.zero;
+
+            TextMeshProUGUI text = textT.gameObject.GetComponent<TextMeshProUGUI>();
+            text.alignment = TextAlignmentOptions.MidlineLeft;
+            text.fontSizeMin = 1;
+            text.fontSizeMax = text.fontSize;
+            text.enableAutoSizing = true;
+
+            TMP_InputField consoleI = console.GetComponent<TMP_InputField>();
+            consoleI.targetGraphic = console.GetComponent<Image>();
+            consoleI.textComponent = text;
+            consoleI.text = "...";
+
+            consoleI.onSubmit = new TMP_InputField.SubmitEvent();
+            consoleI.onSubmit.AddListener(new UnityEngine.Events.UnityAction<string>(ExecuteCommand));
+
+            Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
         }
     }
-
 }

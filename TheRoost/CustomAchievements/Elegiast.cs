@@ -15,9 +15,9 @@ using SecretHistories.Core;
 
 using UnityEngine;
 
-using TheRoost.Entities;
+using TheRoostManchine.Entities;
 
-namespace TheRoost
+namespace TheRoostManchine
 {
     public class Elegiast
     {
@@ -43,8 +43,6 @@ namespace TheRoost
                 original: typeof(MenuScreenController).GetMethod("InitialiseServices", BindingFlags.NonPublic | BindingFlags.Instance),
                 prefix: typeof(AchievementInterfaceManager).GetMethod("CreateInterface", BindingFlags.NonPublic | BindingFlags.Static));
 
-            Beachcomber.InfectFucineWith<VanillaAchievement>();
-            Beachcomber.InfectFucineWith<CustomAchievement>();
             Beachcomber.ClaimProperty<SecretHistories.Entities.Recipe>(propertyThatUnlocks, typeof(List<string>));
 
             LoadAllUnlocks();
@@ -58,7 +56,7 @@ namespace TheRoost
 
         static void UnlockAchievements(SecretHistories.Core.RecipeCompletionEffectCommand __instance)
         {
-            List<string> ids = __instance.Recipe.RetrieveProperty<List<string>>(propertyThatUnlocks);
+            List<string> ids = Beachcomber.RetrieveProperty<List<string>>(__instance.Recipe, propertyThatUnlocks);
             if (ids != null)
             {
                 bool atLeastOneUnlock = false;
