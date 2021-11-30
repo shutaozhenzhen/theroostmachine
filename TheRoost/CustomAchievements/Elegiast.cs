@@ -15,9 +15,9 @@ using SecretHistories.Core;
 
 using UnityEngine;
 
-using TheRoostManchine.Entities;
+using TheRoost.Entities;
 
-namespace TheRoostManchine
+namespace TheRoost
 {
     public class Elegiast
     {
@@ -30,13 +30,13 @@ namespace TheRoostManchine
 
         static string localFile { get { return Application.persistentDataPath + "\\" + datafile; } }
 
-        private static void Invoke()
+        internal static void Enact()
         {
             if (TheRoostMachine.alreadyAssembled)
                 return;
 
             TheRoostMachine.Patch(
-                original: typeof(RecipeCompletionEffectCommand).GetMethod("RunRecipeEffects", BindingFlags.NonPublic | BindingFlags.Instance),
+                original: typeof(RecipeCompletionEffectCommand).GetMethod("Execute", BindingFlags.Public | BindingFlags.Instance),
                 prefix: typeof(Elegiast).GetMethod("UnlockAchievements", BindingFlags.NonPublic | BindingFlags.Static));
 
             TheRoostMachine.Patch(
@@ -73,12 +73,12 @@ namespace TheRoostManchine
             CustomAchievement achievement = Watchman.Get<Compendium>().GetEntityById<CustomAchievement>(id);
             if (achievement == null)
             {
-                Twins.Sing("Attempt to unlock achievement '{0}' - no such achievement exists", id);
+                Birdsong.Sing("Attempt to unlock achievement '{0}' - no such achievement exists", id);
                 return false;
             }
             else if (isUnlocked(achievement))
             {
-                Twins.Sing("Attempt to unlock achievement '{0}' - but it is already unlocked", id);
+                Birdsong.Sing("Attempt to unlock achievement '{0}' - but it is already unlocked", id);
                 return false;
             }
 
@@ -154,7 +154,7 @@ namespace TheRoostManchine
                 }
                 catch
                 {
-                    Twins.Sing("Malformed entry in {0}, deleting", datafile);
+                    Birdsong.Sing("Malformed entry in {0}, deleting", datafile);
                 }
 
             return dictionary;
@@ -179,7 +179,7 @@ namespace TheRoostManchine
                     SteamRemoteStorage.FileDelete(datafile);
                 else
                     SteamRemoteStorage.FileWrite(datafile, bytes, bytes.Length);
-                Twins.Sing("Succesfully pushed achievement info on the cloud storage");
+                Birdsong.Sing("Succesfully pushed achievement info on the cloud storage");
 
             }
             else if (storefront.IsAvailable(StoreClient.Gog))
@@ -226,7 +226,7 @@ namespace TheRoostManchine
             }
             catch
             {
-                Twins.Sing("Malformed entry in {0}, deleting", datafile);
+                Birdsong.Sing("Malformed entry in {0}, deleting", datafile);
                 return string.Empty;
             }
         }
@@ -257,19 +257,19 @@ namespace TheRoostManchine
             if (achievement == "all")
             {
                 unlocks.Clear();
-                Twins.Sing("a l l  c u s t o m  a c h i e v e m e n t s  w e r e  r e s e t", achievement);
+                Birdsong.Sing("a l l  c u s t o m  a c h i e v e m e n t s  w e r e  r e s e t", achievement);
                 TrySyncAchievementStorages();
                 return;
             }
 
             if (unlocks.ContainsKey(achievement) == false)
             {
-                Twins.Sing("Trying to reset achievement '{0}', but it's not unlocked, try checking 'achievements.cloud' and 'achievements.local' commands", achievement);
+                Birdsong.Sing("Trying to reset achievement '{0}', but it's not unlocked, try checking 'achievements.cloud' and 'achievements.local' commands", achievement);
                 return;
             }
 
             unlocks.Remove(achievement);
-            Twins.Sing("Deleted achievement '{0}' from the local storage", achievement);
+            Birdsong.Sing("Deleted achievement '{0}' from the local storage", achievement);
             TrySyncAchievementStorages();
         }
 

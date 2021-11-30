@@ -15,11 +15,11 @@ using UnityEngine.Events;
 using UnityEngine.InputSystem;
 using TMPro;
 
-namespace TheRoostManchine
+namespace TheRoost
 {
     internal class Vagabond : MonoBehaviour
     {
-        private static void Invoke()
+        internal static void Enact()
         {
             if (TheRoostMachine.alreadyAssembled)
                 return;
@@ -27,11 +27,6 @@ namespace TheRoostManchine
             TheRoostMachine.Patch(
                 original: typeof(MenuScreenController).GetMethod("InitialiseServices", BindingFlags.NonPublic | BindingFlags.Instance),
                 prefix: typeof(Vagabond).GetMethod("SetInterface", BindingFlags.NonPublic | BindingFlags.Static));
-
-            //gotta do that litte favour for the Twins since they are static class and are inconvenient to initialise (aesthetically)
-            TheRoostMachine.Patch(
-                original: typeof(NotificationWindow).GetMethod("SetDetails", BindingFlags.Public | BindingFlags.Instance),
-                prefix: typeof(Twins).GetMethod("ShowNotificationWithIntervention", BindingFlags.NonPublic | BindingFlags.Static));
         }
 
         static Dictionary<string, Action<string[]>> testMethods = new Dictionary<string, Action<string[]>>();
@@ -68,7 +63,7 @@ namespace TheRoostManchine
                 case "/goset": GameObjectCommand(command); break;
                 case "/compendium": GameObjectCommand(command); break;
                 case "/test": InvokeTest(command); break;
-                default: Twins.Sing("Unknown command"); break;
+                default: Birdsong.Sing("Unknown command"); break;
             }
         }
 
@@ -86,13 +81,13 @@ namespace TheRoostManchine
                 }
 
                 if (command.Length == 2)
-                    Twins.Sing(data);
+                    Birdsong.Sing(data);
                 else
-                    Twins.Sing("Checking achievement '{0}' presence: {1}", command[2], data.Contains("\"" + command[2] + "\""));
+                    Birdsong.Sing("Checking achievement '{0}' presence: {1}", command[2], data.Contains("\"" + command[2] + "\""));
             }
             catch (Exception ex)
             {
-                Twins.Sing(ex);
+                Birdsong.Sing(ex);
             }
         }
 
@@ -105,25 +100,25 @@ namespace TheRoostManchine
                 if (entity == null)
                 {
                     if (entityPath.Length == 1)
-                        Twins.Sing("No GameObject '{0}' found", entityPath[0]);
+                        Birdsong.Sing("No GameObject '{0}' found", entityPath[0]);
                     else if (entityPath.Length == 2)
-                        Twins.Sing("No Component '{0}' found on {1}", entityPath[1], entityPath[0]);
+                        Birdsong.Sing("No Component '{0}' found on {1}", entityPath[1], entityPath[0]);
                 }
 
                 if (command.Length == 1)
                 {
                     if (entity.GetType() == typeof(GameObject))
-                        Twins.Sing((entity as GameObject).name, ((GameObject)entity).GetComponents(typeof(Component)));
+                        Birdsong.Sing((entity as GameObject).name, ((GameObject)entity).GetComponents(typeof(Component)));
                     else
                         foreach (PropertyInfo property in entity.GetType().GetProperties())
-                            Twins.Sing(property.Name, property.GetValue(entity));
+                            Birdsong.Sing(property.Name, property.GetValue(entity));
                     return;
                 }
 
                 PropertyInfo targetProperty = entity.GetType().GetProperty(command[1]);
                 if (command.Length == 2) //no value specified, just return property
                 {
-                    Twins.Sing(targetProperty.GetValue(entity));
+                    Birdsong.Sing(targetProperty.GetValue(entity));
                     return;
                 }
 
@@ -136,7 +131,7 @@ namespace TheRoostManchine
             }
             catch (Exception ex)
             {
-                Twins.Sing(ex);
+                Birdsong.Sing(ex);
             }
         }
 
@@ -151,7 +146,7 @@ namespace TheRoostManchine
             else if (property.PropertyType.IsValueType)
                 return Convert.ChangeType(value, property.PropertyType);
 
-            Twins.Sing("Can't convert value {0} into {1}", value, property.PropertyType.Name);
+            Birdsong.Sing("Can't convert value {0} into {1}", value, property.PropertyType.Name);
             return null;
         }
 
@@ -186,7 +181,7 @@ namespace TheRoostManchine
                 result = result.GetType().GetProperty(path[n]).GetValue(result);
                 if (result == null)
                 {
-                    Twins.Sing("No property '{0}' found", path[n]);
+                    Birdsong.Sing("No property '{0}' found", path[n]);
                     break;
                 }
             }
@@ -196,10 +191,6 @@ namespace TheRoostManchine
 
         private static void SetInterface()
         {
-            //another little favour
-            if (Twins.onServicesInitialized != null)
-                Twins.onServicesInitialized.Invoke();
-
             Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
             var debugCanvas = GameObject.Find("SecretHistoryLogMessageEntry(Clone)").GetComponentInParent<Canvas>().transform;
 

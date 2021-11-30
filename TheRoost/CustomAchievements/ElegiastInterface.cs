@@ -13,9 +13,9 @@ using TMPro;
 using SecretHistories.UI;
 using SecretHistories.Services;
 
-using TheRoostManchine.Entities;
+using TheRoost.Entities;
 
-namespace TheRoostManchine
+namespace TheRoost
 {
     internal class AchievementInterfaceManager
     {
@@ -83,73 +83,82 @@ namespace TheRoostManchine
             myOverlay.FindInChildren("TitleArtwork").transform.SetAsLastSibling();
 
             Transform content = myOverlay.FindInChildren("content", true).transform;
-            content.GetComponent<VerticalLayoutGroup>().spacing = 3;
-            content.GetComponent<VerticalLayoutGroup>().padding = new RectOffset(0, 0, 20, 50);
+            VerticalLayoutGroup contentLayout = content.GetComponent<VerticalLayoutGroup>();
+            contentLayout.spacing = 3;
+            contentLayout.padding = new RectOffset(0, 0, 15, 50);
+            contentLayout.childAlignment = TextAnchor.MiddleCenter;
 
             achievementsContainer = GameObject.Instantiate(content.gameObject, content).transform;
             achievementsContainer.SetAsFirstSibling();
-            achievementsContainer.GetComponent<VerticalLayoutGroup>().padding = new RectOffset(0, 0, 0, 0);
+            achievementsContainer.GetComponent<VerticalLayoutGroup>().padding = new RectOffset(0, 0, 10, 0);
 
-            var category = new GameObject();
-            category.name = "AchievementCategory";
-            category.transform.SetParent(content);
-            category.transform.SetAsFirstSibling();
-            LayoutElement categoryLayout = category.AddComponent<LayoutElement>();
-            categoryLayout.minHeight = 20;
-            categoryLayout.preferredHeight = categoryLayout.minHeight;
-            categoryLayout.flexibleHeight = 0;
-            categoryLayout.minWidth = 690;
-            categoryLayout.flexibleWidth = 0;
-            category.GetComponent<RectTransform>().sizeDelta = new Vector2(categoryLayout.minWidth, categoryLayout.minHeight);
+            //I have only a distant idea of why what's done here works, but the premise is as follows
+            //category text, if centered perfectly, looks a bit off - and much better if shifted a bit to the right
+            //but VerticalLayoutGroup of the parent object ('content') prevents position offset
+            //so we have to make another container
+            //as for exact implementation of it, I'm leaving you, o dear Reader, wondering why it is as it is
+            //(even if that reader is my future self)
+            //all I'll say is that a more direct approach that may come to your mind when solving this, isn't working
+            float categoryTextWidth = 475;
+            float categoryTextShift = 75;
+            var categoryContainer = new GameObject();
+            categoryContainer.transform.SetParent(content);
+            categoryContainer.transform.SetAsFirstSibling();
+            categoryContainer.transform.localScale = Vector3.one;
+            categoryContainer.AddComponent<RectTransform>().sizeDelta = new Vector2(categoryTextWidth-categoryTextShift, 0);
+            categoryContainer.AddComponent<HorizontalLayoutGroup>().childControlWidth = false;
 
-            categoryText = GameObject.Instantiate(myOverlay.FindInChildren("TitleText"), category.transform).GetComponent<TextMeshProUGUI>();
+            categoryText = GameObject.Instantiate(myOverlay.FindInChildren("TitleText"), categoryContainer.transform).GetComponent<TextMeshProUGUI>();
             categoryText.name = "AchievementCategoryTitle";
-            categoryText.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
+            categoryText.alignment = TextAlignmentOptions.Center;
             categoryText.fontStyle = FontStyles.Bold | FontStyles.UpperCase;
+            categoryText.enableAutoSizing = true;
+            categoryText.fontSizeMax = 21;
+            categoryText.fontSizeMin = 1;
 
             var categoryTransform = categoryText.GetComponent<RectTransform>();
-            categoryTransform.pivot = new Vector2(0.5f, 0f);
-            categoryTransform.anchorMin = new Vector2(0.5f, 0);
-            categoryTransform.anchorMax = new Vector2(0.5f, 0.9f);
-            categoryTransform.anchoredPosition = new Vector2(Screen.width / 40, 0);
-            categoryTransform.sizeDelta = new Vector2(Mathf.Min(700, Screen.width / 2.7f), Screen.height / (175 - Mathf.Sqrt(Screen.height) * 4));
-
-            var buttonNext = GameObject.Instantiate(myOverlay.FindInChildren("modtitle", true), category.transform);
-
+            categoryTransform.SetAsFirstSibling();
+            categoryTransform.sizeDelta = new Vector2(categoryTextWidth, 0);
+            categoryTransform.anchoredPosition = new Vector2(0, 0);
+            
+            var buttonNext = GameObject.Instantiate(myOverlay.FindInChildren("modtitle", true), categoryTransform);
             buttonNext.name = "NextCategory";
             var buttonText = buttonNext.GetComponent<TextMeshProUGUI>();
-            buttonText.color = categoryText.color;
             buttonText.text = ">";
+            buttonText.color = categoryText.color;
             buttonText.font = categoryText.font;
-            buttonText.fontSize = Screen.height / 22;
+            buttonText.fontSize = 48;
             buttonText.enableAutoSizing = false;
             buttonText.fontStyle = FontStyles.Bold;
             buttonText.alignment = TextAlignmentOptions.MidlineLeft;
             buttonText.raycastTarget = true;
+
+            var buttonTransform = buttonNext.GetComponent<RectTransform>();
+            buttonTransform.pivot = new Vector2(0f, 0.6f);
+            buttonTransform.anchorMin = new Vector2(1.03f, 0.5f);
+            buttonTransform.anchorMax = new Vector2(1.03f, 0.5f);
+            buttonTransform.anchoredPosition = Vector2.zero;
+
             var changeButton = buttonNext.AddComponent<Button>();
             changeButton.targetGraphic = buttonText;
             changeButton.onClick.AddListener(new UnityEngine.Events.UnityAction(NextCategory));
 
-            var buttonTransform = buttonNext.GetComponent<RectTransform>();
-            buttonTransform.pivot = new Vector2(0f, 0.5f);
-            buttonTransform.anchorMin = new Vector2(0.5f, 0.5f);
-            buttonTransform.anchorMax = new Vector2(0.5f, 0.5f);
-            buttonTransform.sizeDelta = new Vector2(75, 75);
-            buttonTransform.anchoredPosition = new Vector2(categoryTransform.sizeDelta.x * 0.5f + categoryTransform.anchoredPosition.x + 10, 0);
 
-            var buttonPrev = GameObject.Instantiate(buttonNext, category.transform);
-            buttonPrev.transform.SetAsFirstSibling();
+            var buttonPrev = GameObject.Instantiate(buttonNext, categoryTransform);
             buttonNext.name = "PrevCategory";
             buttonText = buttonPrev.GetComponent<TextMeshProUGUI>();
             buttonText.text = "<";
-            buttonText.alignment = TextAlignmentOptions.MidlineLeft;
+            buttonText.alignment = TextAlignmentOptions.MidlineRight;
+
+            buttonTransform = buttonPrev.GetComponent<RectTransform>();
+            buttonTransform.pivot = new Vector2(1f, 0.6f);
+            buttonTransform.anchorMin = new Vector2(-0.02f, 0.5f);
+            buttonTransform.anchorMax = new Vector2(-0.02f, 0.5f);
+
             changeButton = buttonPrev.GetComponent<Button>();
             changeButton.targetGraphic = buttonText;
             changeButton.onClick.AddListener(new UnityEngine.Events.UnityAction(PrevCategory));
-            buttonText.alignment = TextAlignmentOptions.MidlineRight;
-            buttonTransform = buttonPrev.GetComponent<RectTransform>();
-            buttonTransform.pivot = new Vector2(1f, 0.5f);
-            buttonTransform.anchoredPosition = new Vector2(-categoryTransform.sizeDelta.x * 0.5f + categoryTransform.anchoredPosition.x - 10, 0);
+
 
             while (content.childCount > 2)
                 GameObject.DestroyImmediate(content.GetChild(2).gameObject);
@@ -297,7 +306,7 @@ namespace TheRoostManchine
         {
             if (sortedAchievements.ContainsKey(achievement.category) == false)
             {
-                Twins.Sing("Non-existing category '{0}' for achievement '{1}'", achievement.category, achievement.label);
+                Birdsong.Sing("Non-existing category '{0}' for achievement '{1}'", achievement.category, achievement.label);
                 return;
             }
 
@@ -373,6 +382,8 @@ namespace TheRoostManchine
                 categoryText.text = locStringProvider.Get(category);
             else
                 categoryText.text = Watchman.Get<Compendium>().GetEntityById<CustomAchievement>(category).label;
+
+            Birdsong.Sing(categoryText.text);
 
             if (hiddenInCategory[category] == 0)
                 hiddenInfo.gameObject.SetActive(false);

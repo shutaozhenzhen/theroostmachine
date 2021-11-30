@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-using TheRoostManchine;
+using TheRoost;
 using HarmonyLib;
 
 internal static class TheRoostMachine
@@ -19,19 +19,14 @@ internal static class TheRoostMachine
         //in case something breaks during the setup
         SecretHistories.UI.Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
 
-        Invoke<Beachcomber>();
-        Invoke<Elegiast>();
-        Invoke<Vagabond>();
-        Invoke<TheWorld>();
+        Beachcomber.Enact();
+        Elegiast.Enact();
+        Vagabond.Enact();
+        TheWorld.Enact();
+        Birdsong.Enact();
 
-        SecretHistories.UI.Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
         _alreadyAssembled = true;
-    }
-
-    //want to keep Invoke methods private, so use this roundabout way to init the modules
-    static void Invoke<T>()
-    {
-        typeof(T).GetMethod("Invoke", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, null);
+        SecretHistories.UI.Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
     }
 
     public static void Patch(MethodInfo original, MethodInfo prefix = null, MethodInfo postfix = null, MethodInfo transpiler = null, MethodInfo finalizer = null)
@@ -42,5 +37,4 @@ internal static class TheRoostMachine
             transpiler: transpiler == null ? null : new HarmonyMethod(transpiler),
             finalizer: finalizer == null ? null : new HarmonyMethod(finalizer));
     }
-
 }

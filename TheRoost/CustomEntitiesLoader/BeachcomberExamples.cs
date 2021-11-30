@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using SecretHistories.Fucine;
 using SecretHistories.Fucine.DataImport;
 
-namespace TheRoostManchine.Entities
+namespace TheRoost.Entities
 {
     //example class - needs to have constructor and OnPostImportForSpecificEntity(); otherwise will not load
     [FucineImportable("phony")]

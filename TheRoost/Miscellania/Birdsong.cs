@@ -10,12 +10,20 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-namespace TheRoostManchine
+namespace TheRoost
 {
-    public static class Twins
+    //extension class
+    public static class Birdsong
     {
-        public delegate void ServicesInitialised();
-        public static ServicesInitialised onServicesInitialized;
+        internal static void Enact()
+        {
+            if (TheRoostMachine.alreadyAssembled)
+                return;
+
+            TheRoostMachine.Patch(
+                original: typeof(SecretHistories.UI.NotificationWindow).GetMethod("SetDetails", BindingFlags.Public | BindingFlags.Instance),
+                prefix: typeof(Birdsong).GetMethod("ShowNotificationWithIntervention", BindingFlags.NonPublic | BindingFlags.Static));
+        }
 
         public static void Sing(string wrapMessage, params object[] data)
         {
@@ -29,7 +37,9 @@ namespace TheRoostManchine
         {
             var str = string.Empty;
             foreach (object obj in data)
-                NoonUtility.LogWarning((obj == null ? "null" : obj.ToString()));
+                str += (obj == null ? "null" : obj.ToString()) + ' ';
+
+            NoonUtility.LogWarning(str);
         }
 
         public static GameObject FindInChildren(this GameObject go, string targetName, bool nested = false)
@@ -52,7 +62,7 @@ namespace TheRoostManchine
         {
             if (babelfish == null)
             {
-                Twins.Sing("No Babelfish component on the GameObject '{0}'", babelfish.gameObject.name);
+                Birdsong.Sing("No Babelfish component on the GameObject '{0}'", babelfish.gameObject.name);
                 return;
             }
 

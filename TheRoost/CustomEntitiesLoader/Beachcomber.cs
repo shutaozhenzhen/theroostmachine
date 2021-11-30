@@ -12,17 +12,17 @@ using SecretHistories.Entities;
 using SecretHistories.Fucine.DataImport;
 using SecretHistories.UI;
 
-using TheRoostManchine;
+using TheRoost.Entities;
 using UnityEngine;
 
-namespace TheRoostManchine
+namespace TheRoost
 {
     public class Beachcomber
     {
         private readonly static Dictionary<Type, Dictionary<string, Type>> knownUnknownProperties = new Dictionary<Type, Dictionary<string, Type>>();
         private readonly static Dictionary<IEntityWithId, Dictionary<string, object>> beachcomberStorage = new Dictionary<IEntityWithId, Dictionary<string, object>>();
 
-        private static void Invoke()
+        internal static void Enact()
         {
             if (TheRoostMachine.alreadyAssembled)
                 return;
@@ -41,7 +41,7 @@ namespace TheRoostManchine
             Type entityType = typeof(T);
             if (entityType.GetCustomAttribute(typeof(FucineImportable), false) == null)
             {
-                Twins.Sing("Trying to claim '{0}' of {1}s, but {1} has no FucineImportable attribute and will not be loaded.", propertyName, entityType.Name);
+                Birdsong.Sing("Trying to claim '{0}' of {1}s, but {1} has no FucineImportable attribute and will not be loaded.", propertyName, entityType.Name);
                 return;
             }
 
@@ -123,14 +123,15 @@ namespace TheRoostManchine
                     if (assembly.GetType(mod) != null)
                     {
                         foreach (Type type in assembly.GetTypes())
-                        {
-                            FucineImportable fucineImportable = (FucineImportable)type.GetCustomAttribute(typeof(FucineImportable), false);
-                            if (fucineImportable != null)
+                            if (typesToLoad.Contains(type) == false)
                             {
-                                typesToLoad.Add(type);
-                                fucineLoaders.Add(fucineImportable.TaggedAs.ToLower(), new EntityTypeDataLoader(type, fucineImportable.TaggedAs, cultureId, log));
+                                FucineImportable fucineImportable = (FucineImportable)type.GetCustomAttribute(typeof(FucineImportable), false);
+                                if (fucineImportable != null)
+                                {
+                                    typesToLoad.Add(type);
+                                    fucineLoaders.Add(fucineImportable.TaggedAs.ToLower(), new EntityTypeDataLoader(type, fucineImportable.TaggedAs, cultureId, log));
+                                }
                             }
-                        }
 
                         break;
                     }

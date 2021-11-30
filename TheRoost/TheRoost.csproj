@@ -7,7 +7,7 @@
     <ProjectGuid>{27DA367E-CF6D-48EC-B2EF-3FC992183396}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TheRoostAdjunct</RootNamespace>
+    <RootNamespace>TheRoost</RootNamespace>
     <AssemblyName>main</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -33,14 +33,16 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ContextAwareProperties\TheWorldEntities.cs" />
     <Compile Include="CustomAchievements\ElegiastInterface.cs" />
     <Compile Include="CustomAchievements\ElegiastEntities.cs" />
     <Compile Include="CustomAchievements\Elegiast.cs" />
     <Compile Include="CustomEntitiesLoader\Beachcomber.cs" />
     <Compile Include="CommandLine\Vagabond.cs" />
     <Compile Include="CustomEntitiesLoader\BeachcomberExamples.cs" />
-    <Compile Include="Extensions\Twins.cs" />
-    <Compile Include="TestingGrounds\ContextAwareProperties.cs" />
+    <Compile Include="DeckManipulation\Twins.cs" />
+    <Compile Include="Miscellania\Birdsong.cs" />
+    <Compile Include="ContextAwareProperties\TheWorld.cs" />
     <Compile Include="MainHall.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -74,10 +76,8 @@
       <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\Mono.Security.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="NCalc, Version=1.3.8.0, Culture=neutral, PublicKeyToken=973cde3f1cafed03, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Users\Root\AppData\LocalLow\Weather Factory\Cultist Simulator\mods\TheRoost\dll\NCalc.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="NCalc">
+      <HintPath>..\..\NCalc.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -398,6 +398,7 @@
       <Private>False</Private>
     </Reference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
