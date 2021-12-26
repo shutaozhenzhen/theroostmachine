@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.IO;
 
-using HarmonyLib;
 using Steamworks;
 using Galaxy.Api;
 
@@ -30,20 +29,17 @@ namespace TheRoost
 
         static string localFile { get { return Application.persistentDataPath + "\\" + datafile; } }
 
-        internal static void Enact()
+        internal static void Remember()
         {
             if (TheRoostMachine.alreadyAssembled)
                 return;
 
+            Beachcomber.ClaimProperty<SecretHistories.Entities.Recipe, List<string>>(propertyThatUnlocks);
+            AtTimeOfPower.MainMenuLoaded.Schedule(AchievementsInterface.Create);
+
             TheRoostMachine.Patch(
                 original: typeof(RecipeCompletionEffectCommand).GetMethod("Execute", BindingFlags.Public | BindingFlags.Instance),
                 prefix: typeof(Elegiast).GetMethod("UnlockAchievements", BindingFlags.NonPublic | BindingFlags.Static));
-
-            TheRoostMachine.Patch(
-                original: typeof(MenuScreenController).GetMethod("InitialiseServices", BindingFlags.NonPublic | BindingFlags.Instance),
-                prefix: typeof(AchievementInterfaceManager).GetMethod("CreateInterface", BindingFlags.NonPublic | BindingFlags.Static));
-
-            Beachcomber.ClaimProperty<SecretHistories.Entities.Recipe>(propertyThatUnlocks, typeof(List<string>));
 
             LoadAllUnlocks();
 
@@ -52,20 +48,22 @@ namespace TheRoost
                 cachedGogStats = GalaxyInstance.Stats();
                 cachedGogStats.RequestUserStatsAndAchievements();
             }
+
+            Vagabond.AddCommand("/achievements", AchievementsDebug);
         }
 
         static void UnlockAchievements(SecretHistories.Core.RecipeCompletionEffectCommand __instance)
         {
-            List<string> ids = Beachcomber.RetrieveProperty<List<string>>(__instance.Recipe, propertyThatUnlocks);
-            if (ids != null)
-            {
-                bool atLeastOneUnlock = false;
-                for (var i = ids.Count - 1; i >= 0; i--)
-                    atLeastOneUnlock = UnlockAchievement(ids[i], i) || atLeastOneUnlock;
+            List<string> ids = __instance.Recipe.RetrieveProperty<List<string>>(propertyThatUnlocks);
+            if (ids == null)
+                return;
 
-                if (atLeastOneUnlock)
-                    TrySyncAchievementStorages();
-            }
+            bool atLeastOneUnlock = false;
+            for (var i = ids.Count - 1; i >= 0; i--)
+                atLeastOneUnlock = UnlockAchievement(ids[i], i) || atLeastOneUnlock;
+
+            if (atLeastOneUnlock)
+                TrySyncAchievementStorages();
         }
 
         static bool UnlockAchievement(string id, int messageOrder)
@@ -308,6 +306,30 @@ namespace TheRoost
         public static bool isUnlocked(CustomAchievement achievement)
         {
             return unlocks.ContainsKey(achievement.Id);
+        }
+
+        static void AchievementsDebug(string[] command)
+        {
+            try
+            {
+                string data = string.Empty;
+                switch (command[0])
+                {
+                    case "reset": Elegiast.ClearAchievement(command[1]); return;
+                    case "cloud": data = Elegiast.ReadableCloudData(); break;
+                    case "local": data = Elegiast.ReadableLocalData(); break;
+                    case "all": data = Elegiast.ReadableAll(); break;
+                }
+
+                if (command.Length == 2)
+                    Birdsong.Sing(data);
+                else
+                    Birdsong.Sing("Checking achievement '{0}' presence: {1}", command[1], data.Contains("\"" + command[1] + "\""));
+            }
+            catch (Exception ex)
+            {
+                Birdsong.Sing(ex);
+            }
         }
     }
 

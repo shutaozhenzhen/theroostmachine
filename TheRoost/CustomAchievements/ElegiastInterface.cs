@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.IO;
 using System.Linq;
 using System.Globalization;
 
@@ -17,11 +16,11 @@ using TheRoost.Entities;
 
 namespace TheRoost
 {
-    internal class AchievementInterfaceManager
+    internal class AchievementsInterface
     {
-        private static void CreateInterface()
+        internal static void Create()
         {
-            AchievementInterfaceManager interfaceManager = new AchievementInterfaceManager();
+            AchievementsInterface interfaceManager = new AchievementsInterface();
             interfaceManager.CreateButton();
             interfaceManager.CreateOverlay();
 
@@ -105,7 +104,7 @@ namespace TheRoost
             categoryContainer.transform.SetParent(content);
             categoryContainer.transform.SetAsFirstSibling();
             categoryContainer.transform.localScale = Vector3.one;
-            categoryContainer.AddComponent<RectTransform>().sizeDelta = new Vector2(categoryTextWidth-categoryTextShift, 0);
+            categoryContainer.AddComponent<RectTransform>().sizeDelta = new Vector2(categoryTextWidth - categoryTextShift, 0);
             categoryContainer.AddComponent<HorizontalLayoutGroup>().childControlWidth = false;
 
             categoryText = GameObject.Instantiate(myOverlay.FindInChildren("TitleText"), categoryContainer.transform).GetComponent<TextMeshProUGUI>();
@@ -120,7 +119,7 @@ namespace TheRoost
             categoryTransform.SetAsFirstSibling();
             categoryTransform.sizeDelta = new Vector2(categoryTextWidth, 0);
             categoryTransform.anchoredPosition = new Vector2(0, 0);
-            
+
             var buttonNext = GameObject.Instantiate(myOverlay.FindInChildren("modtitle", true), categoryTransform);
             buttonNext.name = "NextCategory";
             var buttonText = buttonNext.GetComponent<TextMeshProUGUI>();
@@ -143,7 +142,6 @@ namespace TheRoost
             changeButton.targetGraphic = buttonText;
             changeButton.onClick.AddListener(new UnityEngine.Events.UnityAction(NextCategory));
 
-
             var buttonPrev = GameObject.Instantiate(buttonNext, categoryTransform);
             buttonNext.name = "PrevCategory";
             buttonText = buttonPrev.GetComponent<TextMeshProUGUI>();
@@ -159,7 +157,6 @@ namespace TheRoost
             changeButton.targetGraphic = buttonText;
             changeButton.onClick.AddListener(new UnityEngine.Events.UnityAction(PrevCategory));
 
-
             while (content.childCount > 2)
                 GameObject.DestroyImmediate(content.GetChild(2).gameObject);
 
@@ -170,7 +167,9 @@ namespace TheRoost
 
             while (achievementsContainer.childCount > 1)
                 GameObject.DestroyImmediate(achievementsContainer.GetChild(1).gameObject);
+
             GameObject.DestroyImmediate(achievementTemplate.GetComponent<SecretHistories.Constants.Modding.ModEntry>());
+            GameObject.DestroyImmediate(achievementTemplate.FindInChildren("PriorityChangeControls", true));
             GameObject.DestroyImmediate(achievementTemplate.FindInChildren("LocationImageContainer", true));
             GameObject.DestroyImmediate(achievementTemplate.FindInChildren("ModControls", true));
 
@@ -382,8 +381,6 @@ namespace TheRoost
                 categoryText.text = locStringProvider.Get(category);
             else
                 categoryText.text = Watchman.Get<Compendium>().GetEntityById<CustomAchievement>(category).label;
-
-            Birdsong.Sing(categoryText.text);
 
             if (hiddenInCategory[category] == 0)
                 hiddenInfo.gameObject.SetActive(false);

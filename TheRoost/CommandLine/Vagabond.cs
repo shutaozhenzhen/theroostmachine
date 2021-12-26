@@ -1,17 +1,11 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Linq;
 
-using HarmonyLib;
-
-using SecretHistories.Fucine;
 using SecretHistories.UI;
 
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.Events;
 using UnityEngine.InputSystem;
 using TMPro;
 
@@ -19,28 +13,23 @@ namespace TheRoost
 {
     internal class Vagabond : MonoBehaviour
     {
-        internal static void Enact()
+        internal static void Enter()
         {
             if (TheRoostMachine.alreadyAssembled)
                 return;
 
-            TheRoostMachine.Patch(
-                original: typeof(MenuScreenController).GetMethod("InitialiseServices", BindingFlags.NonPublic | BindingFlags.Instance),
-                prefix: typeof(Vagabond).GetMethod("SetInterface", BindingFlags.NonPublic | BindingFlags.Static));
+            AtTimeOfPower.MainMenuLoaded.Schedule(CreateCommandLine);
+
+            AddCommand("/goinfo", GameObjectCommand);
+            AddCommand("/goset", GameObjectCommand);
         }
 
-        static Dictionary<string, Action<string[]>> testMethods = new Dictionary<string, Action<string[]>>();
-        public static void AddTest(string reference, Action<string[]> method)
-        {
-            testMethods.Add(reference, method);
-        }
-        static void InvokeTest(string[] command)
-        {
-            string[] arguments = new string[command.Length - 2];
-            Array.Copy(command, 2, arguments, 0, command.Length - 2);
-            testMethods[command[1]].Invoke(arguments);
-        }
 
+        static Dictionary<string, Action<string[]>> commandMethods = new Dictionary<string, Action<string[]>>();
+        public static void AddCommand(string reference, Action<string[]> method)
+        {
+            commandMethods.Add(reference, method);
+        }
 
         GameObject console;
         void Update()
@@ -50,46 +39,22 @@ namespace TheRoost
                     Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
         }
 
-
-
         private static void ExecuteCommand(string text)
         {
             string[] command = text.Split();
 
-            switch (command[0])
+            if (commandMethods.ContainsKey(command[0]))
             {
-                case "/achievements": AchievementCommand(command); break;
-                case "/goinfo": GameObjectCommand(command); break;
-                case "/goset": GameObjectCommand(command); break;
-                case "/compendium": GameObjectCommand(command); break;
-                case "/test": InvokeTest(command); break;
-                default: Birdsong.Sing("Unknown command"); break;
+                string[] arguments = new string[command.Length - 1];
+                Array.Copy(command, 1, arguments, 0, command.Length - 1);
+                commandMethods[command[0]].Invoke(arguments);
+                return;
             }
+
+            Birdsong.Sing("Unknown command");
         }
 
-        static void AchievementCommand(string[] command)
-        {
-            try
-            {
-                string data = string.Empty;
-                switch (command[1])
-                {
-                    case "reset": Elegiast.ClearAchievement(command[2]); return;
-                    case "cloud": data = Elegiast.ReadableCloudData(); break;
-                    case "local": Elegiast.ReadableCloudData(); break;
-                    case "all": Elegiast.ReadableAll(); break;
-                }
 
-                if (command.Length == 2)
-                    Birdsong.Sing(data);
-                else
-                    Birdsong.Sing("Checking achievement '{0}' presence: {1}", command[2], data.Contains("\"" + command[2] + "\""));
-            }
-            catch (Exception ex)
-            {
-                Birdsong.Sing(ex);
-            }
-        }
 
         static void GameObjectCommand(string[] command)
         {
@@ -189,7 +154,7 @@ namespace TheRoost
             return result;
         }
 
-        private static void SetInterface()
+        private static void CreateCommandLine()
         {
             Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
             var debugCanvas = GameObject.Find("SecretHistoryLogMessageEntry(Clone)").GetComponentInParent<Canvas>().transform;

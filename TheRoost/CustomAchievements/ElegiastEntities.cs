@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using SecretHistories.Fucine;
 using UnityEngine;
-
-using TheRoost;
 
 namespace TheRoost.Entities
 {

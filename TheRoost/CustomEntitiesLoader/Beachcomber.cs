@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -10,19 +11,17 @@ using HarmonyLib;
 using SecretHistories.Fucine;
 using SecretHistories.Entities;
 using SecretHistories.Fucine.DataImport;
-using SecretHistories.UI;
 
-using TheRoost.Entities;
 using UnityEngine;
 
 namespace TheRoost
 {
-    public class Beachcomber
+    public static class Beachcomber
     {
         private readonly static Dictionary<Type, Dictionary<string, Type>> knownUnknownProperties = new Dictionary<Type, Dictionary<string, Type>>();
         private readonly static Dictionary<IEntityWithId, Dictionary<string, object>> beachcomberStorage = new Dictionary<IEntityWithId, Dictionary<string, object>>();
 
-        internal static void Enact()
+        internal static void Claim()
         {
             if (TheRoostMachine.alreadyAssembled)
                 return;
@@ -36,9 +35,10 @@ namespace TheRoost
                 transpiler: typeof(Beachcomber).GetMethod("CuckooTranspiler", BindingFlags.NonPublic | BindingFlags.Static));
         }
 
-        public static void ClaimProperty<T>(string propertyName, Type propertyType) where T : AbstractEntity<T>
+        public static void ClaimProperty<TEntity, TProperty>(string propertyName) where TEntity : AbstractEntity<TEntity>
         {
-            Type entityType = typeof(T);
+            Type entityType = typeof(TEntity);
+            Type propertyType = typeof(TProperty);
             if (entityType.GetCustomAttribute(typeof(FucineImportable), false) == null)
             {
                 Birdsong.Sing("Trying to claim '{0}' of {1}s, but {1} has no FucineImportable attribute and will not be loaded.", propertyName, entityType.Name);
@@ -51,7 +51,7 @@ namespace TheRoost
             knownUnknownProperties[entityType].Add(propertyName.ToLower(), propertyType);
         }
 
-        public static T RetrieveProperty<T>(IEntityWithId owner, string propertyName)
+        public static T RetrieveProperty<T>(this IEntityWithId owner, string propertyName)
         {
             propertyName = propertyName.ToLower();
             if (beachcomberStorage.ContainsKey(owner) && beachcomberStorage[owner].ContainsKey(propertyName))
@@ -112,57 +112,53 @@ namespace TheRoost
             return codes.AsEnumerable();
         }
 
-        //not sure *why* we need refs here, but we *need* them (otherwise error)
+        //not sure *why* we need refs here, but we *need* them (otherwise error (no joke, don't delete refs!!!!!))
         private static void Cuckoo(ref List<Type> typesToLoad, ref Dictionary<string, EntityTypeDataLoader> fucineLoaders, string cultureId, ContentImportLog log)
         {
-            var mods = from mod in Watchman.Get<SecretHistories.Constants.Modding.ModManager>().GetEnabledMods()
-                       select System.Text.RegularExpressions.Regex.Replace(mod.Name, "[^a-zA-Z0-9_]+", "");
-
-            foreach (string mod in mods)
-                foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-                    if (assembly.GetType(mod) != null)
-                    {
-                        foreach (Type type in assembly.GetTypes())
-                            if (typesToLoad.Contains(type) == false)
+            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+                if (assembly.isModAssembly())
+                    foreach (Type type in assembly.GetTypes())
+                        if (typesToLoad.Contains(type) == false)
+                        {
+                            FucineImportable fucineImportable = (FucineImportable)type.GetCustomAttribute(typeof(FucineImportable), false);
+                            if (fucineImportable != null)
                             {
-                                FucineImportable fucineImportable = (FucineImportable)type.GetCustomAttribute(typeof(FucineImportable), false);
-                                if (fucineImportable != null)
-                                {
-                                    typesToLoad.Add(type);
-                                    fucineLoaders.Add(fucineImportable.TaggedAs.ToLower(), new EntityTypeDataLoader(type, fucineImportable.TaggedAs, cultureId, log));
-                                }
+                                typesToLoad.Add(type);
+                                fucineLoaders.Add(fucineImportable.TaggedAs.ToLower(), new EntityTypeDataLoader(type, fucineImportable.TaggedAs, cultureId, log));
                             }
+                        }
+        }
 
-                        break;
-                    }
+        static readonly string modLocationLocal = Application.persistentDataPath.Replace('/', '\\');
+        const string modLocationWorkshop = "steamapps\\workshop\\content";
+        static bool isModAssembly(this Assembly assembly)
+        {
+            string assemblyLocation = assembly.Location.Replace('/', '\\');
+            return (assemblyLocation.Contains(modLocationLocal) || assemblyLocation.Contains(modLocationWorkshop));
         }
     }
 
     public static class BeachcomberImporter
     {
+        delegate object Importer(IEntityWithId parentEntity, object valueData, Type propertyType, ContentImportLog log);
+        static Importer GetImporterForType(Type type)
+        {
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
+                return ImportList;
+            else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+                return ImportDictionary;
+            else if (type.IsClass && type.GetInterfaces().Contains(typeof(IEntityWithId)))
+                return ImportFucineAbstractEntity;
+            else if (type.IsValueType && !type.IsEnum && type.Namespace != "System")
+                return ImportStruct;
+
+            return ImportSimpleValue;
+        }
+
         public static object ImportProperty(IEntityWithId parentEntity, object valueData, Type propertyType, ContentImportLog log)
         {
-            object propertyValue = null;
-
-            ImportType importType = GetImportType(propertyType);
-            switch (importType)
-            {
-                case ImportType.Value:
-                    propertyValue = ImportDataType(parentEntity, valueData, propertyType, log);
-                    break;
-                case ImportType.FucineEntity:
-                    propertyValue = ImportEntity(parentEntity, valueData, propertyType, log);
-                    break;
-                case ImportType.List:
-                    propertyValue = ImportList(parentEntity, valueData, propertyType, log);
-                    break;
-                case ImportType.Dictionary:
-                    propertyValue = ImportDictionary(parentEntity, valueData, propertyType, log);
-                    break;
-                case ImportType.Expression:
-                    propertyValue = ImportExpression(parentEntity, valueData, propertyType, log);
-                    break;
-            }
+            Importer importer = GetImporterForType(propertyType);
+            object propertyValue = importer.Invoke(parentEntity, valueData, propertyType, log);
 
             if (propertyValue == null)
                 log.cawk("Failed to load custom property for {1} id '{0}'", parentEntity.Id, parentEntity.GetType().Name);
@@ -173,40 +169,24 @@ namespace TheRoost
         public static IList ImportList(IEntityWithId parentEntity, object data, Type listType, ContentImportLog log)
         {
             IList list = FactoryInstantiator.CreateObjectWithDefaultConstructor(listType) as IList;
+
             Type expectedEntryType = listType.GetGenericArguments()[0];
+            Importer entryImporter = GetImporterForType(expectedEntryType);
 
             try
             {
                 ArrayList dataList = data as ArrayList;
 
-                switch (GetImportType(expectedEntryType))
+                foreach (object entry in dataList)
                 {
-                    case ImportType.Value:
-                        foreach (object entry in dataList)
-                            list.Add(ImportDataType(parentEntity, entry, expectedEntryType, log));
-                        break;
-                    case ImportType.FucineEntity:
-                        foreach (object entry in dataList)
-                            list.Add(ImportEntity(parentEntity, entry, expectedEntryType, log));
-                        break;
-                    case ImportType.List:
-                        foreach (ArrayList entry in dataList)
-                            list.Add(ImportList(parentEntity, entry, expectedEntryType, log));
-                        break;
-                    case ImportType.Dictionary:
-                        foreach (EntityData entry in dataList)
-                            list.Add(ImportDictionary(parentEntity, entry, expectedEntryType, log));
-                        break;
-                    case ImportType.Expression:
-                        foreach (object entry in dataList)
-                            list.Add(ImportExpression(parentEntity, entry, expectedEntryType, log));
-                        break;
+                    object importedValue = entryImporter.Invoke(parentEntity, entry, expectedEntryType, log);
+                    list.Add(importedValue);
                 }
             }
             catch (Exception ex)
             {
-                log.cawk(ex);
-                log.cawk("List in {1} id '{0}' is wrong format, skipping", parentEntity.Id, parentEntity.GetType().Name);
+                log.cawk(ex.ToString());
+                log.cawk("Unable to import list in {1} id '{0}', skipping", parentEntity.Id, parentEntity.GetType().Name);
             }
 
             return list;
@@ -215,75 +195,34 @@ namespace TheRoost
         public static IDictionary ImportDictionary(IEntityWithId parentEntity, object data, Type dictionaryType, ContentImportLog log)
         {
             IDictionary dictionary = FactoryInstantiator.CreateObjectWithDefaultConstructor(dictionaryType) as IDictionary;
+
             Type dictionaryKeyType = dictionaryType.GetGenericArguments()[0];
+            Importer keyImporter = GetImporterForType(dictionaryKeyType);
+
             Type dictionaryValueType = dictionaryType.GetGenericArguments()[1];
+            Importer valueImporter = GetImporterForType(dictionaryValueType);
 
             try
             {
                 EntityData entityData = data as EntityData;
 
-                switch (GetImportType(dictionaryValueType))
+                foreach (DictionaryEntry dictionaryEntry in entityData.ValuesTable)
                 {
-                    case ImportType.Value:
-                        foreach (DictionaryEntry dictionaryEntry in entityData.ValuesTable)
-                            dictionary.Add(
-                                ImportDataType(parentEntity, dictionaryEntry.Key, dictionaryKeyType, log),
-                                ImportDataType(parentEntity, dictionaryEntry.Value, dictionaryKeyType, log));
-                        break;
-                    case ImportType.FucineEntity:
-                        foreach (DictionaryEntry dictionaryEntry in entityData.ValuesTable)
-                        {
-                            IEntityWithId entity = ImportEntity(parentEntity, dictionaryEntry.Value, dictionaryValueType, log);
-                            dictionary.Add(ImportDataType(parentEntity, dictionaryEntry.Key, dictionaryKeyType, log), entity);
-                        }
-                        break;
-                    case ImportType.List:
-                        foreach (DictionaryEntry dictionaryEntry in entityData.ValuesTable)
-                        {
-                            IList nestedList = ImportList(parentEntity, dictionaryEntry.Value as ArrayList, dictionaryValueType, log);
-                            dictionary.Add(ImportDataType(parentEntity, dictionaryEntry.Key, dictionaryKeyType, log), nestedList);
-                        }
-                        break;
-                    case ImportType.Dictionary:
-                        foreach (DictionaryEntry dictionaryEntry in entityData.ValuesTable)
-                        {
-                            IDictionary nestedDictionary = ImportDictionary(parentEntity, dictionaryEntry.Value as EntityData, dictionaryValueType, log);
-                            dictionary.Add(ImportDataType(parentEntity, dictionaryEntry.Key, dictionaryKeyType, log), nestedDictionary);
-                        }
-                        break;
-                    case ImportType.Expression:
-                        foreach (DictionaryEntry dictionaryEntry in entityData.ValuesTable)
-                        {
-                            var fucineexpression = ImportExpression(parentEntity, dictionaryEntry.Value, dictionaryValueType, log);
-                            dictionary.Add(ImportDataType(parentEntity, dictionaryEntry.Key, dictionaryKeyType, log), fucineexpression);
-                        }
-                        break;
+                    object key = keyImporter.Invoke(parentEntity, dictionaryEntry.Key, dictionaryKeyType, log);
+                    object value = valueImporter.Invoke(parentEntity, dictionaryEntry.Value, dictionaryValueType, log);
+                    dictionary.Add(key, value);
                 }
             }
             catch (Exception ex)
             {
-                log.cawk(ex);
+                log.cawk(ex.ToString());
                 log.cawk("Unable to import dictionary in {1} id '{0}', skipping", parentEntity.Id, parentEntity.GetType().Name);
             }
 
             return dictionary;
         }
 
-        public static object ImportDataType(IEntityWithId parentEntity, object entityData, Type entityType, ContentImportLog log)
-        {
-            try
-            {
-                return Convert.ChangeType(entityData.ToString(), entityType);
-            }
-            catch (Exception ex)
-            {
-                log.cawk(ex);
-                log.cawk("Unable to parse value in {1} id '{0}', skipping", parentEntity.Id, parentEntity.GetType().Name);
-                return null;
-            }
-        }
-
-        public static IEntityWithId ImportEntity(IEntityWithId parentEntity, object entityData, Type entityType, ContentImportLog log)
+        public static IEntityWithId ImportFucineAbstractEntity(IEntityWithId parentEntity, object entityData, Type entityType, ContentImportLog log)
         {
             try
             {
@@ -303,50 +242,72 @@ namespace TheRoost
             }
             catch (Exception ex)
             {
-                log.cawk(ex);
+                log.cawk(ex.ToString());
                 log.cawk("Unable to import {0} in {2} id '{1}', skipping", entityType.Name, parentEntity.Id, parentEntity.GetType().Name);
             }
 
             return null;
         }
 
-        public static object ImportExpression(IEntityWithId parentEntity, object entityData, Type entityType, ContentImportLog log)
+        public static object ImportSimpleValue(IEntityWithId parentEntity, object entityData, Type valueType, ContentImportLog log)
         {
             try
             {
-                return entityType.GetConstructor(new Type[] { typeof(string) }).Invoke(new object[] { entityData.ToString() });
+                return TypeDescriptor.GetConverter(valueType).ConvertFromInvariantString(entityData.ToString());
             }
             catch (Exception ex)
             {
-                log.cawk(ex);
-                log.cawk("Unable to parse expression in {1} id '{0}', skipping", parentEntity.Id, parentEntity.GetType().Name);
-                return null;
+                log.cawk(ex.ToString());
+                log.cawk("Unable to parse value {0} in {1} id '{2}', skipping", entityData.ToString(), parentEntity.GetType().Name, parentEntity.Id);
+                return 0;
             }
         }
 
-        enum ImportType { Value, List, Dictionary, FucineEntity, Expression };
-        static ImportType GetImportType(Type type)
+        public static object ImportStruct(IEntityWithId parentEntity, object structData, Type structType, ContentImportLog log)
         {
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
-                return ImportType.List;
-            else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Dictionary<,>))
-                return ImportType.Dictionary;
-            else if (type.Namespace == "System")
-                return ImportType.Value;
-            else if ((FucineExpression)type.GetCustomAttribute(typeof(FucineExpression), false) != null)
-                return ImportType.Expression;
+            try
+            {
+                EntityData entityData = structData as EntityData;
 
-            return ImportType.FucineEntity;
+                if (entityData == null) //trying to construct with single string constructor
+                {
+                    ConstructorInfo constructor = structType.GetConstructor(new Type[] { typeof(string) });
+                    return constructor.Invoke(new object[] { structData.ToString() });
+                }
+                else //if it's a valid entity data, searching for a matching constructor (not really trying though)
+                {
+                    var ctor = structType.GetConstructors()[0];
+
+                    string[] paramNames = ctor.GetParameters().Select(p => p.Name).ToArray();
+                    object[] parameters = new object[paramNames.Length];
+                    for (int i = 0; i < parameters.Length; ++i)
+                    {
+                        parameters[i] = Type.Missing;
+                    }
+                    foreach (DictionaryEntry item in entityData.ValuesTable)
+                    {
+                        var paramName = item.Key;
+                        var paramIndex = Array.IndexOf(paramNames, paramName);
+                        if (paramIndex >= 0)
+                        {
+                            parameters[paramIndex] = item.Value;
+                        }
+                    }
+
+                    return ctor.Invoke(parameters);
+                }
+            }
+            catch (Exception ex)
+            {
+                log.cawk(ex.ToString());
+                log.cawk("Unable to parse struct in {0} id '{1}', skipping", parentEntity.GetType().Name, parentEntity.Id);
+                return null;
+            }
         }
 
         private static void cawk(this ContentImportLog log, string format, params object[] args)
         {
             log.LogProblem(String.Format(format, args));
-        }
-
-        private static void cawk(this ContentImportLog logger, object obj)
-        {
-            logger.LogProblem(obj.ToString());
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using SecretHistories.Fucine;
 using SecretHistories.Fucine.DataImport;
 
@@ -16,7 +15,7 @@ namespace TheRoost.Entities
         [FucineList]
         public List<string> list { get; set; }
         [FucineDict]
-        public Dictionary<string, int> dict { get; set; }
+        public Dictionary<int, int> dict { get; set; }
 
         public PhonyFucineClass(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
@@ -24,13 +23,13 @@ namespace TheRoost.Entities
         void Examples()
         {
             //to add a custom property
-            Beachcomber.ClaimProperty<SecretHistories.Entities.Verb>("someProperty", typeof(string));
+            Beachcomber.ClaimProperty<SecretHistories.Entities.Verb, string>("someProperty");
 
             //to add a custom property for a custom class
-            Beachcomber.ClaimProperty<PhonyFucineClass>("someProperty", typeof(int));
+            Beachcomber.ClaimProperty<PhonyFucineClass, int>("someProperty");
 
-            //to get the property's value
-            Beachcomber.RetrieveProperty<int>(this, "someProperty");
+            //to get the property value
+            this.RetrieveProperty<int>("someProperty");
         }
     }
 }

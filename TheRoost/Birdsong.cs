@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Reflection;
 using System.Collections;
-using System.Collections.Generic;
 
 using SecretHistories.UI;
-using SecretHistories.Fucine;
 
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
 namespace TheRoost
 {
