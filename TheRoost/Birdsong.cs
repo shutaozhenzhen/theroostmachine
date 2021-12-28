@@ -111,7 +111,7 @@ namespace TheRoost
             TheRoost.Beachcomber.CustomLoader.ClaimProperty<TEntity, TProperty>(propertyName);
         }
 
-        internal static T RetrieveProperty<T>(this IEntityWithId owner, string propertyName)
+        public static T RetrieveProperty<T>(this IEntityWithId owner, string propertyName)
         {
             return TheRoost.Beachcomber.CustomLoader.RetrieveProperty<T>(owner, propertyName);
         }
