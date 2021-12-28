@@ -34,7 +34,7 @@ namespace TheRoost.Beachcomber
                 original: typeof(CompendiumLoader).GetMethod("PopulateCompendium"),
                 transpiler: typeof(CustomLoader).GetMethod("CuckooTranspiler", BindingFlags.NonPublic | BindingFlags.Static));
 
-            //Usurper.OverthrowNativeImporting();
+            Usurper.OverthrowNativeImporting();
         }
 
         internal static void ClaimProperty<TEntity, TProperty>(string propertyName) where TEntity : AbstractEntity<TEntity>
@@ -394,25 +394,28 @@ namespace TheRoost.Beachcomber
             foreach (CachedFucineProperty<T> cachedProperty in TypeInfoCache<T>.GetCachedFucinePropertiesForType())
                 if (cachedProperty.LowerCaseName != "id")
                 {
-                    object propertyValue = cachedProperty.FucineAttribute.DefaultValue;
-                    if (entityData.ValuesTable.Contains(cachedProperty.LowerCaseName))
-                    {
-                        propertyValue = CustomImporter.ImportProperty(entity, entityData.ValuesTable[cachedProperty.LowerCaseName], cachedProperty.ThisPropInfo.PropertyType);
-                        entityData.ValuesTable.Remove(cachedProperty.LowerCaseName);
-                    }
+                    string propertyName = cachedProperty.LowerCaseName;
+                    Type propertyType = cachedProperty.ThisPropInfo.PropertyType;
 
-                    //lists and entities should always be created as an empty object at least
-                    //(actually should they? lists and dicts obvously should, but is it always the case for the entities?)
-                    //raw entities in properties: 
-                    //Expulsion in LinkedRecipeDetails;
-                    //MorphEffectType in MorphEffectDetails
-                    //Internal Deck in Recipe
-                    //Slot in Verb
-                    if (propertyValue == null
-                        && (typeof(IList).IsAssignableFrom(cachedProperty.ThisPropInfo.PropertyType)
-                        || typeof(IDictionary).IsAssignableFrom(cachedProperty.ThisPropInfo.PropertyType)
-                        || typeof(IEntityWithId).IsAssignableFrom(cachedProperty.ThisPropInfo.PropertyType)))
-                        propertyValue = FactoryInstantiator.CreateObjectWithDefaultConstructor(cachedProperty.ThisPropInfo.PropertyType);
+                    object propertyValue;
+                    if (entityData.ValuesTable.Contains(propertyName))
+                    {
+                        propertyValue = CustomImporter.ImportProperty(entity, entityData.ValuesTable[propertyName], propertyType);
+                        entityData.ValuesTable.Remove(propertyName);
+                    }
+                    else
+                    {
+                        //lists, dicts and entities should always be created as an empty object at least (the main game does the same)
+                        //Expulsion in LinkedRecipeDetails;
+                        //MorphEffectType in MorphEffectDetails
+                        //Internal Deck in Recipe
+                        if (typeof(IList).IsAssignableFrom(propertyType)
+                            || typeof(IDictionary).IsAssignableFrom(propertyType)
+                            || typeof(IEntityWithId).IsAssignableFrom(propertyType))
+                            propertyValue = FactoryInstantiator.CreateObjectWithDefaultConstructor(propertyType);
+                        else
+                            propertyValue = cachedProperty.FucineAttribute.DefaultValue;
+                    }
 
                     cachedProperty.SetViaFastInvoke(entity as T, propertyValue);
                 }
