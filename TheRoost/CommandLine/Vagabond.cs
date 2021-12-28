@@ -11,7 +11,7 @@ using TMPro;
 
 namespace TheRoost
 {
-    internal class Vagabond : MonoBehaviour
+    public class Vagabond : MonoBehaviour
     {
         internal static void Enter()
         {

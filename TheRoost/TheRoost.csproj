@@ -37,9 +37,9 @@
     <Compile Include="CustomAchievements\ElegiastInterface.cs" />
     <Compile Include="CustomAchievements\ElegiastEntities.cs" />
     <Compile Include="CustomAchievements\Elegiast.cs" />
-    <Compile Include="CustomEntitiesLoader\Beachcomber.cs" />
+    <Compile Include="CustomLoader\Beachcomber.cs" />
     <Compile Include="CommandLine\Vagabond.cs" />
-    <Compile Include="CustomEntitiesLoader\BeachcomberExamples.cs" />
+    <Compile Include="CustomLoader\BeachcomberExamples.cs" />
     <Compile Include="Events\Twins.cs" />
     <Compile Include="Birdsong.cs" />
     <Compile Include="MainHall.cs" />
@@ -54,10 +54,6 @@
     <Reference Include="GalaxyCSharp">
       <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\GalaxyCSharp.dll</HintPath>
       <Private>False</Private>
-    </Reference>
-    <Reference Include="NCalc">
-      <HintPath>..\..\NCalc.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="OrbCreations">
       <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\OrbCreations.dll</HintPath>

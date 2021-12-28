@@ -12,15 +12,15 @@ using TMPro;
 using SecretHistories.UI;
 using SecretHistories.Services;
 
-using TheRoost.Entities;
+using TheRoost.Elegiast.Entities;
 
-namespace TheRoost
+namespace TheRoost.Elegiast
 {
-    internal class AchievementsInterface
+    internal class CustomAchievementInterface
     {
         internal static void Create()
         {
-            AchievementsInterface interfaceManager = new AchievementsInterface();
+            CustomAchievementInterface interfaceManager = new CustomAchievementInterface();
             interfaceManager.CreateButton();
             interfaceManager.CreateOverlay();
 

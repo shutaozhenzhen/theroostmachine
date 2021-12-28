@@ -6,6 +6,7 @@ using SecretHistories.UI;
 
 using UnityEngine;
 using UnityEngine.UI;
+using SecretHistories.Fucine;
 
 namespace TheRoost
 {
@@ -103,6 +104,16 @@ namespace TheRoost
             delayer.StartCoroutine(delayer.ExecuteDelayed(action, actor, parameters));
 
             return delayer;
+        }
+
+        public static void ClaimProperty<TEntity, TProperty>(string propertyName) where TEntity : AbstractEntity<TEntity>
+        {
+            TheRoost.Beachcomber.CustomLoader.ClaimProperty<TEntity, TProperty>(propertyName);
+        }
+
+        internal static T RetrieveProperty<T>(this IEntityWithId owner, string propertyName)
+        {
+            return TheRoost.Beachcomber.CustomLoader.RetrieveProperty<T>(owner, propertyName);
         }
     }
 

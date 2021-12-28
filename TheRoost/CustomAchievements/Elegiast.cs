@@ -14,11 +14,11 @@ using SecretHistories.Core;
 
 using UnityEngine;
 
-using TheRoost.Entities;
+using TheRoost.Elegiast.Entities;
 
-namespace TheRoost
+namespace TheRoost.Elegiast
 {
-    public class Elegiast
+    public class CustomAchievements
     {
         private static Dictionary<string, string> unlocks;
 
@@ -34,12 +34,12 @@ namespace TheRoost
             if (TheRoostMachine.alreadyAssembled)
                 return;
 
-            Beachcomber.ClaimProperty<SecretHistories.Entities.Recipe, List<string>>(propertyThatUnlocks);
-            AtTimeOfPower.MainMenuLoaded.Schedule(AchievementsInterface.Create);
+            Birdsong.ClaimProperty<SecretHistories.Entities.Recipe, List<string>>(propertyThatUnlocks);
+            AtTimeOfPower.MainMenuLoaded.Schedule(CustomAchievementInterface.Create);
 
             TheRoostMachine.Patch(
                 original: typeof(RecipeCompletionEffectCommand).GetMethod("Execute", BindingFlags.Public | BindingFlags.Instance),
-                prefix: typeof(Elegiast).GetMethod("UnlockAchievements", BindingFlags.NonPublic | BindingFlags.Static));
+                prefix: typeof(CustomAchievements).GetMethod("UnlockAchievements", BindingFlags.NonPublic | BindingFlags.Static));
 
             LoadAllUnlocks();
 
@@ -315,10 +315,10 @@ namespace TheRoost
                 string data = string.Empty;
                 switch (command[0])
                 {
-                    case "reset": Elegiast.ClearAchievement(command[1]); return;
-                    case "cloud": data = Elegiast.ReadableCloudData(); break;
-                    case "local": data = Elegiast.ReadableLocalData(); break;
-                    case "all": data = Elegiast.ReadableAll(); break;
+                    case "reset": CustomAchievements.ClearAchievement(command[1]); return;
+                    case "cloud": data = CustomAchievements.ReadableCloudData(); break;
+                    case "local": data = CustomAchievements.ReadableLocalData(); break;
+                    case "all": data = CustomAchievements.ReadableAll(); break;
                 }
 
                 if (command.Length == 2)

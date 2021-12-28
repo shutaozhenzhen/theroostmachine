@@ -2,7 +2,7 @@
 using SecretHistories.Fucine;
 using SecretHistories.Fucine.DataImport;
 
-namespace TheRoost.Entities
+namespace TheRoost.Beachcomber.Entities
 {
     //example class - needs to have constructor and OnPostImportForSpecificEntity(); otherwise will not load
     [FucineImportable("phony")]
@@ -23,10 +23,10 @@ namespace TheRoost.Entities
         void Examples()
         {
             //to add a custom property
-            Beachcomber.ClaimProperty<SecretHistories.Entities.Verb, string>("someProperty");
+            Birdsong.ClaimProperty<SecretHistories.Entities.Verb, string>("someProperty");
 
             //to add a custom property for a custom class
-            Beachcomber.ClaimProperty<PhonyFucineClass, int>("someProperty");
+            Birdsong.ClaimProperty<PhonyFucineClass, int>("someProperty");
 
             //to get the property value
             this.RetrieveProperty<int>("someProperty");
