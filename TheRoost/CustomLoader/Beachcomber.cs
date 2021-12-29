@@ -153,13 +153,13 @@ namespace TheRoost.Beachcomber
         delegate object Importer(IEntityWithId parentEntity, object valueData, Type propertyType);
         static Importer GetImporterForType(Type type)
         {
-            if (typeof(IList).IsAssignableFrom(type))
+            if (type.isList())
                 return ImportList;
-            else if (typeof(IDictionary).IsAssignableFrom(type))
+            else if (type.isDict())
                 return ImportDictionary;
-            else if (typeof(IEntityWithId).IsAssignableFrom(type))
+            else if (type.isFucineEntity())
                 return ImportFucineEntity;
-            else if (type.IsValueType && !type.IsEnum && type.Namespace != "System")
+            else if (type.isStruct())
                 return ImportStruct;
 
             return ImportSimpleValue;
@@ -176,6 +176,7 @@ namespace TheRoost.Beachcomber
             return propertyValue;
         }
 
+        public static bool isList(this Type type) { return typeof(IList).IsAssignableFrom(type); }
         public static IList ImportList(IEntityWithId parentEntity, object data, Type listType)
         {
             IList list = FactoryInstantiator.CreateObjectWithDefaultConstructor(listType) as IList;
@@ -210,6 +211,7 @@ namespace TheRoost.Beachcomber
             return list;
         }
 
+        public static bool isDict(this Type type) { return typeof(IDictionary).IsAssignableFrom(type); }
         public static IDictionary ImportDictionary(IEntityWithId parentEntity, object data, Type dictionaryType)
         {
             IDictionary dictionary = FactoryInstantiator.CreateObjectWithDefaultConstructor(dictionaryType) as IDictionary;
@@ -243,6 +245,7 @@ namespace TheRoost.Beachcomber
             return dictionary;
         }
 
+        public static bool isFucineEntity(this Type type) { return typeof(IEntityWithId).IsAssignableFrom(type); }
         public static IEntityWithId ImportFucineEntity(IEntityWithId parentEntity, object entityData, Type entityType)
         {
             try
@@ -252,6 +255,10 @@ namespace TheRoost.Beachcomber
                 if (fullSpecEntityData != null)
                 {
                     IEntityWithId entity = FactoryInstantiator.CreateEntity(entityType, entityData as EntityData, null);
+
+                    if (typeof(IFancySpecEntity).IsAssignableFrom(entityType))
+                        (entity as IFancySpecEntity).FancySpec(fullSpecEntityData.ValuesTable);
+
                     return entity;
                 }
                 else if (entityType.GetInterfaces().Contains(typeof(IQuickSpecEntity)))
@@ -272,20 +279,7 @@ namespace TheRoost.Beachcomber
             return null;
         }
 
-        public static object ImportSimpleValue(IEntityWithId parentEntity, object entityData, Type valueType)
-        {
-            try
-            {
-                return TypeDescriptor.GetConverter(valueType).ConvertFromInvariantString(entityData.ToString());
-            }
-            catch (Exception ex)
-            {
-                Birdsong.Sing(ex.ToString());
-                Birdsong.Sing("Unable to parse value {0} in {1} id '{2}', skipping", entityData.ToString(), parentEntity.GetType().Name, parentEntity.Id);
-                return 0;
-            }
-        }
-
+        public static bool isStruct(this Type type) { return type.IsValueType && !type.IsEnum && type.Namespace != "System"; }
         public static object ImportStruct(IEntityWithId parentEntity, object structData, Type structType)
         {
             try
@@ -325,6 +319,20 @@ namespace TheRoost.Beachcomber
                 Birdsong.Sing(ex.ToString());
                 Birdsong.Sing("Unable to parse struct in {0} id '{1}', skipping", parentEntity.GetType().Name, parentEntity.Id);
                 return null;
+            }
+        }
+
+        public static object ImportSimpleValue(IEntityWithId parentEntity, object entityData, Type valueType)
+        {
+            try
+            {
+                return TypeDescriptor.GetConverter(valueType).ConvertFromInvariantString(entityData.ToString());
+            }
+            catch (Exception ex)
+            {
+                Birdsong.Sing(ex.ToString());
+                Birdsong.Sing("Unable to parse value {0} in {1} id '{2}', skipping", entityData.ToString(), parentEntity.GetType().Name, parentEntity.Id);
+                return 0;
             }
         }
     }
@@ -412,13 +420,12 @@ namespace TheRoost.Beachcomber
                     }
                     else
                     {
-                        //lists, dicts and entities should always be created as an empty object at least (the main game does the same)
-                        //Expulsion in LinkedRecipeDetails;
-                        //MorphEffectType in MorphEffectDetails
-                        //Internal Deck in Recipe
-                        if (typeof(IList).IsAssignableFrom(propertyType)
-                            || typeof(IDictionary).IsAssignableFrom(propertyType)
-                            || typeof(IEntityWithId).IsAssignableFrom(propertyType))
+                        if (propertyType.isStruct())
+                        {
+                            ConstructorInfo ctor = propertyType.GetConstructor(new Type[] { cachedProperty.FucineAttribute.DefaultValue.GetType() });
+                            propertyValue = ctor.Invoke(new object[] { cachedProperty.FucineAttribute.DefaultValue });
+                        }
+                        else if (propertyType.isList() || propertyType.isDict() || propertyType.isFucineEntity())
                             propertyValue = FactoryInstantiator.CreateObjectWithDefaultConstructor(propertyType);
                         else
                             propertyValue = cachedProperty.FucineAttribute.DefaultValue;

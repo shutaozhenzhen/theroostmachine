@@ -41,6 +41,7 @@
     <Compile Include="CustomLoader\Beachcomber.cs" />
     <Compile Include="CommandLine\Vagabond.cs" />
     <Compile Include="CustomLoader\BeachcomberExamples.cs" />
+    <Compile Include="CustomLoader\BeachcomberEntities.cs" />
     <Compile Include="Events\Twins.cs" />
     <Compile Include="Birdsong.cs" />
     <Compile Include="MainHall.cs" />
