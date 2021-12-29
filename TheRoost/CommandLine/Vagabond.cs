@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 
 using SecretHistories.UI;
+using SecretHistories.Services;
 
 using UnityEngine;
 using UnityEngine.UI;
@@ -36,7 +37,7 @@ namespace TheRoost
         {
             if (Keyboard.current.backquoteKey.wasPressedThisFrame)
                 if (GameObject.FindObjectOfType<DebugTools>() == null)
-                    Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
+                    Watchman.Get<Concursum>().ToggleSecretHistory();
         }
 
         private static void ExecuteCommand(string text)
@@ -156,15 +157,24 @@ namespace TheRoost
 
         private static void CreateCommandLine()
         {
-            Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
+            bool consoleEnabled = GameObject.Find("SecretHistoryLogMessageEntry(Clone)") != null;
+            if (consoleEnabled == false)
+                Watchman.Get<Concursum>().ToggleSecretHistory();
+
+            Birdsong.Sing(GameObject.FindObjectOfType<Vagabond>());
+            if (GameObject.FindObjectOfType<Vagabond>() != null)
+            {
+                Watchman.Get<Concursum>().ToggleSecretHistory();
+                return;
+            }
+
             var debugCanvas = GameObject.Find("SecretHistoryLogMessageEntry(Clone)").GetComponentInParent<Canvas>().transform;
+            Vagabond vagabond = GameObject.FindObjectOfType<SecretHistory>().gameObject.AddComponent<Vagabond>();
+            vagabond.console = new GameObject("AuxConsole", typeof(RectTransform), typeof(Image), typeof(TMP_InputField));
 
-            var console = new GameObject("AuxConsole", typeof(Vagabond), typeof(RectTransform), typeof(Image), typeof(TMP_InputField));
-            GameObject.FindObjectOfType<SecretHistories.Services.SecretHistory>().gameObject.AddComponent<Vagabond>().console = console;
+            vagabond.console.GetComponent<Image>().color = debugCanvas.GetComponentsInChildren<Image>()[1].color;
 
-            console.GetComponent<Image>().color = debugCanvas.GetComponentsInChildren<Image>()[1].color;
-
-            var consoleT = console.GetComponent<RectTransform>();
+            var consoleT = vagabond.console.GetComponent<RectTransform>();
             consoleT.SetParent(debugCanvas.GetChild(0));
             consoleT.pivot = new Vector2(0.5f, 1f);
             consoleT.anchorMin = new Vector2(0.13f, 0f);
@@ -188,15 +198,15 @@ namespace TheRoost
             text.fontSizeMax = text.fontSize;
             text.enableAutoSizing = true;
 
-            TMP_InputField consoleI = console.GetComponent<TMP_InputField>();
-            consoleI.targetGraphic = console.GetComponent<Image>();
+            TMP_InputField consoleI = vagabond.console.GetComponent<TMP_InputField>();
+            consoleI.targetGraphic = vagabond.console.GetComponent<Image>();
             consoleI.textComponent = text;
             consoleI.text = "...";
 
             consoleI.onSubmit = new TMP_InputField.SubmitEvent();
             consoleI.onSubmit.AddListener(new UnityEngine.Events.UnityAction<string>(ExecuteCommand));
 
-            Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
+            Watchman.Get<Concursum>().ToggleSecretHistory();
         }
     }
 }

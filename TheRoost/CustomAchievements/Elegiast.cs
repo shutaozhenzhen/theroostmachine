@@ -35,7 +35,7 @@ namespace TheRoost.Elegiast
                 return;
 
             Birdsong.ClaimProperty<SecretHistories.Entities.Recipe, List<string>>(propertyThatUnlocks);
-            AtTimeOfPower.MainMenuLoaded.Schedule(CustomAchievementInterface.Create);
+            AtTimeOfPower.MainMenuLoaded.Schedule(CustomAchievementInterface.Create, PatchType.Prefix);
 
             TheRoostMachine.Patch(
                 original: typeof(RecipeCompletionEffectCommand).GetMethod("Execute", BindingFlags.Public | BindingFlags.Instance),
