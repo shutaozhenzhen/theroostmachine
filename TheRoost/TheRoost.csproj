@@ -32,6 +32,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
+    <LangVersion>5</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="CustomAchievements\ElegiastInterface.cs" />
@@ -49,7 +50,7 @@
     <Reference Include="0Harmony, Version=2.1.1.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\0Harmony.dll</HintPath>
-      <Private>True</Private>
+      <Private>False</Private>
     </Reference>
     <Reference Include="GalaxyCSharp">
       <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\GalaxyCSharp.dll</HintPath>
@@ -106,14 +107,6 @@
     </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.UI.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.UIElementsModule">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.UIElementsModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.UIElementsNativeModule">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.UIElementsNativeModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.UIModule">

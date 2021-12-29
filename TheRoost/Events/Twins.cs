@@ -6,90 +6,100 @@ using SecretHistories.Infrastructure;
 
 namespace TheRoost
 {
-    public enum AtTimeOfPower
-    {
-        MainMenuLoaded, TabletopLoaded, NewGameStarted
-    }
+    [Flags]
+    public enum PatchType { Postfix = 0, Prefix = 1 }
+    [Flags]
+    public enum AtTimeOfPower { MainMenuLoaded = 0, NewGameStarted = 2, TabletopLoaded = 4, }
 
     public static class Twins
     {
-        static Dictionary<AtTimeOfPower, InjectedAction> timesofpower;
+        static Dictionary<int, InjectedAction> timesofpower;
         public delegate void InjectedAction();
 
-        public static void Schedule(this AtTimeOfPower time, InjectedAction action)
-        {
-            if (timesofpower == null)
-            {
-                timesofpower = new Dictionary<AtTimeOfPower, InjectedAction>();
-                foreach (AtTimeOfPower t in Enum.GetValues(typeof(AtTimeOfPower)))
-                    timesofpower.Add(t, null);
-            }
-
-            timesofpower[time] -= action;
-            timesofpower[time] += action;
-        }
-
-        public static void Unschedule(AtTimeOfPower time, InjectedAction action)
-        {
-            if (timesofpower == null)
-            {
-                timesofpower = new Dictionary<AtTimeOfPower, InjectedAction>();
-                foreach (AtTimeOfPower t in Enum.GetValues(typeof(AtTimeOfPower)))
-                    timesofpower.Add(t, null);
-            }
-
-            timesofpower[time] -= action;
-        }
+        public static Dictionary<AtTimeOfPower, MethodBase> methodsToPatch = new Dictionary<AtTimeOfPower, MethodBase>() { 
+        { AtTimeOfPower.MainMenuLoaded, typeof(MenuScreenController).GetMethod("InitialiseServices", BindingFlags.Instance | BindingFlags.NonPublic) },
+        { AtTimeOfPower.NewGameStarted, typeof(MenuScreenController).GetMethod("BeginNewSaveWithSpecifiedLegacy", BindingFlags.Instance | BindingFlags.Public) },
+        { AtTimeOfPower.TabletopLoaded, typeof(GameGateway).GetMethod("Start", BindingFlags.Instance | BindingFlags.Public) }
+    };
 
         internal static void Unite()
         {
             if (TheRoostMachine.alreadyAssembled)
                 return;
 
+            CheckTimesInit();
+
+            foreach (AtTimeOfPower time in Enum.GetValues(typeof(AtTimeOfPower)))
+            {
+                string patchMethodName = time.ToString();
+                TheRoostMachine.Patch(methodsToPatch[time],
+                    prefix: typeof(Twins).GetMethod(patchMethodName + "Prefix", BindingFlags.NonPublic | BindingFlags.Static),
+                    postfix: typeof(Twins).GetMethod(patchMethodName + "Postfix", BindingFlags.NonPublic | BindingFlags.Static));
+            }
+        }
+
+        public static void Schedule(this AtTimeOfPower time, InjectedAction action, PatchType moment = PatchType.Postfix)
+        {
+            CheckTimesInit();
+            int signature = (int)time | (int)moment;
+            timesofpower[signature] -= action;
+            timesofpower[signature] += action;
+        }
+
+        public static void Unschedule(AtTimeOfPower time, InjectedAction action, PatchType moment = PatchType.Postfix)
+        {
+            CheckTimesInit();
+            int signature = (int)time | (int)moment;
+            timesofpower[signature] -= action;
+        }
+
+        private static void CheckTimesInit()
+        {
             if (timesofpower == null)
             {
-                timesofpower = new Dictionary<AtTimeOfPower, InjectedAction>();
+                timesofpower = new Dictionary<int, InjectedAction>();
                 foreach (AtTimeOfPower t in Enum.GetValues(typeof(AtTimeOfPower)))
-                    timesofpower.Add(t, null);
+                    foreach (PatchType m in Enum.GetValues(typeof(PatchType)))
+                    {
+                        int signature = (int)t | (int)m;
+                        timesofpower.Add(signature, null);
+                    }
             }
-
-            TheRoostMachine.Patch(
-                original: typeof(MenuScreenController).GetMethod("InitialiseServices", BindingFlags.Instance | BindingFlags.NonPublic),
-                prefix: AtTimeOfPower.MainMenuLoaded.GetImplementation());
-
-            TheRoostMachine.Patch(
-                original: typeof(MenuScreenController).GetMethod("BeginNewSaveWithSpecifiedLegacy", BindingFlags.Instance | BindingFlags.Public),
-                postfix: AtTimeOfPower.NewGameStarted.GetImplementation());
-
-            TheRoostMachine.Patch(
-                original: typeof(GameGateway).GetMethod("Start", BindingFlags.Instance | BindingFlags.Public),
-                postfix: AtTimeOfPower.TabletopLoaded.GetImplementation());
         }
 
-        static MethodInfo GetImplementation(this AtTimeOfPower time)
+        private static void InvokeTime(AtTimeOfPower time, PatchType moment)
         {
-            return typeof(Twins).GetMethod(time.ToString(), BindingFlags.Static | BindingFlags.NonPublic);
+            int signature = (int)time | (int)moment;
+            if (timesofpower[signature] != null)
+                timesofpower[signature].Invoke();
         }
 
-        static void InvokeTime(AtTimeOfPower time)
+        static void MainMenuLoadedPrefix() { InvokeTime(AtTimeOfPower.MainMenuLoaded, PatchType.Prefix); }
+        static void MainMenuLoadedPostfix() { InvokeTime(AtTimeOfPower.MainMenuLoaded, PatchType.Postfix); }
+
+        static void NewGameStartedPrefix() { InvokeTime(AtTimeOfPower.NewGameStarted, PatchType.Prefix); }
+        static void NewGameStartedPostfix() { InvokeTime(AtTimeOfPower.NewGameStarted, PatchType.Postfix); }
+
+        static void TabletopLoadedPrefix() { InvokeTime(AtTimeOfPower.NewGameStarted, PatchType.Prefix); }
+        static void TabletopLoadedPostfix() { InvokeTime(AtTimeOfPower.NewGameStarted, PatchType.Postfix); }
+    }
+
+    public class TimeSpec<TInstance, TResult>
+    {
+        public TResult methodResult;
+        public TInstance instance;
+        public bool continueExecution = true;
+        private readonly Dictionary<string, object> variables = new Dictionary<string, object>();
+
+        public TimeSpec(TInstance instanceObject, TResult result)
         {
-            if (timesofpower[time] != null)
-                timesofpower[time].Invoke();
+            this.instance = instanceObject;
+            this.methodResult = result;
         }
 
-        static void MainMenuLoaded()
+        public T Unpack<T>(string variableName)
         {
-            InvokeTime(AtTimeOfPower.MainMenuLoaded);
-        }
-
-        static void TabletopLoaded()
-        {
-            InvokeTime(AtTimeOfPower.TabletopLoaded);
-        }
-
-        static void NewGameStarted()
-        {
-            InvokeTime(AtTimeOfPower.NewGameStarted);
+            return (T)variables[variableName];
         }
     }
 }

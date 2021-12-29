@@ -43,12 +43,19 @@ namespace TheRoost.Beachcomber
             Type propertyType = typeof(TProperty);
             if (entityType.GetCustomAttribute(typeof(FucineImportable), false) == null)
             {
-                Birdsong.Sing("Trying to claim '{0}' of {1}s, but {1} has no FucineImportable attribute and will not be loaded.", propertyName, entityType.Name);
+                Birdsong.Sing("Trying to claim '{0}' of type {1}, but {1} has no FucineImportable attribute and will not be loaded.", propertyName, entityType.Name);
+                //(actually it totally will)
                 return;
             }
 
             if (knownUnknownProperties.ContainsKey(entityType) == false)
-                knownUnknownProperties[entityType] = new Dictionary<string, Type>();
+                knownUnknownProperties.Add(entityType, new Dictionary<string, Type>());
+
+            if (knownUnknownProperties[entityType].ContainsKey(propertyName.ToLower()))
+            {
+                Birdsong.Sing("Trying to claim '0' of type {1}, but the property of the same name for the same type is already claimed", propertyName, entityType.Name);
+                return;
+            }
 
             knownUnknownProperties[entityType].Add(propertyName.ToLower(), propertyType);
         }
