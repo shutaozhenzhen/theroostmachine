@@ -35,11 +35,9 @@ namespace TheRoost.Elegiast
                 return;
 
             Birdsong.ClaimProperty<SecretHistories.Entities.Recipe, List<string>>(propertyThatUnlocks);
-            AtTimeOfPower.MainMenuLoaded.Schedule(CustomAchievementInterface.Create, PatchType.Prefix);
 
-            TheRoostMachine.Patch(
-                original: typeof(RecipeCompletionEffectCommand).GetMethod("Execute", BindingFlags.Public | BindingFlags.Instance),
-                prefix: typeof(CustomAchievements).GetMethod("UnlockAchievements", BindingFlags.NonPublic | BindingFlags.Static));
+            AtTimeOfPower.MainMenuLoaded.Schedule(CustomAchievementInterface.Create, PatchType.Prefix);
+            AtTimeOfPower.RecipeExecution.Schedule<RecipeCompletionEffectCommand>(UnlockAchievements, PatchType.Prefix);
 
             LoadAllUnlocks();
 
@@ -52,7 +50,7 @@ namespace TheRoost.Elegiast
             Vagabond.AddCommand("/achievements", AchievementsDebug);
         }
 
-        static void UnlockAchievements(SecretHistories.Core.RecipeCompletionEffectCommand __instance)
+        internal static void UnlockAchievements(RecipeCompletionEffectCommand __instance)
         {
             List<string> ids = __instance.Recipe.RetrieveProperty<List<string>>(propertyThatUnlocks);
             if (ids == null)

@@ -19,10 +19,31 @@ namespace TheRoost
             if (TheRoostMachine.alreadyAssembled)
                 return;
 
-            AtTimeOfPower.MainMenuLoaded.Schedule(CreateCommandLine);
+            AtTimeOfPower.MainMenuLoaded.Schedule(CreateCommandLine, PatchType.Postfix);
 
             AddCommand("/goinfo", GameObjectCommand);
             AddCommand("/goset", GameObjectCommand);
+            AddCommand("/reimport", Reimport);
+        }
+
+        static void Reimport(string[] command)
+        {
+            try
+            {
+                Watchman.Get<SecretHistories.Constants.Modding.ModManager>().CatalogueMods();
+                Compendium compendiumToPopulate = Watchman.Get<Compendium>();
+                CompendiumLoader compendiumLoader = new CompendiumLoader(Watchman.Get<Config>().GetConfigValue("contentdir"));
+                DateTime now = DateTime.Now;
+                foreach (SecretHistories.Fucine.ILogMessage logMessage in compendiumLoader.PopulateCompendium(compendiumToPopulate, Watchman.Get<Config>().GetConfigValue("Culture")).GetMessages())
+                {
+                    Birdsong.Sing(logMessage.Description);
+                }
+                Birdsong.Sing("Total time to import: {0}", (DateTime.Now - now));
+            }
+            catch(Exception ex)
+            {
+                Birdsong.Sing(ex);
+            }
         }
 
 
@@ -161,7 +182,6 @@ namespace TheRoost
             if (consoleEnabled == false)
                 Watchman.Get<Concursum>().ToggleSecretHistory();
 
-            Birdsong.Sing(GameObject.FindObjectOfType<Vagabond>());
             if (GameObject.FindObjectOfType<Vagabond>() != null)
             {
                 Watchman.Get<Concursum>().ToggleSecretHistory();

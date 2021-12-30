@@ -96,14 +96,20 @@ namespace TheRoost
             }
         }
 
-        public static Delayer Schedule(MethodInfo action, object actor = null, object[] parameters = null)
+        public static void ExecuteNextFrame(MethodInfo action, object actor = null, object[] parameters = null)
         {
             GameObject gameObject = new GameObject();
             GameObject.DontDestroyOnLoad(gameObject);
             Delayer delayer = gameObject.AddComponent<Delayer>();
-            delayer.StartCoroutine(delayer.ExecuteDelayed(action, actor, parameters));
+            delayer.StartCoroutine(delayer.ExecuteDelayedFrame(action, actor, parameters));
+        }
 
-            return delayer;
+        public static void Schedule(MethodInfo action, float time, object actor = null, object[] parameters = null)
+        {
+            GameObject gameObject = new GameObject();
+            GameObject.DontDestroyOnLoad(gameObject);
+            Delayer delayer = gameObject.AddComponent<Delayer>();
+            delayer.StartCoroutine(delayer.ExecuteDelayedTime(action, actor, parameters, time));
         }
 
         public static void ClaimProperty<TEntity, TProperty>(string propertyName) where TEntity : AbstractEntity<TEntity>
@@ -117,11 +123,20 @@ namespace TheRoost
         }
     }
 
-    public class Delayer : MonoBehaviour
+
+
+    internal class Delayer : MonoBehaviour
     {
-        public IEnumerator ExecuteDelayed(System.Reflection.MethodInfo action, object actor, object[] parameters)
+        internal IEnumerator ExecuteDelayedFrame(System.Reflection.MethodInfo action, object actor, object[] parameters)
         {
             yield return new WaitForEndOfFrame();
+            action.Invoke(actor, parameters);
+            Destroy(this.gameObject);
+        }
+
+        internal IEnumerator ExecuteDelayedTime(System.Reflection.MethodInfo action, object actor, object[] parameters, float time)
+        {
+            yield return new WaitForSeconds(time);
             action.Invoke(actor, parameters);
             Destroy(this.gameObject);
         }

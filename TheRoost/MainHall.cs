@@ -20,7 +20,7 @@ public static class TheRoostMachine
         SecretHistories.UI.Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
 
         TheRoost.Beachcomber.CustomLoader.Claim();
-        Twins.Unite(); //events
+        TheRoost.Twins.EventManager.Unite(); //events
         TheRoost.Elegiast.CustomAchievements.Remember();
         Vagabond.Enter(); //command line
         Birdsong.Enact(); //little something for everyone

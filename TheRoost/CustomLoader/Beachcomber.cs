@@ -142,6 +142,9 @@ namespace TheRoost.Beachcomber
         private const string modLocationWorkshop = "steamapps\\workshop\\content";
         private static bool isModAssembly(this Assembly assembly)
         {
+            if (assembly.IsDynamic)
+                return true;
+
             string assemblyLocation = assembly.Location.Replace('/', '\\');
             return (assemblyLocation.Contains(modLocationLocal) || assemblyLocation.Contains(modLocationWorkshop));
         }

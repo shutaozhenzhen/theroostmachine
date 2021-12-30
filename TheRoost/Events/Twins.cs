@@ -1,105 +1,171 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading.Tasks;
 
+using SecretHistories.UI;
+using SecretHistories.Core;
+using SecretHistories.Entities;
 using SecretHistories.Infrastructure;
 
 namespace TheRoost
 {
-    [Flags]
-    public enum PatchType { Postfix = 0, Prefix = 1 }
-    [Flags]
-    public enum AtTimeOfPower { MainMenuLoaded = 0, NewGameStarted = 2, TabletopLoaded = 4, }
-
-    public static class Twins
+    public enum PatchType { Postfix, Prefix }
+    public enum AtTimeOfPower
     {
-        static Dictionary<int, InjectedAction> timesofpower;
-        public delegate void InjectedAction();
+        MainMenuLoaded, NewGameStarted, TabletopLoaded,
+        RecipeRequirementsCheck, RecipeExecution,
+        RecipeMutations, RecipeXtriggers, RecipeDeckEffects, RecipeEffects, RecipeVerbManipulations, RecipePurges, RecipePortals, RecipeVfx,
+    }
+}
+namespace TheRoost.Twins
+{
+    public static class EventManager
+    {
+        public static Array AllTimesOfPower { get { return Enum.GetValues(typeof(AtTimeOfPower)); } }
+        private static readonly Dictionary<AtTimeOfPower, MethodBase> methodsToPaths = new Dictionary<AtTimeOfPower, MethodBase>()
+        {
+ { AtTimeOfPower.MainMenuLoaded, typeof(MenuScreenController).GetMethod("InitialiseServices", BindingFlags.Instance | BindingFlags.NonPublic) },
+ { AtTimeOfPower.NewGameStarted, typeof(MenuScreenController).GetMethod("BeginNewSaveWithSpecifiedLegacy", BindingFlags.Instance | BindingFlags.Public) },
+ { AtTimeOfPower.TabletopLoaded, typeof(GameGateway).GetMethod("Start", BindingFlags.Instance | BindingFlags.Public) },
 
-        public static Dictionary<AtTimeOfPower, MethodBase> methodsToPatch = new Dictionary<AtTimeOfPower, MethodBase>() { 
-        { AtTimeOfPower.MainMenuLoaded, typeof(MenuScreenController).GetMethod("InitialiseServices", BindingFlags.Instance | BindingFlags.NonPublic) },
-        { AtTimeOfPower.NewGameStarted, typeof(MenuScreenController).GetMethod("BeginNewSaveWithSpecifiedLegacy", BindingFlags.Instance | BindingFlags.Public) },
-        { AtTimeOfPower.TabletopLoaded, typeof(GameGateway).GetMethod("Start", BindingFlags.Instance | BindingFlags.Public) }
-    };
+ { AtTimeOfPower.RecipeRequirementsCheck, typeof(Recipe).GetMethod("RequirementsSatisfiedBy", BindingFlags.Public | BindingFlags.Instance) },
+
+ { AtTimeOfPower.RecipeExecution, typeof(RecipeCompletionEffectCommand).GetMethod("Execute", BindingFlags.Public | BindingFlags.Instance) },
+ { AtTimeOfPower.RecipeMutations, typeof(RecipeCompletionEffectCommand).GetMethod("RunMutationEffects", BindingFlags.NonPublic | BindingFlags.Instance) },
+ { AtTimeOfPower.RecipeXtriggers, typeof(RecipeCompletionEffectCommand).GetMethod("RunXtriggers", BindingFlags.NonPublic | BindingFlags.Instance) },
+ { AtTimeOfPower.RecipeDeckEffects, typeof(RecipeCompletionEffectCommand).GetMethod("RunDeckEffects", BindingFlags.NonPublic | BindingFlags.Instance) },
+ { AtTimeOfPower.RecipeEffects, typeof(RecipeCompletionEffectCommand).GetMethod("RunRecipeEffects", BindingFlags.NonPublic | BindingFlags.Instance) },
+ { AtTimeOfPower.RecipeVerbManipulations, typeof(RecipeCompletionEffectCommand).GetMethod("RunVerbManipulations", BindingFlags.NonPublic | BindingFlags.Instance) },
+ { AtTimeOfPower.RecipePurges, typeof(RecipeCompletionEffectCommand).GetMethod("RunElementPurges", BindingFlags.NonPublic | BindingFlags.Instance) },
+ { AtTimeOfPower.RecipePortals, typeof(RecipeCompletionEffectCommand).GetMethod("OpenPortals", BindingFlags.NonPublic | BindingFlags.Instance) },
+ { AtTimeOfPower.RecipeVfx, typeof(RecipeCompletionEffectCommand).GetMethod("DoRecipeVfx", BindingFlags.NonPublic | BindingFlags.Instance) },
+        };
 
         internal static void Unite()
         {
             if (TheRoostMachine.alreadyAssembled)
                 return;
+            //we want all mods to do the scheduling before the patch
+            Birdsong.ExecuteNextFrame(typeof(EventManager).GetMethod("SetEvents", BindingFlags.NonPublic | BindingFlags.Static));
+        }
 
-            CheckTimesInit();
-
-            foreach (AtTimeOfPower time in Enum.GetValues(typeof(AtTimeOfPower)))
+        private static void SetEvents()
+        {
+            foreach (AtTimeOfPower time in AllTimesOfPower)
             {
-                string patchMethodName = time.ToString();
-                TheRoostMachine.Patch(methodsToPatch[time],
-                    prefix: typeof(Twins).GetMethod(patchMethodName + "Prefix", BindingFlags.NonPublic | BindingFlags.Static),
-                    postfix: typeof(Twins).GetMethod(patchMethodName + "Postfix", BindingFlags.NonPublic | BindingFlags.Static));
+                foreach (Delegate patchGroup in prefixes[time])
+                    foreach (Delegate patchMethod in patchGroup.GetInvocationList())
+                        TheRoostMachine.Patch(methodsToPaths[time], prefix: patchMethod.Method);
+
+                foreach (Delegate patchGroup in postfixes[time])
+                    foreach (Delegate patchMethod in patchGroup.GetInvocationList())
+                        TheRoostMachine.Patch(methodsToPaths[time], postfix: patchMethod.Method);
             }
         }
 
-        public static void Schedule(this AtTimeOfPower time, InjectedAction action, PatchType moment = PatchType.Postfix)
+        public static void Schedule(AtTimeOfPower time, Delegate action, PatchType patchType)
         {
-            CheckTimesInit();
-            int signature = (int)time | (int)moment;
-            timesofpower[signature] -= action;
-            timesofpower[signature] += action;
+            if (patchType == PatchType.Prefix)
+                prefixes[time].Add(action);
+            else
+                postfixes[time].Add(action);
         }
 
-        public static void Unschedule(AtTimeOfPower time, InjectedAction action, PatchType moment = PatchType.Postfix)
+        private static PatchAtTimeCollection prefixes = new PatchAtTimeCollection();
+        private static PatchAtTimeCollection postfixes = new PatchAtTimeCollection();
+        class PatchAtTimeCollection : Dictionary<AtTimeOfPower, List<Delegate>>
         {
-            CheckTimesInit();
-            int signature = (int)time | (int)moment;
-            timesofpower[signature] -= action;
-        }
-
-        private static void CheckTimesInit()
-        {
-            if (timesofpower == null)
+            public PatchAtTimeCollection()
+                : base()
             {
-                timesofpower = new Dictionary<int, InjectedAction>();
-                foreach (AtTimeOfPower t in Enum.GetValues(typeof(AtTimeOfPower)))
-                    foreach (PatchType m in Enum.GetValues(typeof(PatchType)))
-                    {
-                        int signature = (int)t | (int)m;
-                        timesofpower.Add(signature, null);
-                    }
+                foreach (AtTimeOfPower t in EventManager.AllTimesOfPower)
+                    this[t] = new List<Delegate>();
+
             }
         }
-
-        private static void InvokeTime(AtTimeOfPower time, PatchType moment)
-        {
-            int signature = (int)time | (int)moment;
-            if (timesofpower[signature] != null)
-                timesofpower[signature].Invoke();
-        }
-
-        static void MainMenuLoadedPrefix() { InvokeTime(AtTimeOfPower.MainMenuLoaded, PatchType.Prefix); }
-        static void MainMenuLoadedPostfix() { InvokeTime(AtTimeOfPower.MainMenuLoaded, PatchType.Postfix); }
-
-        static void NewGameStartedPrefix() { InvokeTime(AtTimeOfPower.NewGameStarted, PatchType.Prefix); }
-        static void NewGameStartedPostfix() { InvokeTime(AtTimeOfPower.NewGameStarted, PatchType.Postfix); }
-
-        static void TabletopLoadedPrefix() { InvokeTime(AtTimeOfPower.NewGameStarted, PatchType.Prefix); }
-        static void TabletopLoadedPostfix() { InvokeTime(AtTimeOfPower.NewGameStarted, PatchType.Postfix); }
     }
+}
 
-    public class TimeSpec<TInstance, TResult>
+namespace TheRoost
+{
+    //QoL class to convert Actions/Funcs of varying form into Delegate and pass it to the Twins
+    public static class TwinsConvenience
     {
-        public TResult methodResult;
-        public TInstance instance;
-        public bool continueExecution = true;
-        private readonly Dictionary<string, object> variables = new Dictionary<string, object>();
-
-        public TimeSpec(TInstance instanceObject, TResult result)
+        public static void Schedule(this AtTimeOfPower time, Delegate action, PatchType patchType)
         {
-            this.instance = instanceObject;
-            this.methodResult = result;
+            TheRoost.Twins.EventManager.Schedule(time, action, patchType);
         }
 
-        public T Unpack<T>(string variableName)
+        public static void Schedule(this AtTimeOfPower time, Action action, PatchType patchType)
         {
-            return (T)variables[variableName];
+            time.Schedule(action as Delegate, patchType);
+        }
+
+        public static void Schedule<T1>(this AtTimeOfPower time, Action<T1> action, PatchType patchType)
+        {
+            time.Schedule(action as Delegate, patchType);
+        }
+
+        public static void Schedule<T1, T2>(this AtTimeOfPower time, Action<T1, T2> action, PatchType patchType)
+        {
+            time.Schedule(action as Delegate, patchType);
+        }
+
+        public static void Schedule<T1, T2, T3>(this AtTimeOfPower time, Action<T1, T2, T3> action, PatchType patchType)
+        {
+            time.Schedule(action as Delegate, patchType);
+        }
+
+        public static void Schedule<T1, T2, T3, T4>(this AtTimeOfPower time, Action<T1, T2, T3, T4> action, PatchType patchType)
+        {
+            time.Schedule(action as Delegate, patchType);
+        }
+
+        public static void Schedule<T1, T2, T3, T4, T5>(this AtTimeOfPower time, Action<T1, T2, T3, T4, T5> action, PatchType patchType)
+        {
+            time.Schedule(action as Delegate, patchType);
+        }
+
+        //six variables is a reasonable maximum
+        public static void Schedule<T1, T2, T3, T4, T5, T6>(this AtTimeOfPower time, Action<T1, T2, T3, T4, T5, T6> action, PatchType patchType)
+        {
+            time.Schedule(action as Delegate, patchType);
+        }
+
+        public static void ScheduleBreak(this AtTimeOfPower time, Func<bool> func, PatchType patchType)
+        {
+            time.Schedule(func as Delegate, patchType);
+        }
+
+        public static void ScheduleBreak<T1>(this AtTimeOfPower time, Func<T1, bool> func, PatchType patchType)
+        {
+            time.Schedule(func as Delegate, patchType);
+        }
+
+        public static void ScheduleBreak<T1, T2>(this AtTimeOfPower time, Func<T1, T2, bool> func, PatchType patchType)
+        {
+            time.Schedule(func as Delegate, patchType);
+        }
+
+        public static void ScheduleBreak<T1, T2, T3>(this AtTimeOfPower time, Func<T1, T2, T3, bool> func, PatchType patchType)
+        {
+            time.Schedule(func as Delegate, patchType);
+        }
+
+        public static void ScheduleBreak<T1, T2, T3, T4>(this AtTimeOfPower time, Func<T1, T2, T3, T4, bool> func, PatchType patchType)
+        {
+            time.Schedule(func as Delegate, patchType);
+        }
+
+        public static void ScheduleBreak<T1, T2, T3, T4, T5>(this AtTimeOfPower time, Func<T1, T2, T3, T4, T5, bool> func, PatchType patchType)
+        {
+            time.Schedule(func as Delegate, patchType);
+        }
+
+        public static void ScheduleBreak<T1, T2, T3, T4, T5, T6>(this AtTimeOfPower time, Func<T1, T2, T3, T4, T5, T6, bool> func, PatchType patchType)
+        {
+            time.Schedule(func as Delegate, patchType);
         }
     }
 }
