@@ -34,7 +34,7 @@ namespace TheRoost.Twins
  { AtTimeOfPower.RecipeExecution, typeof(RecipeCompletionEffectCommand).GetMethod("Execute", BindingFlags.Public | BindingFlags.Instance) },
  { AtTimeOfPower.RecipeMutations, typeof(RecipeCompletionEffectCommand).GetMethod("RunMutationEffects", BindingFlags.NonPublic | BindingFlags.Instance) },
  { AtTimeOfPower.RecipeXtriggers, typeof(RecipeCompletionEffectCommand).GetMethod("RunXtriggers", BindingFlags.NonPublic | BindingFlags.Instance) },
- { AtTimeOfPower.RecipeDeckEffects, typeof(RecipeCompletionEffectCommand).GetMethod("RunDeckEffects", BindingFlags.NonPublic | BindingFlags.Instance) },
+ { AtTimeOfPower.RecipeDeckEffects, typeof(RecipeCompletionEffectCommand).GetMethod("RunDeckEffect", BindingFlags.Public | BindingFlags.Instance) },
  { AtTimeOfPower.RecipeEffects, typeof(RecipeCompletionEffectCommand).GetMethod("RunRecipeEffects", BindingFlags.NonPublic | BindingFlags.Instance) },
  { AtTimeOfPower.RecipeVerbManipulations, typeof(RecipeCompletionEffectCommand).GetMethod("RunVerbManipulations", BindingFlags.NonPublic | BindingFlags.Instance) },
  { AtTimeOfPower.RecipePurges, typeof(RecipeCompletionEffectCommand).GetMethod("RunElementPurges", BindingFlags.NonPublic | BindingFlags.Instance) },
@@ -54,6 +54,7 @@ namespace TheRoost.Twins
         {
             foreach (AtTimeOfPower time in AllTimesOfPower)
             {
+                Birdsong.Sing(time);
                 foreach (Delegate patchGroup in prefixes[time])
                     foreach (Delegate patchMethod in patchGroup.GetInvocationList())
                         TheRoostMachine.Patch(methodsToPaths[time], prefix: patchMethod.Method);

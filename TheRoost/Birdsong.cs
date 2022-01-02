@@ -104,7 +104,7 @@ namespace TheRoost
             delayer.StartCoroutine(delayer.ExecuteDelayedFrame(action, actor, parameters));
         }
 
-        public static void Schedule(MethodInfo action, float time, object actor = null, object[] parameters = null)
+        public static void ExecuteAfterTime(MethodInfo action, float time, object actor = null, object[] parameters = null)
         {
             GameObject gameObject = new GameObject();
             GameObject.DontDestroyOnLoad(gameObject);
