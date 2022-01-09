@@ -319,10 +319,10 @@ namespace TheRoost.Elegiast
                     case "all": data = CustomAchievements.ReadableAll(); break;
                 }
 
-                if (command.Length == 2)
+                if (command.Length == 1)
                     Birdsong.Sing(data);
                 else
-                    Birdsong.Sing("Checking achievement '{0}' presence: {1}", command[1], data.Contains("\"" + command[1] + "\""));
+                    Birdsong.Sing("Checking achievement '{0}' presence: {1}", command[1], data.Contains("\"" + command[1] + "\"") ? "unlocked" : "locked");
             }
             catch (Exception ex)
             {
