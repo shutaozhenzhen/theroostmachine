@@ -19,6 +19,7 @@ namespace TheRoost.Beachcomber
     public static class CustomLoader
     {
         private readonly static Dictionary<Type, Dictionary<string, Type>> knownUnknownProperties = new Dictionary<Type, Dictionary<string, Type>>();
+        private readonly static Dictionary<Type, List<string>> localizableUnknownProperties = new Dictionary<Type, List<string>>();
         private readonly static Dictionary<IEntityWithId, Dictionary<string, object>> beachcomberStorage = new Dictionary<IEntityWithId, Dictionary<string, object>>();
 
         internal static void Claim()
@@ -34,17 +35,28 @@ namespace TheRoost.Beachcomber
                 original: typeof(CompendiumLoader).GetMethod("PopulateCompendium"),
                 transpiler: typeof(CustomLoader).GetMethod("CuckooTranspiler", BindingFlags.NonPublic | BindingFlags.Static));
 
+            TheRoostMachine.Patch(
+                original: typeof(EntityTypeDataLoader).GetMethod("GetLocalisableKeysForEntityType", BindingFlags.NonPublic | BindingFlags.Instance),
+                postfix: typeof(CustomLoader).GetMethod("InsertCustomLocalizableKeys", BindingFlags.NonPublic | BindingFlags.Static));
+
             Usurper.OverthrowNativeImporting();
         }
 
-        internal static void ClaimProperty<TEntity, TProperty>(string propertyName) where TEntity : AbstractEntity<TEntity>
+        static void InsertCustomLocalizableKeys(EntityTypeDataLoader __instance, HashSet<string> __result)
+        {
+            if (localizableUnknownProperties.ContainsKey(__instance.EntityType))
+                foreach (string property in localizableUnknownProperties[__instance.EntityType])
+                    __result.Add(property);
+        }
+
+        internal static void ClaimProperty<TEntity, TProperty>(string propertyName, bool localize) where TEntity : AbstractEntity<TEntity>
         {
             Type entityType = typeof(TEntity);
             Type propertyType = typeof(TProperty);
             if (entityType.GetCustomAttribute(typeof(FucineImportable), false) == null)
             {
                 Birdsong.Sing("Trying to claim '{0}' of type {1}, but {1} has no FucineImportable attribute and will not be loaded.", propertyName, entityType.Name);
-                //(actually it totally will)
+                //(actually it totally will be loaded)
                 return;
             }
 
@@ -58,6 +70,14 @@ namespace TheRoost.Beachcomber
             }
 
             knownUnknownProperties[entityType].Add(propertyName.ToLower(), propertyType);
+
+            if (localize)
+            {
+                if (localizableUnknownProperties.ContainsKey(entityType) == false)
+                    localizableUnknownProperties[entityType] = new List<string>();
+
+                localizableUnknownProperties[entityType].Add(propertyName);
+            }
         }
 
         internal static T RetrieveProperty<T>(IEntityWithId owner, string propertyName)
@@ -71,24 +91,28 @@ namespace TheRoost.Beachcomber
 
         private static void KnowUnknown(IEntityWithId __instance, Hashtable ___UnknownProperties, ContentImportLog log)
         {
-            if (knownUnknownProperties.ContainsKey(__instance.GetType()))
+            IEntityWithId entity = __instance;
+
+            if (knownUnknownProperties.ContainsKey(entity.GetType()))
             {
                 Hashtable propertiesToComb = new Hashtable(___UnknownProperties);
-                Dictionary<string, Type> propertiesToClaim = knownUnknownProperties[__instance.GetType()];
+                Dictionary<string, Type> propertiesToClaim = knownUnknownProperties[entity.GetType()];
 
                 if (propertiesToClaim.Count > 0)
                     foreach (string propertyName in propertiesToComb.Keys)
                         if (propertiesToClaim.ContainsKey(propertyName))
                         {
-                            log.LogInfo(String.Format("Known-Unknown property '{0}' for '{1}' {2}", propertyName, __instance.Id, __instance.GetType().Name));
+                            log.LogInfo(String.Format("Known-Unknown property '{0}' for '{1}' {2}", propertyName, entity.Id, entity.GetType().Name));
                             ___UnknownProperties.Remove(propertyName);
 
-                            if (beachcomberStorage.ContainsKey(__instance) == false)
-                                beachcomberStorage[__instance] = new Dictionary<string, object>();
+                            if (beachcomberStorage.ContainsKey(entity) == false)
+                                beachcomberStorage[entity] = new Dictionary<string, object>();
 
-                            object value = CustomImporter.ImportProperty(__instance, propertiesToComb[propertyName], propertiesToClaim[propertyName]);
+
+
+                            object value = CustomImporter.ImportProperty(entity, propertiesToComb[propertyName], propertiesToClaim[propertyName]);
                             if (value != null)
-                                beachcomberStorage[__instance].Add(propertyName, value);
+                                beachcomberStorage[entity].Add(propertyName, value);
                         }
             }
         }

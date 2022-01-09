@@ -112,9 +112,9 @@ namespace TheRoost
             delayer.StartCoroutine(delayer.ExecuteDelayedTime(action, actor, parameters, time));
         }
 
-        public static void ClaimProperty<TEntity, TProperty>(string propertyName) where TEntity : AbstractEntity<TEntity>
+        public static void ClaimProperty<TEntity, TProperty>(string propertyName, bool localize = false) where TEntity : AbstractEntity<TEntity>
         {
-            TheRoost.Beachcomber.CustomLoader.ClaimProperty<TEntity, TProperty>(propertyName);
+            TheRoost.Beachcomber.CustomLoader.ClaimProperty<TEntity, TProperty>(propertyName, localize);
         }
 
         public static T RetrieveProperty<T>(this IEntityWithId owner, string propertyName)

@@ -54,7 +54,7 @@ namespace TheRoost.Twins
         {
             foreach (AtTimeOfPower time in AllTimesOfPower)
             {
-                Birdsong.Sing(time);
+                ///Birdsong.Sing(time);
                 foreach (Delegate patchGroup in prefixes[time])
                     foreach (Delegate patchMethod in patchGroup.GetInvocationList())
                         TheRoostMachine.Patch(methodsToPaths[time], prefix: patchMethod.Method);
