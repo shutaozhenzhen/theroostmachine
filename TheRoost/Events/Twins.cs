@@ -1,29 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Threading.Tasks;
 
-using SecretHistories.UI;
 using SecretHistories.Core;
 using SecretHistories.Entities;
 using SecretHistories.Infrastructure;
 
-namespace TheRoost
-{
-    public enum PatchType { Postfix, Prefix }
-    public enum AtTimeOfPower
-    {
-        MainMenuLoaded, NewGameStarted, TabletopLoaded,
-        RecipeRequirementsCheck, RecipeExecution,
-        RecipeMutations, RecipeXtriggers, RecipeDeckEffects, RecipeEffects, RecipeVerbManipulations, RecipePurges, RecipePortals, RecipeVfx,
-    }
-}
 namespace TheRoost.Twins
 {
     public static class EventManager
     {
         public static Array AllTimesOfPower { get { return Enum.GetValues(typeof(AtTimeOfPower)); } }
-        private static readonly Dictionary<AtTimeOfPower, MethodBase> methodsToPaths = new Dictionary<AtTimeOfPower, MethodBase>()
+        private static readonly Dictionary<AtTimeOfPower, MethodBase> methodsToPatch = new Dictionary<AtTimeOfPower, MethodBase>()
         {
  { AtTimeOfPower.MainMenuLoaded, typeof(MenuScreenController).GetMethod("InitialiseServices", BindingFlags.Instance | BindingFlags.NonPublic) },
  { AtTimeOfPower.NewGameStarted, typeof(MenuScreenController).GetMethod("BeginNewSaveWithSpecifiedLegacy", BindingFlags.Instance | BindingFlags.Public) },
@@ -46,22 +34,23 @@ namespace TheRoost.Twins
         {
             if (TheRoostMachine.alreadyAssembled)
                 return;
-            //we want all mods to do the scheduling before the patch
-            Birdsong.ExecuteNextFrame(typeof(EventManager).GetMethod("SetEvents", BindingFlags.NonPublic | BindingFlags.Static));
+
+            //we want all mods to finish the scheduling before we patch so we apply patches a frame after everything is loaded
+            Rooster.Schedule(new Action(ApplyEventPatches), new UnityEngine.WaitForEndOfFrame());
         }
 
-        private static void SetEvents()
+        private static void ApplyEventPatches()
         {
             foreach (AtTimeOfPower time in AllTimesOfPower)
             {
                 ///Birdsong.Sing(time);
                 foreach (Delegate patchGroup in prefixes[time])
                     foreach (Delegate patchMethod in patchGroup.GetInvocationList())
-                        TheRoostMachine.Patch(methodsToPaths[time], prefix: patchMethod.Method);
+                        TheRoostMachine.Patch(methodsToPatch[time], prefix: patchMethod.Method);
 
                 foreach (Delegate patchGroup in postfixes[time])
                     foreach (Delegate patchMethod in patchGroup.GetInvocationList())
-                        TheRoostMachine.Patch(methodsToPaths[time], postfix: patchMethod.Method);
+                        TheRoostMachine.Patch(methodsToPatch[time], postfix: patchMethod.Method);
             }
         }
 
@@ -82,7 +71,6 @@ namespace TheRoost.Twins
             {
                 foreach (AtTimeOfPower t in EventManager.AllTimesOfPower)
                     this[t] = new List<Delegate>();
-
             }
         }
     }
@@ -90,8 +78,15 @@ namespace TheRoost.Twins
 
 namespace TheRoost
 {
-    //QoL class to convert Actions/Funcs of varying form into Delegate and pass it to the Twins
-    public static class TwinsConvenience
+    public enum PatchType { Postfix, Prefix }
+    public enum AtTimeOfPower
+    {
+        MainMenuLoaded, NewGameStarted, TabletopLoaded,
+        RecipeRequirementsCheck, RecipeExecution,
+        RecipeMutations, RecipeXtriggers, RecipeDeckEffects, RecipeEffects, RecipeVerbManipulations, RecipePurges, RecipePortals, RecipeVfx,
+    }
+
+    public static partial class TheRoostAccessExtensions
     {
         public static void Schedule(this AtTimeOfPower time, Delegate action, PatchType patchType)
         {

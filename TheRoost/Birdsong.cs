@@ -3,10 +3,10 @@ using System.Reflection;
 using System.Collections;
 
 using SecretHistories.UI;
+using SecretHistories.Fucine;
 
 using UnityEngine;
 using UnityEngine.UI;
-using SecretHistories.Fucine;
 
 namespace TheRoost
 {
@@ -23,21 +23,39 @@ namespace TheRoost
                 prefix: typeof(Birdsong).GetMethod("ShowNotificationWithIntervention", BindingFlags.NonPublic | BindingFlags.Static));
         }
 
-        public static void Sing(string wrapMessage, params object[] data)
+        public static void Sing(object data, params object[] furtherData)
         {
-            if (data.Length > 0)
-                NoonUtility.LogWarning(String.Format(wrapMessage, data));
-            else
-                NoonUtility.LogWarning(wrapMessage);
+            string message = FormatMessage(data, furtherData);
+            NoonUtility.LogWarning(message);
         }
 
-        public static void Sing(params object[] data)
+        public static void Sing(VerbosityLevel verbosity, int messageLevel, object data, params object[] furtherData)
         {
-            var str = string.Empty;
-            foreach (object obj in data)
-                str += (obj == null ? "null" : obj.ToString()) + ' ';
+            string message = FormatMessage(data, furtherData);
+            NoonUtility.Log(message, messageLevel, verbosity);
+        }
 
-            NoonUtility.LogWarning(str);
+        private static string FormatMessage(object wrapMessageMaybe, params object[] furtherData)
+        {
+            if (wrapMessageMaybe.ToString().Contains("{0}"))
+                return String.Format(wrapMessageMaybe.ToString(), furtherData);
+            else
+                return wrapMessageMaybe.ToString() + ' ' + furtherData.UnpackAsString();
+        }
+
+        public static string UnpackAsString(this IEnumerable collection)
+        {
+            string result = string.Empty;
+            if (collection != null)
+                foreach (object obj in collection)
+                    result += (obj == null ? "null" : obj.ToString()) + ' ';
+
+            return result;
+        }
+
+        public static void ClaimProperty<TEntity, TProperty>(string propertyName, bool localize = false) where TEntity : AbstractEntity<TEntity>
+        {
+            TheRoost.Beachcomber.CustomLoader.ClaimProperty<TEntity, TProperty>(propertyName, localize);
         }
 
         public static GameObject FindInChildren(this GameObject go, string targetName, bool nested = false)
@@ -95,50 +113,34 @@ namespace TheRoost
                     ___artwork.sprite = interventionSprite;
             }
         }
-
-        public static void ExecuteNextFrame(MethodInfo action, object actor = null, object[] parameters = null)
-        {
-            GameObject gameObject = new GameObject();
-            GameObject.DontDestroyOnLoad(gameObject);
-            Delayer delayer = gameObject.AddComponent<Delayer>();
-            delayer.StartCoroutine(delayer.ExecuteDelayedFrame(action, actor, parameters));
-        }
-
-        public static void ExecuteAfterTime(MethodInfo action, float time, object actor = null, object[] parameters = null)
-        {
-            GameObject gameObject = new GameObject();
-            GameObject.DontDestroyOnLoad(gameObject);
-            Delayer delayer = gameObject.AddComponent<Delayer>();
-            delayer.StartCoroutine(delayer.ExecuteDelayedTime(action, actor, parameters, time));
-        }
-
-        public static void ClaimProperty<TEntity, TProperty>(string propertyName, bool localize = false) where TEntity : AbstractEntity<TEntity>
-        {
-            TheRoost.Beachcomber.CustomLoader.ClaimProperty<TEntity, TProperty>(propertyName, localize);
-        }
-
-        public static T RetrieveProperty<T>(this IEntityWithId owner, string propertyName)
-        {
-            return TheRoost.Beachcomber.CustomLoader.RetrieveProperty<T>(owner, propertyName);
-        }
     }
 
-
-
-    internal class Delayer : MonoBehaviour
+    public class Rooster : MonoBehaviour
     {
-        internal IEnumerator ExecuteDelayedFrame(System.Reflection.MethodInfo action, object actor, object[] parameters)
+        private static Rooster NewRooster()
         {
-            yield return new WaitForEndOfFrame();
+            GameObject gameObject = new GameObject();
+            Rooster delayer = gameObject.AddComponent<Rooster>();
+            GameObject.DontDestroyOnLoad(gameObject);
+            return delayer;
+        }
+
+        public static void Schedule(MethodInfo action, YieldInstruction delay, object actor = null, object[] parameters = null)
+        {
+            Rooster delayer = NewRooster();
+            delayer.StartCoroutine(delayer.ExecuteDelayed(action, actor, parameters, delay));
+        }
+
+        internal IEnumerator ExecuteDelayed(MethodInfo action, object actor, object[] parameters, YieldInstruction delay)
+        {
+            yield return delay;
             action.Invoke(actor, parameters);
             Destroy(this.gameObject);
         }
 
-        internal IEnumerator ExecuteDelayedTime(System.Reflection.MethodInfo action, object actor, object[] parameters, float time)
+        public static void Schedule(Delegate action, YieldInstruction delay, object actor = null, object[] parameters = null)
         {
-            yield return new WaitForSeconds(time);
-            action.Invoke(actor, parameters);
-            Destroy(this.gameObject);
+            Schedule(action.Method, delay, actor, parameters);
         }
     }
 }

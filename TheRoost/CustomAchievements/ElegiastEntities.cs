@@ -86,27 +86,4 @@ namespace TheRoost.Elegiast.Entities
         }
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
     }
-    /*
-    public class VanillaAchievement : IFucineAchievement
-    {
-        public readonly string id;
-        uint _unlockTime;
-
-        public string title { get { return SteamUserStats.GetAchievementDisplayAttribute(id, "name"); } }
-        public string description { get { return SteamUserStats.GetAchievementDisplayAttribute(id, "desc"); } }
-        public Sprite icon { get; set; }
-        public DateTime unlockTime { get { return DateTimeOffset.FromUnixTimeSeconds(_unlockTime).DateTime; } }
-        public bool hidden { get { return SteamUserStats.GetAchievementDisplayAttribute(id, "hidden") == "1"; } }
-        public bool unlocked { get { return _unlocked; } } bool _unlocked;
-        public string category { get; set; }
-
-        public VanillaAchievement(string id, string icon, string category)
-        {
-            this.id = id;
-            this.icon = ResourcesManager.GetSpriteForElement(icon);
-            this.category = category;
-            SteamUserStats.GetAchievementAndUnlockTime(id, out _unlocked, out _unlockTime);
-        }
-    }
-     */
 }

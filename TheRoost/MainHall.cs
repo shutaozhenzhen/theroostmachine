@@ -20,10 +20,10 @@ public static class TheRoostMachine
         SecretHistories.UI.Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
 
         TheRoost.Beachcomber.CustomLoader.Claim();
-        TheRoost.Twins.EventManager.Unite(); //events
+        TheRoost.Twins.EventManager.Unite();
         TheRoost.Elegiast.CustomAchievements.Remember();
-        Vagabond.Enter(); //command line
-        Birdsong.Enact(); //little something for everyone
+        TheRoost.Vagabond.CommandLine.Enter();
+        Birdsong.Enact(); //mist
 
         _alreadyAssembled = true;
         SecretHistories.UI.Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
@@ -32,9 +32,15 @@ public static class TheRoostMachine
     public static void Patch(MethodBase original, MethodInfo prefix = null, MethodInfo postfix = null, MethodInfo transpiler = null, MethodInfo finalizer = null)
     {
         if (original == null)
+        {
             Birdsong.Sing("Trying to patch null method!");
+            return;
+        }
         if (prefix == null && postfix == null && transpiler == null && finalizer == null)
+        {
             Birdsong.Sing("All patches for {0}() are null!", original.Name);
+            return;
+        }
 
         harmony.Patch(original,
             prefix: prefix == null ? null : new HarmonyMethod(prefix),
@@ -42,5 +48,4 @@ public static class TheRoostMachine
             transpiler: transpiler == null ? null : new HarmonyMethod(transpiler),
             finalizer: finalizer == null ? null : new HarmonyMethod(finalizer));
     }
-
 }

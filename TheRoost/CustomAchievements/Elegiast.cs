@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using System.IO;
 
 using Steamworks;
@@ -13,12 +12,11 @@ using SecretHistories.Constants;
 using SecretHistories.Core;
 
 using UnityEngine;
-
 using TheRoost.Elegiast.Entities;
 
 namespace TheRoost.Elegiast
 {
-    public class CustomAchievements
+    public static class CustomAchievements
     {
         private static Dictionary<string, string> unlocks;
 
@@ -47,7 +45,7 @@ namespace TheRoost.Elegiast
                 cachedGogStats.RequestUserStatsAndAchievements();
             }
 
-            Vagabond.AddCommand("/achievements", AchievementsDebug);
+            TheRoost.Vagabond.CommandLine.AddCommand("achievements", AchievementsDebug);
         }
 
         internal static void UnlockAchievements(RecipeCompletionEffectCommand __instance)
