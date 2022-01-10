@@ -38,10 +38,11 @@
     <Compile Include="CustomAchievements\ElegiastInterface.cs" />
     <Compile Include="CustomAchievements\ElegiastEntities.cs" />
     <Compile Include="CustomAchievements\Elegiast.cs" />
-    <Compile Include="CustomLoader\Beachcomber.cs" />
+    <Compile Include="CustomLoader\BeachcomberMain.cs" />
     <Compile Include="CommandLine\Vagabond.cs" />
-    <Compile Include="CustomLoader\BeachcomberExamples.cs" />
     <Compile Include="CustomLoader\BeachcomberEntities.cs" />
+    <Compile Include="CustomLoader\BeachcomberImporter.cs" />
+    <Compile Include="CustomLoader\BeachcomberUsurper.cs" />
     <Compile Include="Events\Twins.cs" />
     <Compile Include="Birdsong.cs" />
     <Compile Include="MainHall.cs" />
