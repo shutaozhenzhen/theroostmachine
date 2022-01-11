@@ -13,21 +13,21 @@ namespace TheRoost.Twins
         public static Array AllTimesOfPower { get { return Enum.GetValues(typeof(AtTimeOfPower)); } }
         private static readonly Dictionary<AtTimeOfPower, MethodBase> methodsToPatch = new Dictionary<AtTimeOfPower, MethodBase>()
         {
- { AtTimeOfPower.MainMenuLoaded, typeof(MenuScreenController).GetMethod("InitialiseServices", BindingFlags.Instance | BindingFlags.NonPublic) },
- { AtTimeOfPower.NewGameStarted, typeof(MenuScreenController).GetMethod("BeginNewSaveWithSpecifiedLegacy", BindingFlags.Instance | BindingFlags.Public) },
- { AtTimeOfPower.TabletopLoaded, typeof(GameGateway).GetMethod("Start", BindingFlags.Instance | BindingFlags.Public) },
+ { AtTimeOfPower.MainMenuLoaded, typeof(MenuScreenController).GetMethodInvariant("InitialiseServices") },
+ { AtTimeOfPower.NewGameStarted, typeof(MenuScreenController).GetMethodInvariant("BeginNewSaveWithSpecifiedLegacy") },
+ { AtTimeOfPower.TabletopLoaded, typeof(GameGateway).GetMethodInvariant("Start") },
 
- { AtTimeOfPower.RecipeRequirementsCheck, typeof(Recipe).GetMethod("RequirementsSatisfiedBy", BindingFlags.Public | BindingFlags.Instance) },
+ { AtTimeOfPower.RecipeRequirementsCheck, typeof(Recipe).GetMethodInvariant("RequirementsSatisfiedBy") },
 
- { AtTimeOfPower.RecipeExecution, typeof(RecipeCompletionEffectCommand).GetMethod("Execute", BindingFlags.Public | BindingFlags.Instance) },
- { AtTimeOfPower.RecipeMutations, typeof(RecipeCompletionEffectCommand).GetMethod("RunMutationEffects", BindingFlags.NonPublic | BindingFlags.Instance) },
- { AtTimeOfPower.RecipeXtriggers, typeof(RecipeCompletionEffectCommand).GetMethod("RunXtriggers", BindingFlags.NonPublic | BindingFlags.Instance) },
- { AtTimeOfPower.RecipeDeckEffects, typeof(RecipeCompletionEffectCommand).GetMethod("RunDeckEffect", BindingFlags.Public | BindingFlags.Instance) },
- { AtTimeOfPower.RecipeEffects, typeof(RecipeCompletionEffectCommand).GetMethod("RunRecipeEffects", BindingFlags.NonPublic | BindingFlags.Instance) },
- { AtTimeOfPower.RecipeVerbManipulations, typeof(RecipeCompletionEffectCommand).GetMethod("RunVerbManipulations", BindingFlags.NonPublic | BindingFlags.Instance) },
- { AtTimeOfPower.RecipePurges, typeof(RecipeCompletionEffectCommand).GetMethod("RunElementPurges", BindingFlags.NonPublic | BindingFlags.Instance) },
- { AtTimeOfPower.RecipePortals, typeof(RecipeCompletionEffectCommand).GetMethod("OpenPortals", BindingFlags.NonPublic | BindingFlags.Instance) },
- { AtTimeOfPower.RecipeVfx, typeof(RecipeCompletionEffectCommand).GetMethod("DoRecipeVfx", BindingFlags.NonPublic | BindingFlags.Instance) },
+ { AtTimeOfPower.RecipeExecution, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("Execute") },
+ { AtTimeOfPower.RecipeMutations, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("RunMutationEffects") },
+ { AtTimeOfPower.RecipeXtriggers, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("RunXTriggers") },
+ { AtTimeOfPower.RecipeDeckEffects, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("RunDeckEffect") },
+ { AtTimeOfPower.RecipeEffects, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("RunRecipeEffects") },
+ { AtTimeOfPower.RecipeVerbManipulations, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("RunVerbManipulations") },
+ { AtTimeOfPower.RecipePurges, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("RunElementPurges") },
+ { AtTimeOfPower.RecipePortals, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("OpenPortals") },
+ { AtTimeOfPower.RecipeVfx, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("DoRecipeVfx") },
         };
 
         internal static void Enact()

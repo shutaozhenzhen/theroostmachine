@@ -18,8 +18,8 @@ namespace TheRoost
                 return;
 
             TheRoostMachine.Patch(
-                original: typeof(SecretHistories.UI.NotificationWindow).GetMethod("SetDetails", BindingFlags.Public | BindingFlags.Instance),
-                prefix: typeof(Birdsong).GetMethod("ShowNotificationWithIntervention", BindingFlags.NonPublic | BindingFlags.Static));
+                original: typeof(SecretHistories.UI.NotificationWindow).GetMethodInvariant("SetDetails"),
+                prefix: typeof(Birdsong).GetMethodInvariant("ShowNotificationWithIntervention"));
         }
 
         public static void Sing(object data, params object[] furtherData)
@@ -58,6 +58,29 @@ namespace TheRoost
             foreach (object obj in collection)
                 result += obj.ToString() + ' ';
             return result;
+        }
+
+        public static MethodInfo GetMethodInvariant(this Type definingClass, string methodName)
+        {
+            //just GetMethod() that tries all possible BindingFlags combinations
+            MethodInfo method = definingClass.GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public);
+            if (method != null)
+                return method;
+
+            method = definingClass.GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
+            if (method != null)
+                return method;
+
+            method = definingClass.GetMethod(methodName, BindingFlags.Static | BindingFlags.Public);
+            if (method != null)
+                return method;
+
+            method = definingClass.GetMethod(methodName, BindingFlags.Static | BindingFlags.NonPublic);
+            if (method != null)
+                return method;
+
+            Birdsong.Sing("Method {0} not found in class {1}", methodName, definingClass.Name);
+            return null;
         }
 
         public static bool intervention = false;

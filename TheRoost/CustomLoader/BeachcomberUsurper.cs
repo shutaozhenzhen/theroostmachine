@@ -27,9 +27,10 @@ namespace TheRoost.Beachcomber
             ///(well, that last one is actually impossible anyway since it won't be parsed as a correct json, but theoretical possibility exists)
             ///struct loading is a mad enterprise in particular
             ///the sport was good though
+            invokeGenericImporterForAbstractRootEntity = typeof(Usurper).GetMethodInvariant("InvokeGenericImporterForAbstractRootEntity");
             TheRoostMachine.Patch(
-                typeof(AbstractEntity<>).MakeGenericType(new Type[] { typeof(Verb) }).GetConstructors(BindingFlags.NonPublic | BindingFlags.Instance)[0],
-                transpiler: typeof(Usurper).GetMethod("ImportTranspiler", BindingFlags.NonPublic | BindingFlags.Static));
+                typeof(AbstractEntity<Element>).GetConstructors(BindingFlags.NonPublic | BindingFlags.Instance)[0],
+                transpiler: typeof(Usurper).GetMethodInvariant("AbstractEntityConstructorTranspiler"));
 
             //and another little essay, this time more on theme:
             //patching generics is tricky - the patch is applied to the whole generic class/method
@@ -39,11 +40,12 @@ namespace TheRoost.Beachcomber
             //(generics are needed to mimic CS's own structure and since it makes accessing properties much more easierester)
         }
 
-        private static IEnumerable<CodeInstruction> ImportTranspiler(IEnumerable<CodeInstruction> instructions)
+        static MethodInfo invokeGenericImporterForAbstractRootEntity;
+        private static IEnumerable<CodeInstruction> AbstractEntityConstructorTranspiler(IEnumerable<CodeInstruction> instructions)
         {
             var codes = new List<CodeInstruction>(instructions);
-            MethodInfo injectingMyCodeRightBeforeThisMethod = typeof(Compendium).GetMethod("InitialiseForEntityTypes");
             var finalCodes = new List<CodeInstruction>();
+
             for (int i = 0; i < codes.Count; i++)
             {
                 finalCodes.Add(codes[i]);
@@ -56,8 +58,7 @@ namespace TheRoost.Beachcomber
             ///all other native transmutations are skipped
             finalCodes.Add(new CodeInstruction(OpCodes.Ldarg_0));
             finalCodes.Add(new CodeInstruction(OpCodes.Ldarg_1));
-            finalCodes.Add(new CodeInstruction(OpCodes.Call,
-                       typeof(Usurper).GetMethod("InvokeGenericImporterForAbstractRootEntity", BindingFlags.Static | BindingFlags.NonPublic)));
+            finalCodes.Add(new CodeInstruction(OpCodes.Call, invokeGenericImporterForAbstractRootEntity));
             finalCodes.Add(new CodeInstruction(OpCodes.Ret));
 
             return finalCodes.AsEnumerable();
@@ -69,11 +70,11 @@ namespace TheRoost.Beachcomber
             Type type = entity.GetType();
 
             if (genericImportMethods.ContainsKey(type) == false)
-                genericImportMethods.Add(type, typeof(Usurper).GetMethod("ImportRootEntity").MakeGenericMethod(new Type[] { type }));
+                genericImportMethods.Add(type, typeof(Usurper).GetMethodInvariant("ImportRootEntity").MakeGenericMethod(new Type[] { type }));
             genericImportMethods[type].Invoke(entity, new object[] { entity, entityData });
         }
 
-        public static void ImportRootEntity<T>(IEntityWithId entity, EntityData entityData) where T : AbstractEntity<T>
+        private static void ImportRootEntity<T>(IEntityWithId entity, EntityData entityData) where T : AbstractEntity<T>
         {
             //it makes everything a bit more hacky but I want id to be set first for the possible logs
             if (entityData.ValuesTable.ContainsKey("id"))

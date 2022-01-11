@@ -26,8 +26,8 @@ namespace TheRoost.Beachcomber
 
             //the most convenient place to catch and load simple properties that main game doesn't want, but mods do want is here
             TheRoostMachine.Patch(
-                original: typeof(AbstractEntity<Element>).GetMethod("PopUnknownKeysToLog", BindingFlags.NonPublic | BindingFlags.Instance),
-                prefix: typeof(CuckooLoader).GetMethod("KnowUnknown", BindingFlags.NonPublic | BindingFlags.Static));
+                original: typeof(AbstractEntity<Element>).GetMethodInvariant("PopUnknownKeysToLog"),
+                prefix: typeof(CuckooLoader).GetMethodInvariant("KnowUnknown"));
             //as things stand now, I can load custom properties directly from Usurper
             //but I'm leaving this separated as it's compatible with native loading, in case I'll cut the Usurper out at some point;
             //BeachcomberImporter stays independent of Usurper for the same reason
@@ -35,8 +35,8 @@ namespace TheRoost.Beachcomber
             //in a rare case we want some of our custom properties to be localizable
             //we ask the main game very gently to look it up for us
             TheRoostMachine.Patch(
-                original: typeof(EntityTypeDataLoader).GetMethod("GetLocalisableKeysForEntityType", BindingFlags.NonPublic | BindingFlags.Instance),
-                postfix: typeof(CuckooLoader).GetMethod("InsertCustomLocalizableKeys", BindingFlags.NonPublic | BindingFlags.Static));
+                original: typeof(EntityTypeDataLoader).GetMethodInvariant("GetLocalisableKeysForEntityType"),
+                postfix: typeof(CuckooLoader).GetMethodInvariant("InsertCustomLocalizableKeys"));
 
             //sometimes, a single property just isn't enough; sometimes we want to inject the whole class so it's loaded on par with native entities
             //now, I really don't want to handle the loading of these custom classes
@@ -45,10 +45,10 @@ namespace TheRoost.Beachcomber
             //so we plant all custom classes marked as FucineImportable from all loaded mods into the List and so the game now courteously loads them for us
             //the operation requires a bit of :knock: since we need to modify local variables of PopulateCompendium()
             //the the result well worth it
-            insertCustomTypesMethod = typeof(CuckooLoader).GetMethod("InsertCustomTypesForLoading", BindingFlags.Static | BindingFlags.NonPublic);
+            insertCustomTypesMethod = typeof(CuckooLoader).GetMethodInvariant("InsertCustomTypesForLoading");
             TheRoostMachine.Patch(
-                original: typeof(CompendiumLoader).GetMethod("PopulateCompendium"),
-                transpiler: typeof(CuckooLoader).GetMethod("CuckooTranspiler", BindingFlags.NonPublic | BindingFlags.Static));
+                original: typeof(CompendiumLoader).GetMethodInvariant("PopulateCompendium"),
+                transpiler: typeof(CuckooLoader).GetMethodInvariant("CuckooTranspiler"));
 
             //now, as a finishing touch, we just completely replace how the game handles importing
             //(well, json loading and thus localizing/merging/mod $ stays intact, actually, 
@@ -145,7 +145,7 @@ namespace TheRoost.Beachcomber
         private static IEnumerable<CodeInstruction> CuckooTranspiler(IEnumerable<CodeInstruction> instructions)
         {
             var codes = new List<CodeInstruction>(instructions);
-            MethodInfo injectingMyCodeRightBeforeThisMethod = typeof(Compendium).GetMethod("InitialiseForEntityTypes");
+            MethodInfo injectingMyCodeRightBeforeThisMethod = typeof(Compendium).GetMethodInvariant("InitialiseForEntityTypes");
 
             for (int i = 0; i < codes.Count; i++)
                 if (codes[i].Calls(injectingMyCodeRightBeforeThisMethod))

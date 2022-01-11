@@ -50,7 +50,7 @@ namespace TheRoost.Elegiast
             button.onClick = new Button.ButtonClickedEvent();
             button.onClick.AddListener(new UnityEngine.Events.UnityAction(this.OpenAchievementsMenu));
             //for OpenAchievementsMenu - since we can't pass params here easily
-            this.showoverlay = typeof(MenuScreenController).GetMethod("ShowOverlay", BindingFlags.Instance | BindingFlags.NonPublic);
+            this.showoverlay = typeof(MenuScreenController).GetMethodInvariant("ShowOverlay");
             this.menu = GameObject.FindObjectOfType<MenuScreenController>();
         }
 

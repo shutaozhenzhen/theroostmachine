@@ -26,7 +26,7 @@ namespace TheRoost.Vagabond
 
             AddCommand("reimport", CommandsCollection.Reimport);
             AddCommand("compendium", CommandsCollection.CompendiumInfo);
-            AddCommand("unity", CommandsCollection.GameObjectCommand);
+            AddCommand("unity", CommandsCollection.UnityObjectCommand);
         }
 
         static Dictionary<string, Action<string[]>> commandMethods = new Dictionary<string, Action<string[]>>();
@@ -189,10 +189,17 @@ namespace TheRoost.Vagabond
             }
         }
 
-        public static void GameObjectCommand(string[] command)
+        public static void UnityObjectCommand(string[] command)
         {
             try
             {
+                if (command == null || command.Length == 0)
+                {
+                    foreach (GameObject go in GameObject.FindObjectsOfType(typeof(GameObject)))
+                        Birdsong.Sing(go.name);
+                    return;
+                }
+
                 string[] entityPath = command[0].Split('.');
                 UnityEngine.Object unityObject = GetUnityObject(entityPath);
 
