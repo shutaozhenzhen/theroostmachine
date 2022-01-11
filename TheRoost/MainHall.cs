@@ -23,7 +23,7 @@ public static class TheRoostMachine
         TheRoost.Twins.EventManager.Unite();
         TheRoost.Elegiast.CustomAchievements.Remember();
         TheRoost.Vagabond.CommandLine.Enter();
-        Birdsong.Enact(); //mist
+        Birdsong.Enact(); //miscellania
 
         _alreadyAssembled = true;
         SecretHistories.UI.Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
