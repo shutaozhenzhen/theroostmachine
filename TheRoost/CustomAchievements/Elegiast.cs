@@ -18,6 +18,7 @@ namespace TheRoost.Elegiast
 {
     public static class CustomAchievements
     {
+        //<achievement id, unlock time>
         private static Dictionary<string, string> unlocks;
 
         const string propertyThatUnlocks = "elegiastUnlock";
@@ -67,12 +68,12 @@ namespace TheRoost.Elegiast
             CustomAchievement achievement = Watchman.Get<Compendium>().GetEntityById<CustomAchievement>(id);
             if (achievement == null)
             {
-                Birdsong.Sing("Attempt to unlock achievement '{0}' - no such achievement exists", id);
+                Birdsong.Sing(VerbosityLevel.SystemChatter, 0, "Attempt to unlock achievement '{0}' - no such achievement exists", id);
                 return false;
             }
             else if (isUnlocked(achievement))
             {
-                Birdsong.Sing("Attempt to unlock achievement '{0}' - but it is already unlocked", id);
+                Birdsong.Sing(VerbosityLevel.SystemChatter, 0, "Attempt to unlock achievement '{0}' - but it is already unlocked", id);
                 return false;
             }
 
@@ -94,9 +95,9 @@ namespace TheRoost.Elegiast
             unlocks = LoadUnlocks(cloudData);
             Dictionary<string, string> localUnlocks = LoadUnlocks(localData);
 
-            foreach (KeyValuePair<string, string> unlock in localUnlocks)
-                if (unlocks.ContainsKey(unlock.Key) == false)
-                    unlocks.Add(unlock.Key, unlock.Value);
+            foreach (string achievement in localUnlocks.Keys)
+                if (unlocks.ContainsKey(achievement) == false)
+                    unlocks.Add(achievement, localUnlocks[achievement]);
 
             if (unlocks.ContainsKey("custom_achievement_sample") == false)
             {
@@ -128,7 +129,7 @@ namespace TheRoost.Elegiast
             }
             else if (storefront.IsAvailable(StoreClient.Gog))
             {
-                ///GOG
+                ///TODO GOG (MAYBEY)
             }
 
             return new string[0];
@@ -148,7 +149,7 @@ namespace TheRoost.Elegiast
                 }
                 catch
                 {
-                    Birdsong.Sing("Malformed entry in {0}, deleting", datafile);
+                    Birdsong.Sing("Malformed achievement in {0}, deleting", datafile);
                 }
 
             return dictionary;
@@ -173,12 +174,12 @@ namespace TheRoost.Elegiast
                     SteamRemoteStorage.FileDelete(datafile);
                 else
                     SteamRemoteStorage.FileWrite(datafile, bytes, bytes.Length);
-                Birdsong.Sing("Succesfully pushed achievement info on the cloud storage");
+                Birdsong.Sing(VerbosityLevel.SystemChatter, 1, "Succesfully pushed achievement info on the cloud storage");
 
             }
             else if (storefront.IsAvailable(StoreClient.Gog))
             {
-                ///GOG!!!
+                ///TODO GOG (MAYBEY)
             }
         }
 
@@ -246,46 +247,6 @@ namespace TheRoost.Elegiast
             }
         }
 
-        public static void ClearAchievement(string achievement)
-        {
-            if (achievement == "all")
-            {
-                unlocks.Clear();
-                Birdsong.Sing("a l l  c u s t o m  a c h i e v e m e n t s  w e r e  r e s e t", achievement);
-                TrySyncAchievementStorages();
-                return;
-            }
-
-            if (unlocks.ContainsKey(achievement) == false)
-            {
-                Birdsong.Sing("Trying to reset achievement '{0}', but it's not unlocked, try checking 'achievements.cloud' and 'achievements.local' commands", achievement);
-                return;
-            }
-
-            unlocks.Remove(achievement);
-            Birdsong.Sing("Deleted achievement '{0}' from the local storage", achievement);
-            TrySyncAchievementStorages();
-        }
-
-        public static string ReadableCloudData()
-        {
-            return Decode(GetCloudData());
-        }
-
-        public static string ReadableLocalData()
-        {
-            return Decode(GetLocalData());
-        }
-
-        public static string ReadableAll()
-        {
-            string result = string.Empty;
-            foreach (KeyValuePair<string, string> entry in unlocks)
-                result += String.Format(achievementDataFormat, entry.Key, entry.Value);
-
-            return result;
-        }
-
         static string DateInvariant(DateTime date)
         {
             return DateTime.Now.ToString(new System.Globalization.CultureInfo("en-GB"));
@@ -327,6 +288,45 @@ namespace TheRoost.Elegiast
                 Birdsong.Sing(ex);
             }
         }
-    }
 
+        public static void ClearAchievement(string achievement)
+        {
+            if (achievement == "all")
+            {
+                unlocks.Clear();
+                Birdsong.Sing("a l l  c u s t o m  a c h i e v e m e n t s  w e r e  r e s e t", achievement);
+                TrySyncAchievementStorages();
+                return;
+            }
+
+            if (unlocks.ContainsKey(achievement) == false)
+            {
+                Birdsong.Sing("Trying to reset achievement '{0}', but it's not unlocked, try checking 'achievements.cloud' and 'achievements.local' commands", achievement);
+                return;
+            }
+
+            unlocks.Remove(achievement);
+            Birdsong.Sing("Deleted achievement '{0}' from the local storage", achievement);
+            TrySyncAchievementStorages();
+        }
+
+        public static string ReadableCloudData()
+        {
+            return Decode(GetCloudData());
+        }
+
+        public static string ReadableLocalData()
+        {
+            return Decode(GetLocalData());
+        }
+
+        public static string ReadableAll()
+        {
+            string result = string.Empty;
+            foreach (KeyValuePair<string, string> entry in unlocks)
+                result += String.Format(achievementDataFormat, entry.Key, entry.Value);
+
+            return result;
+        }
+    }
 }
