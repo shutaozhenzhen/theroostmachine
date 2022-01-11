@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using System.Collections;
+using System.ComponentModel;
 
 using SecretHistories.UI;
 using SecretHistories.Fucine;
@@ -37,19 +38,27 @@ namespace TheRoost
 
         private static string FormatMessage(object wrapMessageMaybe, params object[] furtherData)
         {
+            if (wrapMessageMaybe == null)
+                wrapMessageMaybe = "null";
+
+            if (furtherData == null)
+                return wrapMessageMaybe.ToString();
+
+            for (var n = 0; n < furtherData.Length; n++)
+                if (furtherData[n] == null)
+                    furtherData[n] = "null";
+
             if (wrapMessageMaybe.ToString().Contains("{0}"))
                 return String.Format(wrapMessageMaybe.ToString(), furtherData);
             else
-                return wrapMessageMaybe.ToString() + ' ' + furtherData.UnpackAsString();
+                return String.Concat(wrapMessageMaybe.ToString(), " ", furtherData.UnpackAsString());
         }
 
         public static string UnpackAsString(this IEnumerable collection)
         {
             string result = string.Empty;
-            if (collection != null)
-                foreach (object obj in collection)
-                    result += (obj == null ? "null" : obj.ToString()) + ' ';
-
+            foreach (object obj in collection)
+                result += obj.ToString() + ' ';
             return result;
         }
 
@@ -58,20 +67,59 @@ namespace TheRoost
             TheRoost.Beachcomber.CustomLoader.ClaimProperty<TEntity, TProperty>(propertyName, localize);
         }
 
-        public static GameObject FindInChildren(this GameObject go, string targetName, bool nested = false)
+        public static GameObject FindGameObject(string name, bool includeInactive)
         {
+            //NB - case sensitive
+            UnityEngine.GameObject result = GameObject.Find(name);
+
+            if (result == null)
+            {
+                GameObject[] allGO = Resources.FindObjectsOfTypeAll<GameObject>();
+                foreach (GameObject go in allGO)
+                    if (go.name == name)
+                        return go;
+            }
+
+            return result;
+        }
+
+        public static GameObject FindInChildren(this GameObject go, string name, bool nested = false)
+        {
+            //NB - case insensitive
             Transform transform = go.transform;
             for (int n = 0; n < transform.childCount; n++)
-                if (String.Equals(transform.GetChild(n).name, targetName, StringComparison.OrdinalIgnoreCase))
+                if (String.Equals(transform.GetChild(n).name, name, StringComparison.OrdinalIgnoreCase))
                     return transform.GetChild(n).gameObject;
                 else if (nested)
                 {
-                    GameObject nestedFound = FindInChildren(transform.GetChild(n).gameObject, targetName, true);
+                    GameObject nestedFound = FindInChildren(transform.GetChild(n).gameObject, name, true);
                     if (nestedFound != null)
                         return nestedFound;
                 }
 
             return null;
+        }
+
+        public static object ConvertValue(object data, Type destinationType)
+        {
+            try
+            {
+                TypeConverter converter = TypeDescriptor.GetConverter(destinationType);
+                Type sourceType = data.GetType();
+
+                if (sourceType == destinationType)
+                    return data;
+                else if (sourceType == typeof(string) || destinationType.IsEnum)
+                    return converter.ConvertFromInvariantString(data.ToString());
+                else if (converter.CanConvertFrom(sourceType))
+                    return converter.ConvertFrom(data);
+                else
+                    return System.Convert.ChangeType(data, destinationType);
+            }
+            catch
+            {
+                throw;
+            }
         }
 
         public static void SetBabelLabel(this Babelfish babelfish, string locLabel)

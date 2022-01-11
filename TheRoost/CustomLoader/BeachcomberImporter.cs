@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
 using System.Collections;
 using System.Reflection;
 
@@ -124,17 +123,7 @@ namespace TheRoost.Beachcomber
         {
             try
             {
-                TypeConverter converter = TypeDescriptor.GetConverter(destinationType);
-                Type sourceType = valueData.GetType();
-
-                if (sourceType == destinationType)
-                    return valueData;
-                else if (sourceType == typeof(string) || destinationType.IsEnum)
-                    return converter.ConvertFromInvariantString(valueData.ToString());
-                else if (converter.CanConvertFrom(sourceType))
-                    return converter.ConvertFrom(valueData);
-                else
-                    return System.Convert.ChangeType(valueData, destinationType);
+                return Birdsong.ConvertValue(valueData, destinationType);
             }
             catch
             {
