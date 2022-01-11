@@ -91,11 +91,14 @@ namespace TheRoost.Beachcomber
                     object propertyValue;
                     if (entityData.ValuesTable.Contains(propertyName))
                     {
-                        propertyValue = CustomImporter.ImportProperty(entity, entityData.ValuesTable[propertyName], propertyType);
-
-                        if (propertyValue == null)
-                            Birdsong.Sing("Failed to load property '{0}' for {1} id '{2}'", propertyName, typeof(T).Name, entity.Id);
-
+                        try
+                        {
+                            propertyValue = CustomImporter.ImportProperty(entity, entityData.ValuesTable[propertyName], propertyName, propertyType);
+                        }
+                        catch
+                        {
+                            throw new Exception("FAILED TO IMPORT JSON");
+                        }
                         entityData.ValuesTable.Remove(propertyName);
                     }
                     else

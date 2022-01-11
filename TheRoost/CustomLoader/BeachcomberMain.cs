@@ -130,9 +130,15 @@ namespace TheRoost.Beachcomber
                             if (loadedPropertiesStorage.ContainsKey(entity) == false)
                                 loadedPropertiesStorage[entity] = new Dictionary<string, object>();
 
-                            object value = CustomImporter.ImportProperty(entity, propertiesToComb[propertyName], propertiesToClaim[propertyName]);
-                            if (value != null)
+                            try
+                            {
+                                object value = CustomImporter.ImportProperty(entity, propertiesToComb[propertyName], propertyName, propertiesToClaim[propertyName]);
                                 loadedPropertiesStorage[entity].Add(propertyName, value);
+                            }
+                            catch
+                            {
+                                throw new Exception("FAILED TO IMPORT JSON");
+                            }
                         }
             }
         }

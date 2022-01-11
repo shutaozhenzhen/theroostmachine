@@ -11,15 +11,23 @@ namespace TheRoost.Beachcomber
     //leaving this one public in case someone/me will need to load something directly
     public static class CustomImporter
     {
-        public static object ImportProperty(IEntityWithId parentEntity, object valueData, Type propertyType)
+        public static object ImportProperty(IEntityWithId parentEntity, object valueData, string propertyName, Type propertyType)
         {
             Importer importer = GetImporterForType(propertyType);
-            object propertyValue = importer.Invoke(parentEntity, valueData, propertyType);
 
-            return propertyValue;
+            try
+            {
+                object propertyValue = importer.Invoke(valueData, propertyType);
+                return propertyValue;
+            }
+            catch
+            {
+                Birdsong.Sing("FAILED TO LOAD PROPERTY '{0}' FOR {1} ID '{2}'", propertyName, parentEntity.GetType().Name.ToUpper(), parentEntity.Id);
+                throw;
+            }
         }
 
-        delegate object Importer(IEntityWithId parentEntity, object valueData, Type propertyType);
+        delegate object Importer(object valueData, Type propertyType);
         static Importer GetImporterForType(Type type)
         {
             if (type.isList())
@@ -39,7 +47,7 @@ namespace TheRoost.Beachcomber
         public static bool isFucineEntity(this Type type) { return typeof(IEntityWithId).IsAssignableFrom(type); }
         public static bool isStruct(this Type type) { return type.IsValueType && !type.IsEnum && type.Namespace != "System"; }
 
-        public static IList ImportList(IEntityWithId parentEntity, object listData, Type listType)
+        public static IList ImportList(object listData, Type listType)
         {
             IList list = FactoryInstantiator.CreateObjectWithDefaultConstructor(listType) as IList;
 
@@ -59,25 +67,25 @@ namespace TheRoost.Beachcomber
                 {
                     //to reduce boilerplate in json, I allow loading of a single-entry lists from plain strings
                     //i.e. { "someList": [ "entry" ] } and { "someList": "entry" } will yield the same result
-                    object importedSingularEntry = entryImporter.Invoke(parentEntity, listData, expectedEntryType);
+                    object importedSingularEntry = entryImporter.Invoke(listData, expectedEntryType);
                     list.Add(importedSingularEntry);
                 }
                 else foreach (object entry in dataAsArrayList)
                     {
-                        object importedEntry = entryImporter.Invoke(parentEntity, entry, expectedEntryType);
+                        object importedEntry = entryImporter.Invoke(entry, expectedEntryType);
                         list.Add(importedEntry);
                     }
 
                 return list;
             }
-            catch (Exception ex)
+            catch
             {
-                Birdsong.Sing("Unable to import a list[] in {0} id '{1}':\n{2}", parentEntity.GetType().Name, parentEntity.Id, ex);
-                return null;
+                Birdsong.Sing("LIST[] IS MALFORMED, THEREFORE:");
+                throw;
             }
         }
 
-        public static IDictionary ImportDictionary(IEntityWithId parentEntity, object dictionaryData, Type dictionaryType)
+        public static IDictionary ImportDictionary(object dictionaryData, Type dictionaryType)
         {
             IDictionary dictionary = FactoryInstantiator.CreateObjectWithDefaultConstructor(dictionaryType) as IDictionary;
 
@@ -98,21 +106,21 @@ namespace TheRoost.Beachcomber
 
                 foreach (DictionaryEntry dictionaryEntry in entityData.ValuesTable)
                 {
-                    object key = keyImporter.Invoke(parentEntity, dictionaryEntry.Key, dictionaryKeyType);
-                    object value = valueImporter.Invoke(parentEntity, dictionaryEntry.Value, dictionaryValueType);
+                    object key = keyImporter.Invoke(dictionaryEntry.Key, dictionaryKeyType);
+                    object value = valueImporter.Invoke(dictionaryEntry.Value, dictionaryValueType);
                     dictionary.Add(key, value);
                 }
 
                 return dictionary;
             }
-            catch (Exception ex)
+            catch
             {
-                Birdsong.Sing("Unable to import a dictionary{} in {0} id '{1}':\n{2}", parentEntity.GetType().Name, parentEntity.Id, ex);
-                return null;
+                Birdsong.Sing("DICTIONARY{} IS MALFORMED, THEREFORE:");
+                throw;
             }
         }
 
-        public static object ImportSimpleValue(IEntityWithId parentEntity, object valueData, Type destinationType)
+        public static object ImportSimpleValue(object valueData, Type destinationType)
         {
             try
             {
@@ -128,14 +136,14 @@ namespace TheRoost.Beachcomber
                 else
                     return System.Convert.ChangeType(valueData, destinationType);
             }
-            catch (Exception ex)
+            catch
             {
-                Birdsong.Sing("Unable to parse a value {0} in {1} id '{2}':\n{3}", valueData, parentEntity.GetType().Name, parentEntity.Id, ex);
-                return null;
+                Birdsong.Sing("UNABLE TO PARSE A VALUE DATA: '{0}' as {1}, THEREFORE:", valueData, destinationType.Name.ToUpper());
+                throw;
             }
         }
 
-        public static IEntityWithId ImportFucineEntity(IEntityWithId parentEntity, object entityData, Type entityType)
+        public static IEntityWithId ImportFucineEntity(object entityData, Type entityType)
         {
             try
             {
@@ -157,23 +165,24 @@ namespace TheRoost.Beachcomber
                     return quickSpecEntity as IEntityWithId;
                 }
 
-                throw new Exception("Entity Data isn't a dictionary{}, and the entity isn't a Quick Spec entity - so it cannot load from a simple string");
+                Birdsong.Sing("ENTITY DATA IS NOT A DICTIONARY{}, AND THE ENTITY ISN'T A QUICK SPEC ENTITY, SO IT CAN NOT LOAD FROM A SINGLE STRING, THEREFORE:");
+                throw new NotSupportedException();
             }
-            catch (Exception ex)
+            catch
             {
-                Birdsong.Sing("Unable to import {0}{} in {1} id '{2}':\n{3}", entityType.Name, parentEntity.GetType().Name, parentEntity.Id, ex);
-                return null;
+                Birdsong.Sing("ENTITY DATA IS MALFORMED, THEREFORE:");
+                throw;
             }
         }
 
-        public static object ImportStruct(IEntityWithId parentEntity, object structData, Type structType)
+        public static object ImportStruct(object structData, Type structType)
         {
             try
             {
                 ArrayList dataAsList = structData as ArrayList;
 
                 if (dataAsList != null) //list-loading of structs is allowed precisely for one (the first one) constructor
-                    //it's definitely enough for now for loading of vectors/colours
+                //it's definitely enough for now for loading of vectors/colours
                 {
                     ConstructorInfo constructor = structType.GetConstructors()[0];
                     return constructor.Invoke(dataAsList.ToArray());
@@ -184,10 +193,10 @@ namespace TheRoost.Beachcomber
                     return constructor.Invoke(new object[] { structData.ToString() });
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                Birdsong.Sing("Unable to parse a struct[] in {0} id '{1}', reason:\n{2}", parentEntity.GetType().Name, parentEntity.Id, ex);
-                return null;
+                Birdsong.Sing("STRUCT DATA[] IS MALFORMED, THEREFORE:");
+                throw;
             }
         }
     }
