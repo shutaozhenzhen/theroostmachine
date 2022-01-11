@@ -16,7 +16,7 @@ using TheRoost.Elegiast.Entities;
 
 namespace TheRoost.Elegiast
 {
-    public static class CustomAchievements
+    public static class CustomAchievementsManager
     {
         //<achievement id, unlock time>
         private static Dictionary<string, string> unlocks;
@@ -28,7 +28,7 @@ namespace TheRoost.Elegiast
 
         static string localFile { get { return Application.persistentDataPath + "\\" + datafile; } }
 
-        internal static void Remember()
+        internal static void Enact()
         {
             if (TheRoostMachine.alreadyAssembled)
                 return;
@@ -272,10 +272,10 @@ namespace TheRoost.Elegiast
                 string data = string.Empty;
                 switch (command[0])
                 {
-                    case "reset": CustomAchievements.ClearAchievement(command[1]); return;
-                    case "cloud": data = CustomAchievements.ReadableCloudData(); break;
-                    case "local": data = CustomAchievements.ReadableLocalData(); break;
-                    case "all": data = CustomAchievements.ReadableAll(); break;
+                    case "reset": CustomAchievementsManager.ClearAchievement(command[1]); return;
+                    case "cloud": data = CustomAchievementsManager.ReadableCloudData(); break;
+                    case "local": data = CustomAchievementsManager.ReadableLocalData(); break;
+                    case "all": data = CustomAchievementsManager.ReadableAll(); break;
                 }
 
                 if (command.Length == 1)

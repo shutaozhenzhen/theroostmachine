@@ -13,13 +13,13 @@ using UnityEngine;
 
 namespace TheRoost.Beachcomber
 {
-    public static class CustomLoader
+    public static class CuckooLoader
     {
         private readonly static Dictionary<Type, Dictionary<string, Type>> knownUnknownProperties = new Dictionary<Type, Dictionary<string, Type>>();
         private readonly static Dictionary<Type, List<string>> localizableUnknownProperties = new Dictionary<Type, List<string>>();
         private readonly static Dictionary<IEntityWithId, Dictionary<string, object>> loadedPropertiesStorage = new Dictionary<IEntityWithId, Dictionary<string, object>>();
 
-        internal static void Claim()
+        internal static void Enact()
         {
             if (TheRoostMachine.alreadyAssembled)
                 return;
@@ -27,7 +27,7 @@ namespace TheRoost.Beachcomber
             //the most convenient place to catch and load simple properties that main game doesn't want, but mods do want is here
             TheRoostMachine.Patch(
                 original: typeof(AbstractEntity<Element>).GetMethod("PopUnknownKeysToLog", BindingFlags.NonPublic | BindingFlags.Instance),
-                prefix: typeof(CustomLoader).GetMethod("KnowUnknown", BindingFlags.NonPublic | BindingFlags.Static));
+                prefix: typeof(CuckooLoader).GetMethod("KnowUnknown", BindingFlags.NonPublic | BindingFlags.Static));
             //as things stand now, I can load custom properties directly from Usurper
             //but I'm leaving this separated as it's compatible with native loading, in case I'll cut the Usurper out at some point;
             //BeachcomberImporter stays independent of Usurper for the same reason
@@ -36,7 +36,7 @@ namespace TheRoost.Beachcomber
             //we ask the main game very gently to look it up for us
             TheRoostMachine.Patch(
                 original: typeof(EntityTypeDataLoader).GetMethod("GetLocalisableKeysForEntityType", BindingFlags.NonPublic | BindingFlags.Instance),
-                postfix: typeof(CustomLoader).GetMethod("InsertCustomLocalizableKeys", BindingFlags.NonPublic | BindingFlags.Static));
+                postfix: typeof(CuckooLoader).GetMethod("InsertCustomLocalizableKeys", BindingFlags.NonPublic | BindingFlags.Static));
 
             //sometimes, a single property just isn't enough; sometimes we want to inject the whole class so it's loaded on par with native entities
             //now, I really don't want to handle the loading of these custom classes
@@ -45,9 +45,10 @@ namespace TheRoost.Beachcomber
             //so we plant all custom classes marked as FucineImportable from all loaded mods into the List and so the game now courteously loads them for us
             //the operation requires a bit of :knock: since we need to modify local variables of PopulateCompendium()
             //the the result well worth it
+            insertCustomTypesMethod = typeof(CuckooLoader).GetMethod("InsertCustomTypesForLoading", BindingFlags.Static | BindingFlags.NonPublic);
             TheRoostMachine.Patch(
                 original: typeof(CompendiumLoader).GetMethod("PopulateCompendium"),
-                transpiler: typeof(CustomLoader).GetMethod("CuckooTranspiler", BindingFlags.NonPublic | BindingFlags.Static));
+                transpiler: typeof(CuckooLoader).GetMethod("CuckooTranspiler", BindingFlags.NonPublic | BindingFlags.Static));
 
             //now, as a finishing touch, we just completely replace how the game handles importing
             //(well, json loading and thus localizing/merging/mod $ stays intact, actually, 
@@ -55,7 +56,7 @@ namespace TheRoost.Beachcomber
             Usurper.OverthrowNativeImporting();
         }
 
-        internal static void ClaimProperty<TEntity, TProperty>(string propertyName, bool localize) where TEntity : AbstractEntity<TEntity>
+        public static void ClaimProperty<TEntity, TProperty>(string propertyName, bool localize) where TEntity : AbstractEntity<TEntity>
         {
             Type entityType = typeof(TEntity);
             Type propertyType = typeof(TProperty);
@@ -86,25 +87,16 @@ namespace TheRoost.Beachcomber
             }
         }
 
-        internal static T RetrieveProperty<T>(IEntityWithId owner, string propertyName)
-        {
-            object result = RetrieveProperty(owner, propertyName);
-            if (result == null)
-                return default(T);
-            else
-                return (T)result;
-        }
-
-        internal static object RetrieveProperty(IEntityWithId owner, string propertyName)
+        public static T RetrieveProperty<T>(IEntityWithId owner, string propertyName)
         {
             propertyName = propertyName.ToLower();
             if (loadedPropertiesStorage.ContainsKey(owner) && loadedPropertiesStorage[owner].ContainsKey(propertyName))
-                return loadedPropertiesStorage[owner][propertyName];
+                return (T)loadedPropertiesStorage[owner][propertyName];
             else
-                return null;
+                return default(T);
         }
 
-        internal static bool hasCustomProperty(IEntityWithId owner, string propertyName)
+        public static bool hasCustomProperty(IEntityWithId owner, string propertyName)
         {
             propertyName = propertyName.ToLower();
             return (loadedPropertiesStorage.ContainsKey(owner) && loadedPropertiesStorage[owner].ContainsKey(propertyName));
@@ -132,7 +124,7 @@ namespace TheRoost.Beachcomber
 
                             try
                             {
-                                object value = CustomImporter.ImportProperty(entity, propertiesToComb[propertyName], propertyName, propertiesToClaim[propertyName]);
+                                object value = Panimporter.ImportProperty(entity, propertiesToComb[propertyName], propertyName, propertiesToClaim[propertyName]);
                                 loadedPropertiesStorage[entity].Add(propertyName, value);
                             }
                             catch
@@ -162,15 +154,16 @@ namespace TheRoost.Beachcomber
                     //(those two lines are argument loading for InitialiseForEntityTypes)
 
                     //all I do here is locate several local variables (and one instance's private), load them as arguments
-                    //and lastly invoke Beachcomber.Cuckoo method with these as its arguments
+                    //and lastly invoke InsertCustomTypesForLoading() method with these as its arguments
                     codes.Insert(i++, new CodeInstruction(OpCodes.Ldloca_S, 2)); //list of loadable types (local)
                     codes.Insert(i++, new CodeInstruction(OpCodes.Ldloca_S, 1)); //dictionary of entity loaders (local)
                     codes.Insert(i++, new CodeInstruction(OpCodes.Ldarg_2)); //culture id (argument)    
                     codes.Insert(i++, new CodeInstruction(OpCodes.Ldarg_0)); //instance itself (is needed to locate its private variable next)
                     codes.Insert(i++, new CodeInstruction(OpCodes.Ldfld, //locating instance's private variable _log
                         typeof(CompendiumLoader).GetField("_log", BindingFlags.Instance | BindingFlags.NonPublic)));
-                    codes.Insert(i++, new CodeInstruction(OpCodes.Call, //calling Beachcomber.Cuckoo() with all of these
-                        typeof(CustomLoader).GetMethod("Cuckoo", BindingFlags.Static | BindingFlags.NonPublic)));
+                    //finally, calling InsertCustomTypesForLoading() with all of these arguments
+                    //the method is wrapped in a static variable for, as it was being put, "anal" purposes
+                    codes.Insert(i++, new CodeInstruction(OpCodes.Call, insertCustomTypesMethod));
 
                     break;
                 }
@@ -178,8 +171,9 @@ namespace TheRoost.Beachcomber
             return codes.AsEnumerable();
         }
 
+        private static MethodInfo insertCustomTypesMethod;
         //not sure *why* we need refs here, but we *need* them (otherwise error (no joke, don't delete refs!!!!!))
-        private static void Cuckoo(ref List<Type> typesToLoad, ref Dictionary<string, EntityTypeDataLoader> fucineLoaders, string cultureId, ContentImportLog log)
+        private static void InsertCustomTypesForLoading(ref List<Type> typesToLoad, ref Dictionary<string, EntityTypeDataLoader> fucineLoaders, string cultureId, ContentImportLog log)
         {
             foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
                 if (assembly.isModAssembly())
@@ -210,21 +204,21 @@ namespace TheRoost.Beachcomber
 
 namespace TheRoost
 {
-    public partial class TheRoostAccessExtensions
+    public partial class Birdsong
     {
-        public static T RetrieveProperty<T>(this IEntityWithId owner, string propertyName)
+        public static void ClaimProperty<TEntity, TProperty>(string propertyName, bool localize = false) where TEntity : AbstractEntity<TEntity>
         {
-            return TheRoost.Beachcomber.CustomLoader.RetrieveProperty<T>(owner, propertyName);
+            TheRoost.Beachcomber.CuckooLoader.ClaimProperty<TEntity, TProperty>(propertyName, localize);
         }
 
-        public static object RetrieveProperty(this IEntityWithId owner, string propertyName)
+        public static T RetrieveProperty<T>(this IEntityWithId owner, string propertyName)
         {
-            return TheRoost.Beachcomber.CustomLoader.RetrieveProperty(owner, propertyName);
+            return TheRoost.Beachcomber.CuckooLoader.RetrieveProperty<T>(owner, propertyName);
         }
 
         public static bool HasCustomProperty(this IEntityWithId owner, string propertyName)
         {
-            return TheRoost.Beachcomber.CustomLoader.hasCustomProperty(owner, propertyName);
+            return TheRoost.Beachcomber.CuckooLoader.hasCustomProperty(owner, propertyName);
         }
     }
 }

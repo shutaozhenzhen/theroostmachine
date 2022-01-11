@@ -46,8 +46,8 @@ namespace TheRoost.Elegiast.Entities
         {
             get { if (unlocked) return ResourcesManager.GetSpriteForElement(iconUnlocked); else return ResourcesManager.GetSpriteForElement(iconLocked); }
         }
-        public DateTime unlockDate { get { return CustomAchievements.GetUnlockTime(this.Id); } }
-        public bool unlocked { get { return CustomAchievements.isUnlocked(this); } }
+        public DateTime unlockDate { get { return CustomAchievementsManager.GetUnlockTime(this.Id); } }
+        public bool unlocked { get { return CustomAchievementsManager.isUnlocked(this); } }
 
         public CustomAchievement() { }
         public CustomAchievement(SecretHistories.Fucine.DataImport.EntityData importDataForEntity, ContentImportLog log)
@@ -82,7 +82,7 @@ namespace TheRoost.Elegiast.Entities
         public VanillaAchievement(SecretHistories.Fucine.DataImport.EntityData importDataForEntity, ContentImportLog log)
             : base(importDataForEntity, log)
         {
-            CustomAchievements.CheckVanillaAchievement(this,  out _unlocked, out legit, out _hidden, out unlockTime);
+            CustomAchievementsManager.CheckVanillaAchievement(this,  out _unlocked, out legit, out _hidden, out unlockTime);
         }
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
     }

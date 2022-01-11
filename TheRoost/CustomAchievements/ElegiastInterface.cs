@@ -395,6 +395,23 @@ namespace TheRoost.Elegiast
     }
 }
 
+namespace TheRoost
+{
+    public partial class Birdsong
+    {
+        public static void SetBabelLabel(this Babelfish babelfish, string locLabel)
+        {
+            if (babelfish == null)
+            {
+                Birdsong.Sing("No Babelfish component on the GameObject '{0}'", babelfish.gameObject.name);
+                return;
+            }
+
+            typeof(Babelfish).GetField("locLabel", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(babelfish, locLabel);
+            babelfish.SetValuesForCurrentCulture();
+        }
+    }
+}
 //this is the list of all the achievements ordered as in Steam global stats at the moment
 /*
 "A_CULT_LANTERN", "A_ENDING_DESPAIRENDING", "A_ENDING_DEATHOFTHEBODY", "A_MANSUS_WOOD", "A_MANSUS_WHITEDOOR", "A_ENDING_WINTERSACRIFICE",

@@ -19,11 +19,11 @@ public static class TheRoostMachine
         //in case something breaks during the setup
         SecretHistories.UI.Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
 
-        TheRoost.Beachcomber.CustomLoader.Claim();
-        TheRoost.Twins.EventManager.Unite();
-        TheRoost.Elegiast.CustomAchievements.Remember();
-        TheRoost.Vagabond.CommandLine.Enter();
-        Birdsong.Enact(); //miscellania
+        TheRoost.Beachcomber.CuckooLoader.Enact();
+        TheRoost.Twins.EventManager.Enact();
+        TheRoost.Elegiast.CustomAchievementsManager.Enact();
+        TheRoost.Vagabond.CommandLine.Enact();
+        TheRoost.Birdsong.Enact(); //miscellania
 
         _alreadyAssembled = true;
         SecretHistories.UI.Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Reflection;
+using System.ComponentModel;
 
 using SecretHistories.Fucine;
 using SecretHistories.Fucine.DataImport;
@@ -8,7 +9,7 @@ using SecretHistories.Fucine.DataImport;
 namespace TheRoost.Beachcomber
 {
     //leaving this one public in case someone/me will need to load something directly
-    public static class CustomImporter
+    public static class Panimporter
     {
         public static object ImportProperty(IEntityWithId parentEntity, object valueData, string propertyName, Type propertyType)
         {
@@ -123,11 +124,33 @@ namespace TheRoost.Beachcomber
         {
             try
             {
-                return Birdsong.ConvertValue(valueData, destinationType);
+                return ConvertValue(valueData, destinationType);
             }
             catch
             {
                 Birdsong.Sing("UNABLE TO PARSE A VALUE DATA: '{0}' as {1}, THEREFORE:", valueData, destinationType.Name.ToUpper());
+                throw;
+            }
+        }
+
+        public static object ConvertValue(object data, Type destinationType)
+        {
+            try
+            {
+                TypeConverter converter = TypeDescriptor.GetConverter(destinationType);
+                Type sourceType = data.GetType();
+
+                if (sourceType == destinationType)
+                    return data;
+                else if (sourceType == typeof(string) || destinationType.IsEnum)
+                    return converter.ConvertFromInvariantString(data.ToString());
+                else if (converter.CanConvertFrom(sourceType))
+                    return converter.ConvertFrom(data);
+                else
+                    return System.Convert.ChangeType(data, destinationType);
+            }
+            catch
+            {
                 throw;
             }
         }

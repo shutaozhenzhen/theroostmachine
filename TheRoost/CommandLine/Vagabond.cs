@@ -17,16 +17,12 @@ namespace TheRoost.Vagabond
 {
     public class CommandLine : MonoBehaviour
     {
-        internal static void Enter()
+        internal static void Enact()
         {
             if (TheRoostMachine.alreadyAssembled)
                 return;
 
             AtTimeOfPower.MainMenuLoaded.Schedule(CreateCommandLine, PatchType.Postfix);
-
-            TheRoostMachine.Patch(
-                original: typeof(SecretHistories.UI.NotificationWindow).GetMethod("SetDetails", BindingFlags.Public | BindingFlags.Instance),
-                prefix: typeof(CommandsCollection).GetMethod("ShowNotificationWithIntervention", BindingFlags.NonPublic | BindingFlags.Static));
 
             AddCommand("reimport", CommandsCollection.Reimport);
             AddCommand("compendium", CommandsCollection.CompendiumInfo);
@@ -181,7 +177,7 @@ namespace TheRoost.Vagabond
 
                 if (entity.HasCustomProperty(propertyName))
                 {
-                    Birdsong.Sing("Custom property '{0}' of {1} '{2}': {3}", propertyName, entityType.Name, entity.Id, entity.RetrieveProperty(propertyName));
+                    Birdsong.Sing("Custom property '{0}' of {1} '{2}': {3}", propertyName, entityType.Name, entity.Id, entity.RetrieveProperty<object>(propertyName));
                     return;
                 }
 
@@ -233,7 +229,7 @@ namespace TheRoost.Vagabond
                 for (var n = 3; n < command.Length; n++)
                     stringValue += " " + command[n];
 
-                object value = Birdsong.ConvertValue(stringValue, targetProperty.PropertyType);
+                object value = Beachcomber.Panimporter.ConvertValue(stringValue, targetProperty.PropertyType);
                 targetProperty.SetValue(unityObject, value);
             }
             catch (Exception ex)
@@ -281,6 +277,45 @@ namespace TheRoost.Vagabond
                 throw new Exception(String.Format("GameObject '{0}' doesn't have {1} as one of its Components", go.name, path[i]));
 
             return component;
+        }
+    }
+}
+
+namespace TheRoost
+{
+    public static partial class Birdsong
+    {
+        public static GameObject FindGameObject(string name, bool includeInactive)
+        {
+            //NB - case sensitive
+            UnityEngine.GameObject result = GameObject.Find(name);
+
+            if (result == null)
+            {
+                GameObject[] allGO = Resources.FindObjectsOfTypeAll<GameObject>();
+                foreach (GameObject go in allGO)
+                    if (go.name == name)
+                        return go;
+            }
+
+            return result;
+        }
+
+        public static GameObject FindInChildren(this GameObject go, string name, bool nested = false)
+        {
+            //NB - case insensitive
+            Transform transform = go.transform;
+            for (int n = 0; n < transform.childCount; n++)
+                if (String.Equals(transform.GetChild(n).name, name, StringComparison.OrdinalIgnoreCase))
+                    return transform.GetChild(n).gameObject;
+                else if (nested)
+                {
+                    GameObject nestedFound = FindInChildren(transform.GetChild(n).gameObject, name, true);
+                    if (nestedFound != null)
+                        return nestedFound;
+                }
+
+            return null;
         }
     }
 }

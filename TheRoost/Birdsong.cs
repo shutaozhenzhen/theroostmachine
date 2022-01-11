@@ -1,18 +1,16 @@
 ﻿using System;
 using System.Reflection;
 using System.Collections;
-using System.ComponentModel;
 
 using SecretHistories.UI;
-using SecretHistories.Fucine;
 
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace TheRoost
 {
-    //extension class
-    public static class Birdsong
+    //extension class (spread around the files, with functions defined where they are needed)
+    public static partial class Birdsong
     {
         internal static void Enact()
         {
@@ -62,78 +60,6 @@ namespace TheRoost
             return result;
         }
 
-        public static void ClaimProperty<TEntity, TProperty>(string propertyName, bool localize = false) where TEntity : AbstractEntity<TEntity>
-        {
-            TheRoost.Beachcomber.CustomLoader.ClaimProperty<TEntity, TProperty>(propertyName, localize);
-        }
-
-        public static GameObject FindGameObject(string name, bool includeInactive)
-        {
-            //NB - case sensitive
-            UnityEngine.GameObject result = GameObject.Find(name);
-
-            if (result == null)
-            {
-                GameObject[] allGO = Resources.FindObjectsOfTypeAll<GameObject>();
-                foreach (GameObject go in allGO)
-                    if (go.name == name)
-                        return go;
-            }
-
-            return result;
-        }
-
-        public static GameObject FindInChildren(this GameObject go, string name, bool nested = false)
-        {
-            //NB - case insensitive
-            Transform transform = go.transform;
-            for (int n = 0; n < transform.childCount; n++)
-                if (String.Equals(transform.GetChild(n).name, name, StringComparison.OrdinalIgnoreCase))
-                    return transform.GetChild(n).gameObject;
-                else if (nested)
-                {
-                    GameObject nestedFound = FindInChildren(transform.GetChild(n).gameObject, name, true);
-                    if (nestedFound != null)
-                        return nestedFound;
-                }
-
-            return null;
-        }
-
-        public static object ConvertValue(object data, Type destinationType)
-        {
-            try
-            {
-                TypeConverter converter = TypeDescriptor.GetConverter(destinationType);
-                Type sourceType = data.GetType();
-
-                if (sourceType == destinationType)
-                    return data;
-                else if (sourceType == typeof(string) || destinationType.IsEnum)
-                    return converter.ConvertFromInvariantString(data.ToString());
-                else if (converter.CanConvertFrom(sourceType))
-                    return converter.ConvertFrom(data);
-                else
-                    return System.Convert.ChangeType(data, destinationType);
-            }
-            catch
-            {
-                throw;
-            }
-        }
-
-        public static void SetBabelLabel(this Babelfish babelfish, string locLabel)
-        {
-            if (babelfish == null)
-            {
-                Birdsong.Sing("No Babelfish component on the GameObject '{0}'", babelfish.gameObject.name);
-                return;
-            }
-
-            typeof(Babelfish).GetField("locLabel", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(babelfish, locLabel);
-            babelfish.SetValuesForCurrentCulture();
-        }
-
         public static bool intervention = false;
         public static Sprite interventionSprite;
         public static float interventionDuration;
@@ -179,16 +105,16 @@ namespace TheRoost
             delayer.StartCoroutine(delayer.ExecuteDelayed(action, actor, parameters, delay));
         }
 
+        public static void Schedule(Delegate action, YieldInstruction delay, object actor = null, object[] parameters = null)
+        {
+            Schedule(action.Method, delay, actor, parameters);
+        }
+
         internal IEnumerator ExecuteDelayed(MethodInfo action, object actor, object[] parameters, YieldInstruction delay)
         {
             yield return delay;
             action.Invoke(actor, parameters);
             Destroy(this.gameObject);
-        }
-
-        public static void Schedule(Delegate action, YieldInstruction delay, object actor = null, object[] parameters = null)
-        {
-            Schedule(action.Method, delay, actor, parameters);
         }
     }
 }

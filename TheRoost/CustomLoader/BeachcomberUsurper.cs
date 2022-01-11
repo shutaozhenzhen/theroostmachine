@@ -93,7 +93,7 @@ namespace TheRoost.Beachcomber
                     {
                         try
                         {
-                            propertyValue = CustomImporter.ImportProperty(entity, entityData.ValuesTable[propertyName], propertyName, propertyType);
+                            propertyValue = Panimporter.ImportProperty(entity, entityData.ValuesTable[propertyName], propertyName, propertyType);
                         }
                         catch
                         {

@@ -8,7 +8,7 @@ using SecretHistories.Infrastructure;
 
 namespace TheRoost.Twins
 {
-    public static class EventManager
+    internal static class EventManager
     {
         public static Array AllTimesOfPower { get { return Enum.GetValues(typeof(AtTimeOfPower)); } }
         private static readonly Dictionary<AtTimeOfPower, MethodBase> methodsToPatch = new Dictionary<AtTimeOfPower, MethodBase>()
@@ -30,7 +30,7 @@ namespace TheRoost.Twins
  { AtTimeOfPower.RecipeVfx, typeof(RecipeCompletionEffectCommand).GetMethod("DoRecipeVfx", BindingFlags.NonPublic | BindingFlags.Instance) },
         };
 
-        internal static void Unite()
+        internal static void Enact()
         {
             if (TheRoostMachine.alreadyAssembled)
                 return;
@@ -86,7 +86,7 @@ namespace TheRoost
         RecipeMutations, RecipeXtriggers, RecipeDeckEffects, RecipeEffects, RecipeVerbManipulations, RecipePurges, RecipePortals, RecipeVfx,
     }
 
-    public static partial class TheRoostAccessExtensions
+    public static partial class Birdsong
     {
         public static void Schedule(this AtTimeOfPower time, Delegate action, PatchType patchType)
         {
