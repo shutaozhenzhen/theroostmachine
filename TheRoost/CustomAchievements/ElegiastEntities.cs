@@ -14,6 +14,7 @@ namespace TheRoost.Elegiast.Entities
         bool unlocked { get; }
         DateTime unlockDate { get; }
     }
+
     [FucineImportable("achievements")]
     public class CustomAchievement : AbstractEntity<CustomAchievement>, IFucineAchievement
     {

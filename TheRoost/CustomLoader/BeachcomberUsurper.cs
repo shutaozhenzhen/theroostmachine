@@ -26,8 +26,7 @@ namespace TheRoost.Beachcomber
             ///nobody will ever need a <float, bool> dictionary, or, god forbid, <List, List> 
             ///(well, that last one is actually impossible anyway since it won't be parsed as a correct json, but theoretical possibility exists)
             ///struct loading is a mad enterprise in particular
-            ///the sport was good though
-            invokeGenericImporterForAbstractRootEntity = typeof(Usurper).GetMethodInvariant("InvokeGenericImporterForAbstractRootEntity");
+            ///the sport was good thought
             TheRoostMachine.Patch(
                 typeof(AbstractEntity<Element>).GetConstructors(BindingFlags.NonPublic | BindingFlags.Instance)[0],
                 transpiler: typeof(Usurper).GetMethodInvariant("AbstractEntityConstructorTranspiler"));
@@ -36,11 +35,11 @@ namespace TheRoost.Beachcomber
             //patching generics is tricky - the patch is applied to the whole generic class/method
             //it's somewhat convenient for me since I can patch only a single AbstractEntity<T> for the patch to apply to all of them
             //it's also somewhat inconvenient since I can't patch the .ctor directly with my own generic method
-            //thus, I have to create an intermediary - InvokeGenericImporterForAbstractRootEntity() - which will, in turn, call the real generic for the type
+            //(the last patch will be executed for all of the types)
+            //thus, I have to create an intermediary - InvokeGenericImporterForAbstractRootEntity() - which calls the actual type-specific method
             //(generics are needed to mimic CS's own structure and since it makes accessing properties much more easierester)
         }
 
-        static MethodInfo invokeGenericImporterForAbstractRootEntity;
         private static IEnumerable<CodeInstruction> AbstractEntityConstructorTranspiler(IEnumerable<CodeInstruction> instructions)
         {
             var codes = new List<CodeInstruction>(instructions);
@@ -58,7 +57,7 @@ namespace TheRoost.Beachcomber
             ///all other native transmutations are skipped
             finalCodes.Add(new CodeInstruction(OpCodes.Ldarg_0));
             finalCodes.Add(new CodeInstruction(OpCodes.Ldarg_1));
-            finalCodes.Add(new CodeInstruction(OpCodes.Call, invokeGenericImporterForAbstractRootEntity));
+            finalCodes.Add(new CodeInstruction(OpCodes.Call, typeof(Usurper).GetMethodInvariant("InvokeGenericImporterForAbstractRootEntity")));
             finalCodes.Add(new CodeInstruction(OpCodes.Ret));
 
             return finalCodes.AsEnumerable();

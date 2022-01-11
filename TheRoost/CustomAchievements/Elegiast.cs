@@ -49,7 +49,7 @@ namespace TheRoost.Elegiast
             TheRoost.Vagabond.CommandLine.AddCommand("achievements", AchievementsDebug);
         }
 
-        internal static void UnlockAchievements(RecipeCompletionEffectCommand __instance)
+        private static void UnlockAchievements(RecipeCompletionEffectCommand __instance)
         {
             List<string> ids = __instance.Recipe.RetrieveProperty<List<string>>(propertyThatUnlocks);
             if (ids == null)
@@ -63,7 +63,7 @@ namespace TheRoost.Elegiast
                 TrySyncAchievementStorages();
         }
 
-        static bool UnlockAchievement(string id, int messageOrder)
+        private static bool UnlockAchievement(string id, int messageOrder = -1) //-1 for no message (if not inside the game scene currently, for example)
         {
             CustomAchievement achievement = Watchman.Get<Compendium>().GetEntityById<CustomAchievement>(id);
             if (achievement == null)
@@ -81,14 +81,14 @@ namespace TheRoost.Elegiast
 
             if (messageOrder >= 0)
             {
-                string message = achievement.unlockMessage == string.Empty ? string.Empty : achievement.unlockMessage;
+                string message = achievement.unlockMessage == string.Empty ? achievement.unlockdesc : achievement.unlockMessage;
                 Watchman.Get<Notifier>().ShowNotificationWindow(achievement.label, message, achievement.sprite, (messageOrder + 1) * 2, false);
             }
 
             return true;
         }
 
-        static void LoadAllUnlocks()
+        private static void LoadAllUnlocks()
         {
             string[] cloudData = GetCloudData();
             string[] localData = GetLocalData();
@@ -109,7 +109,7 @@ namespace TheRoost.Elegiast
                     TrySyncAchievementStorages();
         }
 
-        static string[] GetLocalData()
+        private static string[] GetLocalData()
         {
             if (File.Exists(localFile) == false)
                 return new string[0];
@@ -117,7 +117,7 @@ namespace TheRoost.Elegiast
             return File.ReadAllLines(localFile);
         }
 
-        static string[] GetCloudData()
+        private static string[] GetCloudData()
         {
             StorefrontServicesProvider storefront = Watchman.Get<StorefrontServicesProvider>();
             if (storefront.IsAvailable(StoreClient.Steam) && SteamRemoteStorage.FileExists(datafile))
@@ -135,7 +135,7 @@ namespace TheRoost.Elegiast
             return new string[0];
         }
 
-        static Dictionary<string, string> LoadUnlocks(string[] encodedData)
+        private static Dictionary<string, string> LoadUnlocks(string[] encodedData)
         {
             Dictionary<string, string> dictionary = new Dictionary<string, string>();
             foreach (string str in encodedData)
@@ -155,12 +155,12 @@ namespace TheRoost.Elegiast
             return dictionary;
         }
 
-        static void SaveCurrentUnlocksLocally()
+        private static void SaveCurrentUnlocksLocally()
         {
             File.WriteAllText(localFile, Encode(unlocks));
         }
 
-        static void TrySyncAchievementStorages()
+        private static void TrySyncAchievementStorages()
         {
             //player can write swear words and other nonsense to Gabe in the file by hand
             //to avoid pushing it on the server, we should ALWAYS do the local save (to rewrite the file) before that
@@ -183,7 +183,7 @@ namespace TheRoost.Elegiast
             }
         }
 
-        static string Encode(Dictionary<string, string> unlockDictionary)
+        private static string Encode(Dictionary<string, string> unlockDictionary)
         {
             string result = string.Empty;
             foreach (KeyValuePair<string, string> entry in unlockDictionary)
@@ -192,14 +192,14 @@ namespace TheRoost.Elegiast
             return result;
         }
 
-        static string Encode(string id, string date)
+        private static string Encode(string id, string date)
         {
             string unlockData = String.Format(achievementDataFormat, id, date);
             byte[] bytes = System.Text.Encoding.UTF8.GetBytes(unlockData);
             return System.Convert.ToBase64String(bytes) + "\n";
         }
 
-        static string Decode(string[] dataToDecode)
+        private static string Decode(string[] dataToDecode)
         {
             string data = string.Empty;
             foreach (string encoded in dataToDecode)
@@ -208,7 +208,7 @@ namespace TheRoost.Elegiast
             return data;
         }
 
-        static string Decode(string dataToDecode)
+        private static string Decode(string dataToDecode)
         {
             if (dataToDecode == string.Empty)
                 return string.Empty;
@@ -226,7 +226,7 @@ namespace TheRoost.Elegiast
             }
         }
 
-        static IStats cachedGogStats;
+        private static IStats cachedGogStats;
         public static void CheckVanillaAchievement(VanillaAchievement achievement, out bool unlocked, out bool legit, out bool hidden, out uint unlockTime)
         {
             unlocked = false;
@@ -247,7 +247,7 @@ namespace TheRoost.Elegiast
             }
         }
 
-        static string DateInvariant(DateTime date)
+        private static string DateInvariant(DateTime date)
         {
             return DateTime.Now.ToString(new System.Globalization.CultureInfo("en-GB"));
         }
@@ -265,7 +265,7 @@ namespace TheRoost.Elegiast
             return unlocks.ContainsKey(achievement.Id);
         }
 
-        static void AchievementsDebug(string[] command)
+        public static void AchievementsDebug(string[] command)
         {
             try
             {

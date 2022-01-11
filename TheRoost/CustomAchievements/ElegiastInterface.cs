@@ -16,7 +16,7 @@ using TheRoost.Elegiast.Entities;
 
 namespace TheRoost.Elegiast
 {
-    internal class CustomAchievementInterface
+    public class CustomAchievementInterface
     {
         internal static void Create()
         {
@@ -253,7 +253,7 @@ namespace TheRoost.Elegiast
         Dictionary<string, int> hiddenInCategory = new Dictionary<string, int>();
         List<string> categories = new List<string>();
         static readonly string[] defaultCategories = new string[] { "ACH_CATEGORY_CSVANILLA", "ACH_CATEGORY_DANCER", "ACH_CATEGORY_PRIEST", "ACH_CATEGORY_GHOUL", "ACH_CATEGORY_EXILE", "ACH_CATEGORY_EVERAFTER", "ACH_CATEGORY_MODS" };
-        void SetAchievements(CultureChangedArgs dontMindMe)
+        private void SetAchievements(CultureChangedArgs dontMindMe)
         {
             achievementTemplate.SetActive(true);
 
@@ -349,7 +349,7 @@ namespace TheRoost.Elegiast
         }
 
         int currentCategory = 0;
-        void NextCategory()
+        private void NextCategory()
         {
             SoundManager.PlaySfx("UIButtonClick");
             currentCategory++;
@@ -358,7 +358,7 @@ namespace TheRoost.Elegiast
             SetCategory(categories[currentCategory]);
         }
 
-        void PrevCategory()
+        private void PrevCategory()
         {
             SoundManager.PlaySfx("UIButtonClick");
             currentCategory--;
@@ -367,7 +367,7 @@ namespace TheRoost.Elegiast
             SetCategory(categories[currentCategory]);
         }
 
-        void SetCategory(string category)
+        private void SetCategory(string category)
         {
             for (var n = 0; n < achievementsContainer.childCount; n++)
                 achievementsContainer.GetChild(n).gameObject.SetActive(false);

@@ -8,7 +8,7 @@ using SecretHistories.Infrastructure;
 
 namespace TheRoost.Twins
 {
-    internal static class EventManager
+    public static class EventManager
     {
         public static Array AllTimesOfPower { get { return Enum.GetValues(typeof(AtTimeOfPower)); } }
         private static readonly Dictionary<AtTimeOfPower, MethodBase> methodsToPatch = new Dictionary<AtTimeOfPower, MethodBase>()
@@ -43,7 +43,6 @@ namespace TheRoost.Twins
         {
             foreach (AtTimeOfPower time in AllTimesOfPower)
             {
-                ///Birdsong.Sing(time);
                 foreach (Delegate patchGroup in prefixes[time])
                     foreach (Delegate patchMethod in patchGroup.GetInvocationList())
                         TheRoostMachine.Patch(methodsToPatch[time], prefix: patchMethod.Method);
@@ -51,6 +50,8 @@ namespace TheRoost.Twins
                 foreach (Delegate patchGroup in postfixes[time])
                     foreach (Delegate patchMethod in patchGroup.GetInvocationList())
                         TheRoostMachine.Patch(methodsToPatch[time], postfix: patchMethod.Method);
+
+                Birdsong.Sing(VerbosityLevel.SystemChatter, 0, "Successfully tapped into {0}", time);
             }
         }
 
@@ -64,7 +65,7 @@ namespace TheRoost.Twins
 
         private static PatchAtTimeCollection prefixes = new PatchAtTimeCollection();
         private static PatchAtTimeCollection postfixes = new PatchAtTimeCollection();
-        class PatchAtTimeCollection : Dictionary<AtTimeOfPower, List<Delegate>>
+        private class PatchAtTimeCollection : Dictionary<AtTimeOfPower, List<Delegate>>
         {
             public PatchAtTimeCollection()
                 : base()

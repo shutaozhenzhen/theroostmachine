@@ -13,7 +13,7 @@ namespace TheRoost.Beachcomber
     {
         public static object ImportProperty(IEntityWithId parentEntity, object valueData, string propertyName, Type propertyType)
         {
-            Importer importer = GetImporterForType(propertyType);
+            ImporterForType importer = GetImporterForType(propertyType);
 
             try
             {
@@ -27,8 +27,8 @@ namespace TheRoost.Beachcomber
             }
         }
 
-        delegate object Importer(object valueData, Type propertyType);
-        static Importer GetImporterForType(Type type)
+        public delegate object ImporterForType(object valueData, Type propertyType);
+        public static ImporterForType GetImporterForType(Type type)
         {
             if (type.isList())
                 return ImportList;
@@ -57,7 +57,7 @@ namespace TheRoost.Beachcomber
                 listType = listType.BaseType;
 
             Type expectedEntryType = listType.GetGenericArguments()[0];
-            Importer entryImporter = GetImporterForType(expectedEntryType);
+            ImporterForType entryImporter = GetImporterForType(expectedEntryType);
 
             try
             {
@@ -95,10 +95,10 @@ namespace TheRoost.Beachcomber
                 dictionaryType = dictionaryType.BaseType;
 
             Type dictionaryKeyType = dictionaryType.GetGenericArguments()[0];
-            Importer keyImporter = GetImporterForType(dictionaryKeyType);
+            ImporterForType keyImporter = GetImporterForType(dictionaryKeyType);
 
             Type dictionaryValueType = dictionaryType.GetGenericArguments()[1];
-            Importer valueImporter = GetImporterForType(dictionaryValueType);
+            ImporterForType valueImporter = GetImporterForType(dictionaryValueType);
 
             try
             {

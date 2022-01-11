@@ -45,7 +45,6 @@ namespace TheRoost.Beachcomber
             //so we plant all custom classes marked as FucineImportable from all loaded mods into the List and so the game now courteously loads them for us
             //the operation requires a bit of :knock: since we need to modify local variables of PopulateCompendium()
             //the the result well worth it
-            insertCustomTypesMethod = typeof(CuckooLoader).GetMethodInvariant("InsertCustomTypesForLoading");
             TheRoostMachine.Patch(
                 original: typeof(CompendiumLoader).GetMethodInvariant("PopulateCompendium"),
                 transpiler: typeof(CuckooLoader).GetMethodInvariant("CuckooTranspiler"));
@@ -163,7 +162,7 @@ namespace TheRoost.Beachcomber
                         typeof(CompendiumLoader).GetField("_log", BindingFlags.Instance | BindingFlags.NonPublic)));
                     //finally, calling InsertCustomTypesForLoading() with all of these arguments
                     //the method is wrapped in a static variable for, as it was being put, "anal" purposes
-                    codes.Insert(i++, new CodeInstruction(OpCodes.Call, insertCustomTypesMethod));
+                    codes.Insert(i++, new CodeInstruction(OpCodes.Call, typeof(CuckooLoader).GetMethodInvariant("InsertCustomTypesForLoading")));
 
                     break;
                 }
@@ -171,7 +170,6 @@ namespace TheRoost.Beachcomber
             return codes.AsEnumerable();
         }
 
-        private static MethodInfo insertCustomTypesMethod;
         //not sure *why* we need refs here, but we *need* them (otherwise error (no joke, don't delete refs!!!!!))
         private static void InsertCustomTypesForLoading(ref List<Type> typesToLoad, ref Dictionary<string, EntityTypeDataLoader> fucineLoaders, string cultureId, ContentImportLog log)
         {

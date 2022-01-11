@@ -22,41 +22,44 @@ namespace TheRoost
                 prefix: typeof(Birdsong).GetMethodInvariant("ShowNotificationWithIntervention"));
         }
 
-        public static void Sing(object data, params object[] furtherData)
-        {
-            string message = FormatMessage(data, furtherData);
-            NoonUtility.LogWarning(message);
-        }
-
         public static void Sing(VerbosityLevel verbosity, int messageLevel, object data, params object[] furtherData)
         {
             string message = FormatMessage(data, furtherData);
             NoonUtility.Log(message, messageLevel, verbosity);
         }
 
+        public static void Sing(object data, params object[] furtherData)
+        {
+            Birdsong.Sing(0, 1, data, furtherData);
+        }
+
         private static string FormatMessage(object wrapMessageMaybe, params object[] furtherData)
         {
-            if (wrapMessageMaybe == null)
-                wrapMessageMaybe = "null";
-
             if (furtherData == null)
                 return wrapMessageMaybe.ToString();
 
-            for (var n = 0; n < furtherData.Length; n++)
-                if (furtherData[n] == null)
-                    furtherData[n] = "null";
-
             if (wrapMessageMaybe.ToString().Contains("{0}"))
+            {
+                for (var n = 0; n < furtherData.Length; n++)
+                    if (furtherData[n] == null)
+                        furtherData[n] = "null";
+
                 return String.Format(wrapMessageMaybe.ToString(), furtherData);
+            }
             else
+            {
+                if (wrapMessageMaybe == null)
+                    wrapMessageMaybe = "null";
+
                 return String.Concat(wrapMessageMaybe.ToString(), " ", furtherData.UnpackAsString());
+            }
         }
 
         public static string UnpackAsString(this IEnumerable collection)
         {
             string result = string.Empty;
             foreach (object obj in collection)
-                result += obj.ToString() + ' ';
+                result += (obj == null ? "null" : obj.ToString()) + ' ';
             return result;
         }
 

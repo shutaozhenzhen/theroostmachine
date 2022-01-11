@@ -29,7 +29,7 @@ namespace TheRoost.Vagabond
             AddCommand("unity", CommandsCollection.UnityObjectCommand);
         }
 
-        static Dictionary<string, Action<string[]>> commandMethods = new Dictionary<string, Action<string[]>>();
+        private static Dictionary<string, Action<string[]>> commandMethods = new Dictionary<string, Action<string[]>>();
         public static void AddCommand(string reference, Action<string[]> method)
         {
             commandMethods.Add(reference, method);
@@ -57,7 +57,7 @@ namespace TheRoost.Vagabond
             Birdsong.Sing("Unknown command '{0}'", command[0]);
         }
 
-        GameObject console;
+        private GameObject console;
         void Update()
         {
             if (Keyboard.current.backquoteKey.wasPressedThisFrame)
