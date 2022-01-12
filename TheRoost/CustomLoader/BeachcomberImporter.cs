@@ -164,9 +164,8 @@ namespace TheRoost.Beachcomber
                 if (fullSpecEntityData != null)
                 {
                     IEntityWithId entity = FactoryInstantiator.CreateEntity(entityType, entityData as EntityData, null);
-
-                    if (typeof(IFancySpecEntity).IsAssignableFrom(entityType))
-                        (entity as IFancySpecEntity).FancySpec(fullSpecEntityData.ValuesTable);
+                    if (typeof(IWeirdSpecEntity).IsAssignableFrom(entityType))
+                        (entity as IWeirdSpecEntity).WeirdSpec(fullSpecEntityData.ValuesTable);
 
                     return entity;
                 }
@@ -178,7 +177,7 @@ namespace TheRoost.Beachcomber
                 }
 
                 Birdsong.Sing("ENTITY DATA IS NOT A DICTIONARY{}, AND THE ENTITY ISN'T A QUICK SPEC ENTITY, SO IT CAN NOT LOAD FROM A SINGLE STRING, THEREFORE:");
-                throw new NotSupportedException();
+                throw new ApplicationException();
             }
             catch
             {
@@ -193,23 +192,67 @@ namespace TheRoost.Beachcomber
             {
                 ArrayList dataAsList = structData as ArrayList;
 
-                if (dataAsList != null) //list-loading of structs is allowed precisely for one (the first one) constructor
-                //it's definitely enough for now for loading of vectors/colours
+                if (dataAsList == null)
+                    dataAsList = new ArrayList() { structData };
+
+                Type[] parameterTypes = new Type[dataAsList.Count];
+                for (int n = 0; n < parameterTypes.Length; n++)
+                    parameterTypes[n] = dataAsList[n].GetType();
+
+                //trying to find a ctor that matches passed parameter types
+                ConstructorInfo matchingConstructor = structType.GetConstructor(parameterTypes);
+                //but since these types are loaded and interpreted by JSON, they can be borked and this won't always work
+                if (matchingConstructor != null)
+                    return matchingConstructor.Invoke(dataAsList.ToArray());
+
+                //in this case we are trying to at least find a constructor with the matching number of arguments (now *this* should work in most cases)
+                foreach (ConstructorInfo constructor in structType.GetConstructors())
                 {
-                    ConstructorInfo constructor = structType.GetConstructors()[0];
-                    return constructor.Invoke(dataAsList.ToArray());
+                    ParameterInfo[] parameters = constructor.GetParameters();
+                    if (parameters.Length == dataAsList.Count)
+                    {
+                        //need to cast these parameters to be usable
+                        for (int n = 0; n < dataAsList.Count; n++)
+                            dataAsList[n] = ConvertValue(dataAsList[n], parameters[n].ParameterType);
+
+                        return constructor.Invoke(dataAsList.ToArray());
+                    }
                 }
-                else //otherwise we're trying to create a struct from a single string
-                {
-                    ConstructorInfo constructor = structType.GetConstructor(new Type[] { typeof(string) });
-                    return constructor.Invoke(new object[] { structData.ToString() });
-                }
+
+
+                Birdsong.Sing("NO MATCHING CONSTRUCTOR FOUND FOR {0} WITH ARGUMENTS {1}, THEREFORE:", structType.Name, parameterTypes.UnpackAsString());
+                throw new ApplicationException();
             }
             catch
             {
                 Birdsong.Sing("STRUCT DATA[] IS MALFORMED, THEREFORE:");
                 throw;
             }
+        }
+    }
+}
+
+namespace SecretHistories.Fucine
+{
+    public interface IWeirdSpecEntity
+    {
+        void WeirdSpec(Hashtable data);
+    }
+
+    [AttributeUsage(AttributeTargets.Property)]
+    public class FucineStruct : Fucine
+    {
+        public FucineStruct() { }
+
+        public FucineStruct(params object[] defaultValue)
+        {
+            DefaultValue = new ArrayList(defaultValue);
+        }
+
+        //won't work with normal game importer, but needs to be impemented; Panimporter doesn't use this
+        public override AbstractImporter CreateImporterInstance()
+        {
+            throw new NotImplementedException();
         }
     }
 }

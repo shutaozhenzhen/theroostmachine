@@ -103,12 +103,9 @@ namespace TheRoost.Beachcomber
                     }
                     else
                     {
-                        if (propertyType.isStruct())
-                        {
-                            ConstructorInfo ctor = propertyType.GetConstructor(new Type[] { cachedProperty.FucineAttribute.DefaultValue.GetType() });
-                            propertyValue = ctor.Invoke(new object[] { cachedProperty.FucineAttribute.DefaultValue });
-                        }
-                        else if (propertyType.isList() || propertyType.isDict() || propertyType.isFucineEntity())
+                        if (propertyType.isStruct() && cachedProperty.FucineAttribute.DefaultValue != null)
+                            propertyValue = Panimporter.ImportStruct(cachedProperty.FucineAttribute.DefaultValue, propertyType);
+                        else if (propertyType.isList() || propertyType.isDict() || propertyType.isFucineEntity() || propertyType.isStruct())
                             propertyValue = FactoryInstantiator.CreateObjectWithDefaultConstructor(propertyType);
                         else
                             propertyValue = cachedProperty.FucineAttribute.DefaultValue;
