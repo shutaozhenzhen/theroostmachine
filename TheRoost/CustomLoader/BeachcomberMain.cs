@@ -53,8 +53,6 @@ namespace TheRoost.Beachcomber
             //(well, json loading and thus localizing/merging/mod $ stays intact, actually, 
             //it's just the process of porting jsons into actual game entities that gets changed)
             Usurper.OverthrowNativeImporting();
-
-            ClaimProperty<Recipe, Color>("vector", false);
         }
 
         public static void ClaimProperty<TEntity, TProperty>(string propertyName, bool localize) where TEntity : AbstractEntity<TEntity>
