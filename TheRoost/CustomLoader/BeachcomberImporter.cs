@@ -22,7 +22,7 @@ namespace TheRoost.Beachcomber
             }
             catch (Exception ex)
             {
-                Birdsong.Sing("FAILED TO LOAD PROPERTY '{0}' FOR {1} ID '{2}':/n{3}", propertyName, parentEntity.GetType().Name.ToUpper(), parentEntity.Id, ex);
+                Birdsong.Sing("FAILED TO LOAD PROPERTY '{0}' FOR {1} ID '{2}':\n{3}", propertyName, parentEntity.GetType().Name.ToUpper(), parentEntity.Id, ex);
                 throw;
             }
         }
