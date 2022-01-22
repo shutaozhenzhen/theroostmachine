@@ -37,15 +37,17 @@ namespace TheRoost.Vagabond
 
         private static void ExecuteCommand(string command)
         {
+            Birdsong.Sing(command);
+
+            command = command.Trim();
             if (string.IsNullOrWhiteSpace(command) || command[0] != '/')
             {
                 Birdsong.Sing("Commands should always start with /");
                 return;
             }
 
-            command = command.Substring(1);
+            command = command.Trim().Substring(1);
             string[] commandParts = command.Split();
-
             if (commandMethods.ContainsKey(commandParts[0]))
             {
                 string[] arguments = new string[commandParts.Length - 1];
@@ -137,6 +139,13 @@ namespace TheRoost.Vagabond
             Compendium compendium = Watchman.Get<Compendium>();
             try
             {
+                if (command.Length == 0)
+                {
+                    foreach (Type type in compendium.GetEntityTypes())
+                        Birdsong.Sing(type.Name);
+                    return;
+                }
+
                 Type entityType = compendium.GetEntityTypes().FirstOrDefault(type => type.Name.ToLower() == command[0].ToLower());
 
                 if (entityType == null)
