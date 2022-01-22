@@ -20,9 +20,9 @@ namespace TheRoost.Beachcomber
                 object propertyValue = importer.Invoke(valueData, propertyType);
                 return propertyValue;
             }
-            catch
+            catch (Exception ex)
             {
-                Birdsong.Sing("FAILED TO LOAD PROPERTY '{0}' FOR {1} ID '{2}'", propertyName, parentEntity.GetType().Name.ToUpper(), parentEntity.Id);
+                Birdsong.Sing("FAILED TO LOAD PROPERTY '{0}' FOR {1} ID '{2}':/n{3}", propertyName, parentEntity.GetType().Name.ToUpper(), parentEntity.Id, ex);
                 throw;
             }
         }
@@ -78,10 +78,10 @@ namespace TheRoost.Beachcomber
 
                 return list;
             }
-            catch
+            catch (Exception ex)
             {
                 Birdsong.Sing("LIST[] IS MALFORMED, THEREFORE:");
-                throw;
+                throw ex;
             }
         }
 
@@ -113,10 +113,10 @@ namespace TheRoost.Beachcomber
 
                 return dictionary;
             }
-            catch
+            catch (Exception ex)
             {
                 Birdsong.Sing("DICTIONARY{} IS MALFORMED, THEREFORE:");
-                throw;
+                throw ex;
             }
         }
 
@@ -126,10 +126,10 @@ namespace TheRoost.Beachcomber
             {
                 return ConvertValue(valueData, destinationType);
             }
-            catch
+            catch (Exception ex)
             {
-                Birdsong.Sing("UNABLE TO PARSE A VALUE DATA: '{0}' as {1}, THEREFORE:", valueData, destinationType.Name.ToUpper());
-                throw;
+                Birdsong.Sing("UNABLE TO PARSE A VALUE DATA: '{0}' AS {1}, THEREFORE:", valueData, destinationType.Name.ToUpper());
+                throw ex;
             }
         }
 
@@ -149,9 +149,9 @@ namespace TheRoost.Beachcomber
                 else
                     return System.Convert.ChangeType(data, destinationType);
             }
-            catch
+            catch (Exception ex)
             {
-                throw;
+                throw ex;
             }
         }
 
@@ -179,10 +179,10 @@ namespace TheRoost.Beachcomber
                 Birdsong.Sing("ENTITY DATA IS NOT A DICTIONARY{}, AND THE ENTITY ISN'T A QUICK SPEC ENTITY, SO IT CAN NOT LOAD FROM A SINGLE STRING, THEREFORE:");
                 throw new ApplicationException();
             }
-            catch
+            catch (Exception ex)
             {
                 Birdsong.Sing("ENTITY DATA IS MALFORMED, THEREFORE:");
-                throw;
+                throw ex;
             }
         }
 
@@ -219,14 +219,12 @@ namespace TheRoost.Beachcomber
                     }
                 }
 
-
-                Birdsong.Sing("NO MATCHING CONSTRUCTOR FOUND FOR {0} WITH ARGUMENTS {1}, THEREFORE:", structType.Name, parameterTypes.UnpackAsString());
-                throw new ApplicationException();
+                throw new ApplicationException(String.Format("NO MATCHING CONSTRUCTOR FOUND FOR {0} WITH ARGUMENTS {1}, THEREFORE:", structType.Name, parameterTypes.UnpackAsString()));
             }
-            catch
+            catch (Exception ex)
             {
                 Birdsong.Sing("STRUCT DATA[] IS MALFORMED, THEREFORE:");
-                throw;
+                throw ex;
             }
         }
     }
