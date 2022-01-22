@@ -130,39 +130,39 @@ namespace TheRoost
             time.Schedule(action as Delegate, patchType);
         }
 
-        public static void ScheduleBreak(this AtTimeOfPower time, Func<bool> func, PatchType patchType)
+        public static void Schedule(this AtTimeOfPower time, Func<bool> func)
         {
-            time.Schedule(func as Delegate, patchType);
+            time.Schedule(func as Delegate, PatchType.Prefix);
         }
 
-        public static void ScheduleBreak<T1>(this AtTimeOfPower time, Func<T1, bool> func, PatchType patchType)
+        public static void Schedule<T1>(this AtTimeOfPower time, Func<T1, bool> func)
         {
-            time.Schedule(func as Delegate, patchType);
+            time.Schedule(func as Delegate, PatchType.Prefix);
         }
 
-        public static void ScheduleBreak<T1, T2>(this AtTimeOfPower time, Func<T1, T2, bool> func, PatchType patchType)
+        public static void Schedule<T1, T2>(this AtTimeOfPower time, Func<T1, T2, bool> func)
         {
-            time.Schedule(func as Delegate, patchType);
+            time.Schedule(func as Delegate, PatchType.Prefix);
         }
 
-        public static void ScheduleBreak<T1, T2, T3>(this AtTimeOfPower time, Func<T1, T2, T3, bool> func, PatchType patchType)
+        public static void Schedule<T1, T2, T3>(this AtTimeOfPower time, Func<T1, T2, T3, bool> func)
         {
-            time.Schedule(func as Delegate, patchType);
+            time.Schedule(func as Delegate, PatchType.Prefix);
         }
 
-        public static void ScheduleBreak<T1, T2, T3, T4>(this AtTimeOfPower time, Func<T1, T2, T3, T4, bool> func, PatchType patchType)
+        public static void Schedule<T1, T2, T3, T4>(this AtTimeOfPower time, Func<T1, T2, T3, T4, bool> func)
         {
-            time.Schedule(func as Delegate, patchType);
+            time.Schedule(func as Delegate, PatchType.Prefix);
         }
 
-        public static void ScheduleBreak<T1, T2, T3, T4, T5>(this AtTimeOfPower time, Func<T1, T2, T3, T4, T5, bool> func, PatchType patchType)
+        public static void Schedule<T1, T2, T3, T4, T5>(this AtTimeOfPower time, Func<T1, T2, T3, T4, T5, bool> func)
         {
-            time.Schedule(func as Delegate, patchType);
+            time.Schedule(func as Delegate, PatchType.Prefix);
         }
 
-        public static void ScheduleBreak<T1, T2, T3, T4, T5, T6>(this AtTimeOfPower time, Func<T1, T2, T3, T4, T5, T6, bool> func, PatchType patchType)
+        public static void Schedule<T1, T2, T3, T4, T5, T6>(this AtTimeOfPower time, Func<T1, T2, T3, T4, T5, T6, bool> func)
         {
-            time.Schedule(func as Delegate, patchType);
+            time.Schedule(func as Delegate, PatchType.Prefix);
         }
     }
 }
