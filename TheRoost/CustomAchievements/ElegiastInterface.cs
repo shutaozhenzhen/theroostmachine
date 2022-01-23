@@ -407,7 +407,7 @@ namespace TheRoost
                 return;
             }
 
-            typeof(Babelfish).GetField("locLabel", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(babelfish, locLabel);
+            typeof(Babelfish).GetFieldInvariant("locLabel").SetValue(babelfish, locLabel);
             babelfish.SetValuesForCurrentCulture();
         }
     }

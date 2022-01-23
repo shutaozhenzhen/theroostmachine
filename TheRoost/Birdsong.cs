@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using System.Collections;
+using System.Collections.Generic;
 
 using SecretHistories.UI;
 
@@ -63,26 +64,51 @@ namespace TheRoost
             return result;
         }
 
+        static List<BindingFlags> bindingFlagsPriority = new List<BindingFlags> { 
+            (BindingFlags.Instance | BindingFlags.Public), 
+            (BindingFlags.Instance | BindingFlags.NonPublic),
+            (BindingFlags.Static | BindingFlags.Public),
+            (BindingFlags.Static | BindingFlags.NonPublic),
+        };
         public static MethodInfo GetMethodInvariant(this Type definingClass, string methodName)
         {
-            //just GetMethod() that tries all possible BindingFlags combinations
-            MethodInfo method = definingClass.GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public);
-            if (method != null)
-                return method;
-
-            method = definingClass.GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
-            if (method != null)
-                return method;
-
-            method = definingClass.GetMethod(methodName, BindingFlags.Static | BindingFlags.Public);
-            if (method != null)
-                return method;
-
-            method = definingClass.GetMethod(methodName, BindingFlags.Static | BindingFlags.NonPublic);
-            if (method != null)
-                return method;
+            MethodInfo method;
+            foreach (BindingFlags flag in bindingFlagsPriority)
+            {
+                method = definingClass.GetMethod(methodName, flag);
+                if (method != null)
+                    return method;
+            }
 
             Birdsong.Sing("Method {0} not found in class {1}", methodName, definingClass.Name);
+            return null;
+        }
+
+        public static FieldInfo GetFieldInvariant(this Type definingClass, string fieldName)
+        {
+            FieldInfo field;
+            foreach (BindingFlags flag in bindingFlagsPriority)
+            {
+                field = definingClass.GetField(fieldName, flag);
+                if (field != null)
+                    return field;
+            }
+
+            Birdsong.Sing("Field {0} not found in class {1}", fieldName, definingClass.Name);
+            return null;
+        }
+
+        public static PropertyInfo GetPropertyInvariant(this Type definingClass, string propertyName)
+        {
+            PropertyInfo property;
+            foreach (BindingFlags flag in bindingFlagsPriority)
+            {
+                property = definingClass.GetProperty(propertyName, flag);
+                if (property != null)
+                    return property;
+            }
+
+            Birdsong.Sing("Property {0} not found in class {1}", propertyName, definingClass.Name);
             return null;
         }
 

@@ -159,9 +159,8 @@ namespace TheRoost.Beachcomber
                     codes.Insert(i++, new CodeInstruction(OpCodes.Ldarg_2)); //culture id (argument)    
                     codes.Insert(i++, new CodeInstruction(OpCodes.Ldarg_0)); //instance itself (is needed to locate its private variable next)
                     codes.Insert(i++, new CodeInstruction(OpCodes.Ldfld, //locating instance's private variable _log
-                        typeof(CompendiumLoader).GetField("_log", BindingFlags.Instance | BindingFlags.NonPublic)));
+                        typeof(CompendiumLoader).GetFieldInvariant("_log")));
                     //finally, calling InsertCustomTypesForLoading() with all of these arguments
-                    //the method is wrapped in a static variable for, as it was being put, "anal" purposes
                     codes.Insert(i++, new CodeInstruction(OpCodes.Call, typeof(CuckooLoader).GetMethodInvariant("InsertCustomTypesForLoading")));
 
                     break;
