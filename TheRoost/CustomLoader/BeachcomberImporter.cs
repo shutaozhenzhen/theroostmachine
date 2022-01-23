@@ -128,7 +128,6 @@ namespace TheRoost.Beachcomber
             }
             catch (Exception ex)
             {
-                Birdsong.Sing("UNABLE TO PARSE A VALUE DATA: '{0}' AS {1}, THEREFORE:", valueData, destinationType.Name.ToUpper());
                 throw ex;
             }
         }
@@ -151,6 +150,7 @@ namespace TheRoost.Beachcomber
             }
             catch (Exception ex)
             {
+                Birdsong.Sing("UNABLE TO PARSE A VALUE DATA: '{0}' AS {1}", data, destinationType.Name.ToUpper());
                 throw ex;
             }
         }
