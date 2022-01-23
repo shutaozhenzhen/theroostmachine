@@ -55,6 +55,13 @@ namespace TheRoost.Vagabond
                 commandMethods[commandParts[0]].Invoke(arguments);
                 return;
             }
+            else
+                foreach (Type type in Watchman.Get<Compendium>().GetEntityTypes())
+                    if (type.Name.ToLower() == commandParts[0].ToLower())
+                    {
+                        CommandsCollection.CompendiumInfo(commandParts);
+                        return;
+                    }
 
             Birdsong.Sing("Unknown command '{0}'", command[0]);
         }
@@ -178,19 +185,18 @@ namespace TheRoost.Vagabond
 
                 string propertyName = command[2].ToLower().First().ToString().ToUpper() + command[2].Substring(1);
                 PropertyInfo property = entity.GetType().GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public);
+                object value;
                 if (property != null)
-                {
-                    Birdsong.Sing("{0} of {1} '{2}': {3}", propertyName, entityType.Name, entity.Id, property.GetValue(entity));
-                    return;
-                }
+                    value = property.GetValue(entity);
+                else if (entity.HasCustomProperty(propertyName))
+                    value = entity.RetrieveProperty<object>(propertyName);
+                else
+                    throw new Exception(String.Format("Property '{0}' of {1} id '{2}' not found", command[2], entityType.Name, entity.Id));
 
-                if (entity.HasCustomProperty(propertyName))
-                {
-                    Birdsong.Sing("Custom property '{0}' of {1} '{2}': {3}", propertyName, entityType.Name, entity.Id, entity.RetrieveProperty<object>(propertyName));
-                    return;
-                }
+                if ((value as IEnumerable) != null)
+                    value = (value as IEnumerable).UnpackAsString();
 
-                throw new Exception(String.Format("Property '{0}' of {1} id '{2}' not found", command[2], entityType.Name, entity.Id));
+                Birdsong.Sing("{0} of {1} '{2}': {3}", propertyName, entityType.Name, entity.Id, value);
             }
             catch (Exception ex)
             {
