@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Linq;
 using System.Globalization;
 
@@ -18,7 +17,7 @@ namespace TheRoost.Elegiast
 {
     public class CustomAchievementInterface
     {
-        internal static void Create()
+        internal static void CreateInterface()
         {
             CustomAchievementInterface interfaceManager = new CustomAchievementInterface();
             interfaceManager.CreateButton();
@@ -31,10 +30,10 @@ namespace TheRoost.Elegiast
         private void CreateButton()
         {
             GameObject buttonSample = GameObject.Find("ModsBtn");
-            GameObject myButton = GameObject.Instantiate(buttonSample);
-            myButton.name = "AchievementsBtn";
+            GameObject achievementsButton = GameObject.Instantiate(buttonSample);
+            achievementsButton.name = "AchievementsBtn";
 
-            RectTransform myButtonTransform = myButton.GetComponent<RectTransform>();
+            RectTransform myButtonTransform = achievementsButton.GetComponent<RectTransform>();
             myButtonTransform.SetParent(GameObject.Find("CanvasMenu").transform);
             myButtonTransform.SetAsFirstSibling();
             myButtonTransform.anchorMax = Vector2.right;
@@ -43,31 +42,28 @@ namespace TheRoost.Elegiast
             myButtonTransform.localScale = Vector3.one;
             myButtonTransform.anchoredPosition = (Vector2.left + Vector2.up) * 15;
 
-            myButton.GetComponentInChildren<Babelfish>().SetBabelLabel("ACH_BUTTON");
-            myButton.GetComponentInChildren<Image>().sprite = ResourcesManager.GetSpriteForAspect("library");
+            achievementsButton.GetComponentInChildren<Babelfish>().SetBabelLabel("ACH_BUTTON");
+            achievementsButton.GetComponentInChildren<Image>().sprite = ResourcesManager.GetSpriteForAspect("library");
 
-            Button button = myButton.GetComponent<Button>();
+            Button button = achievementsButton.GetComponent<Button>();
             button.onClick = new Button.ButtonClickedEvent();
             button.onClick.AddListener(new UnityEngine.Events.UnityAction(this.OpenAchievementsMenu));
-            //for OpenAchievementsMenu - since we can't pass params here easily
-            this.showoverlay = typeof(MenuScreenController).GetMethodInvariant("ShowOverlay");
-            this.menu = GameObject.FindObjectOfType<MenuScreenController>();
         }
 
+        CanvasGroupFader achievementsOverlay;
         Transform achievementsContainer;
         GameObject achievementTemplate;
-        GameObject hiddenInfo;
+        GameObject hiddenAchievementsInfo;
         TextMeshProUGUI categoryText;
         private void CreateOverlay()
         {
             GameObject overlaySample = GameObject.Find("OverlayHolder_KEEP-ACTIVE").FindInChildren("OverlayWindow_Mods");
 
             GameObject myOverlay = GameObject.Instantiate(overlaySample, overlaySample.transform.parent);
-            myOverlay.transform.SetAsLastSibling();
-
-            this.overlay = new object[] { myOverlay.transform.GetComponent<CanvasGroupFader>() };
+            achievementsOverlay = myOverlay.transform.GetComponent<CanvasGroupFader>();
+            myOverlay.transform.SetAsFirstSibling();
+            myOverlay.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
             myOverlay.name = "OverlayWindow_Achievements";
-            myOverlay.SetActive(true); //textmeshpro doesn't update on inactive
 
             myOverlay.FindInChildren("TitleText").GetComponent<Babelfish>().SetBabelLabel("ACH_BUTTON");
             myOverlay.FindInChildren("TitleText").GetComponent<TextMeshProUGUI>().fontStyle = FontStyles.UpperCase;
@@ -84,28 +80,23 @@ namespace TheRoost.Elegiast
             Transform content = myOverlay.FindInChildren("content", true).transform;
             VerticalLayoutGroup contentLayout = content.GetComponent<VerticalLayoutGroup>();
             contentLayout.spacing = 3;
-            contentLayout.padding = new RectOffset(0, 0, 15, 50);
+            contentLayout.padding = new RectOffset(0, 0, 15, 30);
             contentLayout.childAlignment = TextAnchor.MiddleCenter;
+            contentLayout.childForceExpandWidth = true;
+            contentLayout.childControlWidth = true;
 
             achievementsContainer = GameObject.Instantiate(content.gameObject, content).transform;
             achievementsContainer.SetAsFirstSibling();
             achievementsContainer.GetComponent<VerticalLayoutGroup>().padding = new RectOffset(0, 0, 10, 0);
 
-            //I have only a distant idea of why what's done here works, but the premise is as follows
-            //category text, if centered perfectly, looks a bit off - and much better if shifted a bit to the right
-            //but VerticalLayoutGroup of the parent object ('content') prevents position offset
-            //so we have to make another container
-            //as for exact implementation of it, I'm leaving you, o dear Reader, wondering why it is as it is
-            //(even if that reader is my future self)
-            //all I'll say is that a more direct approach that may come to your mind when solving this, isn't working
-            float categoryTextWidth = 475;
-            float categoryTextShift = 75;
+            while (content.childCount > 1)
+                GameObject.DestroyImmediate(content.GetChild(1).gameObject);
+
             var categoryContainer = new GameObject();
             categoryContainer.transform.SetParent(content);
             categoryContainer.transform.SetAsFirstSibling();
             categoryContainer.transform.localScale = Vector3.one;
-            categoryContainer.AddComponent<RectTransform>().sizeDelta = new Vector2(categoryTextWidth - categoryTextShift, 0);
-            categoryContainer.AddComponent<HorizontalLayoutGroup>().childControlWidth = false;
+            categoryContainer.gameObject.AddComponent<LayoutElement>().minHeight = 20;
 
             categoryText = GameObject.Instantiate(myOverlay.FindInChildren("TitleText"), categoryContainer.transform).GetComponent<TextMeshProUGUI>();
             categoryText.name = "AchievementCategoryTitle";
@@ -115,14 +106,21 @@ namespace TheRoost.Elegiast
             categoryText.fontSizeMax = 21;
             categoryText.fontSizeMin = 1;
 
-            var categoryTransform = categoryText.GetComponent<RectTransform>();
+            RectTransform categoryTransform = categoryText.GetComponent<RectTransform>();
+            categoryTransform.anchorMin = new Vector2(0.5f, 0.5f);
+            categoryTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            categoryTransform.pivot = new Vector2(0.5f, 0.65f);
             categoryTransform.SetAsFirstSibling();
-            categoryTransform.sizeDelta = new Vector2(categoryTextWidth, 0);
-            categoryTransform.anchoredPosition = new Vector2(0, 0);
+            categoryTransform.sizeDelta = new Vector2(475, 30);
+            categoryTransform.anchoredPosition = new Vector2(30, 0);
 
-            var buttonNext = GameObject.Instantiate(myOverlay.FindInChildren("modtitle", true), categoryTransform);
+            GameObject buttonNext = GameObject.Instantiate(myOverlay.FindInChildren("modtitle", true), categoryTransform);
+            buttonNext.AddComponent<ButtonSoundTrigger>();
+            ContentSizeFitter buttonContentResizer = buttonNext.AddComponent<ContentSizeFitter>();
+            buttonContentResizer.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            buttonContentResizer.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             buttonNext.name = "NextCategory";
-            var buttonText = buttonNext.GetComponent<TextMeshProUGUI>();
+            TextMeshProUGUI buttonText = buttonNext.GetComponent<TextMeshProUGUI>();
             buttonText.text = ">";
             buttonText.color = categoryText.color;
             buttonText.font = categoryText.font;
@@ -132,17 +130,25 @@ namespace TheRoost.Elegiast
             buttonText.alignment = TextAlignmentOptions.MidlineLeft;
             buttonText.raycastTarget = true;
 
-            var buttonTransform = buttonNext.GetComponent<RectTransform>();
+            RectTransform buttonTransform = buttonNext.GetComponent<RectTransform>();
             buttonTransform.pivot = new Vector2(0f, 0.6f);
             buttonTransform.anchorMin = new Vector2(1.03f, 0.5f);
             buttonTransform.anchorMax = new Vector2(1.03f, 0.5f);
             buttonTransform.anchoredPosition = Vector2.zero;
 
-            var changeButton = buttonNext.AddComponent<Button>();
+            Button changeButton = buttonNext.GetComponent<Button>();
             changeButton.targetGraphic = buttonText;
             changeButton.onClick.AddListener(new UnityEngine.Events.UnityAction(NextCategory));
 
-            var buttonPrev = GameObject.Instantiate(buttonNext, categoryTransform);
+            ColorBlock colours = changeButton.colors;
+            colours.highlightedColor = new Color(2, 2, 2, 1);
+            changeButton.colors = colours;
+
+            Navigation navigation = changeButton.navigation;
+            navigation.mode = Navigation.Mode.None;
+            changeButton.navigation = navigation;
+
+            GameObject buttonPrev = GameObject.Instantiate(buttonNext, categoryTransform);
             buttonNext.name = "PrevCategory";
             buttonText = buttonPrev.GetComponent<TextMeshProUGUI>();
             buttonText.text = "<";
@@ -156,9 +162,6 @@ namespace TheRoost.Elegiast
             changeButton = buttonPrev.GetComponent<Button>();
             changeButton.targetGraphic = buttonText;
             changeButton.onClick.AddListener(new UnityEngine.Events.UnityAction(PrevCategory));
-
-            while (content.childCount > 2)
-                GameObject.DestroyImmediate(content.GetChild(2).gameObject);
 
             achievementTemplate = myOverlay.FindInChildren("AModEntry", true);
             achievementTemplate.name = "AchievementEntry";
@@ -205,9 +208,9 @@ namespace TheRoost.Elegiast
             TextMeshProUGUI description = achievementTemplate.FindInChildren("moddescription", true).GetComponent<TextMeshProUGUI>();
             description.name = "description";
 
+            //babelfish so font correctly switches on culture change; needs a label though, errs without
             title.gameObject.SetActive(false);
             description.gameObject.SetActive(false);
-            //babelfish so font correctly switches on culture change; needs a label though, errs without
             title.gameObject.AddComponent<Babelfish>().SetBabelLabel(string.Empty);
             description.gameObject.AddComponent<Babelfish>().SetBabelLabel(string.Empty);
             title.gameObject.SetActive(true);
@@ -225,7 +228,7 @@ namespace TheRoost.Elegiast
             description.fontSizeMax = fontSize;
             description.fontSizeMin = 1;
             description.enableAutoSizing = true;
-            var height = image.rectTransform.sizeDelta.y;
+            float height = image.rectTransform.sizeDelta.y;
             title.rectTransform.sizeDelta = new Vector2(425, height / 2);
             description.rectTransform.sizeDelta = new Vector2(title.rectTransform.sizeDelta.x, height / 2);
             textContainer.GetComponent<RectTransform>().sizeDelta = new Vector2(title.rectTransform.sizeDelta.x, height);
@@ -241,12 +244,10 @@ namespace TheRoost.Elegiast
             date.fontSizeMax -= 2;
             date.fontStyle = FontStyles.Normal;
 
-            hiddenInfo = GameObject.Instantiate(achievementTemplate, content);
-            hiddenInfo.FindInChildren("previewimage", true).GetComponent<Image>().color = new Color(0, 0, 0, 0);
-            hiddenInfo.FindInChildren("title", true).GetComponent<TextMeshProUGUI>().color = new Color(0.25f, 0.25f, 0.25f, 1);
-            hiddenInfo.FindInChildren("description", true).GetComponent<TextMeshProUGUI>().color = new Color(0.25f, 0.25f, 0.25f, 1);
-
-            myOverlay.SetActive(false);
+            hiddenAchievementsInfo = GameObject.Instantiate(achievementTemplate, content);
+            hiddenAchievementsInfo.FindInChildren("previewimage", true).GetComponent<Image>().color = new Color(0, 0, 0, 0);
+            hiddenAchievementsInfo.FindInChildren("title", true).GetComponent<TextMeshProUGUI>().color = new Color(0.25f, 0.25f, 0.25f, 1);
+            hiddenAchievementsInfo.FindInChildren("description", true).GetComponent<TextMeshProUGUI>().color = new Color(0.25f, 0.25f, 0.25f, 1);
         }
 
         Dictionary<string, List<GameObject>> sortedAchievements = new Dictionary<string, List<GameObject>>();
@@ -263,13 +264,6 @@ namespace TheRoost.Elegiast
             categories.Clear();
             sortedAchievements.Clear();
             hiddenInCategory.Clear();
-
-            foreach (string category in defaultCategories)
-            {
-                categories.Add(category);
-                hiddenInCategory[category] = 0;
-                sortedAchievements[category] = new List<GameObject>();
-            }
 
             foreach (CustomAchievement customCategory in customAchievements.ToArray().Where(achievement => achievement.isCategory == true))
             {
@@ -338,20 +332,16 @@ namespace TheRoost.Elegiast
             }
         }
 
-        MethodInfo showoverlay;
-        MenuScreenController menu;
-        object[] overlay;
         private void OpenAchievementsMenu()
         {
-            showoverlay.Invoke(menu, overlay);
+            TheRoost.Vagabond.MenuManager.ShowOverlay(achievementsOverlay);
             currentCategory = 0;
-            SetCategory(categories[0]);
+            SetCategory(categories[currentCategory]);
         }
 
         int currentCategory = 0;
         private void NextCategory()
         {
-            SoundManager.PlaySfx("UIButtonClick");
             currentCategory++;
             if (currentCategory >= categories.Count)
                 currentCategory = 0;
@@ -360,7 +350,6 @@ namespace TheRoost.Elegiast
 
         private void PrevCategory()
         {
-            SoundManager.PlaySfx("UIButtonClick");
             currentCategory--;
             if (currentCategory < 0)
                 currentCategory = categories.Count - 1;
@@ -375,21 +364,18 @@ namespace TheRoost.Elegiast
             foreach (GameObject entry in sortedAchievements[category])
                 entry.SetActive(true);
 
-            ILocStringProvider locStringProvider = Watchman.Get<ILocStringProvider>();
-
-            if (defaultCategories.Contains(category))
-                categoryText.text = locStringProvider.Get(category);
-            else
-                categoryText.text = Watchman.Get<Compendium>().GetEntityById<CustomAchievement>(category).label;
+            categoryText.text = Watchman.Get<Compendium>().GetEntityById<CustomAchievement>(category).label;
 
             if (hiddenInCategory[category] == 0)
-                hiddenInfo.gameObject.SetActive(false);
+                hiddenAchievementsInfo.gameObject.SetActive(false);
             else
             {
-                hiddenInfo.gameObject.SetActive(true);
-                hiddenInfo.FindInChildren("title", true).GetComponent<TextMeshProUGUI>().text = String.Format(locStringProvider.Get("ACH_HIDDEN_TITLE"), hiddenInCategory[category]);
-                hiddenInfo.FindInChildren("description", true).GetComponent<TextMeshProUGUI>().text = locStringProvider.Get("ACH_HIDDEN_DESC");
-                hiddenInfo.transform.SetAsLastSibling();
+                ILocStringProvider locStringProvider = Watchman.Get<ILocStringProvider>();
+
+                hiddenAchievementsInfo.gameObject.SetActive(true);
+                hiddenAchievementsInfo.FindInChildren("title", true).GetComponent<TextMeshProUGUI>().text = String.Format(locStringProvider.Get("ACH_HIDDEN_TITLE"), hiddenInCategory[category]);
+                hiddenAchievementsInfo.FindInChildren("description", true).GetComponent<TextMeshProUGUI>().text = locStringProvider.Get("ACH_HIDDEN_DESC");
+                hiddenAchievementsInfo.transform.SetAsLastSibling();
             }
         }
     }

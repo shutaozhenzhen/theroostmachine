@@ -1,12 +1,17 @@
-﻿using System.Reflection;
-using TheRoost;
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
+
 using HarmonyLib;
+using TheRoost;
 
 public static class TheRoostMachine
 {
-    private static bool _alreadyAssembled = false;
     public static bool alreadyAssembled { get { return _alreadyAssembled; } }
-    private static readonly Harmony harmony = new Harmony("theroostmachine");
+    private static bool _alreadyAssembled = false;
+
+    private static readonly Dictionary<string, Harmony> patchers = new Dictionary<string, Harmony>();
+    public const string defaultRoostPatchId = "theroostmachine";
 
     public static void Initialise()
     {
@@ -16,21 +21,29 @@ public static class TheRoostMachine
             return;
         }
 
-        //in case something breaks during the setup
-        SecretHistories.UI.Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
+        try
+        {
+            _alreadyAssembled = true;
 
-        TheRoost.Beachcomber.CuckooLoader.Enact();
-        TheRoost.Twins.EventManager.Enact();
-        TheRoost.Elegiast.CustomAchievementsManager.Enact();
-        TheRoost.Vagabond.CommandLine.Enact();
-        TheRoost.Birdsong.Enact(); //miscellania
+            //in case something breaks during the setup
+            SecretHistories.UI.Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
 
-        _alreadyAssembled = true;
-        SecretHistories.UI.Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
+            TheRoost.Vagabond.RoostConfig.Enact();
+            TheRoost.Beachcomber.CuckooLoader.Enact();
+            TheRoost.Vagabond.MenuManager.Enact();
+            TheRoost.Elegiast.CustomAchievementsManager.Enact();
+
+            SecretHistories.UI.Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
+        }
+        catch (Exception ex)
+        {
+            Birdsong.Sing(ex);
+        }
     }
 
     public static void Patch(MethodBase original,
-        MethodInfo prefix = null, MethodInfo postfix = null, MethodInfo transpiler = null, MethodInfo finalizer = null)
+        MethodInfo prefix = null, MethodInfo postfix = null, MethodInfo transpiler = null, MethodInfo finalizer = null,
+        string patchId = defaultRoostPatchId)
     {
         if (original == null)
         {
@@ -43,10 +56,26 @@ public static class TheRoostMachine
             return;
         }
 
-        harmony.Patch(original,
+        if (patchers.ContainsKey(patchId) == false)
+            patchers[patchId] = new Harmony(patchId);
+
+        patchers[patchId].Patch(original,
             prefix: prefix == null ? null : new HarmonyMethod(prefix),
             postfix: postfix == null ? null : new HarmonyMethod(postfix),
             transpiler: transpiler == null ? null : new HarmonyMethod(transpiler),
             finalizer: finalizer == null ? null : new HarmonyMethod(finalizer));
+    }
+
+    public static void Unpatch(string patchId)
+    {
+        if (patchers.ContainsKey(patchId) == false)
+            Birdsong.Sing("Harmony patch '{0}' isn't present in the Roost Machine");
+        else if (Harmony.HasAnyPatches(patchId))
+            patchers[patchId].UnpatchAll(patchId);
+    }
+
+    public static bool HasAnyPatches(string patchId)
+    {
+        return Harmony.HasAnyPatches(patchId);
     }
 }

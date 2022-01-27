@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -10,8 +9,6 @@ using HarmonyLib;
 using SecretHistories.Fucine;
 using SecretHistories.Entities;
 using SecretHistories.Fucine.DataImport;
-
-using Newtonsoft.Json.Linq;
 
 namespace TheRoost.Beachcomber
 {
@@ -41,12 +38,6 @@ namespace TheRoost.Beachcomber
             //(the last patch will be executed for all of the types)
             //thus, I have to create an intermediary - InvokeGenericImporterForAbstractRootEntity() - which calls the actual type-specific method
             //(generics are needed to mimic CS's own structure and since it makes accessing properties much more easierester)
-
-            
-            //fixes two things - $ ops being incompatible with each other and mod content being inaccessible for them
-            TheRoostMachine.Patch(
-                typeof(EntityTypeDataLoader).GetMethodInvariant("LoadEntityDataFromSuppliedFiles"),
-                transpiler: typeof(Usurper).GetMethodInvariant("ModContentOpsFixer"));
         }
 
         private static IEnumerable<CodeInstruction> AbstractEntityConstructorTranspiler(IEnumerable<CodeInstruction> instructions)
@@ -125,52 +116,6 @@ namespace TheRoost.Beachcomber
 
             foreach (object key in entityData.ValuesTable.Keys)
                 (entity as AbstractEntity<T>).PushUnknownProperty(key, entityData.ValuesTable[key]);
-        }
-
-
-        private static IEnumerable<CodeInstruction> ModContentOpsFixer(IEnumerable<CodeInstruction> instructions)
-        {
-            var codes = instructions.ToList();
-            var finalCodes = new List<CodeInstruction>();
-
-            for (int i = 0; i < codes.Count; i++)
-            {
-                finalCodes.Add(codes[i]);
-                if (codes[i].opcode == OpCodes.Stloc_0)
-                    break;
-            }
-
-            finalCodes.Add(new CodeInstruction(OpCodes.Ldarg_0)); //instance itself
-            finalCodes.Add(new CodeInstruction(OpCodes.Ldloca_S, 0)); //alreadyLoadedEntities (local)                   
-            finalCodes.Add(new CodeInstruction(OpCodes.Call, typeof(Usurper).GetMethodInvariant("ApplyModsToDataFileByFile")));
-            finalCodes.Add(new CodeInstruction(OpCodes.Ret));
-
-            return finalCodes.AsEnumerable();
-        }
-
-        private static void ApplyModsToDataFileByFile(EntityTypeDataLoader loader, ref Dictionary<string, EntityData> alreadyLoadedEntities)
-        {
-            List<LoadedDataFile> modContentFiles = loader.GetType().GetFieldInvariant("_modContentFiles").GetValue(loader) as List<LoadedDataFile>;
-            ContentImportLog log = loader.GetType().GetFieldInvariant("_log").GetValue(loader) as ContentImportLog;
-
-            var unpackObjectDataIntoCollection = typeof(EntityTypeDataLoader).GetMethodInvariant("UnpackObjectDataIntoCollection").CreateDelegate(typeof(Action<JToken, FucineUniqueIdBuilder, Dictionary<string, EntityData>, LoadedDataFile>), loader) as Action<JToken, FucineUniqueIdBuilder, Dictionary<string, EntityData>, LoadedDataFile>;
-
-            foreach (LoadedDataFile contentFile in modContentFiles)
-            {
-                Dictionary<string, EntityData> moddedEntityData = new Dictionary<string, EntityData>();
-                FucineUniqueIdBuilder containerBuilder = new FucineUniqueIdBuilder(contentFile.EntityContainer);
-
-                foreach (JToken eachObject in ((JArray)contentFile.EntityContainer.Value))
-                {
-                    moddedEntityData.Clear();
-                    unpackObjectDataIntoCollection.Invoke(eachObject, containerBuilder, moddedEntityData, contentFile);
-
-                    foreach (EntityData modData in moddedEntityData.Values)
-                        new EntityMod(modData).ApplyModTo(alreadyLoadedEntities, log);
-                }
-            }
-
-            loader.GetType().GetPropertyInvariant("_allLoadedEntities").SetValue(loader, alreadyLoadedEntities);
         }
     }
 }

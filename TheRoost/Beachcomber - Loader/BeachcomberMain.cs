@@ -7,6 +7,7 @@ using System.Linq;
 
 using SecretHistories.Fucine;
 using SecretHistories.Entities;
+using SecretHistories.Fucine.DataImport;
 
 using HarmonyLib;
 using UnityEngine;
@@ -19,11 +20,12 @@ namespace TheRoost.Beachcomber
         private readonly static Dictionary<Type, List<string>> localizableUnknownProperties = new Dictionary<Type, List<string>>();
         private readonly static Dictionary<IEntityWithId, Dictionary<string, object>> loadedPropertiesStorage = new Dictionary<IEntityWithId, Dictionary<string, object>>();
 
+        private readonly static Dictionary<Type, List<string>> ignoredProperties = new Dictionary<Type, List<string>>();
+        //NB entities can only be ignored with Usurper
+        private readonly static Dictionary<Type, List<string>> ignoredEntityGroups = new Dictionary<Type, List<string>>();
+
         internal static void Enact()
         {
-            if (TheRoostMachine.alreadyAssembled)
-                return;
-
             //the most convenient place to catch and load simple properties that main game doesn't want, but mods do want is here
             TheRoostMachine.Patch(
                 original: typeof(AbstractEntity<Element>).GetMethodInvariant("PopUnknownKeysToLog"),
@@ -49,20 +51,23 @@ namespace TheRoost.Beachcomber
                 original: typeof(CompendiumLoader).GetMethodInvariant("PopulateCompendium"),
                 transpiler: typeof(CuckooLoader).GetMethodInvariant("CuckooTranspiler"));
 
+            //self-explanatory
+            BeachcomberFixes.Fix();
+
             //now, as a finishing touch, we just completely replace how the game handles importing
             //(well, json loading and thus localizing/merging/mod $ stays intact, actually, 
             //it's just the process of porting jsons into actual game entities that gets changed)
             Usurper.OverthrowNativeImporting();
         }
 
-        public static void ClaimProperty<TEntity, TProperty>(string propertyName, bool localize) where TEntity : AbstractEntity<TEntity>
+        internal static void ClaimProperty<TEntity, TProperty>(string propertyName, bool localize) where TEntity : AbstractEntity<TEntity>
         {
             Type entityType = typeof(TEntity);
             Type propertyType = typeof(TProperty);
 
             if (typeof(AbstractEntity<TEntity>).IsAssignableFrom(typeof(TEntity)) == false)
             {
-                Birdsong.Sing("Trying to claim property '{0}' of {1}, but {1} has doesn't derive from AbstractEntity and thus can't not be loaded.", propertyName, entityType.Name);
+                Birdsong.Sing("Trying to claim property '{0}' for type '{1}', but {1} has doesn't derive from AbstractEntity and thus can't not be loaded.", propertyName, entityType.Name);
                 return;
             }
 
@@ -71,7 +76,7 @@ namespace TheRoost.Beachcomber
 
             if (knownUnknownProperties[entityType].ContainsKey(propertyName.ToLower()))
             {
-                Birdsong.Sing("Trying to claim '0' of type {1}, but the property of the same name for the same type is already claimed", propertyName, entityType.Name);
+                Birdsong.Sing("Trying to claim property '{0}' for type '{1}', but the property of the same name for the same type is already claimed (it's ok when happens on disabling/enabling modules)", propertyName, entityType.Name);
                 return;
             }
 
@@ -86,7 +91,7 @@ namespace TheRoost.Beachcomber
             }
         }
 
-        public static T RetrieveProperty<T>(IEntityWithId owner, string propertyName)
+        internal static T RetrieveProperty<T>(IEntityWithId owner, string propertyName)
         {
             propertyName = propertyName.ToLower();
             if (loadedPropertiesStorage.ContainsKey(owner) && loadedPropertiesStorage[owner].ContainsKey(propertyName))
@@ -95,26 +100,64 @@ namespace TheRoost.Beachcomber
                 return default(T);
         }
 
-        public static bool hasCustomProperty(IEntityWithId owner, string propertyName)
+        public static void AddIgnoredProperty<TEntity>(string propertyName)
+        {
+            if (ignoredProperties[typeof(TEntity)] == null)
+                ignoredProperties[typeof(TEntity)] = new List<string>();
+
+            if (ignoredProperties[typeof(TEntity)].Contains(propertyName) == false)
+                ignoredProperties[typeof(TEntity)].Add(propertyName);
+        }
+
+        public static void AddIgnoredEntityGroup<TEntity>(string groupId)
+        {
+            if (ignoredEntityGroups[typeof(TEntity)] == null)
+                ignoredEntityGroups[typeof(TEntity)] = new List<string>();
+
+            if (ignoredEntityGroups[typeof(TEntity)].Contains(groupId) == false)
+                ignoredEntityGroups[typeof(TEntity)].Add(groupId);
+        }
+
+        public static bool isIgnoredEntity(this EntityData data, Type type)
+        {
+            if (data.ValuesTable.Contains("ignoreGroups"))
+            {
+                ArrayList entityGroups = data.ValuesTable["ignoreGroups"] as ArrayList;
+                foreach (string entityGroup in entityGroups)
+                    if (ignoredEntityGroups[type].Contains(entityGroup))
+                        return true;
+            }
+
+            return false;
+        }
+
+        internal static bool HasCustomProperty(IEntityWithId owner, string propertyName)
         {
             propertyName = propertyName.ToLower();
             return (loadedPropertiesStorage.ContainsKey(owner) && loadedPropertiesStorage[owner].ContainsKey(propertyName));
         }
 
-        private static void KnowUnknown(IEntityWithId __instance, Hashtable ___UnknownProperties)
+        private static bool KnowUnknown(IEntityWithId __instance, Hashtable ___UnknownProperties)
         {
             IEntityWithId entity = __instance;
+            Type entityType = entity.GetType();
 
-            if (knownUnknownProperties.ContainsKey(entity.GetType()))
+            if (knownUnknownProperties.ContainsKey(entityType))
             {
                 Hashtable propertiesToComb = new Hashtable(___UnknownProperties);
-                Dictionary<string, Type> propertiesToClaim = knownUnknownProperties[entity.GetType()];
+                Dictionary<string, Type> propertiesToClaim = knownUnknownProperties[entityType];
 
                 if (propertiesToClaim.Count > 0)
                     foreach (string propertyName in propertiesToComb.Keys)
                         if (propertiesToClaim.ContainsKey(propertyName))
                         {
-                            Birdsong.Sing(VerbosityLevel.SystemChatter, 0, "Known-Unknown property '{0}' for '{1}' {2}", propertyName, entity.Id, entity.GetType().Name);
+                            if (ignoredProperties.ContainsKey(entityType) && ignoredProperties[entityType].Contains(propertyName))
+                            {
+                                Birdsong.Sing(VerbosityLevel.SystemChatter, 0, "Known-Unknown - but ignored - property '{0}' for '{1}' {2}", propertyName, entity.Id, entityType.Name);
+                                continue;
+                            }
+
+                            Birdsong.Sing(VerbosityLevel.SystemChatter, 0, "Known-Unknown property '{0}' for '{1}' {2}", propertyName, entity.Id, entityType.Name);
 
                             ___UnknownProperties.Remove(propertyName);
 
@@ -132,6 +175,8 @@ namespace TheRoost.Beachcomber
                             }
                         }
             }
+
+            return true;
         }
 
         private static void InsertCustomLocalizableKeys(EntityTypeDataLoader __instance, HashSet<string> __result)
@@ -196,6 +241,7 @@ namespace TheRoost.Beachcomber
             string assemblyLocation = assembly.Location.Replace('/', '\\');
             return (assemblyLocation.Contains(modLocationLocal) || assemblyLocation.Contains(modLocationWorkshop));
         }
+
     }
 }
 
@@ -215,7 +261,7 @@ namespace TheRoost
 
         public static bool HasCustomProperty(this IEntityWithId owner, string propertyName)
         {
-            return TheRoost.Beachcomber.CuckooLoader.hasCustomProperty(owner, propertyName);
+            return TheRoost.Beachcomber.CuckooLoader.HasCustomProperty(owner, propertyName);
         }
     }
 }

@@ -21,22 +21,32 @@ namespace TheRoost.Elegiast
         //<achievement id, unlock time>
         private static Dictionary<string, string> unlocks;
 
-        const string propertyThatUnlocks = "elegiastUnlock";
-        const string datafile = "customachievements.json";
-        const string achievementDataFormat = "\"{0}\": \"{1}\",\n";
-        const string achievementUnlockLabel = "ACH_UNLOCKED";
+        public const string elegiastPatchId = "theroostmachine.elegiast";
 
+        const string propertyThatUnlocks = "elegiastUnlock";
+
+        const string datafile = "customachievements.json";
         static string localFile { get { return Application.persistentDataPath + "\\" + datafile; } }
+
+        const string achievementDataFormat = "\"{0}\": \"{1}\",\n";
+
+        private static bool alreadyEnacted;
 
         internal static void Enact()
         {
-            if (TheRoostMachine.alreadyAssembled)
+            if (!alreadyEnacted)
+            {
+                //this is required for the Elegiast not to claim the same property/debug input several times if he's enabled/disabled several times
+                Birdsong.ClaimProperty<SecretHistories.Entities.Recipe, List<string>>(propertyThatUnlocks);
+                TheRoost.Vagabond.CommandLine.AddCommand("achievements", AchievementsDebug);
+                alreadyEnacted = true;
+            }
+
+            if (Birdsong.GetConfigValue<int>(TheRoost.Vagabond.RoostConfig.achievementsEnabled, 1) == 0)
                 return;
 
-            Birdsong.ClaimProperty<SecretHistories.Entities.Recipe, List<string>>(propertyThatUnlocks);
-
-            AtTimeOfPower.MainMenuLoaded.Schedule(CustomAchievementInterface.Create, PatchType.Prefix);
-            AtTimeOfPower.RecipeExecution.Schedule<RecipeCompletionEffectCommand>(UnlockAchievements, PatchType.Prefix);
+            AtTimeOfPower.MainMenuLoaded.Schedule(CustomAchievementInterface.CreateInterface, PatchType.Prefix, elegiastPatchId);
+            AtTimeOfPower.RecipeExecution.Schedule<RecipeCompletionEffectCommand>(UnlockAchievements, PatchType.Prefix, elegiastPatchId);
 
             LoadAllUnlocks();
 
@@ -45,8 +55,6 @@ namespace TheRoost.Elegiast
                 cachedGogStats = GalaxyInstance.Stats();
                 cachedGogStats.RequestUserStatsAndAchievements();
             }
-
-            TheRoost.Vagabond.CommandLine.AddCommand("achievements", AchievementsDebug);
         }
 
         private static void UnlockAchievements(RecipeCompletionEffectCommand __instance)

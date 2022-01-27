@@ -3,26 +3,13 @@ using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 
-using SecretHistories.UI;
-
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace TheRoost
 {
     //extension class (spread around the files, with functions defined where they are needed)
     public static partial class Birdsong
     {
-        internal static void Enact()
-        {
-            if (TheRoostMachine.alreadyAssembled)
-                return;
-
-            TheRoostMachine.Patch(
-                original: typeof(SecretHistories.UI.NotificationWindow).GetMethodInvariant("SetDetails"),
-                prefix: typeof(Birdsong).GetMethodInvariant("ShowNotificationWithIntervention"));
-        }
-
         public static void Sing(VerbosityLevel verbosity, int messageLevel, object data, params object[] furtherData)
         {
             string message = FormatMessage(data, furtherData);
@@ -36,6 +23,8 @@ namespace TheRoost
 
         private static string FormatMessage(object wrapMessageMaybe, params object[] furtherData)
         {
+            if (wrapMessageMaybe == null)
+                wrapMessageMaybe = "null";
             if (furtherData == null)
                 return wrapMessageMaybe.ToString();
 
@@ -48,12 +37,7 @@ namespace TheRoost
                 return String.Format(wrapMessageMaybe.ToString(), furtherData);
             }
             else
-            {
-                if (wrapMessageMaybe == null)
-                    wrapMessageMaybe = "null";
-
                 return String.Concat(wrapMessageMaybe.ToString(), " ", furtherData.UnpackAsString());
-            }
         }
 
         public static string UnpackAsString(this IEnumerable collection)
@@ -112,32 +96,9 @@ namespace TheRoost
             return null;
         }
 
-        public static bool intervention = false;
-        public static Sprite interventionSprite;
-        public static float interventionDuration;
-        public static void ShowNotificationWindow(this Notifier notifier, string title, string description, Sprite image, float duration, bool duplicatesAllowed = true)
+        public static T GetConfigValue<T>(string configId, T valueIfNotDefined = default(T))
         {
-            intervention = true;
-            interventionSprite = image;
-            interventionDuration = duration;
-            notifier.ShowNotificationWindow(title, description, duplicatesAllowed);
-            intervention = false;
-            interventionSprite = null;
-            interventionDuration = -1;
-        }
-
-        private static void ShowNotificationWithIntervention(NotificationWindow __instance, ref Image ___artwork)
-        {
-            if (intervention)
-            {
-                if (interventionDuration > 0)
-                {
-                    __instance.CancelInvoke("Hide");
-                    __instance.SetDuration(interventionDuration);
-                }
-                if (interventionSprite != null)
-                    ___artwork.sprite = interventionSprite;
-            }
+            return TheRoost.Vagabond.RoostConfig.GetConfigValueSafe<T>(configId, valueIfNotDefined);
         }
     }
 

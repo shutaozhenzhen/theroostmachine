@@ -35,15 +35,18 @@
     <LangVersion>5</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="CustomAchievements\ElegiastInterface.cs" />
-    <Compile Include="CustomAchievements\ElegiastEntities.cs" />
-    <Compile Include="CustomAchievements\Elegiast.cs" />
-    <Compile Include="CustomLoader\BeachcomberMain.cs" />
-    <Compile Include="CommandLine\Vagabond.cs" />
-    <Compile Include="CustomLoader\BeachcomberEntities.cs" />
-    <Compile Include="CustomLoader\BeachcomberImporter.cs" />
-    <Compile Include="CustomLoader\BeachcomberUsurper.cs" />
-    <Compile Include="Events\Twins.cs" />
+    <Compile Include="Beachcomber - Loader\BeachcomberFixes.cs" />
+    <Compile Include="Vagabond - Various Interventions\VagabondConfig.cs" />
+    <Compile Include="Vagabond - Various Interventions\VagabondMain.cs" />
+    <Compile Include="Elegiast - Achievements\ElegiastInterface.cs" />
+    <Compile Include="Elegiast - Achievements\ElegiastEntities.cs" />
+    <Compile Include="Elegiast - Achievements\ElegiastMain.cs" />
+    <Compile Include="Beachcomber - Loader\BeachcomberMain.cs" />
+    <Compile Include="Vagabond - Various Interventions\VagabondCommandLine.cs" />
+    <Compile Include="Beachcomber - Loader\BeachcomberExamples.cs" />
+    <Compile Include="Beachcomber - Loader\BeachcomberImporter.cs" />
+    <Compile Include="Beachcomber - Loader\BeachcomberUsurper.cs" />
+    <Compile Include="Twins - Events\TwinsMain.cs" />
     <Compile Include="Birdsong.cs" />
     <Compile Include="MainHall.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
