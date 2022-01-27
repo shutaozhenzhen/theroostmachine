@@ -38,7 +38,7 @@ namespace TheRoost.Vagabond
 
         public static void ShowOverlay(CanvasGroupFader overlay)
         {
-            //HideCurrentOverlay();
+            HideCurrentOverlay();
             showOverlay.Invoke(overlay);
         }
 
@@ -73,6 +73,7 @@ namespace TheRoost.Vagabond
         {
             Button button = __instance.GetComponentInChildren<Button>();
             ColorBlock colours = button.colors;
+            colours.disabledColor = new Color(0, 0, 0, 0);
             colours.normalColor = new Color(0, 0, 0, 0);
             button.colors = colours;
         }
