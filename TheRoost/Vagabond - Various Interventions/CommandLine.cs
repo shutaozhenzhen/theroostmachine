@@ -275,7 +275,7 @@ namespace TheRoost.Vagabond
 
         private static UnityEngine.Object GetUnityObject(string[] path)
         {
-            GameObject go = Birdsong.FindGameObject(path[0], true);
+            GameObject go = Machine.FindGameObject(path[0], true);
 
             if (go == null)
                 return null;
@@ -342,7 +342,7 @@ namespace TheRoost.Vagabond
 
 namespace TheRoost
 {
-    public static partial class Birdsong
+    public static partial class Machine
     {
         public static GameObject FindGameObject(string name, bool includeInactive)
         {

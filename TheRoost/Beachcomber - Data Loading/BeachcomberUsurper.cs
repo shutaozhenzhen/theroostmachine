@@ -16,6 +16,10 @@ namespace TheRoost.Beachcomber
     {
         internal static void OverthrowNativeImporting()
         {
+            //here we completely replace how the game handles importing
+            //(well, json loading and thus localizing/merging/mod $ stays intact, actually, 
+            //it's just the process of porting jsons into actual game entities that gets changed)
+
             ///this little thing below actually hijacks the entirety of the CS loading proccess and replaces it all with Beachcomber's pipeline;
             ///the original thing has a... history, which makes it powerful in some regards but decrepit in others
             ///it can load QuickSpec entities only if they are contained in the ***Dictionary<string,List<IQuickSpecEntity>>*** (hilarious)
@@ -27,7 +31,7 @@ namespace TheRoost.Beachcomber
             ///(well, that last one is actually impossible anyway since it won't be parsed as a correct json, but theoretical possibility exists)
             ///struct loading is a mad enterprise in particular
             ///the sport was good thought
-            TheRoostMachine.Patch(
+            Machine.Patch(
                 typeof(AbstractEntity<Element>).GetConstructors(BindingFlags.NonPublic | BindingFlags.Instance)[0],
                 transpiler: typeof(Usurper).GetMethodInvariant("AbstractEntityConstructorTranspiler"));
 
@@ -97,7 +101,7 @@ namespace TheRoost.Beachcomber
                         }
                         catch
                         {
-                            throw new Exception("FAILED TO IMPORT JSON");
+                            throw Birdsong.Caw("FAILED TO IMPORT JSON");
                         }
                         entityData.ValuesTable.Remove(propertyName);
                     }

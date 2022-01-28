@@ -7,34 +7,33 @@ using SecretHistories.Entities;
 
 using UnityEngine;
 
-using TheRoost.Vagabond.ModConfigs;
+using TheRoost.Vagabond.SettingSubscribers;
 
 namespace TheRoost.Vagabond
 {
-    internal static class RoostConfig
+    internal static class ConfigMask
     {
         private static Dictionary<string, string> configValues;
 
-        public const string achievementsEnabled = "ElegiastEnabled";
         public const string minimizePromo = "MinimizePromo";
-        public const string WorldEnabled = "ExpressionsEnabled";
 
-        public static void Enact()
+        internal static void Enact()
         {
-            configValues = typeof(Config).GetFieldInvariant("_configValues").GetValue(Watchman.Get<Config>()) as Dictionary<string, string>;
-
             AtTimeOfPower.MainMenuLoaded.Schedule(ApplyConfigs, PatchType.Postfix);
         }
 
-        public static void ApplyConfigs()
+        private static void ApplyConfigs()
         {
-            new EnableAchievements(achievementsEnabled,
-                TheRoost.Elegiast.CustomAchievementsManager.elegiastPatchId, TheRoost.Elegiast.CustomAchievementsManager.Enact);
             new MinimizePromo(minimizePromo);
+            new EnableAchievements(Enactors.Elegiast.enabledSettingId, Enactors.Elegiast.patchId, TheRoost.Elegiast.CustomAchievementsManager.Enact);
+            new PatchSwitcher(Enactors.Twins.enabledSettingId, Enactors.Twins.patchId, TheRoost.Twins.ExpressionEffects.Enact);
         }
 
         internal static T GetConfigValueSafe<T>(string configId, T valueIfNotDefined)
         {
+            if (configValues == null)
+                configValues = typeof(Config).GetFieldInvariant("_configValues").GetValue(Watchman.Get<Config>()) as Dictionary<string, string>;
+
             object result; string configResult;
             if (configValues.TryGetValue(configId, out configResult))
                 result = configResult;
@@ -49,7 +48,7 @@ namespace TheRoost.Vagabond
     }
 }
 
-namespace TheRoost.Vagabond.ModConfigs
+namespace TheRoost.Vagabond.SettingSubscribers
 {
     internal abstract class ModSettingSubscriber<T> : ISettingSubscriber
     {
@@ -92,7 +91,7 @@ namespace TheRoost.Vagabond.ModConfigs
         }
     }
 
-    internal abstract class PatchSwitcher : ModSettingSubscriber<int>
+    internal class PatchSwitcher : ModSettingSubscriber<int>
     {
         protected readonly string modulePatchId;
         protected readonly Action moduleEnact;
@@ -103,15 +102,15 @@ namespace TheRoost.Vagabond.ModConfigs
             this.moduleEnact = enact;
         }
 
-        protected void Switch()
+        public override void WhenSettingUpdated(object newValue)
         {
             if (settingValue == 1)
             {
-                if (TheRoostMachine.HasAnyPatches(modulePatchId) == false)
+                if (Vagabond.HarmonyMask.HasAnyPatches(modulePatchId) == false)
                     moduleEnact.Invoke();
             }
-            else if (TheRoostMachine.HasAnyPatches(modulePatchId) == true)
-                TheRoostMachine.Unpatch(modulePatchId);
+            else if (Vagabond.HarmonyMask.HasAnyPatches(modulePatchId) == true)
+                Vagabond.HarmonyMask.Unpatch(modulePatchId);
         }
     }
 
@@ -121,7 +120,7 @@ namespace TheRoost.Vagabond.ModConfigs
 
         public override void WhenSettingUpdated(object value)
         {
-            Switch();
+            base.WhenSettingUpdated(value);
 
             GameObject menu = GameObject.Find("CanvasMenu");
             if (menu != null)
@@ -131,6 +130,17 @@ namespace TheRoost.Vagabond.ModConfigs
                 else if (settingValue == 1)
                     Watchman.Get<SecretHistories.Services.StageHand>().MenuScreen();
             }
+        }
+    }
+}
+
+namespace TheRoost
+{
+    public static partial class Machine
+    {
+        public static T GetConfigValue<T>(string configId, T valueIfNotDefined = default(T))
+        {
+            return Vagabond.ConfigMask.GetConfigValueSafe<T>(configId, valueIfNotDefined);
         }
     }
 }

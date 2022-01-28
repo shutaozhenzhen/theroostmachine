@@ -55,11 +55,11 @@ namespace TheRoost.Beachcomber.Entities
         //and of course, entity can have any amount of its own methods 
         void Examples()
         {
-            //to add a custom property to any entity type: Birdsong.ClaimProperty<entityType, propertyType>(propertyName)
-            Birdsong.ClaimProperty<SecretHistories.Entities.Verb, string>("someProperty");
+            //to add a custom property to any entity type: TheRoostMachine.ClaimProperty<entityType, propertyType>(propertyName)
+            Machine.ClaimProperty<SecretHistories.Entities.Verb, string>("someProperty");
 
             //can be done with a custom class too
-            Birdsong.ClaimProperty<ExampleFucineClass, int>("someProperty");
+            Machine.ClaimProperty<ExampleFucineClass, int>("someProperty");
 
             //to get the property value: entity.RetrieveProperty<propertyType>(propertyName)
             this.RetrieveProperty<int>("someProperty");

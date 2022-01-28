@@ -7,11 +7,11 @@ using SecretHistories.UI;
 using SecretHistories.Spheres;
 using SecretHistories.Enums;
 
-using TheRoost.PracticalApplications.World.Entities;
+using TheRoost.Twins.Entities;
 
-namespace TheRoost.PracticalApplications.World
+namespace TheRoost.Twins
 {
-    static class TheWorldApplication
+    static class ExpressionEffects
     {
         //Dictionary<Funcine<int>, Funcine<int>> - both parts are basically numbers which are checked by normal CS req rules
         const string refReqs = "@reqs";
@@ -21,14 +21,17 @@ namespace TheRoost.PracticalApplications.World
         //mutation effects are identical to normal ones, not counting WeirdSpecs quirks, with the only difference of Level being Funcine<int>
         const string refMutations = "@mutations";
 
+        internal static void ClaimProperties()
+        {
+            Machine.ClaimProperty<Recipe, Dictionary<Funcine<int>, Funcine<int>>>(refReqs);
+            Machine.ClaimProperty<Recipe, Dictionary<string, Funcine<int>>>(refEffects);
+            Machine.ClaimProperty<Recipe, Dictionary<Funcine<bool>, List<RefMutationEffect>>>(refMutations);
+        }
+
         internal static void Enact()
         {
-            AtTimeOfPower.RecipeRequirementsCheck.Schedule<Recipe, AspectsInContext, bool>(RefReqs);
-            AtTimeOfPower.RecipeExecution.Schedule<RecipeCompletionEffectCommand, Situation>(ExecuteEffectsWithReferences, PatchType.Prefix);
-
-            Birdsong.ClaimProperty<Recipe, Dictionary<Funcine<int>, Funcine<int>>>(refReqs);
-            Birdsong.ClaimProperty<Recipe, Dictionary<string, Funcine<int>>>(refEffects);
-            Birdsong.ClaimProperty<Recipe, Dictionary<Funcine<bool>, List<RefMutationEffect>>>(refMutations);
+            AtTimeOfPower.RecipeRequirementsCheck.Schedule<Recipe, AspectsInContext, bool>(RefReqs, Enactors.Twins.patchId);
+            AtTimeOfPower.RecipeExecution.Schedule<RecipeCompletionEffectCommand, Situation>(ExecuteEffectsWithReferences, PatchType.Prefix, Enactors.Twins.patchId);
         }
 
         private static bool RefReqs(Recipe __instance, AspectsInContext aspectsinContext, bool __result)
@@ -40,7 +43,7 @@ namespace TheRoost.PracticalApplications.World
                 return true;
             }
 
-            TheWorldHolder.ResetCache();
+            TokenContextManager.ResetCache();
 
             //what I am about to do here should be illegal (and will be at some point of time in the bright future of humankind)
             //but I really need to know a *situation* instead of just aspects; and there is no easier way to find it
@@ -49,7 +52,7 @@ namespace TheRoost.PracticalApplications.World
             {
                 if (situation.GetAspects(true).AspectsEqual(aspectsinContext.AspectsInSituation))
                 {
-                    TheWorldHolder.SetLocalSituation(situation);
+                    TokenContextManager.SetLocalSituation(situation);
 
                     situaitionFound = true;
                     break;
@@ -100,8 +103,8 @@ namespace TheRoost.PracticalApplications.World
 
         private static void ExecuteEffectsWithReferences(RecipeCompletionEffectCommand __instance, Situation situation)
         {
-            TheWorldHolder.ResetCache();
-            TheWorldHolder.SetLocalSituation(situation);
+            TokenContextManager.ResetCache();
+            TokenContextManager.SetLocalSituation(situation);
 
             Sphere storage = situation.GetSingleSphereByCategory(SphereCategory.SituationStorage);
 

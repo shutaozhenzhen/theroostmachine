@@ -6,16 +6,14 @@ using SecretHistories.Fucine;
 using SecretHistories.Spheres;
 using SecretHistories.Enums;
 
-using TheRoost.PracticalApplications.World.Entities;
+using TheRoost.Twins.Entities;
 
-namespace TheRoost.PracticalApplications.World
+namespace TheRoost.Twins
 {
-    public static class TheWorldHolder
+    public static class TokenContextManager
     {
-        internal static void Enact()
+        internal static void AddDebugCommads()
         {
-            TheWorldApplication.Enact();
-
             TheRoost.Vagabond.CommandLine.AddCommand("spheres", LogAllSpheres);
             TheRoost.Vagabond.CommandLine.AddCommand("ref", TestReference);
             TheRoost.Vagabond.CommandLine.AddCommand("exp", TestExpression);
@@ -107,7 +105,7 @@ namespace TheRoost.PracticalApplications.World
             List<Token> result = new List<Token>();
             foreach (Token token in tokens)
             {
-                TheWorldHolder.SetLocalToken(token);
+                TokenContextManager.SetLocalToken(token);
                 if (filter.result == true)
                     result.Add(token);
             }
@@ -130,8 +128,8 @@ namespace TheRoost.PracticalApplications.World
 
         public static void TestExpression(params string[] command)
         {
-            TheWorldHolder.ResetCache();
-            TheWorldHolder.SetLocalSituation(SecretHistories.NullObjects.NullSituation.Create());
+            TokenContextManager.ResetCache();
+            TokenContextManager.SetLocalSituation(SecretHistories.NullObjects.NullSituation.Create());
             Funcine<int> test = new Funcine<int>(command[0]);
             Birdsong.Sing("{0} = {1}", test.formula, test.result);
         }
@@ -159,7 +157,7 @@ namespace TheRoost.PracticalApplications.World
 
         public static void ShowCache(params string[] command)
         {
-            TheWorldHolder.ResetCache();
+            TokenContextManager.ResetCache();
             if (command == null || command.Length == 0)
             {
                 foreach (string cachedSphere in cachedSpheres.Keys)

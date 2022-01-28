@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 
-using TheRoost.PracticalApplications.World.Entities;
+using TheRoost.Twins.Entities;
 
-namespace TheRoost.PracticalApplications.World
+namespace TheRoost.Twins
 {
     public static class FuncineParser
     {
@@ -78,7 +78,7 @@ namespace TheRoost.PracticalApplications.World
                 return expression;
 
             if (closingPosition == -1)
-                throw new ApplicationException("Reference in " + expression + " is not closed");
+                throw Birdsong.Caw("Reference in {0} is not closed", expression);
 
             string referenceData = expression.Substring(openingPosition + 1, closingPosition - openingPosition - 1);
             int innerOpeningsCount = referenceData.Split(referenceOpening).Length - 1;
@@ -89,7 +89,7 @@ namespace TheRoost.PracticalApplications.World
                 {
                     closingPosition = expression.IndexOfAny(referenceClosing, closingPosition + 1);
                     if (closingPosition == -1)
-                        throw new ApplicationException("Unclosed reference in " + expression);
+                        throw Birdsong.Caw("Unclosed reference in {0}", expression);
                 }
 
                 referenceData = expression.Substring(openingPosition + 1, closingPosition - openingPosition - 1);
@@ -123,10 +123,10 @@ namespace TheRoost.PracticalApplications.World
                 case "decks": return InterpretDeckReferencePath(ref path);
                 case "table":
                 case "tabletop": return "~/tabletop";
-                case "extant": return TheWorldHolder.EXTANT_PATH;
-                case "token": return TheWorldHolder.LOCAL_TOKEN_PATH;
-                case "situation": return TheWorldHolder.LOCAL_SITUATION_PATH;
-                case "": return TheWorldHolder.LOCAL_SPHERE_PATH;
+                case "extant": return TokenContextManager.EXTANT_PATH;
+                case "token": return TokenContextManager.LOCAL_TOKEN_PATH;
+                case "situation": return TokenContextManager.LOCAL_SITUATION_PATH;
+                case "": return TokenContextManager.LOCAL_SPHERE_PATH;
                 default:
                     Birdsong.Sing("Unknown sphere area {0}", sphereArea);
                     return "~/" + sphereArea;
@@ -140,16 +140,16 @@ namespace TheRoost.PracticalApplications.World
 
             switch (sphere)
             {
-                case "storage": return TheWorldHolder.StoragePathForVerb(verbId);
-                case "slots": return TheWorldHolder.SlotsPathForVerb(verbId);
+                case "storage": return TokenContextManager.StoragePathForVerb(verbId);
+                case "slots": return TokenContextManager.SlotsPathForVerb(verbId);
                 case "slot":
                     string slotId = GetNextPathPart(ref path);
-                    return TheWorldHolder.SingleSlotPathForVerb(verbId, slotId);
+                    return TokenContextManager.SingleSlotPathForVerb(verbId, slotId);
                 case "":
-                case "all": return TheWorldHolder.PathForVerb(verbId);
+                case "all": return TokenContextManager.PathForVerb(verbId);
                 default:
                     Birdsong.Sing("Unknown verb sphere {0}", sphere);
-                    return TheWorldHolder.PathForVerb(verbId) + "/unknown";
+                    return TokenContextManager.PathForVerb(verbId) + "/unknown";
             }
         }
 

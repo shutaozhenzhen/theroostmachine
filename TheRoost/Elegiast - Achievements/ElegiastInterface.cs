@@ -334,7 +334,7 @@ namespace TheRoost.Elegiast
 
         private void OpenAchievementsMenu()
         {
-            TheRoost.Vagabond.MenuManager.ShowOverlay(achievementsOverlay);
+            TheRoost.Vagabond.MenuMask.ShowOverlay(achievementsOverlay);
             currentCategory = 0;
             SetCategory(categories[currentCategory]);
         }
@@ -383,7 +383,7 @@ namespace TheRoost.Elegiast
 
 namespace TheRoost
 {
-    public partial class Birdsong
+    public partial class Machine
     {
         public static void SetBabelLabel(this Babelfish babelfish, string locLabel)
         {

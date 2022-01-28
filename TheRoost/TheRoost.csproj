@@ -35,23 +35,23 @@
     <LangVersion>5</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Beachcomber - Loader\BeachcomberFixes.cs" />
-    <Compile Include="Practical Applications\TheWorld - Expressions and Contexts\TheWorldParser.cs" />
-    <Compile Include="Practical Applications\TheWorld - Expressions and Contexts\TheWorldMain.cs" />
-    <Compile Include="Practical Applications\DeckExtensions.cs" />
-    <Compile Include="Practical Applications\TheWorld - Expressions and Contexts\TheWorldApplication.cs" />
-    <Compile Include="Practical Applications\TheWorld - Expressions and Contexts\TheWorldEntities.cs" />
+    <Compile Include="Beachcomber - Data Loading\BeachcomberFixes.cs" />
+    <Compile Include="Twins - Expressions and Contexts\FuncineParser.cs" />
+    <Compile Include="Twins - Expressions and Contexts\TwinsMain.cs" />
+    <Compile Include="Local Applications\DeckExtensions.cs" />
+    <Compile Include="Twins - Expressions and Contexts\TwinsEffects.cs" />
+    <Compile Include="Twins - Expressions and Contexts\TwinsEntities.cs" />
+    <Compile Include="Vagabond - Various Interventions\HarmonyPatchWrapper.cs" />
     <Compile Include="Vagabond - Various Interventions\VagabondConfig.cs" />
-    <Compile Include="Vagabond - Various Interventions\VagabondMain.cs" />
-    <Compile Include="Practical Applications\Elegiast - Achievements\ElegiastInterface.cs" />
-    <Compile Include="Practical Applications\Elegiast - Achievements\ElegiastEntities.cs" />
-    <Compile Include="Practical Applications\Elegiast - Achievements\ElegiastMain.cs" />
-    <Compile Include="Beachcomber - Loader\BeachcomberMain.cs" />
-    <Compile Include="Vagabond - Various Interventions\VagabondCommandLine.cs" />
-    <Compile Include="Beachcomber - Loader\BeachcomberExamples.cs" />
-    <Compile Include="Beachcomber - Loader\BeachcomberImporter.cs" />
-    <Compile Include="Beachcomber - Loader\BeachcomberUsurper.cs" />
-    <Compile Include="Twins - Events\TwinsMain.cs" />
+    <Compile Include="Vagabond - Various Interventions\VagabondMenu.cs" />
+    <Compile Include="Elegiast - Achievements\ElegiastInterface.cs" />
+    <Compile Include="Elegiast - Achievements\ElegiastEntities.cs" />
+    <Compile Include="Elegiast - Achievements\ElegiastManager.cs" />
+    <Compile Include="Beachcomber - Data Loading\BeachcomberLoader.cs" />
+    <Compile Include="Vagabond - Various Interventions\CommandLine.cs" />
+    <Compile Include="Beachcomber - Data Loading\BeachcomberExamples.cs" />
+    <Compile Include="Beachcomber - Data Loading\BeachcomberImporter.cs" />
+    <Compile Include="Beachcomber - Data Loading\BeachcomberUsurper.cs" />
     <Compile Include="Birdsong.cs" />
     <Compile Include="MainHall.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

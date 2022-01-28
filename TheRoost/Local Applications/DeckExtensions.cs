@@ -9,10 +9,10 @@ using Assets.Logic;
 using SecretHistories.Abstract;
 using SecretHistories.Spheres;
 
-using TheRoost.PracticalApplications.World;
-using TheRoost.PracticalApplications.World.Entities;
+using TheRoost.Twins;
+using TheRoost.Twins.Entities;
 
-namespace TheRoost.PracticalApplications
+namespace TheRoost.LocalApplications
 {
     public static class Legerdemain
     {
@@ -32,21 +32,21 @@ namespace TheRoost.PracticalApplications
 
         internal static void Enact()
         {
-            Birdsong.ClaimProperty<DeckSpec, bool>(deckAutoShuffleProperty);
+            Machine.ClaimProperty<DeckSpec, bool>(deckAutoShuffleProperty);
 
-            Birdsong.ClaimProperty<Recipe, List<string>>(deckShuffleProperty);
-            Birdsong.ClaimProperty<Recipe, Dictionary<string, List<string>>>(deckForbidProperty);
-            Birdsong.ClaimProperty<Recipe, Dictionary<string, List<string>>>(deckAllowProperty);
-            Birdsong.ClaimProperty<Recipe, Dictionary<string, List<string>>>(deckAddProperty);
-            Birdsong.ClaimProperty<Recipe, Dictionary<string, List<Funcine<bool>>>>(deckTakeOutProperty);
-            Birdsong.ClaimProperty<Recipe, Dictionary<string, List<Funcine<bool>>>>(deckInsertProperty);
+            Machine.ClaimProperty<Recipe, List<string>>(deckShuffleProperty);
+            Machine.ClaimProperty<Recipe, Dictionary<string, List<string>>>(deckForbidProperty);
+            Machine.ClaimProperty<Recipe, Dictionary<string, List<string>>>(deckAllowProperty);
+            Machine.ClaimProperty<Recipe, Dictionary<string, List<string>>>(deckAddProperty);
+            Machine.ClaimProperty<Recipe, Dictionary<string, List<Funcine<bool>>>>(deckTakeOutProperty);
+            Machine.ClaimProperty<Recipe, Dictionary<string, List<Funcine<bool>>>>(deckInsertProperty);
 
             AtTimeOfPower.NewGameStarted.Schedule(CatchNewGame, PatchType.Postfix);
             AtTimeOfPower.TabletopLoaded.Schedule(ReshuffleDecksOnNewGame, PatchType.Postfix);
             AtTimeOfPower.RecipeDeckEffects.Schedule<RecipeCompletionEffectCommand, Sphere>(DeckEffectsPre, PatchType.Prefix);
             AtTimeOfPower.RecipeDeckEffects.Schedule<RecipeCompletionEffectCommand, Sphere>(DeckEffectsPost, PatchType.Postfix);
 
-            TheRoostMachine.Patch(
+            Machine.Patch(
                 original: typeof(Dealer).GetMethod("Deal", new Type[] { typeof(DeckSpec) }),
                 prefix: typeof(Legerdemain).GetMethodInvariant("Deal"));
         }

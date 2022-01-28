@@ -7,7 +7,7 @@ using SecretHistories.Core;
 using SecretHistories.UI;
 using NCalc;
 
-namespace TheRoost.PracticalApplications.World.Entities
+namespace TheRoost.Twins.Entities
 {
     public struct Funcine<T>
     {
@@ -51,10 +51,10 @@ namespace TheRoost.PracticalApplications.World.Entities
         {
             get
             {
-                IEnumerable<Token> tokens = TheWorldHolder.GetReferencedTokens(targetPath);
+                IEnumerable<Token> tokens = TokenContextManager.GetReferencedTokens(targetPath);
 
                 if (this.filter.isUndefined == false)
-                    tokens = TheWorldHolder.FilterTokens(tokens, filter);
+                    tokens = TokenContextManager.FilterTokens(tokens, filter);
 
                 AspectsDictionary aspects = new AspectsDictionary();
                 foreach (Token token in tokens)

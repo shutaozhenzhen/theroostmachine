@@ -18,35 +18,25 @@ namespace TheRoost.Elegiast
 {
     public static class CustomAchievementsManager
     {
-        //<achievement id, unlock time>
+        //Dictionary<achievement id, unlock time>
         private static Dictionary<string, string> unlocks;
-
-        public const string elegiastPatchId = "theroostmachine.elegiast";
 
         const string propertyThatUnlocks = "elegiastUnlock";
 
         const string datafile = "customachievements.json";
         static string localFile { get { return Application.persistentDataPath + "\\" + datafile; } }
-
         const string achievementDataFormat = "\"{0}\": \"{1}\",\n";
 
-        private static bool alreadyEnacted;
+        internal static void ClaimProperties()
+        {
+            Machine.ClaimProperty<SecretHistories.Entities.Recipe, List<string>>(propertyThatUnlocks);
+            TheRoost.Vagabond.CommandLine.AddCommand("achievements", AchievementsDebug);
+        }
 
         internal static void Enact()
         {
-            if (!alreadyEnacted)
-            {
-                //this is required for the Elegiast not to claim the same property/debug input several times if he's enabled/disabled several times
-                Birdsong.ClaimProperty<SecretHistories.Entities.Recipe, List<string>>(propertyThatUnlocks);
-                TheRoost.Vagabond.CommandLine.AddCommand("achievements", AchievementsDebug);
-                alreadyEnacted = true;
-            }
-
-            if (Birdsong.GetConfigValue<int>(TheRoost.Vagabond.RoostConfig.achievementsEnabled, 1) == 0)
-                return;
-
-            AtTimeOfPower.MainMenuLoaded.Schedule(CustomAchievementInterface.CreateInterface, PatchType.Prefix, elegiastPatchId);
-            AtTimeOfPower.RecipeExecution.Schedule<RecipeCompletionEffectCommand>(UnlockAchievements, PatchType.Prefix, elegiastPatchId);
+            AtTimeOfPower.MainMenuLoaded.Schedule(CustomAchievementInterface.CreateInterface, PatchType.Prefix, Enactors.Elegiast.patchId);
+            AtTimeOfPower.RecipeExecution.Schedule<RecipeCompletionEffectCommand>(UnlockAchievements, PatchType.Prefix, Enactors.Elegiast.patchId);
 
             LoadAllUnlocks();
 

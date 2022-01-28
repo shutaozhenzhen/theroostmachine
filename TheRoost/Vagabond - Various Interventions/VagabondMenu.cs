@@ -5,25 +5,23 @@ using UnityEngine.UI;
 
 namespace TheRoost.Vagabond
 {
-    public static class MenuManager
+    internal static class MenuMask
     {
         internal static void Enact()
         {
             AtTimeOfPower.MainMenuLoaded.Schedule(TapIntoMainMenu, PatchType.Prefix);
 
-            TheRoostMachine.Patch(
+            Machine.Patch(
                 original: typeof(OptionsPanel).GetMethodInvariant("PopulateTabs"),
-                prefix: typeof(MenuManager).GetMethodInvariant("SetModConfigInterface"));
+                prefix: typeof(MenuMask).GetMethodInvariant("SetModConfigInterface"));
 
-            TheRoostMachine.Patch(
+            Machine.Patch(
                 original: typeof(OptionsPanelTab).GetMethodInvariant("Initialise"),
-                prefix: typeof(MenuManager).GetMethodInvariant("FixIncrediblyAnnoyingNonTransparentTabsBackground"));
+                prefix: typeof(MenuMask).GetMethodInvariant("FixIncrediblyAnnoyingNonTransparentTabsBackground"));
 
-            TheRoostMachine.Patch(
+            Machine.Patch(
                 original: typeof(NotificationWindow).GetMethodInvariant("SetDetails"),
-                prefix: typeof(MenuManager).GetMethodInvariant("ShowNotificationWithIntervention"));
-
-            CommandLine.Enact();
+                prefix: typeof(MenuMask).GetMethodInvariant("ShowNotificationWithIntervention"));
         }
 
         private static Action hideCurrentOverlay;
@@ -36,13 +34,13 @@ namespace TheRoost.Vagabond
             showOverlay = Delegate.CreateDelegate(typeof(Action<CanvasGroupFader>), controller, controller.GetType().GetMethodInvariant("ShowOverlay")) as Action<CanvasGroupFader>;
         }
 
-        public static void ShowOverlay(CanvasGroupFader overlay)
+        internal static void ShowOverlay(CanvasGroupFader overlay)
         {
             HideCurrentOverlay();
             showOverlay.Invoke(overlay);
         }
 
-        public static void HideCurrentOverlay()
+        internal static void HideCurrentOverlay()
         {
             hideCurrentOverlay.Invoke();
         }
@@ -110,11 +108,33 @@ namespace TheRoost.Vagabond
 
 namespace TheRoost
 {
-    public partial class Birdsong
+    public partial class Machine
     {
+        public static void ShowOverlay(this MenuScreenController menuScreenController, CanvasGroupFader overlay)
+        {
+            if (menuScreenController == null)
+            {
+                Birdsong.Sing("Trying to ShowOverlay, but we're not in the main menu");
+                return;
+            }
+
+            Vagabond.MenuMask.ShowOverlay(overlay);
+        }
+
+        public static void HideCurrentOverlay(this MenuScreenController menuScreenController)
+        {
+            if (menuScreenController == null)
+            {
+                Birdsong.Sing("Trying to ShowOverlay, but we're not in the main menu");
+                return;
+            }
+
+            Vagabond.MenuMask.HideCurrentOverlay();
+        }
+
         public static void ShowNotificationWindow(this Notifier notifier, string title, string description, Sprite image, float duration, bool duplicatesAllowed = true)
         {
-            TheRoost.Vagabond.MenuManager.ShowNotificationWindow(notifier, title, description, image, duration, duplicatesAllowed);
+            TheRoost.Vagabond.MenuMask.ShowNotificationWindow(notifier, title, description, image, duration, duplicatesAllowed);
         }
     }
 }

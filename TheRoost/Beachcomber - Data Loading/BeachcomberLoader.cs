@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace TheRoost.Beachcomber
 {
-    public static class CuckooLoader
+    internal static class CuckooLoader
     {
         private readonly static Dictionary<Type, Dictionary<string, Type>> knownUnknownProperties = new Dictionary<Type, Dictionary<string, Type>>();
         private readonly static Dictionary<Type, List<string>> localizableUnknownProperties = new Dictionary<Type, List<string>>();
@@ -27,7 +27,7 @@ namespace TheRoost.Beachcomber
         internal static void Enact()
         {
             //the most convenient place to catch and load simple properties that main game doesn't want, but mods do want is here
-            TheRoostMachine.Patch(
+            Machine.Patch(
                 original: typeof(AbstractEntity<Element>).GetMethodInvariant("PopUnknownKeysToLog"),
                 prefix: typeof(CuckooLoader).GetMethodInvariant("KnowUnknown"));
             //as things stand now, I can load custom properties directly from Usurper
@@ -36,7 +36,7 @@ namespace TheRoost.Beachcomber
 
             //in a rare case we want some of our custom properties to be localizable
             //we ask the main game very gently to look it up for us
-            TheRoostMachine.Patch(
+            Machine.Patch(
                 original: typeof(EntityTypeDataLoader).GetMethodInvariant("GetLocalisableKeysForEntityType"),
                 postfix: typeof(CuckooLoader).GetMethodInvariant("InsertCustomLocalizableKeys"));
 
@@ -47,17 +47,9 @@ namespace TheRoost.Beachcomber
             //so we plant all custom classes marked as FucineImportable from all loaded mods into the List and so the game now courteously loads them for us
             //the operation requires a bit of :knock: since we need to modify local variables of PopulateCompendium()
             //the the result well worth it
-            TheRoostMachine.Patch(
+            Machine.Patch(
                 original: typeof(CompendiumLoader).GetMethodInvariant("PopulateCompendium"),
                 transpiler: typeof(CuckooLoader).GetMethodInvariant("CuckooTranspiler"));
-
-            //self-explanatory
-            BeachcomberFixes.Fix();
-
-            //now, as a finishing touch, we just completely replace how the game handles importing
-            //(well, json loading and thus localizing/merging/mod $ stays intact, actually, 
-            //it's just the process of porting jsons into actual game entities that gets changed)
-            Usurper.OverthrowNativeImporting();
         }
 
         internal static void ClaimProperty<TEntity, TProperty>(string propertyName, bool localize) where TEntity : AbstractEntity<TEntity>
@@ -171,7 +163,7 @@ namespace TheRoost.Beachcomber
                             }
                             catch
                             {
-                                throw new Exception("FAILED TO IMPORT JSON");
+                                throw Birdsong.Caw("FAILED TO IMPORT JSON");
                             }
                         }
             }
@@ -247,7 +239,7 @@ namespace TheRoost.Beachcomber
 
 namespace TheRoost
 {
-    public partial class Birdsong
+    public partial class Machine
     {
         public static void ClaimProperty<TEntity, TProperty>(string propertyName, bool localize = false) where TEntity : AbstractEntity<TEntity>
         {

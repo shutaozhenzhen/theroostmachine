@@ -11,22 +11,23 @@ using Newtonsoft.Json.Linq;
 
 namespace TheRoost.Beachcomber
 {
-    static class BeachcomberFixes
+    //here we fix (aka steal-pick-peck - geddit? geddit?) the bugs
+    internal static class BugsPicker
     {
         internal static void Fix()
         {
             //why this keeps happening
-            TheRoostMachine.Patch(
+            Machine.Patch(
                 original: typeof(ResourcesManager).GetMethodInvariant("GetSprite"),
-                prefix: typeof(BeachcomberFixes).GetMethodInvariant("GetSpriteFix"));
+                prefix: typeof(BugsPicker).GetMethodInvariant("GetSpriteFix"));
 
             //now $ ops are applied entity by entity - thus, no flattening whatsoever
             //fixes two  things:
             //- $ ops incompatibility between mods;
             //- inability to modify modded content with $ ops;
-            TheRoostMachine.Patch(
+            Machine.Patch(
                 typeof(EntityTypeDataLoader).GetMethodInvariant("LoadEntityDataFromSuppliedFiles"),
-                transpiler: typeof(BeachcomberFixes).GetMethodInvariant("ModContentOpsFix"));
+                transpiler: typeof(BugsPicker).GetMethodInvariant("ModContentOpsFix"));
         }
 
 
@@ -49,7 +50,7 @@ namespace TheRoost.Beachcomber
 
             finalCodes.Add(new CodeInstruction(OpCodes.Ldarg_0)); //instance itself
             finalCodes.Add(new CodeInstruction(OpCodes.Ldloca_S, 0)); //alreadyLoadedEntities (local)                   
-            finalCodes.Add(new CodeInstruction(OpCodes.Call, typeof(BeachcomberFixes).GetMethodInvariant("ApplyModsToData")));
+            finalCodes.Add(new CodeInstruction(OpCodes.Call, typeof(BugsPicker).GetMethodInvariant("ApplyModsToData")));
             finalCodes.Add(new CodeInstruction(OpCodes.Ret));
 
             return finalCodes.AsEnumerable();
