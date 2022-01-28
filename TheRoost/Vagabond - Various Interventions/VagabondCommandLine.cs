@@ -29,6 +29,11 @@ namespace TheRoost.Vagabond
         private static Dictionary<string, Action<string[]>> commandMethods = new Dictionary<string, Action<string[]>>();
         public static void AddCommand(string reference, Action<string[]> method)
         {
+            if (commandMethods.ContainsKey(reference))
+            {
+                Birdsong.Sing("Trying to register command '{0}', but it's already registered", reference);
+                return;
+            }
             commandMethods.Add(reference, method);
         }
 

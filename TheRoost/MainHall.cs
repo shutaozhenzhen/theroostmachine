@@ -11,7 +11,7 @@ public static class TheRoostMachine
     private static bool _alreadyAssembled = false;
 
     private static readonly Dictionary<string, Harmony> patchers = new Dictionary<string, Harmony>();
-    public const string defaultRoostPatchId = "theroostmachine";
+    public const string defaultPatchId = "theroostmachine";
 
     public static void Initialise()
     {
@@ -43,7 +43,7 @@ public static class TheRoostMachine
 
     public static void Patch(MethodBase original,
         MethodInfo prefix = null, MethodInfo postfix = null, MethodInfo transpiler = null, MethodInfo finalizer = null,
-        string patchId = defaultRoostPatchId)
+        string patchId = defaultPatchId)
     {
         if (original == null)
         {

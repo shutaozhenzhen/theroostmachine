@@ -54,53 +54,53 @@ namespace TheRoost
 
     public static partial class Birdsong
     {
-        public static void Schedule(this AtTimeOfPower time, Delegate action, PatchType patchType, string patchId = TheRoostMachine.defaultRoostPatchId)
+        public static void Schedule(this AtTimeOfPower time, Delegate action, PatchType patchType, string patchId = TheRoostMachine.defaultPatchId)
         {
             TheRoost.Twins.EventManager.Unite(time, action, patchType, patchId);
         }
 
-        public static void Schedule(this AtTimeOfPower time, Action action, PatchType patchType, string patchId = TheRoostMachine.defaultRoostPatchId)
+        public static void Schedule(this AtTimeOfPower time, Action action, PatchType patchType, string patchId = TheRoostMachine.defaultPatchId)
         {
             time.Schedule(action as Delegate, patchType, patchId);
         }
 
-        public static void Schedule<T1>(this AtTimeOfPower time, Action<T1> action, PatchType patchType, string patchId = TheRoostMachine.defaultRoostPatchId)
+        public static void Schedule<T1>(this AtTimeOfPower time, Action<T1> action, PatchType patchType, string patchId = TheRoostMachine.defaultPatchId)
         {
             time.Schedule(action as Delegate, patchType, patchId);
         }
 
-        public static void Schedule<T1, T2>(this AtTimeOfPower time, Action<T1, T2> action, PatchType patchType, string patchId = TheRoostMachine.defaultRoostPatchId)
+        public static void Schedule<T1, T2>(this AtTimeOfPower time, Action<T1, T2> action, PatchType patchType, string patchId = TheRoostMachine.defaultPatchId)
         {
             time.Schedule(action as Delegate, patchType, patchId);
         }
 
-        public static void Schedule<T1, T2, T3>(this AtTimeOfPower time, Action<T1, T2, T3> action, PatchType patchType, string patchId = TheRoostMachine.defaultRoostPatchId)
+        public static void Schedule<T1, T2, T3>(this AtTimeOfPower time, Action<T1, T2, T3> action, PatchType patchType, string patchId = TheRoostMachine.defaultPatchId)
         {
             time.Schedule(action as Delegate, patchType, patchId);
         }
 
-        public static void Schedule<T1, T2, T3, T4>(this AtTimeOfPower time, Action<T1, T2, T3, T4> action, PatchType patchType, string patchId = TheRoostMachine.defaultRoostPatchId)
+        public static void Schedule<T1, T2, T3, T4>(this AtTimeOfPower time, Action<T1, T2, T3, T4> action, PatchType patchType, string patchId = TheRoostMachine.defaultPatchId)
         {
             time.Schedule(action as Delegate, patchType, patchId);
         }
 
-        public static void Schedule<T1, T2, T3, T4, T5>(this AtTimeOfPower time, Action<T1, T2, T3, T4, T5> action, PatchType patchType, string patchId = TheRoostMachine.defaultRoostPatchId)
+        public static void Schedule<T1, T2, T3, T4, T5>(this AtTimeOfPower time, Action<T1, T2, T3, T4, T5> action, PatchType patchType, string patchId = TheRoostMachine.defaultPatchId)
         {
             time.Schedule(action as Delegate, patchType, patchId);
         }
 
         //six variables is a reasonable maximum
-        public static void Schedule<T1, T2, T3, T4, T5, T6>(this AtTimeOfPower time, Action<T1, T2, T3, T4, T5, T6> action, PatchType patchType, string patchId = TheRoostMachine.defaultRoostPatchId)
+        public static void Schedule<T1, T2, T3, T4, T5, T6>(this AtTimeOfPower time, Action<T1, T2, T3, T4, T5, T6> action, PatchType patchType, string patchId = TheRoostMachine.defaultPatchId)
         {
             time.Schedule(action as Delegate, patchType, patchId);
         }
 
-        public static void Schedule(this AtTimeOfPower time, Func<bool> func, string patchId = TheRoostMachine.defaultRoostPatchId)
+        public static void Schedule(this AtTimeOfPower time, Func<bool> func, string patchId = TheRoostMachine.defaultPatchId)
         {
             time.Schedule(func as Delegate, PatchType.Prefix);
         }
 
-        public static void Schedule<T1>(this AtTimeOfPower time, Func<T1, bool> func, string patchId = TheRoostMachine.defaultRoostPatchId)
+        public static void Schedule<T1>(this AtTimeOfPower time, Func<T1, bool> func, string patchId = TheRoostMachine.defaultPatchId)
         {
             time.Schedule(func as Delegate, PatchType.Prefix);
         }
@@ -110,23 +110,23 @@ namespace TheRoost
             time.Schedule(func as Delegate, PatchType.Prefix);
         }
 
-        public static void Schedule<T1, T2, T3>(this AtTimeOfPower time, Func<T1, T2, T3, bool> func, string patchId = TheRoostMachine.defaultRoostPatchId)
+        public static void Schedule<T1, T2, T3>(this AtTimeOfPower time, Func<T1, T2, T3, bool> func, string patchId = TheRoostMachine.defaultPatchId)
         {
             time.Schedule(func as Delegate, PatchType.Prefix);
         }
 
-        public static void Schedule<T1, T2, T3, T4>(this AtTimeOfPower time, Func<T1, T2, T3, T4, bool> func, string patchId = TheRoostMachine.defaultRoostPatchId)
+        public static void Schedule<T1, T2, T3, T4>(this AtTimeOfPower time, Func<T1, T2, T3, T4, bool> func, string patchId = TheRoostMachine.defaultPatchId)
         {
             time.Schedule(func as Delegate, PatchType.Prefix);
         }
 
-        public static void Schedule<T1, T2, T3, T4, T5>(this AtTimeOfPower time, Func<T1, T2, T3, T4, T5, bool> func, string patchId = TheRoostMachine.defaultRoostPatchId)
+        public static void Schedule<T1, T2, T3, T4, T5>(this AtTimeOfPower time, Func<T1, T2, T3, T4, T5, bool> func, string patchId = TheRoostMachine.defaultPatchId)
         {
             time.Schedule(func as Delegate, PatchType.Prefix);
         }
 
         //six variables is a reasonable maximum 2
-        public static void Schedule<T1, T2, T3, T4, T5, T6>(this AtTimeOfPower time, Func<T1, T2, T3, T4, T5, T6, bool> func, string patchId = TheRoostMachine.defaultRoostPatchId)
+        public static void Schedule<T1, T2, T3, T4, T5, T6>(this AtTimeOfPower time, Func<T1, T2, T3, T4, T5, T6, bool> func, string patchId = TheRoostMachine.defaultPatchId)
         {
             time.Schedule(func as Delegate, PatchType.Prefix);
         }

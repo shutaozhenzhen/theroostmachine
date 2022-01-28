@@ -95,12 +95,12 @@ namespace TheRoost.Vagabond.ModConfigs
     internal abstract class PatchSwitcher : ModSettingSubscriber<int>
     {
         protected readonly string modulePatchId;
-        protected readonly Action enact;
+        protected readonly Action moduleEnact;
         public PatchSwitcher(string settingId, string modulePatchId, Action enact)
             : base(settingId)
         {
             this.modulePatchId = modulePatchId;
-            this.enact = enact;
+            this.moduleEnact = enact;
         }
 
         protected void Switch()
@@ -108,7 +108,7 @@ namespace TheRoost.Vagabond.ModConfigs
             if (settingValue == 1)
             {
                 if (TheRoostMachine.HasAnyPatches(modulePatchId) == false)
-                    enact.Invoke();
+                    moduleEnact.Invoke();
             }
             else if (TheRoostMachine.HasAnyPatches(modulePatchId) == true)
                 TheRoostMachine.Unpatch(modulePatchId);
@@ -124,8 +124,13 @@ namespace TheRoost.Vagabond.ModConfigs
             Switch();
 
             GameObject menu = GameObject.Find("CanvasMenu");
-            if (menu != null && menu.FindInChildren("AchievementsBtn", true) != null)
-                menu.FindInChildren("AchievementsBtn", true).SetActive(settingValue == 1);
+            if (menu != null)
+            {
+                if (menu.FindInChildren("AchievementsBtn", true) != null)
+                    menu.FindInChildren("AchievementsBtn", true).SetActive(settingValue == 1);
+                else if (settingValue == 1)
+                    Watchman.Get<SecretHistories.Services.StageHand>().MenuScreen();
+            }
         }
     }
 }

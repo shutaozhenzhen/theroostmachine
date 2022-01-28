@@ -100,7 +100,13 @@ namespace TheRoost.Beachcomber
                 return default(T);
         }
 
-        public static void AddIgnoredProperty<TEntity>(string propertyName)
+        internal static bool HasCustomProperty(IEntityWithId owner, string propertyName)
+        {
+            propertyName = propertyName.ToLower();
+            return (loadedPropertiesStorage.ContainsKey(owner) && loadedPropertiesStorage[owner].ContainsKey(propertyName));
+        }
+
+        internal static void AddIgnoredProperty<TEntity>(string propertyName)
         {
             if (ignoredProperties[typeof(TEntity)] == null)
                 ignoredProperties[typeof(TEntity)] = new List<string>();
@@ -109,7 +115,7 @@ namespace TheRoost.Beachcomber
                 ignoredProperties[typeof(TEntity)].Add(propertyName);
         }
 
-        public static void AddIgnoredEntityGroup<TEntity>(string groupId)
+        internal static void AddIgnoredEntityGroup<TEntity>(string groupId)
         {
             if (ignoredEntityGroups[typeof(TEntity)] == null)
                 ignoredEntityGroups[typeof(TEntity)] = new List<string>();
@@ -118,7 +124,7 @@ namespace TheRoost.Beachcomber
                 ignoredEntityGroups[typeof(TEntity)].Add(groupId);
         }
 
-        public static bool isIgnoredEntity(this EntityData data, Type type)
+        internal static bool isIgnoredEntity(this EntityData data, Type type)
         {
             if (data.ValuesTable.Contains("ignoreGroups"))
             {
@@ -129,12 +135,6 @@ namespace TheRoost.Beachcomber
             }
 
             return false;
-        }
-
-        internal static bool HasCustomProperty(IEntityWithId owner, string propertyName)
-        {
-            propertyName = propertyName.ToLower();
-            return (loadedPropertiesStorage.ContainsKey(owner) && loadedPropertiesStorage[owner].ContainsKey(propertyName));
         }
 
         private static bool KnowUnknown(IEntityWithId __instance, Hashtable ___UnknownProperties)
@@ -251,17 +251,27 @@ namespace TheRoost
     {
         public static void ClaimProperty<TEntity, TProperty>(string propertyName, bool localize = false) where TEntity : AbstractEntity<TEntity>
         {
-            TheRoost.Beachcomber.CuckooLoader.ClaimProperty<TEntity, TProperty>(propertyName, localize);
+            Beachcomber.CuckooLoader.ClaimProperty<TEntity, TProperty>(propertyName, localize);
         }
 
         public static T RetrieveProperty<T>(this IEntityWithId owner, string propertyName)
         {
-            return TheRoost.Beachcomber.CuckooLoader.RetrieveProperty<T>(owner, propertyName);
+            return Beachcomber.CuckooLoader.RetrieveProperty<T>(owner, propertyName);
         }
 
         public static bool HasCustomProperty(this IEntityWithId owner, string propertyName)
         {
-            return TheRoost.Beachcomber.CuckooLoader.HasCustomProperty(owner, propertyName);
+            return Beachcomber.CuckooLoader.HasCustomProperty(owner, propertyName);
+        }
+
+        public static void AddIgnoredProperty<T>(string propertyName)
+        {
+            Beachcomber.CuckooLoader.AddIgnoredProperty<T>(propertyName);
+        }
+
+        public static void AddIgnoredEntityGroup<T>(string propertyName)
+        {
+            Beachcomber.CuckooLoader.AddIgnoredEntityGroup<T>(propertyName);
         }
     }
 }

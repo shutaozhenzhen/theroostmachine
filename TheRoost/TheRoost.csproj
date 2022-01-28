@@ -36,11 +36,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Beachcomber - Loader\BeachcomberFixes.cs" />
+    <Compile Include="Practical Applications\TheWorld - Expressions and Contexts\TheWorldParser.cs" />
+    <Compile Include="Practical Applications\TheWorld - Expressions and Contexts\TheWorldMain.cs" />
+    <Compile Include="Practical Applications\DeckExtensions.cs" />
+    <Compile Include="Practical Applications\TheWorld - Expressions and Contexts\TheWorldApplication.cs" />
+    <Compile Include="Practical Applications\TheWorld - Expressions and Contexts\TheWorldEntities.cs" />
     <Compile Include="Vagabond - Various Interventions\VagabondConfig.cs" />
     <Compile Include="Vagabond - Various Interventions\VagabondMain.cs" />
-    <Compile Include="Elegiast - Achievements\ElegiastInterface.cs" />
-    <Compile Include="Elegiast - Achievements\ElegiastEntities.cs" />
-    <Compile Include="Elegiast - Achievements\ElegiastMain.cs" />
+    <Compile Include="Practical Applications\Elegiast - Achievements\ElegiastInterface.cs" />
+    <Compile Include="Practical Applications\Elegiast - Achievements\ElegiastEntities.cs" />
+    <Compile Include="Practical Applications\Elegiast - Achievements\ElegiastMain.cs" />
     <Compile Include="Beachcomber - Loader\BeachcomberMain.cs" />
     <Compile Include="Vagabond - Various Interventions\VagabondCommandLine.cs" />
     <Compile Include="Beachcomber - Loader\BeachcomberExamples.cs" />
@@ -60,6 +65,9 @@
     <Reference Include="GalaxyCSharp">
       <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\GalaxyCSharp.dll</HintPath>
       <Private>False</Private>
+    </Reference>
+    <Reference Include="NCalc">
+      <HintPath>..\..\NCalc.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
