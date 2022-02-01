@@ -163,7 +163,7 @@ namespace TheRoost.Beachcomber
                             }
                             catch
                             {
-                                throw Birdsong.Caw("FAILED TO IMPORT JSON");
+                                throw Birdsong.Droppings("FAILED TO IMPORT JSON");
                             }
                         }
             }

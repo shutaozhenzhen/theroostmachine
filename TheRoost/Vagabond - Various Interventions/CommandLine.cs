@@ -39,17 +39,18 @@ namespace TheRoost.Vagabond
 
         private static void ExecuteCommand(string command)
         {
-            Birdsong.Sing(command);
+            CommandLine.Log(command);
 
             command = command.Trim();
             if (string.IsNullOrWhiteSpace(command) || command[0] != '/')
             {
-                Birdsong.Sing("Commands should always start with /");
+                CommandLine.Log("Commands should always start with /");
                 return;
             }
 
             command = command.Trim().Substring(1);
             string[] commandParts = command.Split();
+
             if (commandMethods.ContainsKey(commandParts[0]))
             {
                 string[] arguments = new string[commandParts.Length - 1];
@@ -65,7 +66,7 @@ namespace TheRoost.Vagabond
                         return;
                     }
 
-            Birdsong.Sing("Unknown command '{0}'", command[0]);
+            CommandLine.Log("Unknown command '{0}'", commandParts[0]);
         }
 
         private GameObject console;
@@ -128,6 +129,11 @@ namespace TheRoost.Vagabond
 
             Watchman.Get<Concursum>().ToggleSecretHistory();
         }
+
+        public static void Log(object data, params object[] furtherData)
+        {
+            Birdsong.Sing(data, furtherData);
+        }
     }
 
     public static class CommandsCollection
@@ -139,8 +145,8 @@ namespace TheRoost.Vagabond
             CompendiumLoader loader = new CompendiumLoader(Watchman.Get<Config>().GetConfigValue("contentdir"));
             DateTime now = DateTime.Now;
             foreach (SecretHistories.Fucine.ILogMessage logMessage in loader.PopulateCompendium(compendium, Watchman.Get<Config>().GetConfigValue("Culture")).GetMessages())
-                Birdsong.Sing(VerbosityLevel.Trivia, logMessage.Description);
-            Birdsong.Sing("Total time to import: {0}", (DateTime.Now - now));
+                Birdsong.Sing(logMessage.VerbosityNeeded, logMessage.MessageLevel, logMessage.Description);
+            CommandLine.Log("Total time to import: {0}", (DateTime.Now - now));
         }
 
         public static void CompendiumInfo(string[] command)
@@ -151,7 +157,7 @@ namespace TheRoost.Vagabond
                 if (command.Length == 0)
                 {
                     foreach (Type type in compendium.GetEntityTypes())
-                        Birdsong.Sing(type.Name);
+                        CommandLine.Log(type.Name);
                     return;
                 }
 
@@ -159,7 +165,7 @@ namespace TheRoost.Vagabond
 
                 if (entityType == null)
                 {
-                    Birdsong.Sing("Entity type {0} not found", command[0]);
+                    CommandLine.Log("Entity type {0} not found", command[0]);
                     return;
                 }
 
@@ -167,10 +173,10 @@ namespace TheRoost.Vagabond
                 {
                     object list = typeof(Compendium).GetMethod("GetEntitiesAsAlphabetisedList").MakeGenericMethod(new Type[] { entityType }).Invoke(compendium, new object[0]);
 
-                    Birdsong.Sing("All entities of type {0}\n~~~", entityType.Name, command[1]);
+                    CommandLine.Log("All entities of type {0}\n~~~", entityType.Name, command[1]);
                     foreach (IEntityWithId entityWithId in list as IList)
-                        Birdsong.Sing(entityWithId.Id, entityWithId.Lever == null);
-                    Birdsong.Sing("~~~~~~~");
+                        CommandLine.Log(entityWithId.Id, entityWithId.Lever == null);
+                    CommandLine.Log("~~~~~~~");
                     return;
                 }
 
@@ -178,16 +184,16 @@ namespace TheRoost.Vagabond
 
                 if (entity == null || entity.Lever == null)
                 {
-                    Birdsong.Sing("{0} '{1}' not found", entityType.Name, command[1]);
+                    CommandLine.Log("{0} '{1}' not found", entityType.Name, command[1]);
                     return;
                 }
 
                 if (command.Length == 2)
                 {
-                    Birdsong.Sing("All properties of {0} id '{1}\n~~~", entityType.Name, command[1]);
+                    CommandLine.Log("All properties of {0} id '{1}\n~~~", entityType.Name, command[1]);
                     foreach (PropertyInfo prop in entity.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
-                        Birdsong.Sing(prop.Name, prop.GetValue(entity));
-                    Birdsong.Sing("~~~~~~~");
+                        CommandLine.Log(prop.Name, prop.GetValue(entity));
+                    CommandLine.Log("~~~~~~~");
                     return;
                 }
 
@@ -200,18 +206,18 @@ namespace TheRoost.Vagabond
                     value = entity.RetrieveProperty<object>(propertyName);
                 else
                 {
-                    Birdsong.Sing("Property '{0}' of {1} id '{2}' not found", command[2], entityType.Name, entity.Id);
+                    CommandLine.Log("Property '{0}' of {1} id '{2}' not found", command[2], entityType.Name, entity.Id);
                     return;
                 }
 
                 if ((value as IEnumerable) != null)
                     value = (value as IEnumerable).UnpackAsString();
 
-                Birdsong.Sing("{0} of {1} '{2}': {3}", propertyName, entityType.Name, entity.Id, value);
+                CommandLine.Log("{0} of {1} '{2}': {3}", propertyName, entityType.Name, entity.Id, value);
             }
             catch (Exception ex)
             {
-                Birdsong.Sing(ex.Message);
+                CommandLine.Log(ex.Message);
             }
         }
 
@@ -222,7 +228,7 @@ namespace TheRoost.Vagabond
                 if (command == null || command.Length == 0)
                 {
                     foreach (GameObject go in GameObject.FindObjectsOfType(typeof(GameObject)))
-                        Birdsong.Sing(go.name);
+                        CommandLine.Log(go.name);
 
                     return;
                 }
@@ -231,7 +237,7 @@ namespace TheRoost.Vagabond
                 UnityEngine.Object unityObject = GetUnityObject(entityPath);
                 if (unityObject == null)
                 {
-                    Birdsong.Sing("No GameObject defined as '{0}' found", entityPath);
+                    CommandLine.Log("No GameObject defined as '{0}' found", entityPath);
                     return;
                 }
 
@@ -250,13 +256,13 @@ namespace TheRoost.Vagabond
 
                 if (targetProperty == null)
                 {
-                    Birdsong.Sing("Property {0} is not found in {1}", command[1], unityObject);
+                    CommandLine.Log("Property {0} is not found in {1}", command[1], unityObject);
                     return;
                 }
 
                 if (command.Length == 2) //no set value specified, just return current property value
                 {
-                    Birdsong.Sing("{0} of {1}: {2}", targetProperty.Name, unityObject.name, targetProperty.GetValue(unityObject));
+                    CommandLine.Log("{0} of {1}: {2}", targetProperty.Name, unityObject.name, targetProperty.GetValue(unityObject));
                     return;
                 }
 
@@ -269,7 +275,7 @@ namespace TheRoost.Vagabond
             }
             catch (Exception ex)
             {
-                Birdsong.Sing(ex);
+                CommandLine.Log(ex);
             }
         }
 
@@ -299,7 +305,7 @@ namespace TheRoost.Vagabond
 
                 if (go == null)
                 {
-                    Birdsong.Sing("No sufficient GameObject relative to '{0}' was found", path[0]);
+                    CommandLine.Log("No sufficient GameObject relative to '{0}' was found", path[0]);
                     return null;
                 }
                 else if (i >= path.Length)
@@ -307,35 +313,35 @@ namespace TheRoost.Vagabond
             }
 
             if (i < path.Length - 1)
-                Birdsong.Sing("UnityObject definition string is too long, don't know what to do with that; trying to return a component");
+                CommandLine.Log("UnityObject definition string is too long, don't know what to do with that; trying to return a component");
 
             UnityEngine.Component component = go.GetComponent(path[i]);
 
             if (component == null)
-                Birdsong.Sing("GameObject '{0}' doesn't have {1} as one of its Components", go.name, path[i]);
+                CommandLine.Log("GameObject '{0}' doesn't have {1} as one of its Components", go.name, path[i]);
 
             return component;
         }
 
         public static void LogAllComponents(this GameObject unityObject)
         {
-            Birdsong.Sing("All Components of GameObject {0}\n~~~~~~~", unityObject.name);
+            CommandLine.Log("All Components of GameObject {0}\n~~~~~~~", unityObject.name);
             foreach (Component component in unityObject.GetComponents(typeof(Component)))
-                Birdsong.Sing(component.GetType().Name);
+                CommandLine.Log(component.GetType().Name);
         }
 
         public static void LogAllProperties(this Component unityObject)
         {
-            Birdsong.Sing("All properties of {0}\n~~~~~~~", unityObject);
+            CommandLine.Log("All properties of {0}\n~~~~~~~", unityObject);
             foreach (PropertyInfo property in unityObject.GetType().GetProperties())
-                Birdsong.Sing(property.Name, property.GetValue(unityObject));
+                CommandLine.Log(property.Name, property.GetValue(unityObject));
         }
 
         public static void LogAllChildren(this Transform transform)
         {
-            Birdsong.Sing("All children of {0}\n~~~~~~~", transform.gameObject);
+            CommandLine.Log("All children of {0}\n~~~~~~~", transform.gameObject);
             for (int n = 0; n < transform.childCount; n++)
-                Birdsong.Sing(transform.GetChild(n).gameObject.name);
+                CommandLine.Log(transform.GetChild(n).gameObject.name);
         }
     }
 }

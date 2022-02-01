@@ -60,6 +60,9 @@ namespace TheRoost.Vagabond
 
         public static MethodInfo GetMethodInvariant(this Type definingClass, string methodName)
         {
+            if (string.IsNullOrWhiteSpace(methodName))
+                Birdsong.Sing("Trying to find whitespace method for class {0} (don't!)", definingClass.Name);
+
             MethodInfo method;
             foreach (BindingFlags flag in bindingFlagsPriority)
             {

@@ -136,17 +136,19 @@ namespace TheRoost.Beachcomber
         {
             try
             {
-                TypeConverter converter = TypeDescriptor.GetConverter(destinationType);
                 Type sourceType = data.GetType();
-
                 if (sourceType == destinationType)
                     return data;
-                else if (sourceType == typeof(string) || destinationType.IsEnum)
-                    return converter.ConvertFromInvariantString(data.ToString());
-                else if (converter.CanConvertFrom(sourceType))
-                    return converter.ConvertFrom(data);
-                else
-                    return System.Convert.ChangeType(data, destinationType);
+
+                if (data is string)
+                    return TypeDescriptor.GetConverter(destinationType).ConvertFromInvariantString(data.ToString());
+                else if (destinationType == typeof(string))
+                    return TypeDescriptor.GetConverter(sourceType).ConvertToInvariantString(data);
+
+                if (data is bool && destinationType != typeof(string))
+                    data = ((bool)data == true) ? 1 : -1;
+
+                return System.Convert.ChangeType(data, destinationType);
             }
             catch (Exception ex)
             {

@@ -18,7 +18,7 @@ namespace TheRoost
             Birdsong.Sing(0, 1, data, furtherData);
         }
 
-        public static System.Exception Caw(object data, params object[] furtherData)
+        public static System.Exception Droppings(object data, params object[] furtherData)
         {
             string message = FormatMessage(data, furtherData);
             return new ApplicationException(message);
