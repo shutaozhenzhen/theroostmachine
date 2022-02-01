@@ -88,7 +88,6 @@ namespace TheRoost.Enactors
             if (!propertiesClaimed)
             {
                 TheRoost.Twins.ExpressionEffects.ClaimProperties();
-                TheRoost.Twins.TokenContextManager.AddDebugCommads();
                 propertiesClaimed = true;
             }
 

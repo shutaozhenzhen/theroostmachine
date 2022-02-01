@@ -36,11 +36,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Beachcomber - Data Loading\BeachcomberFixes.cs" />
+    <Compile Include="Twins - Expressions and Contexts\ContextAccessors.cs" />
     <Compile Include="Twins - Expressions and Contexts\FuncineParser.cs" />
-    <Compile Include="Twins - Expressions and Contexts\TwinsMain.cs" />
     <Compile Include="Local Applications\DeckExtensions.cs" />
     <Compile Include="Twins - Expressions and Contexts\TwinsEffects.cs" />
-    <Compile Include="Twins - Expressions and Contexts\TwinsEntities.cs" />
+    <Compile Include="Twins - Expressions and Contexts\ExpressionsEntities.cs" />
     <Compile Include="Vagabond - Various Interventions\HarmonyPatchWrapper.cs" />
     <Compile Include="Vagabond - Various Interventions\VagabondConfig.cs" />
     <Compile Include="Vagabond - Various Interventions\VagabondMenu.cs" />

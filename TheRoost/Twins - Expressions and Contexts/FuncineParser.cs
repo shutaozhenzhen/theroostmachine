@@ -2,27 +2,31 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using SecretHistories.Fucine;
+using SecretHistories.Enums;
+
 using TheRoost.Twins.Entities;
 
 namespace TheRoost.Twins
 {
     public static class FuncineParser
     {
-        public static readonly char[] referenceOpening = new char[] { '[', '{', };
-        public static readonly char[] referenceClosing = new char[] { ']', '}', };
-        public static readonly char[] scopeSeparators = new char[] { '\\', '/' };
+        static readonly char[] referenceOpening = new char[] { '[', '{', };
+        static readonly char[] referenceClosing = new char[] { ']', '}', };
+        static readonly char[] scopeSeparators = new char[] { '/', '\\' };
+        static readonly char[] operationSigns = new char[] { '(', ')', '|', '&', '!', '~', '=', '<', '>', '^', '+', '-', '*', '/', '%' };
+        const char entityIdSeparator = ':';
 
-        public static List<FucineRef> LoadReferences(ref string expression)
+        public static List<FuncineRef> LoadReferences(ref string expression)
         {
-            List<FucineRef> references = new List<FucineRef>();
+            if (string.IsNullOrWhiteSpace(expression))
+                throw Birdsong.Droppings("Expression definition is empty");
+
+            List<FuncineRef> references = new List<FuncineRef>();
 
             expression.Trim();
-
-            //NCalc parses stuff like "-1" as booleans, apparently, because it understands minus sign as logical negation???!!!???!11??!! i am at loss of words
-            if (expression[0] == '-')
-                expression = expression.Insert(0, "0");
-
-            if (expression.IndexOfAny(referenceOpening) == -1 && char.IsDigit(expression[0]) == false)
+            if (expression.IndexOfAny(operationSigns) == -1 && expression.IndexOfAny(referenceOpening) == -1
+                && expression.StartsWith("true") == false && expression.StartsWith("false") == false)
                 expression = string.Concat(referenceOpening[0], expression, referenceClosing[0]);
 
             int openingPosition, closingPosition;
@@ -30,10 +34,10 @@ namespace TheRoost.Twins
             while (openingPosition > -1)
             {
                 string referenceId = GenerateUniqueReferenceId(references.Count);
-                FucineRef reference = LoadReference(referenceData, referenceId);
+                FuncineRef reference = new FuncineRef(referenceData, referenceId);
 
                 bool referenceIsUnique = true;
-                foreach (FucineRef olderReference in references)
+                foreach (FuncineRef olderReference in references)
                     if (reference.Equals(olderReference))
                     {
                         referenceIsUnique = false;
@@ -51,11 +55,11 @@ namespace TheRoost.Twins
             return references;
         }
 
-        public static FucineRef LoadReference(string referenceData, string referenceId)
+        public static void PopulateFucineReference(string referenceData, out string elementId, out Funcine<bool> filter, out FuncineRef.SphereTokenGet targetSphere)
         {
-            string elementId = GetLastPathPart(ref referenceData);
+            elementId = GetLastPathPart(ref referenceData);
 
-            Funcine<bool> filter = default(Funcine<bool>);
+            filter = default(Funcine<bool>);
             if (referenceData.Length > 0 && referenceClosing.Contains(referenceData[referenceData.Length - 1]))
             {
                 int filterOpening, filterClosing;
@@ -65,8 +69,82 @@ namespace TheRoost.Twins
                 referenceData = referenceData.Remove(filterOpening);
             }
 
-            string targetPath = InterpretReferencePath(ref referenceData);
-            return new FucineRef(referenceId, elementId, targetPath, filter);
+            targetSphere = GetSphereGetter(referenceData);
+        }
+
+        private readonly static Dictionary<string, FuncineRef.SphereTokenGet> _cachedSphereGetters = new Dictionary<string, FuncineRef.SphereTokenGet>();
+        public static FuncineRef.SphereTokenGet GetSphereGetter(string path)
+        {
+            path = path.NormalizeAsContextPath();
+
+            if (_cachedSphereGetters.ContainsKey(path) == false)
+                _cachedSphereGetters[path] = InterpretReferencePath(path);
+
+            return _cachedSphereGetters[path];
+        }
+
+        public static string NormalizeAsContextPath(this string path)
+        {
+            path = path.ToLower();
+
+            if (path.Length > 0 && scopeSeparators.Contains(path[0]))
+                path = path.Substring(1);
+
+            foreach (char separator in scopeSeparators)
+                path = path.Replace(separator, scopeSeparators[0]);
+
+            return path;
+        }
+
+        public static FuncineRef.SphereTokenGet InterpretReferencePath(string path)
+        {
+            if (path.StartsWith("~"))
+                return () => TokenContextAccessors.GetSphereTokensByPath(new FucinePath(path));
+
+            string[] pathPart = GetNextPathPart(ref path).Split(entityIdSeparator);
+            string referenceType = pathPart[0];
+            string entityId = pathPart.Length > 1 ? pathPart[1] : string.Empty;
+
+            switch (referenceType)
+            {
+                case "verb": return InterpretVerbPath(ref path, entityId);
+                case "deck": return () => TokenContextAccessors.GetDeckTokens(entityId);
+                case "deck_forbidden": return () => TokenContextAccessors.GetDeckForbiddenTokens(entityId);
+                case "table": return TokenContextAccessors.GetTableTokens;
+                case "extant": return TokenContextAccessors.GetExtantTokens;
+                case "token": return TokenContextAccessors.GetLocalTokenAsTokens;
+                case "": return TokenContextAccessors.GetLocalSphereTokens;
+                default:
+                    throw Birdsong.Droppings("Unknown reference type {0}", referenceType);
+            }
+        }
+
+        private static FuncineRef.SphereTokenGet InterpretVerbPath(ref string path, string verbId)
+        {
+            string[] pathPart = GetNextPathPart(ref path).Split(entityIdSeparator);
+            string sphere = pathPart[0];
+            string subId = pathPart.Length > 1 ? pathPart[1] : string.Empty;
+
+            if (string.IsNullOrWhiteSpace(verbId))
+                switch (sphere)
+                {
+                    case "": return () => TokenContextAccessors.GetLocalSituation().GetElementTokensInSituation();
+                    case "slot": return () => TokenContextAccessors.GetLocalSituation().GetSituationSlot(subId).GetElementTokens();
+                    case "slots": return () => TokenContextAccessors.GetLocalSituation().GetSpheresByCategory(SphereCategory.Threshold).GetSpheresTokens();
+                    case "storage": return () => TokenContextAccessors.GetLocalSituation().GetSituationStorageTokens();
+                    default:
+                        throw Birdsong.Droppings("Unknown situation sphere type {0}", sphere);
+                }
+
+            switch (sphere)
+            {
+                case "": return () => TokenContextAccessors.GetSituation(verbId).GetElementTokensInSituation();
+                case "slot": return () => TokenContextAccessors.GetSituation(verbId).GetSituationSlot(subId).GetElementTokens();
+                case "slots": return () => TokenContextAccessors.GetSituation(verbId).GetSpheresByCategory(SphereCategory.Threshold).GetSpheresTokens();
+                case "storage": return () => TokenContextAccessors.GetSituation(verbId).GetSituationStorageTokens();
+                default:
+                    throw Birdsong.Droppings("Unknown situation sphere type {0}", sphere);
+            }
         }
 
         private static string GetBordersOfSeparatedArea(string expression, out int openingPosition, out int closingPosition)
@@ -78,7 +156,7 @@ namespace TheRoost.Twins
                 return expression;
 
             if (closingPosition == -1)
-                throw Birdsong.Caw("Reference in {0} is not closed", expression);
+                throw Birdsong.Droppings("Reference in {0} is not closed", expression);
 
             string referenceData = expression.Substring(openingPosition + 1, closingPosition - openingPosition - 1);
             int innerOpeningsCount = referenceData.Split(referenceOpening).Length - 1;
@@ -89,7 +167,7 @@ namespace TheRoost.Twins
                 {
                     closingPosition = expression.IndexOfAny(referenceClosing, closingPosition + 1);
                     if (closingPosition == -1)
-                        throw Birdsong.Caw("Unclosed reference in {0}", expression);
+                        throw Birdsong.Droppings("Unclosed reference in {0}", expression);
                 }
 
                 referenceData = expression.Substring(openingPosition + 1, closingPosition - openingPosition - 1);
@@ -97,78 +175,6 @@ namespace TheRoost.Twins
             }
 
             return referenceData;
-        }
-
-        public static string InterpretReferencePath(ref string path)
-        {
-            if (path.StartsWith("~"))
-            {
-                foreach (char separator in scopeSeparators)
-                    path = path.Replace(separator, '/');
-
-                return path;
-            }
-
-            if (path.Length > 0 && scopeSeparators.Contains(path[0]))
-                path = path.Substring(1);
-
-            path = path.ToLower();
-            string sphereArea = GetNextPathPart(ref path);
-
-            switch (sphereArea)
-            {
-                case "verb":
-                case "verbs": return InterpretVerbReferencePath(ref path);
-                case "deck":
-                case "decks": return InterpretDeckReferencePath(ref path);
-                case "table":
-                case "tabletop": return "~/tabletop";
-                case "extant": return TokenContextManager.EXTANT_PATH;
-                case "token": return TokenContextManager.LOCAL_TOKEN_PATH;
-                case "situation": return TokenContextManager.LOCAL_SITUATION_PATH;
-                case "": return TokenContextManager.LOCAL_SPHERE_PATH;
-                default:
-                    Birdsong.Sing("Unknown sphere area {0}", sphereArea);
-                    return "~/" + sphereArea;
-            }
-        }
-
-        private static string InterpretVerbReferencePath(ref string path)
-        {
-            string verbId = GetNextPathPart(ref path);
-            string sphere = GetNextPathPart(ref path);
-
-            switch (sphere)
-            {
-                case "storage": return TokenContextManager.StoragePathForVerb(verbId);
-                case "slots": return TokenContextManager.SlotsPathForVerb(verbId);
-                case "slot":
-                    string slotId = GetNextPathPart(ref path);
-                    return TokenContextManager.SingleSlotPathForVerb(verbId, slotId);
-                case "":
-                case "all": return TokenContextManager.PathForVerb(verbId);
-                default:
-                    Birdsong.Sing("Unknown verb sphere {0}", sphere);
-                    return TokenContextManager.PathForVerb(verbId) + "/unknown";
-            }
-        }
-
-        private static string InterpretDeckReferencePath(ref string path)
-        {
-            string entityId = GetNextPathPart(ref path);
-            string sphere = GetNextPathPart(ref path);
-
-            string fucinePath = "~/" + entityId;
-
-            switch (sphere)
-            {
-                case "forbidden": return fucinePath + "_forbidedn";
-                case "draw":
-                case "": return fucinePath + "_draw";
-                default:
-                    Birdsong.Sing("Unknown deck sphere {0}", sphere);
-                    return fucinePath + "/unknown";
-            }
         }
 
         private static string GetNextPathPart(ref string path)
@@ -196,7 +202,7 @@ namespace TheRoost.Twins
             return result;
         }
 
-        private static string GetLastPathPart(ref string path)
+        public static string GetLastPathPart(ref string path)
         {
             path = path.Trim();
             if (path == string.Empty)
