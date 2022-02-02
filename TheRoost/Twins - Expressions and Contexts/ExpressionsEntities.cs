@@ -42,14 +42,18 @@ namespace TheRoost.Twins.Entities
 
     public struct FuncineRef
     {
-        public delegate List<Token> SphereTokenGet();
+        public delegate List<Token> SphereTokensRef();
 
         public readonly string idInExpression;
         public readonly string targetElementId;
-        public readonly SphereTokenGet getTargetTokens;
+        public readonly SphereTokensRef getTargetTokens;
         public readonly Funcine<bool> tokensFilter;
-        
-        public enum SpecialOperation { SingleMin, SingleMax, CountOfAny };
+        public readonly SpecialOperation special;
+
+        public enum SpecialOperation { None, SingleTokenMin, SingleTokenMax, CountCards };
+        public const string opCountKeyword = "$any";
+        public const string opMaxKeyword = "$max";
+        public const string opMinKeyword = "$min";
 
         public int value
         {
@@ -57,26 +61,66 @@ namespace TheRoost.Twins.Entities
             {
                 List<Token> tokens = getTargetTokens.Invoke();
 
+                //!~!!!!!!!!!!!!!!!!!!!!!NB temp and dirty solution
+                foreach (Token token in tokens.ToArray())
+                    if (token.PayloadEntityId == "tlg.note")
+                        tokens.Remove(token);
+
                 if (this.tokensFilter.isUndefined == false)
                     tokens = tokens.FilterTokens(tokensFilter);
 
-                AspectsDictionary aspects = new AspectsDictionary();
-                foreach (Token token in tokens)
-                    aspects.CombineAspects(token.GetAspects());
+                switch (special)
+                {
+                    case SpecialOperation.None:
+                        AspectsDictionary aspects = new AspectsDictionary();
+                        foreach (Token token in tokens)
+                            aspects.CombineAspects(token.GetAspects());
+                        return aspects.AspectValue(targetElementId);
 
-                return aspects.AspectValue(targetElementId);
+                    case SpecialOperation.SingleTokenMax:
+                        int maxValue = 0; int currentTokenValue;
+                        foreach (Token token in tokens)
+                        {
+                            currentTokenValue = token.GetAspects().AspectValue(targetElementId);
+                            if (currentTokenValue > maxValue)
+                                maxValue = currentTokenValue;
+                        }
+                        return maxValue;
+                    case SpecialOperation.SingleTokenMin:
+                        int minValue = int.MaxValue;
+                        foreach (Token token in tokens)
+                        {
+                            currentTokenValue = token.GetAspects().AspectValue(targetElementId);
+                            if (currentTokenValue != 0 && currentTokenValue < minValue)
+                                minValue = currentTokenValue;
+                        }
+                        
+                        return minValue == int.MaxValue ? 0 : minValue;
+                    case SpecialOperation.CountCards: return tokens.Count;
+                    default: throw Birdsong.Droppings("Something strange happened. Unknown reference special operation {0}", special);
+                }
+
+
             }
         }
 
         public FuncineRef(string referenceData, string referenceId)
         {
             this.idInExpression = referenceId;
-            FuncineParser.PopulateFucineReference(referenceData, out targetElementId, out tokensFilter, out getTargetTokens);
+            FuncineParser.PopulateFucineReference(referenceData, out targetElementId, out tokensFilter, out getTargetTokens, out special);
         }
 
         public bool Equals(FuncineRef otherReference)
         {
             return otherReference.getTargetTokens == this.getTargetTokens && otherReference.targetElementId == this.targetElementId && otherReference.tokensFilter.isUndefined && this.tokensFilter.isUndefined;
         }
+    }
+
+    public struct SphereRef
+    {
+        public SphereRef(string reference) { sphereGet = FuncineParser.GetSphereRef(reference); }
+
+        private System.Func<SecretHistories.Spheres.Sphere> sphereGet;
+        public SecretHistories.Spheres.Sphere target { get { return sphereGet.Invoke(); } }
     }
 }
