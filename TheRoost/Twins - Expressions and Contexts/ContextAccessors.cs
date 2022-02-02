@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 
 using SecretHistories.Entities;
 using SecretHistories.UI;
@@ -16,14 +15,9 @@ namespace TheRoost.Twins
         private static readonly List<Token> local_token = new List<Token>();
         private static List<Token> local_sphere = new List<Token>();
 
-        public static List<Token> GetTableTokens()
-        {
-            return Watchman.Get<HornedAxe>().GetDefaultSphere().GetElementTokens();
-        }
-
         public static List<Token> GetExtantTokens()
         {
-            List<Token> tokens = GetTableTokens();
+            List<Token> tokens = Watchman.Get<HornedAxe>().GetDefaultSphere().GetElementTokens();
             foreach (Situation situation in Watchman.Get<HornedAxe>().GetRegisteredSituations())
                 tokens.AddRange(situation.GetElementTokensInSituation());
 
@@ -47,49 +41,33 @@ namespace TheRoost.Twins
             return Assets.Scripts.Application.Entities.NullEntities.NullSphere.Create();
         }
 
-        public static List<Token> GetSpheresTokens(this List<Sphere> spheres)
+        public static Sphere GetSituationStorage(this Situation situation)
+        {
+            Sphere storage = situation.GetSingleSphereByCategory(SecretHistories.Enums.SphereCategory.SituationStorage);
+            if (storage != null)
+                return storage;
+            else
+            {
+                storage = situation.GetSingleSphereByCategory(SecretHistories.Enums.SphereCategory.Output);
+                if (storage != null)
+                    return storage;
+            }
+
+            return Assets.Scripts.Application.Entities.NullEntities.NullSphere.Create();
+        }
+
+        public static Situation GetLocalSituation()
+        {
+            return local_situation;
+        }
+
+        public static List<Token> GetTokensFromSpheres(this List<Sphere> spheres)
         {
             List<Token> result = new List<Token>();
             foreach (Sphere sphere in spheres)
                 result.AddRange(sphere.GetTokens());
 
             return result;
-        }
-
-        public static List<Token> GetSituationStorageTokens(this Situation situation)
-        {
-            List<Token> result = new List<Token>();
-            Sphere storage = situation.GetSingleSphereByCategory(SecretHistories.Enums.SphereCategory.SituationStorage);
-            if (storage != null)
-                result.AddRange(storage.GetElementTokens());
-            else
-            {
-                storage = situation.GetSingleSphereByCategory(SecretHistories.Enums.SphereCategory.Output);
-                if (storage != null)
-                    result.AddRange(storage.GetTokens());
-            }
-
-            return result;
-        }
-
-        public static List<Token> GetDeckTokens(string deckId)
-        {
-            return Watchman.Get<SecretHistories.Infrastructure.DealersTable>().GetDrawPile(deckId).GetElementTokens();
-        }
-
-        public static List<Token> GetDeckForbiddenTokens(string deckId)
-        {
-            return Watchman.Get<SecretHistories.Infrastructure.DealersTable>().GetForbiddenPile(deckId).GetElementTokens();
-        }
-
-        public static List<Token> GetSphereTokensByPath(FucinePath spherePath)
-        {
-            return Watchman.Get<HornedAxe>().GetSphereByPath(spherePath).GetTokens().ToList();
-        }
-
-        public static Situation GetLocalSituation()
-        {
-            return local_situation;
         }
 
         public static List<Token> GetLocalTokenAsTokens()
@@ -136,12 +114,15 @@ namespace TheRoost.Twins
 
             return result;
         }
+    }
 
+    internal class TwinsDebug
+    {
         public static void TestReference(string[] command)
         {
             string formula = string.Concat(command);
             FuncineRef reference = new FuncineRef(formula, "A");
-            Birdsong.Sing("Targeting element '{0}' by filter {2}", reference.targetElementId, reference.tokensFilter.formula);
+            Birdsong.Sing("Amount of '{0}', filter '{1}', special op '{2}': {3}", reference.targetElementId, reference.tokensFilter.formula, reference.special, reference.value);
         }
 
         public static void TestExpression(params string[] command)
