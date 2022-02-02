@@ -58,20 +58,9 @@ namespace TheRoost.Enactors
     {
         public const string enabledSettingId = "ElegiastEnabled";
         public const string patchId = "theroostmachine.elegiast";
-        private static bool propertiesClaimed = false;
 
         internal static void Enact()
         {
-            //we claim properties (and add debug commands) regardless of enable/disable state of the module
-            //so they won't clog the log with "ALREADY CLAIMED" messages if the module is disabled-enabled several times
-            //I don't quite like how it's currently - how scattered everything is in particular
-            //but we'll see
-            if (!propertiesClaimed)
-            {
-                TheRoost.Elegiast.CustomAchievementsManager.ClaimProperties();
-                propertiesClaimed = true;
-            }
-
             if (Machine.GetConfigValue<int>(enabledSettingId, 1) == 1)
                 TheRoost.Elegiast.CustomAchievementsManager.Enact();
         }
@@ -81,16 +70,9 @@ namespace TheRoost.Enactors
     {
         public const string enabledSettingId = "ExpressionsEnabled";
         public const string patchId = "theroostmachine.twins";
-        private static bool propertiesClaimed = false;
 
         internal static void Enact()
         {
-            if (!propertiesClaimed)
-            {
-                TheRoost.Twins.ExpressionEffects.ClaimProperties();
-                propertiesClaimed = true;
-            }
-
             if (Machine.GetConfigValue<int>(enabledSettingId, 1) == 1)
                 TheRoost.Twins.ExpressionEffects.Enact();
         }

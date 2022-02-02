@@ -39,7 +39,7 @@ namespace TheRoost.Vagabond
 
         private static void ExecuteCommand(string command)
         {
-            CommandLine.Log(command);
+            CommandLine.Log("executing command: '{0}'", command);
 
             command = command.Trim();
             if (string.IsNullOrWhiteSpace(command) || command[0] != '/')

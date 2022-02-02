@@ -27,11 +27,7 @@ namespace TheRoost.Elegiast
         static string localFile { get { return Application.persistentDataPath + "\\" + datafile; } }
         const string achievementDataFormat = "\"{0}\": \"{1}\",\n";
 
-        internal static void ClaimProperties()
-        {
-            Machine.ClaimProperty<SecretHistories.Entities.Recipe, List<string>>(propertyThatUnlocks);
-            TheRoost.Vagabond.CommandLine.AddCommand("achievements", AchievementsDebug);
-        }
+        private static bool propertiesClaimed = false;
 
         internal static void Enact()
         {
@@ -40,6 +36,15 @@ namespace TheRoost.Elegiast
 
             LoadAllUnlocks();
 
+            //in case player disables/enables the module several times, so it won't clog the log with "already claimed" messages
+            if (propertiesClaimed == false)
+            {
+                Machine.ClaimProperty<SecretHistories.Entities.Recipe, List<string>>(propertyThatUnlocks);
+                TheRoost.Vagabond.CommandLine.AddCommand("achievements", AchievementsDebug);
+                propertiesClaimed = true;
+            }
+
+            //will I ever implement this
             if (Watchman.Get<SecretHistories.Services.StorefrontServicesProvider>().IsAvailable(StoreClient.Gog))
             {
                 cachedGogStats = GalaxyInstance.Stats();
