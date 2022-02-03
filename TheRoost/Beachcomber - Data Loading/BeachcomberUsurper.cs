@@ -222,7 +222,7 @@ namespace TheRoost.Beachcomber
             }
         }
 
-        private static ArrayList GetParents(this EntityData data, string inheritanceProperty)
+        private static ArrayList GetParentsOfInheritanceType(this EntityData data, string inheritanceProperty)
         {
             if (!data.ValuesTable.ContainsKey(inheritanceProperty))
                 return new ArrayList();
@@ -238,8 +238,8 @@ namespace TheRoost.Beachcomber
 
         private static void ApplyOverrideParentInheritance(this EntityData child, Dictionary<string, EntityData> allCoreEntitiesOfType)
         {
-            ArrayList extendsList = child.GetParents(inheritOverrideParentsKeyword);
-            extendsList.AddRange(child.GetParents(inheritOverrideParentsLegacyKeyword));
+            ArrayList extendsList = child.GetParentsOfInheritanceType(inheritOverrideParentsKeyword);
+            extendsList.AddRange(child.GetParentsOfInheritanceType(inheritOverrideParentsLegacyKeyword));
 
             foreach (string extendId in extendsList)
             {
@@ -257,13 +257,13 @@ namespace TheRoost.Beachcomber
                                 throw Birdsong.Cack("Unable to extend property '{0}' of entity '{1}' from entity '{2}', reason:\n{3}", key, child.Id, extendId, ex);
                             }
                         else
-                            Birdsong.Sing("{0} tried to extend from an entity that doesn't exist: {1}", child.Id, extendId);
+                            Birdsong.Sing("'{0}' tried to extend from an entity that doesn't exist: {1}", child.Id, extendId);
             }
         }
 
         private static void ApplyAdditiveInheritance(this EntityData derivative, Dictionary<string, EntityData> allCoreEntitiesOfType)
         {
-            ArrayList deriveFromEntities = derivative.GetParents(inheritAdditiveKeyword);
+            ArrayList deriveFromEntities = derivative.GetParentsOfInheritanceType(inheritAdditiveKeyword);
             
             foreach (string rootId in deriveFromEntities)
                 if (allCoreEntitiesOfType.ContainsKey(rootId))
@@ -285,7 +285,7 @@ namespace TheRoost.Beachcomber
                             }
                 }
                 else
-                    Birdsong.Sing("{0} tried to derive from an entity that doesn't exist: {1}", derivative.Id, rootId);
+                    Birdsong.Sing("'{0}' tried to derive from an entity that doesn't exist: {1}", derivative.Id, rootId);
         }
 
         public static object MergeValues(object derivative, object root)
