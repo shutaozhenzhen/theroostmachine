@@ -111,7 +111,7 @@ namespace TheRoost.Beachcomber
                         object propertyValue;
                         if (entityData.ValuesTable.Contains(propertyName))
                         {
-                            propertyValue = Panimporter.ImportProperty(entity, entityData.ValuesTable[propertyName], propertyName, propertyType);
+                            propertyValue = Panimporter.ImportProperty(entity, entityData.ValuesTable[propertyName], propertyType, propertyName);
                             entityData.ValuesTable.Remove(propertyName);
                         }
                         else
@@ -170,8 +170,10 @@ namespace TheRoost.Beachcomber
 
     public static class ModOpManager
     {
-        private const string derivesKeyword = "$derives";
-        private const string extendsKeyword = "extends";
+        private const string inheritAdditiveKeyword = "$derives";
+        private const string inheritOverrideParentsKeyword = "$overrides";
+        private const string inheritOverrideParentsLegacyKeyword = "extends";
+
         private const string priorityKeyword = "$priority";
 
         private static readonly MethodInfo processPropertyOperationsFromEntityMod = typeof(EntityMod).GetMethodInvariant("ProcessPropertyOperationsFromEntityMod");
@@ -197,7 +199,8 @@ namespace TheRoost.Beachcomber
                     }
                 }
 
-            foreach (EntityData modEntity in allModdedEntities.OrderBy(data => data.ValuesTable.ContainsKey(priorityKeyword) ? (int)data.ValuesTable[priorityKeyword] : 0))
+            foreach (EntityData modEntity in allModdedEntities.OrderBy(data =>
+                data.ValuesTable.ContainsKey(priorityKeyword) ? (int)data.ValuesTable[priorityKeyword] : 0))
                 ApplyModTo(new EntityMod(modEntity), modEntity, alreadyLoadedEntities, log);
 
             loader.GetType().GetPropertyInvariant("_allLoadedEntities").SetValue(loader, alreadyLoadedEntities);
@@ -205,8 +208,8 @@ namespace TheRoost.Beachcomber
 
         private static void ApplyModTo(EntityMod entityMod, EntityData modData, Dictionary<string, EntityData> allEntitiesOfType, ContentImportLog log)
         {
-            modData.ApplyDerives(allEntitiesOfType);
-            modData.ApplyExtends(allEntitiesOfType, log);
+            modData.ApplyAdditiveInheritance(allEntitiesOfType);
+            modData.ApplyOverrideParentInheritance(allEntitiesOfType);
 
             EntityData coreDefinition = allEntitiesOfType[modData.Id];
             processPropertyOperationsFromEntityMod.Invoke(entityMod, new object[] { log, coreDefinition });
@@ -219,63 +222,70 @@ namespace TheRoost.Beachcomber
             }
         }
 
-        private static ArrayList GetDerives(this EntityData data)
+        private static ArrayList GetParents(this EntityData data, string inheritanceProperty)
         {
-            if (!data.ValuesTable.ContainsKey(derivesKeyword))
+            if (!data.ValuesTable.ContainsKey(inheritanceProperty))
                 return new ArrayList();
 
-            ArrayList arrayList = data.ValuesTable[derivesKeyword] as ArrayList;
+            ArrayList arrayList = data.ValuesTable[inheritanceProperty] as ArrayList;
             if (arrayList == null)
-                arrayList = new ArrayList { data.ValuesTable[derivesKeyword] };
+                arrayList = new ArrayList { data.ValuesTable[inheritanceProperty] };
 
-            data.ValuesTable.Remove(derivesKeyword);
+            data.ValuesTable.Remove(inheritanceProperty);
 
             return arrayList;
         }
 
-        private static void ApplyExtends(this EntityData modEntity, Dictionary<string, EntityData> allCoreEntitiesOfType, ContentImportLog log)
+        private static void ApplyOverrideParentInheritance(this EntityData child, Dictionary<string, EntityData> allCoreEntitiesOfType)
         {
-            List<string> extendsList = modEntity.FlushEntityIdsToExtend();
+            ArrayList extendsList = child.GetParents(inheritOverrideParentsKeyword);
+            extendsList.AddRange(child.GetParents(inheritOverrideParentsLegacyKeyword));
 
             foreach (string extendId in extendsList)
             {
-                EntityData entityData;
-                if (allCoreEntitiesOfType.TryGetValue(extendId, out entityData))
-                    foreach (object key in entityData.ValuesTable.Keys)
-                        try
-                        {
-                            modEntity.TryAdd(key, CopyDeep(entityData.ValuesTable[key]));
-                        }
-                        catch (Exception ex)
-                        {
-                            throw Birdsong.Cack("Unable to extend property '{0}' of entity '{1}' from entity '{2}', reason:\n{3}", key, modEntity.Id, extendId, ex);
-                        }
-                else
-                    throw Birdsong.Cack("{0} tried to extend from an entity that doesn't exist: {1}", modEntity.Id, extendId);
+                EntityData parentEntity;
+                if (allCoreEntitiesOfType.TryGetValue(extendId, out parentEntity))
+                    foreach (object key in parentEntity.ValuesTable.Keys)
+                        if (key.ToString().Contains("$") == false)
+                            try
+                            {
+                                if (child.ValuesTable.ContainsKey(key) == false)
+                                    child.ValuesTable.Add(key, CopyDeep(parentEntity.ValuesTable[key]));
+                            }
+                            catch (Exception ex)
+                            {
+                                throw Birdsong.Cack("Unable to extend property '{0}' of entity '{1}' from entity '{2}', reason:\n{3}", key, child.Id, extendId, ex);
+                            }
+                        else
+                            Birdsong.Sing("{0} tried to extend from an entity that doesn't exist: {1}", child.Id, extendId);
             }
         }
 
-        private static void ApplyDerives(this EntityData derivative, Dictionary<string, EntityData> allCoreEntitiesOfType)
+        private static void ApplyAdditiveInheritance(this EntityData derivative, Dictionary<string, EntityData> allCoreEntitiesOfType)
         {
-            ArrayList deriveFromEntities = derivative.GetDerives();
+            ArrayList deriveFromEntities = derivative.GetParents(inheritAdditiveKeyword);
+            
             foreach (string rootId in deriveFromEntities)
                 if (allCoreEntitiesOfType.ContainsKey(rootId))
                 {
-                    EntityData root = allCoreEntitiesOfType[rootId];
+                    EntityData parentEntity = allCoreEntitiesOfType[rootId];
 
-                    foreach (object key in root.ValuesTable.Keys)
-                        try
-                        {
-                            if (derivative.ValuesTable.ContainsKey(key))
-                                derivative.ValuesTable[key] = MergeValues(derivative.ValuesTable[key], root.ValuesTable[key]);
-                            else
-                                derivative.ValuesTable.Add(key, CopyDeep(root.ValuesTable[key]));
-                        }
-                        catch (Exception ex)
-                        {
-                            throw Birdsong.Cack("Unable to derive property '{0}' of entity '{1}' from entity '{2}', reason:\n{3}", key, derivative.Id, rootId, ex);
-                        }
+                    foreach (object key in parentEntity.ValuesTable.Keys)
+                        if (key.ToString().Contains("$") == false)
+                            try
+                            {
+                                if (derivative.ValuesTable.ContainsKey(key))
+                                    derivative.ValuesTable[key] = MergeValues(derivative.ValuesTable[key], parentEntity.ValuesTable[key]);
+                                else
+                                    derivative.ValuesTable.Add(key, CopyDeep(parentEntity.ValuesTable[key]));
+                            }
+                            catch (Exception ex)
+                            {
+                                throw Birdsong.Cack("Unable to derive property '{0}' of entity '{1}' from entity '{2}', reason:\n{3}", key, derivative.Id, rootId, ex);
+                            }
                 }
+                else
+                    Birdsong.Sing("{0} tried to derive from an entity that doesn't exist: {1}", derivative.Id, rootId);
         }
 
         public static object MergeValues(object derivative, object root)

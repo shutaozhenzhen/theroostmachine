@@ -11,7 +11,7 @@ namespace TheRoost.Beachcomber
     //leaving this one public in case someone/me will need to load something directly
     public static class Panimporter
     {
-        public static object ImportProperty(IEntityWithId parentEntity, object valueData, string propertyName, Type propertyType)
+        public static object ImportProperty(IEntityWithId parentEntity, object valueData, Type propertyType, string propertyName)
         {
             ImporterForType importer = GetImporterForType(propertyType);
 
@@ -22,7 +22,7 @@ namespace TheRoost.Beachcomber
             }
             catch (Exception ex)
             {
-                Birdsong.Sing("FAILED TO LOAD PROPERTY '{0}' FOR {1} ID '{2}':\n{3}", propertyName, parentEntity.GetType().Name.ToUpper(), parentEntity.Id, ex);
+                Birdsong.Sing("FAILED TO LOAD PROPERTY '{0}' FOR {1} ID '{2}' - {3}", propertyName, parentEntity.GetType().Name.ToUpper(), parentEntity.Id, ex.Message);
                 throw;
             }
         }
@@ -80,8 +80,7 @@ namespace TheRoost.Beachcomber
             }
             catch (Exception ex)
             {
-                Birdsong.Sing("LIST[] IS MALFORMED, THEREFORE:");
-                throw ex;
+                throw Birdsong.Cack("LIST[] IS MALFORMED, ERROR:\n{0}", ex.Message);
             }
         }
 
@@ -115,8 +114,7 @@ namespace TheRoost.Beachcomber
             }
             catch (Exception ex)
             {
-                Birdsong.Sing("DICTIONARY{} IS MALFORMED, THEREFORE:");
-                throw ex;
+                throw Birdsong.Cack("DICTIONARY{} IS MALFORMED, ERROR:\n{0}", ex.Message);
             }
         }
 
@@ -128,31 +126,6 @@ namespace TheRoost.Beachcomber
             }
             catch (Exception ex)
             {
-                throw ex;
-            }
-        }
-
-        public static object ConvertValue(object data, Type destinationType)
-        {
-            try
-            {
-                Type sourceType = data.GetType();
-                if (sourceType == destinationType)
-                    return data;
-
-                if (data is string)
-                    return TypeDescriptor.GetConverter(destinationType).ConvertFromInvariantString(data.ToString());
-                else if (destinationType == typeof(string))
-                    return TypeDescriptor.GetConverter(sourceType).ConvertToInvariantString(data);
-
-                if (data is bool && destinationType != typeof(string))
-                    data = ((bool)data == true) ? 1 : -1;
-
-                return System.Convert.ChangeType(data, destinationType);
-            }
-            catch (Exception ex)
-            {
-                Birdsong.Sing("UNABLE TO PARSE A VALUE DATA: '{0}' AS {1}", data, destinationType.Name.ToUpper());
                 throw ex;
             }
         }
@@ -178,13 +151,11 @@ namespace TheRoost.Beachcomber
                     return quickSpecEntity as IEntityWithId;
                 }
 
-                Birdsong.Sing("ENTITY DATA IS NOT A DICTIONARY{}, AND THE ENTITY ISN'T A QUICK SPEC ENTITY, SO IT CAN NOT LOAD FROM A SINGLE STRING, THEREFORE:");
-                throw new ApplicationException();
+                throw Birdsong.Cack("ENTITY DATA IS NOT A DICTIONARY{}, AND THE ENTITY ISN'T A QUICK SPEC ENTITY, SO IT CAN NOT LOAD FROM A SINGLE STRING");
             }
             catch (Exception ex)
             {
-                Birdsong.Sing("ENTITY DATA IS MALFORMED, THEREFORE:");
-                throw ex;
+                throw Birdsong.Cack("ENTITY DATA IS MALFORMED, ERROR:/n{0}", ex.Message);
             }
         }
 
@@ -221,12 +192,39 @@ namespace TheRoost.Beachcomber
                     }
                 }
 
-                throw new ApplicationException(String.Format("NO MATCHING CONSTRUCTOR FOUND FOR {0} WITH ARGUMENTS {1}, THEREFORE:", structType.Name, parameterTypes.UnpackAsString()));
+                throw Birdsong.Cack("NO MATCHING CONSTRUCTOR FOUND FOR {0} WITH ARGUMENTS '{1}'", structType.Name, parameterTypes.UnpackAsString());
             }
             catch (Exception ex)
             {
-                Birdsong.Sing("STRUCT DATA[] IS MALFORMED, THEREFORE:");
-                throw ex;
+                throw Birdsong.Cack("STRUCT DATA[] IS MALFORMED, ERROR:\n{0}", ex.Message);
+            }
+        }
+
+        public static object ConvertValue(object data, Type destinationType)
+        {
+            try
+            {
+                Type sourceType = data.GetType();
+                if (sourceType == destinationType)
+                    return data;
+
+                if ((sourceType.IsValueType == false && sourceType != typeof(string))
+                    || (destinationType.IsValueType == false && destinationType != typeof(string)))
+                    throw Birdsong.Cack("Trying to convert data '{0}' to {1}, but at least one of these two is not a value type", data, destinationType.Name);
+
+                if (data is string)
+                    return TypeDescriptor.GetConverter(destinationType).ConvertFromInvariantString(data.ToString());
+                else if (destinationType == typeof(string))
+                    return TypeDescriptor.GetConverter(sourceType).ConvertToInvariantString(data);
+
+                if (data is bool && destinationType != typeof(string))
+                    data = ((bool)data == true) ? 1 : -1;
+
+                return System.Convert.ChangeType(data, destinationType);
+            }
+            catch (Exception ex)
+            {
+                throw Birdsong.Cack("UNABLE TO PARSE A VALUE DATA: '{0}' AS {1}, ERROR:\n{2}", data, destinationType.Name.ToUpper(), ex.Message);
             }
         }
     }
@@ -249,7 +247,7 @@ namespace SecretHistories.Fucine
             DefaultValue = new ArrayList(defaultValue);
         }
 
-        //won't work with normal game importer, but needs to be impemented; Panimporter doesn't use this
+        //won't work with the normal game importer, and Panimporter doesn't use this at all, but compiler wants this to exist
         public override AbstractImporter CreateImporterInstance()
         {
             throw new NotImplementedException();
