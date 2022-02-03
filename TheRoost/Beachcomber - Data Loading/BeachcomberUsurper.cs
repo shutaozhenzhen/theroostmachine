@@ -6,7 +6,7 @@ using System.Reflection.Emit;
 using System.Linq;
 
 using HarmonyLib;
-
+using Newtonsoft.Json.Linq;
 using SecretHistories.Fucine;
 using SecretHistories.Entities;
 using SecretHistories.Fucine.DataImport;
@@ -44,9 +44,18 @@ namespace TheRoost.Beachcomber
             //thus, I have to create an intermediary - InvokeGenericImporterForAbstractRootEntity() - which calls the actual type-specific method
             //(generics are needed to mimic CS's own structure and since it makes accessing properties much more easierester)
 
-
-            Machine.Patch(typeof(EntityMod).GetMethodInvariant("ApplyModTo"),
-                prefix: typeof(Usurper).GetMethodInvariant("ApplyDerives"));
+            //another thing that gets usurped (and rightly so, in my humble opinion), is a proccess of applying mod data
+            //significant changes:
+            //1. now $ ops are applied entity by entity - thus, no flattening whatsoever
+            //1.1 solves $ ops incompatibility between mods;
+            //1.2 solves inability to modify modded content with $ ops
+            //2. extended properties are passed to the inheriting entity as copies; solves the problem of not being able to inherit subentities
+            //3. added '$derives' property that does the same thing as 'extends', only additively (merges properties of child and parent)
+            //4. added $priority property that controls what definitions are applied first
+            //5 maybe something else? i forgot
+            Machine.Patch(
+                typeof(EntityTypeDataLoader).GetMethodInvariant("LoadEntityDataFromSuppliedFiles"),
+                transpiler: typeof(Usurper).GetMethodInvariant("ModContentOpsFix"));
         }
 
         private static IEnumerable<CodeInstruction> AbstractEntityConstructorTranspiler(IEnumerable<CodeInstruction> instructions)
@@ -84,66 +93,171 @@ namespace TheRoost.Beachcomber
 
         private static void ImportRootEntity<T>(IEntityWithId entity, EntityData entityData) where T : AbstractEntity<T>
         {
-            //this is a relatively harmless fix for a rather obscure feature
-            //which is "using "extends" for inheriting properties that contain sub-entities"
-            //extending, when applied to sub-entity properties, makes it so that one instance of EntityData appear in several places
-            //but the main game loader (and, previously, Usurper, following its footsteps) deletes properties from EntityData when importing
-            //therefore, the first time that spread-across-several-other-entitydatas entitydata is loaded, it becomes blank, with all its properties removed
-            //and each consequitive load gives you nothing
-            //thus, we're fixing this by not removing properties, and just marking them as "recognized" instead
-            //the data is cleared afterwards by GC anyway (I think)
-            List<string> recognizedProperties = new List<string>();
-
             //it makes everything a bit more hacky but I want id to be set first for the possible logs
             if (entityData.ValuesTable.ContainsKey("id"))
             {
                 entity.SetId(entityData.Id);
-                recognizedProperties.Add("id");
+                entityData.ValuesTable.Remove("id");
             }
 
-            foreach (CachedFucineProperty<T> cachedProperty in TypeInfoCache<T>.GetCachedFucinePropertiesForType())
-                if (cachedProperty.LowerCaseName != "id")
-                {
-                    string propertyName = cachedProperty.LowerCaseName;
-                    Type propertyType = cachedProperty.ThisPropInfo.PropertyType;
-
-                    object propertyValue;
-                    if (entityData.ValuesTable.Contains(propertyName))
+            try
+            {
+                foreach (CachedFucineProperty<T> cachedProperty in TypeInfoCache<T>.GetCachedFucinePropertiesForType())
+                    if (cachedProperty.LowerCaseName != "id")
                     {
-                        try
+                        string propertyName = cachedProperty.LowerCaseName;
+                        Type propertyType = cachedProperty.ThisPropInfo.PropertyType;
+
+                        object propertyValue;
+                        if (entityData.ValuesTable.Contains(propertyName))
                         {
                             propertyValue = Panimporter.ImportProperty(entity, entityData.ValuesTable[propertyName], propertyName, propertyType);
+                            entityData.ValuesTable.Remove(propertyName);
                         }
-                        catch
-                        {
-                            throw Birdsong.Droppings("FAILED TO IMPORT JSON");
-                        }
-
-                        recognizedProperties.Add(propertyName);
-                    }
-                    else
-                    {
-                        if (propertyType.isStruct() && cachedProperty.FucineAttribute.DefaultValue != null)
-                            propertyValue = Panimporter.ImportStruct(cachedProperty.FucineAttribute.DefaultValue, propertyType);
-                        else if (propertyType.isList() || propertyType.isDict() || propertyType.isFucineEntity() || propertyType.isStruct())
-                            propertyValue = FactoryInstantiator.CreateObjectWithDefaultConstructor(propertyType);
                         else
-                            propertyValue = cachedProperty.FucineAttribute.DefaultValue;
+                        {
+                            if (propertyType.isStruct() && cachedProperty.FucineAttribute.DefaultValue != null)
+                                propertyValue = Panimporter.ImportStruct(cachedProperty.FucineAttribute.DefaultValue, propertyType);
+                            else if (propertyType.isList() || propertyType.isDict() || propertyType.isFucineEntity() || propertyType.isStruct())
+                                propertyValue = FactoryInstantiator.CreateObjectWithDefaultConstructor(propertyType);
+                            else
+                                propertyValue = cachedProperty.FucineAttribute.DefaultValue;
+                        }
+
+                        cachedProperty.SetViaFastInvoke(entity as T, propertyValue);
                     }
 
-                    cachedProperty.SetViaFastInvoke(entity as T, propertyValue);
-                }
-
-            foreach (object key in entityData.ValuesTable.Keys)
-                if (recognizedProperties.Contains(key.ToString().ToLower()) == false)
+                foreach (object key in entityData.ValuesTable.Keys)
                     (entity as AbstractEntity<T>).PushUnknownProperty(key, entityData.ValuesTable[key]);
+            }
+            catch (Exception ex)
+            {
+                throw Birdsong.Cack(ex);
+            }
         }
 
-        const string derivesPropertyName = "$derives";
-        private static void ApplyDerives(Dictionary<string, EntityData> allCoreEntitiesOfType, EntityData ____modData)
+        private static IEnumerable<CodeInstruction> ModContentOpsFix(IEnumerable<CodeInstruction> instructions)
         {
-            EntityData derivative = ____modData;
-            List<string> deriveFromEntities = ____modData.GetDerives();
+            var codes = instructions.ToList();
+            var finalCodes = new List<CodeInstruction>();
+
+            for (int i = 0; i < codes.Count; i++)
+            {
+                finalCodes.Add(codes[i]);
+                if (codes[i].opcode == OpCodes.Stloc_0)
+                    break;
+            }
+
+            finalCodes.Add(new CodeInstruction(OpCodes.Ldarg_0)); //instance itself
+
+            finalCodes.Add(new CodeInstruction(OpCodes.Ldloca_S, 0)); //alreadyLoadedEntities (local)            
+
+            finalCodes.Add(new CodeInstruction(OpCodes.Ldarg_0)); //instance itself (is needed to locate its private variable next)
+            finalCodes.Add(new CodeInstruction(OpCodes.Ldfld, //locating instance's private variable _modContentFiles
+                typeof(EntityTypeDataLoader).GetFieldInvariant("_modContentFiles")));
+
+            finalCodes.Add(new CodeInstruction(OpCodes.Ldarg_0)); //instance itself (is needed to locate its private variable next)
+            finalCodes.Add(new CodeInstruction(OpCodes.Ldfld, //locating instance's private variable _log
+                typeof(EntityTypeDataLoader).GetFieldInvariant("_log")));
+
+            finalCodes.Add(new CodeInstruction(OpCodes.Call, typeof(ModOpManager).GetMethodInvariant("ApplyModsToData")));
+
+            finalCodes.Add(new CodeInstruction(OpCodes.Ret));
+
+            return finalCodes.AsEnumerable();
+        }
+    }
+
+    public static class ModOpManager
+    {
+        private const string derivesKeyword = "$derives";
+        private const string extendsKeyword = "extends";
+        private const string priorityKeyword = "$priority";
+
+        private static readonly MethodInfo processPropertyOperationsFromEntityMod = typeof(EntityMod).GetMethodInvariant("ProcessPropertyOperationsFromEntityMod");
+
+        private static void ApplyModsToData(EntityTypeDataLoader loader, ref Dictionary<string, EntityData> alreadyLoadedEntities, List<LoadedDataFile> modContentFiles, ContentImportLog log)
+        {
+            var unpackObjectDataIntoCollection = typeof(EntityTypeDataLoader).GetMethodInvariant("UnpackObjectDataIntoCollection").CreateDelegate(typeof(Action<JToken, FucineUniqueIdBuilder, Dictionary<string, EntityData>, LoadedDataFile>), loader) as Action<JToken, FucineUniqueIdBuilder, Dictionary<string, EntityData>, LoadedDataFile>;
+
+            List<EntityData> allModdedEntities = new List<EntityData>();
+            Dictionary<string, EntityData> moddedEntityData = new Dictionary<string, EntityData>();
+            foreach (LoadedDataFile contentFile in modContentFiles)
+                foreach (JToken eachObject in ((JArray)contentFile.EntityContainer.Value))
+                {
+                    moddedEntityData.Clear();
+                    FucineUniqueIdBuilder containerBuilder = new FucineUniqueIdBuilder(contentFile.EntityContainer);
+                    unpackObjectDataIntoCollection.Invoke(eachObject, containerBuilder, moddedEntityData, contentFile);
+
+                    foreach (EntityData modeEntity in moddedEntityData.Values)
+                    {
+                        allModdedEntities.Add(modeEntity);
+                        if (!alreadyLoadedEntities.ContainsKey(modeEntity.Id))
+                            alreadyLoadedEntities.Add(modeEntity.Id, new EntityData(modeEntity.ValuesTable));
+                    }
+                }
+
+            foreach (EntityData modEntity in allModdedEntities.OrderBy(data => data.ValuesTable.ContainsKey(priorityKeyword) ? (int)data.ValuesTable[priorityKeyword] : 0))
+                ApplyModTo(new EntityMod(modEntity), modEntity, alreadyLoadedEntities, log);
+
+            loader.GetType().GetPropertyInvariant("_allLoadedEntities").SetValue(loader, alreadyLoadedEntities);
+        }
+
+        private static void ApplyModTo(EntityMod entityMod, EntityData modData, Dictionary<string, EntityData> allEntitiesOfType, ContentImportLog log)
+        {
+            modData.ApplyDerives(allEntitiesOfType);
+            modData.ApplyExtends(allEntitiesOfType, log);
+
+            EntityData coreDefinition = allEntitiesOfType[modData.Id];
+            processPropertyOperationsFromEntityMod.Invoke(entityMod, new object[] { log, coreDefinition });
+
+            if (coreDefinition != modData)
+            {
+                List<object> allKeys = modData.ValuesTable.Keys.OfType<object>().ToList();
+                foreach (object key in allKeys)
+                    coreDefinition.OverwriteOrAdd(key, modData.ValuesTable[key]);
+            }
+        }
+
+        private static ArrayList GetDerives(this EntityData data)
+        {
+            if (!data.ValuesTable.ContainsKey(derivesKeyword))
+                return new ArrayList();
+
+            ArrayList arrayList = data.ValuesTable[derivesKeyword] as ArrayList;
+            if (arrayList == null)
+                arrayList = new ArrayList { data.ValuesTable[derivesKeyword] };
+
+            data.ValuesTable.Remove(derivesKeyword);
+
+            return arrayList;
+        }
+
+        private static void ApplyExtends(this EntityData modEntity, Dictionary<string, EntityData> allCoreEntitiesOfType, ContentImportLog log)
+        {
+            List<string> extendsList = modEntity.FlushEntityIdsToExtend();
+
+            foreach (string extendId in extendsList)
+            {
+                EntityData entityData;
+                if (allCoreEntitiesOfType.TryGetValue(extendId, out entityData))
+                    foreach (object key in entityData.ValuesTable.Keys)
+                        try
+                        {
+                            modEntity.TryAdd(key, CopyDeep(entityData.ValuesTable[key]));
+                        }
+                        catch (Exception ex)
+                        {
+                            throw Birdsong.Cack("Unable to extend property '{0}' of entity '{1}' from entity '{2}', reason:\n{3}", key, modEntity.Id, extendId, ex);
+                        }
+                else
+                    throw Birdsong.Cack("{0} tried to extend from an entity that doesn't exist: {1}", modEntity.Id, extendId);
+            }
+        }
+
+        private static void ApplyDerives(this EntityData derivative, Dictionary<string, EntityData> allCoreEntitiesOfType)
+        {
+            ArrayList deriveFromEntities = derivative.GetDerives();
             foreach (string rootId in deriveFromEntities)
                 if (allCoreEntitiesOfType.ContainsKey(rootId))
                 {
@@ -153,78 +267,60 @@ namespace TheRoost.Beachcomber
                         try
                         {
                             if (derivative.ValuesTable.ContainsKey(key))
-                                derivative.ValuesTable[key] = DeriveProperty(derivative.ValuesTable[key], root.ValuesTable[key]);
+                                derivative.ValuesTable[key] = MergeValues(derivative.ValuesTable[key], root.ValuesTable[key]);
                             else
                                 derivative.ValuesTable.Add(key, CopyDeep(root.ValuesTable[key]));
                         }
                         catch (Exception ex)
                         {
-                            throw Birdsong.Droppings("Unable to derive property '{0}' of entity '{1}' from entity '{2}', reason:\n{3}", key, ____modData.Id, rootId, ex);
+                            throw Birdsong.Cack("Unable to derive property '{0}' of entity '{1}' from entity '{2}', reason:\n{3}", key, derivative.Id, rootId, ex);
                         }
                 }
         }
 
-        private static List<string> GetDerives(this EntityData data)
-        {
-            if (!data.ValuesTable.ContainsKey(derivesPropertyName))
-                return new List<string>();
-
-            ArrayList arrayList = data.ValuesTable[derivesPropertyName] as ArrayList;
-            data.ValuesTable.Remove(derivesPropertyName);
-            if (arrayList == null)
-                return new List<string>() { data.ValuesTable[derivesPropertyName].ToString() };
-
-            return arrayList.Cast<string>().ToList();
-        }
-
-        private static object DeriveProperty(object derivative, object root)
+        public static object MergeValues(object derivative, object root)
         {
             try
             {
                 if (derivative.GetType() == root.GetType())
                 {
                     if (derivative is EntityData)
-                    {
-                        EntityData derivativeProperties = (derivative as EntityData);
-                        EntityData rootProperties = (root as EntityData);
-
-                        foreach (string key in rootProperties.ValuesTable.Keys)
-                        {
-                            if (derivativeProperties.ValuesTable.ContainsKey(key))
-                                derivativeProperties.ValuesTable[key] = DeriveProperty(derivativeProperties.ValuesTable[key], rootProperties.ValuesTable[key]);
-                            else
-                                derivativeProperties.ValuesTable.Add(key, CopyDeep(rootProperties.ValuesTable[key]));
-                        }
-                    }
+                        return CombineEntityData(derivative as EntityData, root as EntityData);
                     else if (derivative is ArrayList)
-                        foreach (object value in (root as ArrayList))
-                            (derivative as ArrayList).Add(value);
-                    //there's a third case where both properties are simple values - in that case we don't modify it at all
-
-                    return derivative;
+                        return CombineArrayList(derivative as ArrayList, root as ArrayList);
+                    else
+                        return derivative;
                 }
-                else if (derivative.GetType().IsValueType == false && root.GetType().IsValueType == false)
-                    throw new ApplicationException("Can't merge a list with a dictionary");
-                else if (derivative is EntityData || root is EntityData)
-                    throw Birdsong.Droppings("Can't merge a string with a dictionary");
                 else if (derivative is ArrayList || root is ArrayList)
                 {
-                    ArrayList result;
-                    if (root is ArrayList == false)
+                    //if one of the properties is a list, we can still attempt to merge the properties
+                    //if another property is a value type, it's interpreted as list's entry
+                    //in some cases we can even merge it with entity data
+
+                    if (derivative is EntityData || root is EntityData)
                     {
-                        result = derivative as ArrayList;
-                        result.Add(root);
+                        ArrayList list = derivative is ArrayList ? derivative as ArrayList : root as ArrayList;
+                        //if lists already contain dicts, everything is fine; the merging happens by normal rules (later below) 
+                        if (list.Count == 0 || (list[0] is EntityData) == false)
+                            throw new ApplicationException("Can't merge a list with a dictionary.");
+                    }
+
+                    if (derivative is ArrayList)
+                    {
+                        (derivative as ArrayList).Add(root);
+                        return derivative;
                     }
                     else
                     {
-                        result = CopyDeep(root) as ArrayList;
+                        ArrayList result = CopyDeep(root) as ArrayList;
                         result.Insert(0, derivative);
+                        return result;
                     }
-
-                    return result;
                 }
-
-                throw Birdsong.Droppings("Can't process property types");
+                else if (derivative is EntityData || root is EntityData)
+                    throw Birdsong.Cack("Can't merge a value type with a dictionary");
+                else
+                    throw Birdsong.Cack("Can't merge two value type properties.");
             }
             catch (Exception ex)
             {
@@ -232,7 +328,28 @@ namespace TheRoost.Beachcomber
             }
         }
 
-        private static object CopyDeep(object source)
+        private static EntityData CombineEntityData(EntityData to, EntityData from)
+        {
+            foreach (string key in from.ValuesTable.Keys)
+            {
+                if (to.ValuesTable.ContainsKey(key))
+                    to.ValuesTable[key] = MergeValues(to.ValuesTable[key], from.ValuesTable[key]);
+                else
+                    to.ValuesTable.Add(key, CopyDeep(from.ValuesTable[key]));
+            }
+
+            return to;
+        }
+
+        private static ArrayList CombineArrayList(ArrayList to, ArrayList from)
+        {
+            foreach (object value in from)
+                to.Add(value);
+
+            return to;
+        }
+
+        public static object CopyDeep(object source)
         {
             if (source.GetType().IsValueType || source is string)
                 return source;
@@ -254,7 +371,7 @@ namespace TheRoost.Beachcomber
                 return data;
             }
 
-            throw Birdsong.Droppings("Can't make a deep copy of type {0} (in fact, how did you even manage to get that inside a json?)", source.GetType());
+            throw Birdsong.Cack("Can't make a deep copy of type {0} (in fact, how did you even manage to get that inside a json?)", source.GetType());
         }
     }
 }
