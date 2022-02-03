@@ -28,7 +28,7 @@ namespace TheRoost.Beachcomber
         {
             //the most convenient place to catch and load simple properties that main game doesn't want, but mods do want is here
             Machine.Patch(
-                original: typeof(AbstractEntity<Element>).GetMethodInvariant("PopUnknownKeysToLog"),
+                original: typeof(AbstractEntity<Element>).GetMethodInvariant("PushUnknownProperty"),
                 prefix: typeof(CuckooLoader).GetMethodInvariant("KnowUnknown"));
             //as things stand now, I can load custom properties directly from Usurper
             //but I'm leaving this separated as it's compatible with native loading, in case I'll cut the Usurper out at some point;
@@ -59,7 +59,7 @@ namespace TheRoost.Beachcomber
 
             if (typeof(AbstractEntity<TEntity>).IsAssignableFrom(typeof(TEntity)) == false)
             {
-                Birdsong.Sing("Trying to claim property '{0}' for type '{1}', but {1} has doesn't derive from AbstractEntity and thus can't not be loaded.", propertyName, entityType.Name);
+                Birdsong.Sing("Trying to claim property '{0}' for type {1}, but {1} doesn't derive from AbstractEntity and thus can't not be loaded.", propertyName, entityType.Name);
                 return;
             }
 
@@ -68,7 +68,7 @@ namespace TheRoost.Beachcomber
 
             if (knownUnknownProperties[entityType].ContainsKey(propertyName.ToLower()))
             {
-                Birdsong.Sing("Trying to claim property '{0}' for type '{1}', but the property of the same name for the same type is already claimed (it's ok when happens on disabling/enabling modules)", propertyName, entityType.Name);
+                Birdsong.Sing("Trying to claim property '{0}' for type {1}, but the property of the same name for the same type is already claimed (it's ok when happens on disabling/enabling modules though)", propertyName, entityType.Name);
                 return;
             }
 
@@ -137,43 +137,28 @@ namespace TheRoost.Beachcomber
             return false;
         }
 
-        private static bool KnowUnknown(IEntityWithId __instance, Hashtable ___UnknownProperties)
+        private static bool KnowUnknown(IEntityWithId __instance, object key, object value)
         {
             IEntityWithId entity = __instance;
             Type entityType = entity.GetType();
+            string propertyName = key.ToString();
 
-            if (knownUnknownProperties.ContainsKey(entityType))
+            if (knownUnknownProperties.ContainsKey(entityType) && knownUnknownProperties[entityType].ContainsKey(propertyName))
             {
-                Hashtable propertiesToComb = new Hashtable(___UnknownProperties);
-                Dictionary<string, Type> propertiesToClaim = knownUnknownProperties[entityType];
+                if (ignoredProperties.ContainsKey(entityType) && ignoredProperties[entityType].Contains(propertyName))
+                {
+                    Birdsong.Sing(VerbosityLevel.SystemChatter, 0, "Known-Unknown - but ignored - property '{0}' for '{1}' {2}", propertyName, entity.Id, entityType.Name);
+                    return false;
+                }
 
-                if (propertiesToClaim.Count > 0)
-                    foreach (string propertyName in propertiesToComb.Keys)
-                        if (propertiesToClaim.ContainsKey(propertyName))
-                        {
-                            if (ignoredProperties.ContainsKey(entityType) && ignoredProperties[entityType].Contains(propertyName))
-                            {
-                                Birdsong.Sing(VerbosityLevel.SystemChatter, 0, "Known-Unknown - but ignored - property '{0}' for '{1}' {2}", propertyName, entity.Id, entityType.Name);
-                                continue;
-                            }
+                Birdsong.Sing(VerbosityLevel.SystemChatter, 0, "Known-Unknown property '{0}' for '{1}' {2}", propertyName, entity.Id, entityType.Name);
+                object importedValue = Panimporter.ImportProperty(entity, value, knownUnknownProperties[entityType][propertyName], propertyName);
 
-                            Birdsong.Sing(VerbosityLevel.SystemChatter, 0, "Known-Unknown property '{0}' for '{1}' {2}", propertyName, entity.Id, entityType.Name);
+                if (loadedPropertiesStorage.ContainsKey(entity) == false)
+                    loadedPropertiesStorage[entity] = new Dictionary<string, object>();
+                loadedPropertiesStorage[entity].Add(propertyName, importedValue);
 
-                            ___UnknownProperties.Remove(propertyName);
-
-                            if (loadedPropertiesStorage.ContainsKey(entity) == false)
-                                loadedPropertiesStorage[entity] = new Dictionary<string, object>();
-
-                            try
-                            {
-                                object value = Panimporter.ImportProperty(entity, propertiesToComb[propertyName], propertyName, propertiesToClaim[propertyName]);
-                                loadedPropertiesStorage[entity].Add(propertyName, value);
-                            }
-                            catch
-                            {
-                                throw Birdsong.Cack("FAILED TO IMPORT JSON");
-                            }
-                        }
+                return false;
             }
 
             return true;
