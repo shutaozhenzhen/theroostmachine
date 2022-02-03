@@ -40,7 +40,6 @@ namespace TheRoost.Enactors
         {
             TheRoost.Beachcomber.CuckooLoader.Enact();
             TheRoost.Beachcomber.Usurper.OverthrowNativeImporting();
-            TheRoost.Beachcomber.BugsPicker.Fix();
         }
     }
 
@@ -84,6 +83,7 @@ namespace TheRoost.Enactors
         internal static void Enact()
         {
             LocalApplications.Legerdemain.Enact();
+            LocalApplications.BugsPicker.Fix();
         }
     }
 }

@@ -35,7 +35,7 @@
     <LangVersion>5</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Beachcomber - Data Loading\BeachcomberFixes.cs" />
+    <Compile Include="Local Applications\Bugfixes.cs" />
     <Compile Include="Twins - Expressions and Contexts\ContextAccessors.cs" />
     <Compile Include="Twins - Expressions and Contexts\FuncineParser.cs" />
     <Compile Include="Local Applications\DeckExtensions.cs" />
