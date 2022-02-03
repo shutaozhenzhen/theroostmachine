@@ -92,10 +92,18 @@ namespace TheRoost.Beachcomber
                 return default(T);
         }
 
+        internal static Dictionary<string, Type> GetCustomProperties(Type type)
+        {
+            if (knownUnknownProperties.ContainsKey(type) == false)
+                return new Dictionary<string, Type>();
+
+            return new Dictionary<string, Type>(knownUnknownProperties[type]);
+        }
+
         internal static bool HasCustomProperty(IEntityWithId owner, string propertyName)
         {
             propertyName = propertyName.ToLower();
-            return (loadedPropertiesStorage.ContainsKey(owner) && loadedPropertiesStorage[owner].ContainsKey(propertyName));
+            return loadedPropertiesStorage.ContainsKey(owner) && loadedPropertiesStorage[owner].ContainsKey(propertyName);
         }
 
         internal static void AddIgnoredProperty<TEntity>(string propertyName)
@@ -163,7 +171,7 @@ namespace TheRoost.Beachcomber
                             }
                             catch
                             {
-                                throw Birdsong.Droppings("FAILED TO IMPORT JSON");
+                                throw Birdsong.Cack("FAILED TO IMPORT JSON");
                             }
                         }
             }
@@ -191,12 +199,17 @@ namespace TheRoost.Beachcomber
 
                     //all I do here is locate several local variables (and one instance's private), load them as arguments
                     //and lastly invoke InsertCustomTypesForLoading() method with these as its arguments
+
                     codes.Insert(i++, new CodeInstruction(OpCodes.Ldloca_S, 2)); //list of loadable types (local)
+
                     codes.Insert(i++, new CodeInstruction(OpCodes.Ldloca_S, 1)); //dictionary of entity loaders (local)
+
                     codes.Insert(i++, new CodeInstruction(OpCodes.Ldarg_2)); //culture id (argument)    
+
                     codes.Insert(i++, new CodeInstruction(OpCodes.Ldarg_0)); //instance itself (is needed to locate its private variable next)
                     codes.Insert(i++, new CodeInstruction(OpCodes.Ldfld, //locating instance's private variable _log
                         typeof(CompendiumLoader).GetFieldInvariant("_log")));
+
                     //finally, calling InsertCustomTypesForLoading() with all of these arguments
                     codes.Insert(i++, new CodeInstruction(OpCodes.Call, typeof(CuckooLoader).GetMethodInvariant("InsertCustomTypesForLoading")));
 
@@ -206,7 +219,7 @@ namespace TheRoost.Beachcomber
             return codes.AsEnumerable();
         }
 
-        //not sure *why* we need refs here, but we *need* them (otherwise error (no joke, don't delete refs!!!!!))
+        //not sure *why* we need refs for types that are reference anyway, but we *need* them (otherwise error (no joke, don't delete refs!!!(/srs)!!))
         private static void InsertCustomTypesForLoading(ref List<Type> typesToLoad, ref Dictionary<string, EntityTypeDataLoader> fucineLoaders, string cultureId, ContentImportLog log)
         {
             foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
@@ -233,7 +246,6 @@ namespace TheRoost.Beachcomber
             string assemblyLocation = assembly.Location.Replace('/', '\\');
             return (assemblyLocation.Contains(modLocationLocal) || assemblyLocation.Contains(modLocationWorkshop));
         }
-
     }
 }
 
@@ -249,6 +261,11 @@ namespace TheRoost
         public static T RetrieveProperty<T>(this IEntityWithId owner, string propertyName)
         {
             return Beachcomber.CuckooLoader.RetrieveProperty<T>(owner, propertyName);
+        }
+
+        public static Dictionary<string, Type> GetCustomProperties(Type type)
+        {
+            return Beachcomber.CuckooLoader.GetCustomProperties(type);
         }
 
         public static bool HasCustomProperty(this IEntityWithId owner, string propertyName)

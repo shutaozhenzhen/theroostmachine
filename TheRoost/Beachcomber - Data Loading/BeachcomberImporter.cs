@@ -67,8 +67,8 @@ namespace TheRoost.Beachcomber
                 {
                     //to reduce boilerplate in json, I allow loading of a single-entry lists from plain strings
                     //i.e. { "someList": [ "entry" ] } and { "someList": "entry" } will yield the same result
-                    object importedSingularEntry = entryImporter.Invoke(listData, expectedEntryType);
-                    list.Add(importedSingularEntry);
+                    object importedSingleEntry = entryImporter.Invoke(listData, expectedEntryType);
+                    list.Add(importedSingleEntry);
                 }
                 else foreach (object entry in dataAsArrayList)
                     {

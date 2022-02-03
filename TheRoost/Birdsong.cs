@@ -18,7 +18,8 @@ namespace TheRoost
             Birdsong.Sing(0, 1, data, furtherData);
         }
 
-        public static System.Exception Droppings(object data, params object[] furtherData)
+        //finally, an optimal name for error throwing
+        public static System.Exception Cack(object data, params object[] furtherData)
         {
             string message = FormatMessage(data, furtherData);
             return new ApplicationException(message);

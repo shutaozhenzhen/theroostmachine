@@ -78,7 +78,7 @@ namespace TheRoost.Twins
                     break;
                 }
             if (!situationFound)
-                throw Birdsong.Droppings("Something strange happened. Cannot identify the current situation for requirements check.");
+                throw Birdsong.Cack("Something strange happened. Cannot identify the current situation for requirements check.");
 
             bool result = true;
 

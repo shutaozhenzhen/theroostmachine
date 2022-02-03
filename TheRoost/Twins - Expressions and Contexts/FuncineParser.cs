@@ -23,7 +23,7 @@ namespace TheRoost.Twins
         public static List<FuncineRef> LoadReferences(ref string expression)
         {
             if (string.IsNullOrWhiteSpace(expression))
-                throw Birdsong.Droppings("Expression definition is empty");
+                throw Birdsong.Cack("Expression definition is empty");
 
             List<FuncineRef> references = new List<FuncineRef>();
 
@@ -75,7 +75,7 @@ namespace TheRoost.Twins
                 special = GetReferenceOp(ref elementId);
 
                 if (elementId.Any(char.IsLetter) == false)
-                    throw Birdsong.Droppings("Wrong element id {0} (if this is intentional - don't use only digits, it confuses parser)", elementId);
+                    throw Birdsong.Cack("Wrong element id {0} (if this is intentional - don't use only digits, it confuses parser)", elementId);
 
                 filter = default(Funcine<bool>);
                 if (referenceData.Length > 0 && referenceClosing.Contains(referenceData[referenceData.Length - 1]))
@@ -102,12 +102,12 @@ namespace TheRoost.Twins
             else if (elementId.StartsWith(FuncineRef.opMaxKeyword))
             {
                 elementId = elementId.Split(entityIdSeparator)[1];
-                return FuncineRef.SpecialOperation.SingleTokenMax;
+                return FuncineRef.SpecialOperation.SingleHighest;
             }
             else if (elementId.StartsWith(FuncineRef.opMinKeyword))
             {
                 elementId = elementId.Split(entityIdSeparator)[1];
-                return FuncineRef.SpecialOperation.SingleTokenMin;
+                return FuncineRef.SpecialOperation.SingleLowest;
             }
 
             return FuncineRef.SpecialOperation.None;
@@ -161,7 +161,7 @@ namespace TheRoost.Twins
                 case "token": return TokenContextAccessors.GetLocalTokenAsTokens;
                 case "": return TokenContextAccessors.GetLocalSphereTokens;
                 default:
-                    throw Birdsong.Droppings("Unknown reference type '{0}' in '{1}'", referenceType, initial_path);
+                    throw Birdsong.Cack("Unknown reference type '{0}' in '{1}'", referenceType, initial_path);
             }
         }
 
@@ -179,7 +179,7 @@ namespace TheRoost.Twins
                     case "slots": return () => TokenContextAccessors.GetLocalSituation().GetSpheresByCategory(SphereCategory.Threshold).GetTokensFromSpheres();
                     case "storage": return () => TokenContextAccessors.GetLocalSituation().GetSituationStorage().GetElementTokens();
                     default:
-                        throw Birdsong.Droppings("Unknown situation sphere type '{0}' in {1}", sphere);
+                        throw Birdsong.Cack("Unknown situation sphere type '{0}' in {1}", sphere);
                 }
 
             switch (sphere)
@@ -189,7 +189,7 @@ namespace TheRoost.Twins
                 case "slots": return () => TokenContextAccessors.GetSituation(verbId).GetSpheresByCategory(SphereCategory.Threshold).GetTokensFromSpheres();
                 case "storage": return () => TokenContextAccessors.GetSituation(verbId).GetSituationStorage().GetElementTokens();
                 default:
-                    throw Birdsong.Droppings("Unknown situation sphere type '{0}' in {1}", sphere);
+                    throw Birdsong.Cack("Unknown situation sphere type '{0}' in {1}", sphere);
             }
         }
 
@@ -226,7 +226,7 @@ namespace TheRoost.Twins
                 case "deck": return () => Watchman.Get<SecretHistories.Infrastructure.DealersTable>().GetDrawPile(entityId) as Sphere;
                 case "deck_forbidden": return () => Watchman.Get<SecretHistories.Infrastructure.DealersTable>().GetForbiddenPile(entityId) as Sphere;
                 default:
-                    throw Birdsong.Droppings("Unknown reference type '{0}' in '{1}'", referenceType, initial_path);
+                    throw Birdsong.Cack("Unknown reference type '{0}' in '{1}'", referenceType, initial_path);
             }
         }
 
@@ -239,7 +239,7 @@ namespace TheRoost.Twins
                 return expression;
 
             if (closingPosition == -1)
-                throw Birdsong.Droppings("Reference in {0} is not closed", expression);
+                throw Birdsong.Cack("Reference in {0} is not closed", expression);
 
             string referenceData = expression.Substring(openingPosition + 1, closingPosition - openingPosition - 1);
             int innerOpeningsCount = referenceData.Split(referenceOpening).Length - 1;
@@ -250,7 +250,7 @@ namespace TheRoost.Twins
                 {
                     closingPosition = expression.IndexOfAny(referenceClosing, closingPosition + 1);
                     if (closingPosition == -1)
-                        throw Birdsong.Droppings("Unclosed reference in {0}", expression);
+                        throw Birdsong.Cack("Unclosed reference in {0}", expression);
                 }
 
                 referenceData = expression.Substring(openingPosition + 1, closingPosition - openingPosition - 1);
