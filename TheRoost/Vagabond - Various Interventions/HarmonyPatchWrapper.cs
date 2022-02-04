@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Reflection;
+using System.Reflection.Emit;
+using System.Linq;
 using System.Collections.Generic;
 
 using SecretHistories.Core;
@@ -10,23 +12,17 @@ using HarmonyLib;
 
 namespace TheRoost.Vagabond
 {
+    public delegate bool CodeInstructionMask(CodeInstruction instruction);
     internal static class HarmonyMask
     {
         private static readonly Dictionary<string, Harmony> patchers = new Dictionary<string, Harmony>();
 
-
         public static void Patch(MethodBase original, MethodInfo prefix, MethodInfo postfix, MethodInfo transpiler, MethodInfo finalizer, string patchId)
         {
             if (original == null)
-            {
-                Birdsong.Sing("Trying to patch null method!");
-                return;
-            }
+                throw Birdsong.Cack("Trying to patch null method!");
             if (prefix == null && postfix == null && transpiler == null && finalizer == null)
-            {
-                Birdsong.Sing("All patches for {0}() are null!", original.Name);
-                return;
-            }
+                throw Birdsong.Cack("All patches for {0}() are null!", original.Name);
 
             if (patchers.ContainsKey(patchId) == false)
                 patchers[patchId] = new Harmony(patchId);
@@ -58,7 +54,7 @@ namespace TheRoost.Vagabond
             (BindingFlags.Static | BindingFlags.NonPublic),
         };
 
-        public static MethodInfo GetMethodInvariant(this Type definingClass, string methodName)
+        internal static MethodInfo GetMethodInvariant(Type definingClass, string methodName)
         {
             if (string.IsNullOrWhiteSpace(methodName))
                 Birdsong.Sing("Trying to find whitespace method for class {0} (don't!)", definingClass.Name);
@@ -75,7 +71,12 @@ namespace TheRoost.Vagabond
             return null;
         }
 
-        public static FieldInfo GetFieldInvariant(this Type definingClass, string fieldName)
+        internal static MethodInfo GetMethodInvariant(Type definingClass, string methodName, params Type[] args)
+        {
+            return definingClass.GetMethod(methodName, args);
+        }
+
+        internal static FieldInfo GetFieldInvariant(this Type definingClass, string fieldName)
         {
             FieldInfo field;
             foreach (BindingFlags flag in bindingFlagsPriority)
@@ -89,7 +90,7 @@ namespace TheRoost.Vagabond
             return null;
         }
 
-        public static PropertyInfo GetPropertyInvariant(this Type definingClass, string propertyName)
+        internal static PropertyInfo GetPropertyInvariant(this Type definingClass, string propertyName)
         {
             PropertyInfo property;
             foreach (BindingFlags flag in bindingFlagsPriority)
@@ -131,30 +132,117 @@ namespace TheRoost.Vagabond
             else
                 Birdsong.Sing("Trying to schedule method {0} at Time of Power '{1}' with patch type '{2}' - which is not a valid PatchType (not a prefix, not a postfix). No fooling around with the Times of Power, please.");
         }
+
+        internal static IEnumerable<CodeInstruction> TranspilerReplaceMethodCall(IEnumerable<CodeInstruction> instructions, MethodInfo methodToReplace, List<CodeInstruction> myCode, int skipCallsCount)
+        {
+            List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+            int argsCount = methodToReplace.GetParameters().Length + (methodToReplace.IsStatic ? 0 : 1);
+            int currentMethodCall = 0;
+
+            for (int i = 0; i < codes.Count; i++)
+                if (codes[i].Calls(methodToReplace))
+                {
+                    currentMethodCall++;
+                    if (currentMethodCall <= skipCallsCount)
+                        continue;
+
+                    i -= argsCount;
+                    for (var n = 0; n <= argsCount; n++)//additional deletion for the method call itself
+                        codes.RemoveAt(i);
+                    if (codes[i].opcode == OpCodes.Pop)
+                        codes.RemoveAt(i);
+
+                    codes.InsertRange(i, myCode);
+
+                    break;
+                }
+
+            return codes.AsEnumerable();
+        }
+
+        internal static IEnumerable<CodeInstruction> TranspilerInsertAtMethod(IEnumerable<CodeInstruction> instructions, MethodInfo insertCodeNearThisMethodCall, List<CodeInstruction> myCode, PatchType patchType, int skipCallsCount)
+        {
+            List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+            int lineShift;
+            if (patchType == PatchType.Prefix)
+                lineShift = -(insertCodeNearThisMethodCall.GetParameters().Length + (insertCodeNearThisMethodCall.IsStatic ? 0 : 1));
+            else
+                lineShift = 1;
+
+            int currentMethodCall = 0;
+            for (int i = 0; i < codes.Count; i++)
+                if (codes[i].Calls(insertCodeNearThisMethodCall))
+                {
+                    currentMethodCall++;
+                    if (currentMethodCall <= skipCallsCount)
+                        continue;
+
+                    i += lineShift;
+                    if (patchType == PatchType.Postfix && codes[i].opcode == OpCodes.Pop)
+                        i++;
+
+                    codes.InsertRange(i, myCode);
+                    break;
+                }
+
+            return codes.AsEnumerable();
+        }
+
+        internal static IEnumerable<CodeInstruction> TranspilerReplaceAllAfterMask(IEnumerable<CodeInstruction> instructions, CodeInstructionMask checkMask, List<CodeInstruction> myCode, bool inclusive, int skipOccurences)
+        {
+            if (myCode == null || myCode.Count == 0)
+                return instructions;
+
+            List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+            List<CodeInstruction> finalCodes = new List<CodeInstruction>();
+
+            int currentOccurence = 0;
+            for (int i = 0; i < codes.Count; i++)
+            {
+                if (checkMask(codes[i]))
+                {
+                    currentOccurence++;
+                    if (currentOccurence <= skipOccurences)
+                        continue;
+                    else
+                    {
+                        if (inclusive)
+                            finalCodes.Add(codes[i]);
+
+                        break;
+                    }
+                }
+
+                finalCodes.Add(codes[i]);
+            }
+
+            finalCodes.AddRange(myCode);
+            finalCodes.Add(new CodeInstruction(OpCodes.Ret));
+
+            return finalCodes.AsEnumerable();
+        }
+
+        internal static void LogILCodes(IEnumerable<CodeInstruction> instructions)
+        {
+            foreach (CodeInstruction instruction in instructions)
+                Birdsong.Sing(instruction.opcode, instruction.operand == null ? string.Empty : instruction.operand, instruction.labels.UnpackAsString());
+        }
     }
 }
 
 namespace TheRoost
 {
-    public enum PatchType { Postfix, Prefix }
-    public enum AtTimeOfPower
-    {
-        MainMenuLoaded, NewGameStarted, TabletopLoaded,
-        RecipeRequirementsCheck, RecipeExecution,
-        RecipeMutations, RecipeXtriggers, RecipeDeckEffects, RecipeEffects, RecipeVerbManipulations, RecipePurges, RecipePortals, RecipeVfx,
-    }
-
+    //get members methods
     public static partial class Machine
     {
-        private const string defaultPatchId = "theroostmachine";
-        public static void Patch(MethodBase original, MethodInfo prefix = null, MethodInfo postfix = null, MethodInfo transpiler = null, MethodInfo finalizer = null, string patchId = defaultPatchId)
-        {
-            Vagabond.HarmonyMask.Patch(original, prefix, postfix, transpiler, finalizer, patchId);
-        }
-
         public static MethodInfo GetMethodInvariant(this Type definingClass, string methodName)
         {
             return Vagabond.HarmonyMask.GetMethodInvariant(definingClass, methodName);
+        }
+
+        public static MethodInfo GetMethodInvariant(this Type definingClass, string methodName, params Type[] args)
+        {
+            return Vagabond.HarmonyMask.GetMethodInvariant(definingClass, methodName, args);
         }
 
         public static FieldInfo GetFieldInvariant(this Type definingClass, string fieldName)
@@ -166,54 +254,96 @@ namespace TheRoost
         {
             return Vagabond.HarmonyMask.GetPropertyInvariant(definingClass, propertyName);
         }
+    }
 
-        public static void Schedule(this AtTimeOfPower time, Delegate action, PatchType patchType, string patchId = defaultPatchId)
+    //patching methods
+    public static partial class Machine
+    {
+        private const string DEFAULT_PATCH_ID = "theroostmachine";
+        public static void Patch(MethodBase original, MethodInfo prefix = null, MethodInfo postfix = null, MethodInfo transpiler = null, MethodInfo finalizer = null, string patchId = DEFAULT_PATCH_ID)
+        {
+            Vagabond.HarmonyMask.Patch(original, prefix, postfix, transpiler, finalizer, patchId);
+        }
+
+        public static IEnumerable<CodeInstruction> ReplaceMethodCall(this IEnumerable<CodeInstruction> original, MethodInfo methodToReplace, List<CodeInstruction> myCode, int methodCallNumber = 0)
+        {
+            return Vagabond.HarmonyMask.TranspilerReplaceMethodCall(original, methodToReplace, myCode, methodCallNumber);
+        }
+
+        public static IEnumerable<CodeInstruction> InsertNearMethodCall(this IEnumerable<CodeInstruction> original, MethodInfo nearMethodCall, List<CodeInstruction> myCode, PatchType beforeOrAfter, int methodCallNumber = 0)
+        {
+            return Vagabond.HarmonyMask.TranspilerInsertAtMethod(original, nearMethodCall, myCode, beforeOrAfter, methodCallNumber);
+        }
+
+        public static IEnumerable<CodeInstruction> ReplaceAllAfterMask(this IEnumerable<CodeInstruction> original, Vagabond.CodeInstructionMask codePointMask, List<CodeInstruction> myCode, bool inclusive, int occurencesNumber = 0)
+        {
+            return Vagabond.HarmonyMask.TranspilerReplaceAllAfterMask(original, codePointMask, myCode, inclusive, occurencesNumber);
+        }
+
+        public static void LogILCodes(this IEnumerable<CodeInstruction> codes)
+        {
+            Vagabond.HarmonyMask.LogILCodes(codes);
+        }
+    }
+
+    public enum PatchType { Postfix, Prefix }
+    public enum AtTimeOfPower
+    {
+        MainMenuLoaded, NewGameStarted, TabletopLoaded,
+        RecipeRequirementsCheck, RecipeExecution,
+        RecipeMutations, RecipeXtriggers, RecipeDeckEffects, RecipeEffects, RecipeVerbManipulations, RecipePurges, RecipePortals, RecipeVfx,
+    }
+
+    //times of power scheduling methods
+    public static partial class Machine
+    {
+        public static void Schedule(this AtTimeOfPower time, Delegate action, PatchType patchType, string patchId = DEFAULT_PATCH_ID)
         {
             Vagabond.HarmonyMask.Unite(time, action, patchType, patchId);
         }
 
-        public static void Schedule(this AtTimeOfPower time, Action action, PatchType patchType, string patchId = defaultPatchId)
+        public static void Schedule(this AtTimeOfPower time, Action action, PatchType patchType, string patchId = DEFAULT_PATCH_ID)
         {
             time.Schedule(action as Delegate, patchType, patchId);
         }
 
-        public static void Schedule<T1>(this AtTimeOfPower time, Action<T1> action, PatchType patchType, string patchId = defaultPatchId)
+        public static void Schedule<T1>(this AtTimeOfPower time, Action<T1> action, PatchType patchType, string patchId = DEFAULT_PATCH_ID)
         {
             time.Schedule(action as Delegate, patchType, patchId);
         }
 
-        public static void Schedule<T1, T2>(this AtTimeOfPower time, Action<T1, T2> action, PatchType patchType, string patchId = defaultPatchId)
+        public static void Schedule<T1, T2>(this AtTimeOfPower time, Action<T1, T2> action, PatchType patchType, string patchId = DEFAULT_PATCH_ID)
         {
             time.Schedule(action as Delegate, patchType, patchId);
         }
 
-        public static void Schedule<T1, T2, T3>(this AtTimeOfPower time, Action<T1, T2, T3> action, PatchType patchType, string patchId = defaultPatchId)
+        public static void Schedule<T1, T2, T3>(this AtTimeOfPower time, Action<T1, T2, T3> action, PatchType patchType, string patchId = DEFAULT_PATCH_ID)
         {
             time.Schedule(action as Delegate, patchType, patchId);
         }
 
-        public static void Schedule<T1, T2, T3, T4>(this AtTimeOfPower time, Action<T1, T2, T3, T4> action, PatchType patchType, string patchId = defaultPatchId)
+        public static void Schedule<T1, T2, T3, T4>(this AtTimeOfPower time, Action<T1, T2, T3, T4> action, PatchType patchType, string patchId = DEFAULT_PATCH_ID)
         {
             time.Schedule(action as Delegate, patchType, patchId);
         }
 
-        public static void Schedule<T1, T2, T3, T4, T5>(this AtTimeOfPower time, Action<T1, T2, T3, T4, T5> action, PatchType patchType, string patchId = defaultPatchId)
+        public static void Schedule<T1, T2, T3, T4, T5>(this AtTimeOfPower time, Action<T1, T2, T3, T4, T5> action, PatchType patchType, string patchId = DEFAULT_PATCH_ID)
         {
             time.Schedule(action as Delegate, patchType, patchId);
         }
 
         //six variables is a reasonable maximum
-        public static void Schedule<T1, T2, T3, T4, T5, T6>(this AtTimeOfPower time, Action<T1, T2, T3, T4, T5, T6> action, PatchType patchType, string patchId = defaultPatchId)
+        public static void Schedule<T1, T2, T3, T4, T5, T6>(this AtTimeOfPower time, Action<T1, T2, T3, T4, T5, T6> action, PatchType patchType, string patchId = DEFAULT_PATCH_ID)
         {
             time.Schedule(action as Delegate, patchType, patchId);
         }
 
-        public static void Schedule(this AtTimeOfPower time, Func<bool> func, string patchId = defaultPatchId)
+        public static void Schedule(this AtTimeOfPower time, Func<bool> func, string patchId = DEFAULT_PATCH_ID)
         {
             time.Schedule(func as Delegate, PatchType.Prefix);
         }
 
-        public static void Schedule<T1>(this AtTimeOfPower time, Func<T1, bool> func, string patchId = defaultPatchId)
+        public static void Schedule<T1>(this AtTimeOfPower time, Func<T1, bool> func, string patchId = DEFAULT_PATCH_ID)
         {
             time.Schedule(func as Delegate, PatchType.Prefix);
         }
@@ -223,23 +353,23 @@ namespace TheRoost
             time.Schedule(func as Delegate, PatchType.Prefix);
         }
 
-        public static void Schedule<T1, T2, T3>(this AtTimeOfPower time, Func<T1, T2, T3, bool> func, string patchId = defaultPatchId)
+        public static void Schedule<T1, T2, T3>(this AtTimeOfPower time, Func<T1, T2, T3, bool> func, string patchId = DEFAULT_PATCH_ID)
         {
             time.Schedule(func as Delegate, PatchType.Prefix);
         }
 
-        public static void Schedule<T1, T2, T3, T4>(this AtTimeOfPower time, Func<T1, T2, T3, T4, bool> func, string patchId = defaultPatchId)
+        public static void Schedule<T1, T2, T3, T4>(this AtTimeOfPower time, Func<T1, T2, T3, T4, bool> func, string patchId = DEFAULT_PATCH_ID)
         {
             time.Schedule(func as Delegate, PatchType.Prefix);
         }
 
-        public static void Schedule<T1, T2, T3, T4, T5>(this AtTimeOfPower time, Func<T1, T2, T3, T4, T5, bool> func, string patchId = defaultPatchId)
+        public static void Schedule<T1, T2, T3, T4, T5>(this AtTimeOfPower time, Func<T1, T2, T3, T4, T5, bool> func, string patchId = DEFAULT_PATCH_ID)
         {
             time.Schedule(func as Delegate, PatchType.Prefix);
         }
 
         //six variables is a reasonable maximum 2
-        public static void Schedule<T1, T2, T3, T4, T5, T6>(this AtTimeOfPower time, Func<T1, T2, T3, T4, T5, T6, bool> func, string patchId = defaultPatchId)
+        public static void Schedule<T1, T2, T3, T4, T5, T6>(this AtTimeOfPower time, Func<T1, T2, T3, T4, T5, T6, bool> func, string patchId = DEFAULT_PATCH_ID)
         {
             time.Schedule(func as Delegate, PatchType.Prefix);
         }
