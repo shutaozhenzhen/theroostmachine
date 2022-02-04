@@ -13,11 +13,10 @@ namespace TheRoost.Beachcomber
     {
         public static object ImportProperty(IEntityWithId parentEntity, object valueData, Type propertyType, string propertyName)
         {
-            ImporterForType importer = GetImporterForType(propertyType);
-
             try
             {
-                object propertyValue = importer.Invoke(valueData, propertyType);
+                ImporterForType Import = GetImporterForType(propertyType);
+                object propertyValue = Import(valueData, propertyType);
                 return propertyValue;
             }
             catch (Exception ex)
@@ -57,7 +56,7 @@ namespace TheRoost.Beachcomber
                 listType = listType.BaseType;
 
             Type expectedEntryType = listType.GetGenericArguments()[0];
-            ImporterForType entryImporter = GetImporterForType(expectedEntryType);
+            ImporterForType ImportEntity = GetImporterForType(expectedEntryType);
 
             try
             {
@@ -67,12 +66,12 @@ namespace TheRoost.Beachcomber
                 {
                     //to reduce boilerplate in json, I allow loading of a single-entry lists from plain strings
                     //i.e. { "someList": [ "entry" ] } and { "someList": "entry" } will yield the same result
-                    object importedSingleEntry = entryImporter.Invoke(listData, expectedEntryType);
+                    object importedSingleEntry = ImportEntity(listData, expectedEntryType);
                     list.Add(importedSingleEntry);
                 }
                 else foreach (object entry in dataAsArrayList)
                     {
-                        object importedEntry = entryImporter.Invoke(entry, expectedEntryType);
+                        object importedEntry = ImportEntity(entry, expectedEntryType);
                         list.Add(importedEntry);
                     }
 
@@ -94,10 +93,10 @@ namespace TheRoost.Beachcomber
                 dictionaryType = dictionaryType.BaseType;
 
             Type dictionaryKeyType = dictionaryType.GetGenericArguments()[0];
-            ImporterForType keyImporter = GetImporterForType(dictionaryKeyType);
+            ImporterForType ImportKey = GetImporterForType(dictionaryKeyType);
 
             Type dictionaryValueType = dictionaryType.GetGenericArguments()[1];
-            ImporterForType valueImporter = GetImporterForType(dictionaryValueType);
+            ImporterForType ImportValue = GetImporterForType(dictionaryValueType);
 
             try
             {
@@ -105,8 +104,8 @@ namespace TheRoost.Beachcomber
 
                 foreach (DictionaryEntry dictionaryEntry in entityData.ValuesTable)
                 {
-                    object key = keyImporter.Invoke(dictionaryEntry.Key, dictionaryKeyType);
-                    object value = valueImporter.Invoke(dictionaryEntry.Value, dictionaryValueType);
+                    object key = ImportKey(dictionaryEntry.Key, dictionaryKeyType);
+                    object value = ImportValue(dictionaryEntry.Value, dictionaryValueType);
                     dictionary.Add(key, value);
                 }
 

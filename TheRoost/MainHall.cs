@@ -82,6 +82,7 @@ namespace TheRoost.Enactors
     {
         internal static void Enact()
         {
+            LocalApplications.CardVFXMaster.Enact();
             LocalApplications.Legerdemain.Enact();
             LocalApplications.BugsPicker.Fix();
         }

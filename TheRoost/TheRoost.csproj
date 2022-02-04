@@ -36,9 +36,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Local Applications\Bugfixes.cs" />
+    <Compile Include="Local Applications\CardVFXMaster.cs" />
     <Compile Include="Twins - Expressions and Contexts\ContextAccessors.cs" />
     <Compile Include="Twins - Expressions and Contexts\FuncineParser.cs" />
-    <Compile Include="Local Applications\DeckExtensions.cs" />
+    <Compile Include="Local Applications\DecksExtensions.cs" />
     <Compile Include="Twins - Expressions and Contexts\TwinsEffects.cs" />
     <Compile Include="Twins - Expressions and Contexts\ExpressionsEntities.cs" />
     <Compile Include="Vagabond - Various Interventions\HarmonyPatchWrapper.cs" />

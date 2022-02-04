@@ -46,11 +46,11 @@ namespace TheRoost.Twins.Entities
 
         public readonly string idInExpression;
         public readonly string targetElementId;
-        public readonly SphereTokensRef getTargetTokens;
+        public readonly SphereTokensRef GetTargetTokens;
         public readonly Funcine<bool> tokensFilter;
         public readonly SpecialOperation special;
 
-        public enum SpecialOperation { None, SingleTokenMin, SingleTokenMax, CountCards };
+        public enum SpecialOperation { None, SingleLowest, SingleHighest, CountCards, PayloadProperty, ElementProperty };
         public const string opCountKeyword = "$any";
         public const string opMaxKeyword = "$max";
         public const string opMinKeyword = "$min";
@@ -59,7 +59,7 @@ namespace TheRoost.Twins.Entities
         {
             get
             {
-                List<Token> tokens = getTargetTokens.Invoke();
+                List<Token> tokens = GetTargetTokens();
 
                 //!~!!!!!!!!!!!!!!!!!!!!!NB temp and dirty solution
                 foreach (Token token in tokens.ToArray())
@@ -77,7 +77,7 @@ namespace TheRoost.Twins.Entities
                             aspects.CombineAspects(token.GetAspects());
                         return aspects.AspectValue(targetElementId);
 
-                    case SpecialOperation.SingleTokenMax:
+                    case SpecialOperation.SingleHighest:
                         int maxValue = 0; int currentTokenValue;
                         foreach (Token token in tokens)
                         {
@@ -86,7 +86,7 @@ namespace TheRoost.Twins.Entities
                                 maxValue = currentTokenValue;
                         }
                         return maxValue;
-                    case SpecialOperation.SingleTokenMin:
+                    case SpecialOperation.SingleLowest:
                         int minValue = int.MaxValue;
                         foreach (Token token in tokens)
                         {
@@ -96,31 +96,33 @@ namespace TheRoost.Twins.Entities
                         }
                         
                         return minValue == int.MaxValue ? 0 : minValue;
-                    case SpecialOperation.CountCards: return tokens.Count;
-                    default: throw Birdsong.Droppings("Something strange happened. Unknown reference special operation {0}", special);
+                    case SpecialOperation.CountCards:
+                        int amount = 0;
+                        foreach (Token token in tokens)
+                            amount += (token.Payload as ElementStack).Quantity;
+                            return amount;
+                    default: throw Birdsong.Cack("Something strange happened. Unknown reference special operation '{0}'", special);
                 }
-
-
             }
         }
 
         public FuncineRef(string referenceData, string referenceId)
         {
             this.idInExpression = referenceId;
-            FuncineParser.PopulateFucineReference(referenceData, out targetElementId, out tokensFilter, out getTargetTokens, out special);
+            FuncineParser.PopulateFucineReference(referenceData, out targetElementId, out tokensFilter, out GetTargetTokens, out special);
         }
 
         public bool Equals(FuncineRef otherReference)
         {
-            return otherReference.getTargetTokens == this.getTargetTokens && otherReference.targetElementId == this.targetElementId && otherReference.tokensFilter.isUndefined && this.tokensFilter.isUndefined;
+            return otherReference.GetTargetTokens == this.GetTargetTokens && otherReference.targetElementId == this.targetElementId && otherReference.tokensFilter.isUndefined && this.tokensFilter.isUndefined;
         }
     }
 
     public struct SphereRef
     {
-        public SphereRef(string reference) { sphereGet = FuncineParser.GetSphereRef(reference); }
+        public SphereRef(string reference) { GetSphere = FuncineParser.GetSphereRef(reference); }
 
-        private System.Func<SecretHistories.Spheres.Sphere> sphereGet;
-        public SecretHistories.Spheres.Sphere target { get { return sphereGet.Invoke(); } }
+        private System.Func<SecretHistories.Spheres.Sphere> GetSphere;
+        public SecretHistories.Spheres.Sphere target { get { return GetSphere(); } }
     }
 }

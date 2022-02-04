@@ -21,10 +21,10 @@ namespace TheRoost.Elegiast
         //Dictionary<achievement id, unlock time>
         private static Dictionary<string, string> unlocks;
 
-        const string propertyThatUnlocks = "elegiastUnlock";
+        const string UNLOCK_PROPERTY = "elegiastUnlock";
+        const string ACHIEVEMENTS_FILE = "customachievements.json";
 
-        const string datafile = "customachievements.json";
-        static string localFile { get { return Application.persistentDataPath + "\\" + datafile; } }
+        static string localFile { get { return Application.persistentDataPath + "\\" + ACHIEVEMENTS_FILE; } }
         const string achievementDataFormat = "\"{0}\": \"{1}\",\n";
 
         private static bool propertiesClaimed = false;
@@ -39,7 +39,7 @@ namespace TheRoost.Elegiast
             //in case player disables/enables the module several times, so it won't clog the log with "already claimed" messages
             if (propertiesClaimed == false)
             {
-                Machine.ClaimProperty<SecretHistories.Entities.Recipe, List<string>>(propertyThatUnlocks);
+                Machine.ClaimProperty<SecretHistories.Entities.Recipe, List<string>>(UNLOCK_PROPERTY);
                 TheRoost.Vagabond.CommandLine.AddCommand("achievements", AchievementsDebug);
                 propertiesClaimed = true;
             }
@@ -54,7 +54,7 @@ namespace TheRoost.Elegiast
 
         private static void UnlockAchievements(RecipeCompletionEffectCommand __instance)
         {
-            List<string> ids = __instance.Recipe.RetrieveProperty<List<string>>(propertyThatUnlocks);
+            List<string> ids = __instance.Recipe.RetrieveProperty<List<string>>(UNLOCK_PROPERTY);
             if (ids == null)
                 return;
 
@@ -123,11 +123,11 @@ namespace TheRoost.Elegiast
         private static string[] GetCloudData()
         {
             StorefrontServicesProvider storefront = Watchman.Get<StorefrontServicesProvider>();
-            if (storefront.IsAvailable(StoreClient.Steam) && SteamRemoteStorage.FileExists(datafile))
+            if (storefront.IsAvailable(StoreClient.Steam) && SteamRemoteStorage.FileExists(ACHIEVEMENTS_FILE))
             {
-                int size = SteamRemoteStorage.GetFileSize(datafile);
+                int size = SteamRemoteStorage.GetFileSize(ACHIEVEMENTS_FILE);
                 byte[] bytes = new byte[size];
-                SteamRemoteStorage.FileRead(datafile, bytes, size);
+                SteamRemoteStorage.FileRead(ACHIEVEMENTS_FILE, bytes, size);
                 return System.Text.Encoding.UTF8.GetString(bytes).Split('\n');
             }
             else if (storefront.IsAvailable(StoreClient.Gog))
@@ -152,7 +152,7 @@ namespace TheRoost.Elegiast
                 }
                 catch
                 {
-                    Birdsong.Sing("Malformed achievement in {0}, deleting", datafile);
+                    Birdsong.Sing("Malformed achievement in {0}, deleting", ACHIEVEMENTS_FILE);
                 }
 
             return dictionary;
@@ -174,9 +174,9 @@ namespace TheRoost.Elegiast
             {
                 byte[] bytes = File.ReadAllBytes(localFile);
                 if (bytes.Length == 0)
-                    SteamRemoteStorage.FileDelete(datafile);
+                    SteamRemoteStorage.FileDelete(ACHIEVEMENTS_FILE);
                 else
-                    SteamRemoteStorage.FileWrite(datafile, bytes, bytes.Length);
+                    SteamRemoteStorage.FileWrite(ACHIEVEMENTS_FILE, bytes, bytes.Length);
                 Birdsong.Sing(VerbosityLevel.SystemChatter, 1, "Succesfully pushed achievement info on the cloud storage");
 
             }
@@ -224,7 +224,7 @@ namespace TheRoost.Elegiast
             }
             catch
             {
-                Birdsong.Sing("Malformed entry in {0}, deleting", datafile);
+                Birdsong.Sing("Malformed entry in {0}, deleting", ACHIEVEMENTS_FILE);
                 return string.Empty;
             }
         }

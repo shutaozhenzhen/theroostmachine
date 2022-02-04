@@ -36,13 +36,13 @@ namespace TheRoost.Vagabond
 
         internal static void ShowOverlay(CanvasGroupFader overlay)
         {
-            HideCurrentOverlay();
-            showOverlay.Invoke(overlay);
+            hideCurrentOverlay();
+            showOverlay(overlay);
         }
 
         internal static void HideCurrentOverlay()
         {
-            hideCurrentOverlay.Invoke();
+            hideCurrentOverlay();
         }
 
         private static void SetModConfigInterface(Transform ___TabsHere)

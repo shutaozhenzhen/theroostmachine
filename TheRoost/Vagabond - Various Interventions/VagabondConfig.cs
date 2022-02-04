@@ -94,12 +94,12 @@ namespace TheRoost.Vagabond.SettingSubscribers
     internal class PatchSwitcher : ModSettingSubscriber<int>
     {
         protected readonly string modulePatchId;
-        protected readonly Action moduleEnact;
+        protected readonly Action EnactModule;
         public PatchSwitcher(string settingId, string modulePatchId, Action enact)
             : base(settingId)
         {
             this.modulePatchId = modulePatchId;
-            this.moduleEnact = enact;
+            this.EnactModule = enact;
         }
 
         public override void WhenSettingUpdated(object newValue)
@@ -107,7 +107,7 @@ namespace TheRoost.Vagabond.SettingSubscribers
             if (settingValue == 1)
             {
                 if (Vagabond.HarmonyMask.HasAnyPatches(modulePatchId) == false)
-                    moduleEnact.Invoke();
+                    EnactModule();
             }
             else if (Vagabond.HarmonyMask.HasAnyPatches(modulePatchId) == true)
                 Vagabond.HarmonyMask.Unpatch(modulePatchId);
