@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Linq;
 
 using SecretHistories.Fucine;
 using SecretHistories.Entities;
@@ -173,35 +172,20 @@ namespace TheRoost.Beachcomber
 
         private static IEnumerable<CodeInstruction> CuckooTranspiler(IEnumerable<CodeInstruction> instructions)
         {
-            var codes = new List<CodeInstruction>(instructions);
+            List<CodeInstruction> myCode = new List<CodeInstruction>()
+            {
+                new CodeInstruction(OpCodes.Ldloca_S, 2), //list of loadable types (local)
+                new CodeInstruction(OpCodes.Ldloca_S, 1), //dictionary of entity loaders (local)
+                new CodeInstruction(OpCodes.Ldarg_2), //culture id (argument)
+                new CodeInstruction(OpCodes.Ldarg_0), //instance itself (is needed to locate its private variable next)
+                new CodeInstruction(OpCodes.Ldfld, typeof(CompendiumLoader).GetFieldInvariant("_log")),//locating instance's private variable _log
+                //finally, calling InsertCustomTypesForLoading() with all these arguments
+                new CodeInstruction(OpCodes.Call, typeof(CuckooLoader).GetMethodInvariant("InsertCustomTypesForLoading"))
+            };
             MethodInfo injectingMyCodeRightBeforeThisMethod = typeof(Compendium).GetMethodInvariant("InitialiseForEntityTypes");
 
-            for (int i = 0; i < codes.Count; i++)
-                if (codes[i].Calls(injectingMyCodeRightBeforeThisMethod))
-                {
-                    i -= 2; //injecting the code two lines above of InitialiseForEntityTypes() is called 
-                    //(those two lines are argument loading for InitialiseForEntityTypes)
+            return instructions.InsertNearMethodCall(injectingMyCodeRightBeforeThisMethod, myCode, PatchType.Prefix);
 
-                    //all I do here is locate several local variables (and one instance's private), load them as arguments
-                    //and lastly invoke InsertCustomTypesForLoading() method with these as its arguments
-
-                    codes.Insert(i++, new CodeInstruction(OpCodes.Ldloca_S, 2)); //list of loadable types (local)
-
-                    codes.Insert(i++, new CodeInstruction(OpCodes.Ldloca_S, 1)); //dictionary of entity loaders (local)
-
-                    codes.Insert(i++, new CodeInstruction(OpCodes.Ldarg_2)); //culture id (argument)    
-
-                    codes.Insert(i++, new CodeInstruction(OpCodes.Ldarg_0)); //instance itself (is needed to locate its private variable next)
-                    codes.Insert(i++, new CodeInstruction(OpCodes.Ldfld, //locating instance's private variable _log
-                        typeof(CompendiumLoader).GetFieldInvariant("_log")));
-
-                    //finally, calling InsertCustomTypesForLoading() with all of these arguments
-                    codes.Insert(i++, new CodeInstruction(OpCodes.Call, typeof(CuckooLoader).GetMethodInvariant("InsertCustomTypesForLoading")));
-
-                    break;
-                }
-
-            return codes.AsEnumerable();
         }
 
         //not sure *why* we need refs for types that are reference anyway, but we *need* them (otherwise error (no joke, don't delete refs!!!(/srs)!!))

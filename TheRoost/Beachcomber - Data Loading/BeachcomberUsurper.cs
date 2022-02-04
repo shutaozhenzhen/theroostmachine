@@ -60,25 +60,18 @@ namespace TheRoost.Beachcomber
 
         private static IEnumerable<CodeInstruction> AbstractEntityConstructorTranspiler(IEnumerable<CodeInstruction> instructions)
         {
-            var codes = instructions.ToList();
-            var finalCodes = new List<CodeInstruction>();
-
-            for (int i = 0; i < codes.Count; i++)
-            {
-                finalCodes.Add(codes[i]);
-                if (codes[i].opcode == OpCodes.Call)
-                    break;
-            }
-
             ///transpiler is very simple this time - we just wait until the native code does the actual object creation
             ///after it's done, we call InvokeGenericImporterForAbstractRootEntity() to modify the object as we please
             ///all other native transmutations are skipped
-            finalCodes.Add(new CodeInstruction(OpCodes.Ldarg_0));
-            finalCodes.Add(new CodeInstruction(OpCodes.Ldarg_1));
-            finalCodes.Add(new CodeInstruction(OpCodes.Call, typeof(Usurper).GetMethodInvariant("InvokeGenericImporterForAbstractRootEntity")));
-            finalCodes.Add(new CodeInstruction(OpCodes.Ret));
+            List<CodeInstruction> myCode = new List<CodeInstruction>()
+            {
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Ldarg_1),
+                new CodeInstruction(OpCodes.Call, typeof(Usurper).GetMethodInvariant("InvokeGenericImporterForAbstractRootEntity")),
+            };
 
-            return finalCodes.AsEnumerable();
+            Vagabond.CodeInstructionMask mask = instruction => instruction.opcode == OpCodes.Call;
+            return instructions.ReplaceAllAfterMask(mask, myCode, true); ;
         }
 
         private static readonly Dictionary<Type, MethodInfo> genericImportMethods = new Dictionary<Type, MethodInfo>();
@@ -138,43 +131,29 @@ namespace TheRoost.Beachcomber
 
         private static IEnumerable<CodeInstruction> ModContentOpsFix(IEnumerable<CodeInstruction> instructions)
         {
-            var codes = instructions.ToList();
-            var finalCodes = new List<CodeInstruction>();
-
-            for (int i = 0; i < codes.Count; i++)
+            List<CodeInstruction> myCode = new List<CodeInstruction>()
             {
-                finalCodes.Add(codes[i]);
-                if (codes[i].opcode == OpCodes.Stloc_0)
-                    break;
-            }
+                new CodeInstruction(OpCodes.Ldarg_0), //instance itself as argument
+                new CodeInstruction(OpCodes.Ldloca_S, 0), //alreadyLoadedEntities (local)            
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Ldfld, typeof(EntityTypeDataLoader).GetFieldInvariant("_modContentFiles")), 
+                new CodeInstruction(OpCodes.Ldarg_0), 
+                new CodeInstruction(OpCodes.Ldfld, typeof(EntityTypeDataLoader).GetFieldInvariant("_log")),
+                new CodeInstruction(OpCodes.Call, typeof(ModOpManager).GetMethodInvariant("ApplyModsToData")),
+            };
 
-            finalCodes.Add(new CodeInstruction(OpCodes.Ldarg_0)); //instance itself
-
-            finalCodes.Add(new CodeInstruction(OpCodes.Ldloca_S, 0)); //alreadyLoadedEntities (local)            
-
-            finalCodes.Add(new CodeInstruction(OpCodes.Ldarg_0)); //instance itself (is needed to locate its private variable next)
-            finalCodes.Add(new CodeInstruction(OpCodes.Ldfld, //locating instance's private variable _modContentFiles
-                typeof(EntityTypeDataLoader).GetFieldInvariant("_modContentFiles")));
-
-            finalCodes.Add(new CodeInstruction(OpCodes.Ldarg_0)); //instance itself (is needed to locate its private variable next)
-            finalCodes.Add(new CodeInstruction(OpCodes.Ldfld, //locating instance's private variable _log
-                typeof(EntityTypeDataLoader).GetFieldInvariant("_log")));
-
-            finalCodes.Add(new CodeInstruction(OpCodes.Call, typeof(ModOpManager).GetMethodInvariant("ApplyModsToData")));
-
-            finalCodes.Add(new CodeInstruction(OpCodes.Ret));
-
-            return finalCodes.AsEnumerable();
+            Vagabond.CodeInstructionMask mask = instruction => instruction.opcode == OpCodes.Stloc_0;
+            return instructions.ReplaceAllAfterMask(mask, myCode, true); ;
         }
     }
 
     public static class ModOpManager
     {
-        private const string inheritAdditiveKeyword = "$derives";
-        private const string inheritOverrideParentsKeyword = "$overrides";
-        private const string inheritOverrideParentsLegacyKeyword = "extends";
+        private const string INHERIT_ADDITIVE = "$derives";
+        private const string INHERIT_OVERRIDE = "$overrides";
+        private const string IHERIDE_OVERRIDE_LEGACY = "extends";
 
-        private const string priorityKeyword = "$priority";
+        private const string PRIORITY = "$priority";
 
         private static readonly MethodInfo processPropertyOperationsFromEntityMod = typeof(EntityMod).GetMethodInvariant("ProcessPropertyOperationsFromEntityMod");
 
@@ -189,7 +168,7 @@ namespace TheRoost.Beachcomber
                 {
                     moddedEntityData.Clear();
                     FucineUniqueIdBuilder containerBuilder = new FucineUniqueIdBuilder(contentFile.EntityContainer);
-                    unpackObjectDataIntoCollection.Invoke(eachObject, containerBuilder, moddedEntityData, contentFile);
+                    unpackObjectDataIntoCollection(eachObject, containerBuilder, moddedEntityData, contentFile);
 
                     foreach (EntityData modeEntity in moddedEntityData.Values)
                     {
@@ -200,7 +179,7 @@ namespace TheRoost.Beachcomber
                 }
 
             foreach (EntityData modEntity in allModdedEntities.OrderBy(data =>
-                data.ValuesTable.ContainsKey(priorityKeyword) ? (int)data.ValuesTable[priorityKeyword] : 0))
+                data.ValuesTable.ContainsKey(PRIORITY) ? (int)data.ValuesTable[PRIORITY] : 0))
                 ApplyModTo(new EntityMod(modEntity), modEntity, alreadyLoadedEntities, log);
 
             loader.GetType().GetPropertyInvariant("_allLoadedEntities").SetValue(loader, alreadyLoadedEntities);
@@ -238,8 +217,8 @@ namespace TheRoost.Beachcomber
 
         private static void ApplyOverrideParentInheritance(this EntityData child, Dictionary<string, EntityData> allCoreEntitiesOfType)
         {
-            ArrayList extendsList = child.GetParentsOfInheritanceType(inheritOverrideParentsKeyword);
-            extendsList.AddRange(child.GetParentsOfInheritanceType(inheritOverrideParentsLegacyKeyword));
+            ArrayList extendsList = child.GetParentsOfInheritanceType(INHERIT_OVERRIDE);
+            extendsList.AddRange(child.GetParentsOfInheritanceType(IHERIDE_OVERRIDE_LEGACY));
 
             foreach (string extendId in extendsList)
             {
@@ -263,8 +242,8 @@ namespace TheRoost.Beachcomber
 
         private static void ApplyAdditiveInheritance(this EntityData derivative, Dictionary<string, EntityData> allCoreEntitiesOfType)
         {
-            ArrayList deriveFromEntities = derivative.GetParentsOfInheritanceType(inheritAdditiveKeyword);
-            
+            ArrayList deriveFromEntities = derivative.GetParentsOfInheritanceType(INHERIT_ADDITIVE);
+
             foreach (string rootId in deriveFromEntities)
                 if (allCoreEntitiesOfType.ContainsKey(rootId))
                 {
