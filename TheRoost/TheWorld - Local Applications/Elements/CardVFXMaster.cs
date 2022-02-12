@@ -11,7 +11,7 @@ using Assets.Scripts.Application.Infrastructure.Events;
 
 using HarmonyLib;
 
-namespace TheRoost.LocalApplications
+namespace Roost.World.Elements
 {
     public static class CardVFXMaster
     {
@@ -22,7 +22,7 @@ namespace TheRoost.LocalApplications
         internal static void Enact()
         {
             Machine.ClaimProperty<Element, RetirementVFX>(ELEMENT_DECAY_VFX);
-          
+
             //vfx for decay
             Machine.Patch(
                 original: typeof(ElementStack).GetMethodInvariant("ExecuteHeartbeat"),
@@ -77,7 +77,8 @@ namespace TheRoost.LocalApplications
             return instructions.ReplaceMethodCall(methodCallToReplace, myCode);
         }
 
-        //alternative 
+        //the cleaner solution would be to pass VFX with TokenPayloadChangeArgs
+        //but the vanilla code does everything to ensure that doing that will be the most horrible, most annoying pain in the ay which CS modding community ever faced since $ ops incompatibility bug was discovered
         private static RetirementVFX VFXforCurrentTransformation = RetirementVFX.CardBurn;
         private static void StoreOldElementVFX(ElementStack __instance)
         {
@@ -86,11 +87,6 @@ namespace TheRoost.LocalApplications
                 VFXforCurrentTransformation = transformedElement.RetrieveProperty<RetirementVFX>(ELEMENT_DECAY_VFX);
             else
                 VFXforCurrentTransformation = RetirementVFX.CardTransformWhite;
-        }
-
-        public static void Remanifests(ref RetirementVFX vfx)
-        {
-            vfx = VFXforCurrentTransformation;
         }
 
         private static void RemanifestWithVFX(Token token, TokenPayloadChangedArgs args)

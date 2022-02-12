@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using SecretHistories.Fucine;
 using SecretHistories.Fucine.DataImport;
 
-namespace TheRoost.Beachcomber.Entities
+namespace Roost.Beachcomber.Entities
 {
 
     //All custom classes need to have FucineImportable attribute followed by a string-tag
@@ -63,6 +63,8 @@ namespace TheRoost.Beachcomber.Entities
 
             //to get the property value: entity.RetrieveProperty<propertyType>(propertyName)
             this.RetrieveProperty<int>("someProperty");
+            //or cast directly
+            int value = (int)this.RetrieveProperty("someProperty");
         }
 
         public void QuickSpec(string value)

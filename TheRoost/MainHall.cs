@@ -1,5 +1,5 @@
 ﻿using System;
-using TheRoost;
+using Roost;
 
 public static class TheRoostMachine
 {
@@ -12,18 +12,19 @@ public static class TheRoostMachine
         else
             try
             {
-                alreadyAssembled = true;
-
+                Birdsong.currentVerbosity = (VerbosityLevel)SecretHistories.UI.Watchman.Get<Config>().GetConfigValueAsInt("verbosity");
                 //in case something breaks during the setup
                 SecretHistories.UI.Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
 
-                TheRoost.Enactors.Beachcomber.Enact();
-                TheRoost.Enactors.Elegiast.Enact();
-                TheRoost.Enactors.Vagabond.Enact();
-                TheRoost.Enactors.Twins.Enact();
-                TheRoost.Enactors.InaamKapigiginlupirGarkieCryppys.Enact();
+                Roost.Enactors.Beachcomber.Enact();
+                Roost.Enactors.Elegiast.Enact();
+                Roost.Enactors.Vagabond.Enact();
+                Roost.Enactors.Twins.Enact();
+                Roost.Enactors.World.Enact();
 
                 SecretHistories.UI.Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
+
+                alreadyAssembled = true;
             }
             catch (Exception ex)
             {
@@ -32,14 +33,14 @@ public static class TheRoostMachine
     }
 }
 
-namespace TheRoost.Enactors
+namespace Roost.Enactors
 {
     internal static class Beachcomber
     {
         internal static void Enact()
         {
-            TheRoost.Beachcomber.CuckooLoader.Enact();
-            TheRoost.Beachcomber.Usurper.OverthrowNativeImporting();
+            Roost.Beachcomber.Cuckoo.Enact();
+            Roost.Beachcomber.Usurper.OverthrowNativeImporting();
         }
     }
 
@@ -47,9 +48,17 @@ namespace TheRoost.Enactors
     {
         internal static void Enact()
         {
-            TheRoost.Vagabond.MenuMask.Enact();
-            TheRoost.Vagabond.ConfigMask.Enact();
-            TheRoost.Vagabond.CommandLine.Enact();
+            Roost.Vagabond.MenuMask.Enact();
+            Roost.Vagabond.ConfigMask.Enact();
+            Roost.Vagabond.CommandLine.Enact();
+        }
+    }
+
+    internal static class Twins
+    {
+        internal static void Enact()
+        {
+            Roost.Twins.TokenContextAccessors.Enact();
         }
     }
 
@@ -61,35 +70,29 @@ namespace TheRoost.Enactors
         internal static void Enact()
         {
             if (Machine.GetConfigValue<int>(enabledSettingId, 1) == 1)
-                TheRoost.Elegiast.CustomAchievementsManager.Enact();
+                Roost.Elegiast.CustomAchievementsManager.Enact();
         }
     }
 
-    internal static class Twins
+    internal static class World
     {
         public const string enabledSettingId = "ExpressionsEnabled";
-        public const string patchId = "theroostmachine.twins";
+        public const string patchId = "theroostmachine.theworld";
 
         internal static void Enact()
         {
-            if (Machine.GetConfigValue<int>(enabledSettingId, 1) == 1)
-                TheRoost.Twins.ExpressionEffects.Enact();
-        }
-    }
+          if (Machine.GetConfigValue<int>(enabledSettingId, 1) == 1)
+              Roost.World.Recipes.RecipeEffectsExtension.Enact();
 
-    //everything module-less comes (will come) here
-    internal static class InaamKapigiginlupirGarkieCryppys
-    {
-        internal static void Enact()
-        {
-            LocalApplications.CardVFXMaster.Enact();
-            LocalApplications.Legerdemain.Enact();
-            LocalApplications.BugsPicker.Fix();
+            Roost.World.Recipes.Legerdemain.Enact();
+            Roost.World.Elements.CardVFXMaster.Enact();
+            Roost.World.Recipes.Inductions.InductionsExtensions.Enact();
+            Roost.World.BugsPicker.Fix();
         }
     }
 }
 
-namespace TheRoost
+namespace Roost
 {
     ///accessor/wrapper class for all the features from all other modules
     ///partial, so each set of wrapping methods are defined in a corresponding file

@@ -13,7 +13,7 @@ using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using TMPro;
 
-namespace TheRoost.Vagabond
+namespace Roost.Vagabond
 {
     public class CommandLine : MonoBehaviour
     {
@@ -203,7 +203,7 @@ namespace TheRoost.Vagabond
                 if (property != null)
                     value = property.GetValue(entity);
                 else if (entity.HasCustomProperty(propertyName))
-                    value = entity.RetrieveProperty<object>(propertyName);
+                    value = entity.RetrieveProperty(propertyName);
                 else
                 {
                     CommandLine.Log("Property '{0}' of {1} id '{2}' not found", command[2], entityType.Name, entity.Id);
@@ -346,7 +346,7 @@ namespace TheRoost.Vagabond
     }
 }
 
-namespace TheRoost
+namespace Roost
 {
     public static partial class Machine
     {

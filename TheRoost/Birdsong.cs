@@ -3,12 +3,16 @@ using System.Reflection;
 using System.Collections;
 using UnityEngine;
 
-namespace TheRoost
+namespace Roost
 {
     public static class Birdsong
-        {
+    {
+        public static VerbosityLevel currentVerbosity;
         public static void Sing(VerbosityLevel verbosity, int messageLevel, object data, params object[] furtherData)
         {
+            if (currentVerbosity < verbosity)
+                return;
+
             string message = FormatMessage(data, furtherData);
             NoonUtility.Log(message, messageLevel, verbosity);
         }

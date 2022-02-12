@@ -3,7 +3,7 @@ using SecretHistories.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace TheRoost.Vagabond
+namespace Roost.Vagabond
 {
     internal static class MenuMask
     {
@@ -106,7 +106,7 @@ namespace TheRoost.Vagabond
     }
 }
 
-namespace TheRoost
+namespace Roost
 {
     public partial class Machine
     {
@@ -134,7 +134,7 @@ namespace TheRoost
 
         public static void ShowNotificationWindow(this Notifier notifier, string title, string description, Sprite image, float duration, bool duplicatesAllowed = true)
         {
-            TheRoost.Vagabond.MenuMask.ShowNotificationWindow(notifier, title, description, image, duration, duplicatesAllowed);
+            Roost.Vagabond.MenuMask.ShowNotificationWindow(notifier, title, description, image, duration, duplicatesAllowed);
         }
     }
 }

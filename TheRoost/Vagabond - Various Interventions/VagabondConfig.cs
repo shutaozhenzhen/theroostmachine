@@ -7,9 +7,9 @@ using SecretHistories.Entities;
 
 using UnityEngine;
 
-using TheRoost.Vagabond.SettingSubscribers;
+using Roost.Vagabond.SettingSubscribers;
 
-namespace TheRoost.Vagabond
+namespace Roost.Vagabond
 {
     internal static class ConfigMask
     {
@@ -25,8 +25,8 @@ namespace TheRoost.Vagabond
         private static void ApplyConfigs()
         {
             new MinimizePromo(minimizePromo);
-            new EnableAchievements(Enactors.Elegiast.enabledSettingId, Enactors.Elegiast.patchId, TheRoost.Elegiast.CustomAchievementsManager.Enact);
-            new PatchSwitcher(Enactors.Twins.enabledSettingId, Enactors.Twins.patchId, TheRoost.Twins.ExpressionEffects.Enact);
+            new EnableAchievements(Enactors.Elegiast.enabledSettingId, Enactors.Elegiast.patchId, Roost.Elegiast.CustomAchievementsManager.Enact);
+            new PatchSwitcher(Enactors.World.enabledSettingId, Enactors.World.patchId, Roost.World.Recipes.RecipeEffectsExtension.Enact);
         }
 
         internal static T GetConfigValueSafe<T>(string configId, T valueIfNotDefined)
@@ -43,19 +43,19 @@ namespace TheRoost.Vagabond
                 Watchman.Get<Config>().PersistConfigValue(configId, result.ToString());
             }
 
-            return (T)TheRoost.Beachcomber.Panimporter.ConvertValue(result, typeof(T));
+            return (T)Roost.Beachcomber.Panimporter.ConvertValue(result, typeof(T));
         }
     }
 }
 
-namespace TheRoost.Vagabond.SettingSubscribers
+namespace Roost.Vagabond.SettingSubscribers
 {
     internal abstract class ModSettingSubscriber<T> : ISettingSubscriber
     {
         protected readonly string settingId;
         protected readonly Setting setting;
 
-        protected T settingValue { get { return (T)TheRoost.Beachcomber.Panimporter.ConvertValue(setting.CurrentValue, typeof(T)); } }
+        protected T settingValue { get { return (T)Roost.Beachcomber.Panimporter.ConvertValue(setting.CurrentValue, typeof(T)); } }
 
         public ModSettingSubscriber(string settingId)
         {
@@ -134,7 +134,7 @@ namespace TheRoost.Vagabond.SettingSubscribers
     }
 }
 
-namespace TheRoost
+namespace Roost
 {
     public static partial class Machine
     {

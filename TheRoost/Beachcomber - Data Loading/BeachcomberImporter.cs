@@ -6,7 +6,7 @@ using System.ComponentModel;
 using SecretHistories.Fucine;
 using SecretHistories.Fucine.DataImport;
 
-namespace TheRoost.Beachcomber
+namespace Roost.Beachcomber
 {
     //leaving this one public in case someone/me will need to load something directly
     public static class Panimporter
@@ -16,8 +16,7 @@ namespace TheRoost.Beachcomber
             try
             {
                 ImporterForType Import = GetImporterForType(propertyType);
-                object propertyValue = Import(valueData, propertyType);
-                return propertyValue;
+                return Import(valueData, propertyType);
             }
             catch (Exception ex)
             {
@@ -79,7 +78,7 @@ namespace TheRoost.Beachcomber
             }
             catch (Exception ex)
             {
-                throw Birdsong.Cack("LIST[] IS MALFORMED, ERROR:\n{0}", ex.Message);
+                throw Birdsong.Cack("LIST[] IS MALFORMED - {0}", ex.Message);
             }
         }
 
@@ -102,6 +101,9 @@ namespace TheRoost.Beachcomber
             {
                 EntityData entityData = dictionaryData as EntityData;
 
+                if (entityData == null)
+                    throw Birdsong.Cack("DICTIONARY IS DEFINED AS {0}", dictionaryData.GetType().Name.ToUpper());
+
                 foreach (DictionaryEntry dictionaryEntry in entityData.ValuesTable)
                 {
                     object key = ImportKey(dictionaryEntry.Key, dictionaryKeyType);
@@ -113,7 +115,7 @@ namespace TheRoost.Beachcomber
             }
             catch (Exception ex)
             {
-                throw Birdsong.Cack("DICTIONARY{} IS MALFORMED, ERROR:\n{0}", ex.Message);
+                throw Birdsong.Cack("{1} IS MALFORMED - {0}", ex.Message, "DICTIONARY{}");
             }
         }
 
@@ -145,6 +147,9 @@ namespace TheRoost.Beachcomber
                 }
                 else if (typeof(IQuickSpecEntity).IsAssignableFrom(entityType))
                 {
+                    if (entityType.GetConstructor(Type.EmptyTypes) == null)
+                        throw Birdsong.Cack("QUICK SPEC ENTITY MUST HAVE AN EMPTY CONSTRUCTOR");
+
                     IQuickSpecEntity quickSpecEntity = FactoryInstantiator.CreateObjectWithDefaultConstructor(entityType) as IQuickSpecEntity;
                     quickSpecEntity.QuickSpec(entityData.ToString());
                     return quickSpecEntity as IEntityWithId;
@@ -154,7 +159,7 @@ namespace TheRoost.Beachcomber
             }
             catch (Exception ex)
             {
-                throw Birdsong.Cack("ENTITY DATA IS MALFORMED, ERROR:/n{0}", ex.Message);
+                throw Birdsong.Cack("ENTITY DATA IS MALFORMED - {0}", ex.Message);
             }
         }
 
@@ -195,7 +200,7 @@ namespace TheRoost.Beachcomber
             }
             catch (Exception ex)
             {
-                throw Birdsong.Cack("STRUCT DATA[] IS MALFORMED, ERROR:\n{0}", ex.Message);
+                throw Birdsong.Cack("STRUCT DATA[] IS MALFORMED - {0}", ex.Message);
             }
         }
 
@@ -223,7 +228,7 @@ namespace TheRoost.Beachcomber
             }
             catch (Exception ex)
             {
-                throw Birdsong.Cack("UNABLE TO PARSE A VALUE DATA: '{0}' AS {1}, ERROR:\n{2}", data, destinationType.Name.ToUpper(), ex.Message);
+                throw Birdsong.Cack("UNABLE TO PARSE A VALUE DATA: '{0}' AS {1}: {2}", data, destinationType.Name.ToUpper(), ex.Message);
             }
         }
     }

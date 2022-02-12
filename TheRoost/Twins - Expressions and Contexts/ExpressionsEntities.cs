@@ -3,7 +3,7 @@ using SecretHistories.Core;
 using SecretHistories.UI;
 using NCalc;
 
-namespace TheRoost.Twins.Entities
+namespace Roost.Twins.Entities
 {
     public struct Funcine<T>
     {
@@ -18,7 +18,7 @@ namespace TheRoost.Twins.Entities
             this.expression = new Expression(Expression.Compile(expression, false));
         }
 
-        public T result
+        public T value
         {
             get
             {
@@ -26,9 +26,11 @@ namespace TheRoost.Twins.Entities
                     expression.Parameters[reference.idInExpression] = reference.value;
                 object result = expression.Evaluate();
 
-                return (T)TheRoost.Beachcomber.Panimporter.ConvertValue(result, typeof(T));
+                return (T)Roost.Beachcomber.Panimporter.ConvertValue(result, typeof(T));
             }
         }
+
+        public static implicit operator Funcine<T>(string formula) { return new Funcine<T>(formula); }
 
         public bool isUndefined { get { return this.expression == null; } }
 
@@ -36,7 +38,7 @@ namespace TheRoost.Twins.Entities
         {
             if (isUndefined)
                 return "undefined expression";
-            return "'" + this.formula + "' = " + this.result;
+            return "'" + this.formula + "' = " + this.value;
         }
     }
 
@@ -123,6 +125,6 @@ namespace TheRoost.Twins.Entities
         public SphereRef(string reference) { GetSphere = FuncineParser.GetSphereRef(reference); }
 
         private System.Func<SecretHistories.Spheres.Sphere> GetSphere;
-        public SecretHistories.Spheres.Sphere target { get { return GetSphere(); } }
+        public SecretHistories.Spheres.Sphere referencedSphere { get { return GetSphere(); } }
     }
 }

@@ -2,74 +2,57 @@
 using System.Collections.Generic;
 
 using SecretHistories.Entities;
-using SecretHistories.Core;
 using SecretHistories.UI;
 using SecretHistories.Infrastructure;
 using Assets.Logic;
 using SecretHistories.Abstract;
 using SecretHistories.Spheres;
 
-using TheRoost.Twins;
-using TheRoost.Twins.Entities;
+using Roost.Twins;
+using Roost.Twins.Entities;
+using Roost.World.Recipes.Entities;
 
-namespace TheRoost.LocalApplications
+namespace Roost.World.Recipes
 {
+    //order: shuffle, forbid, normal draws, normal effects with references, takeout, allow, add, insert
     public static class Legerdemain
     {
-        const string deckAutoShuffleProperty = "shuffleAfterEachDraw";
+        const string DECK_AUTO_SHUFFLE = "shuffleAfterDraw";
 
-        //deck effects order:
-        //shuffle, forbid, normal effects, takeout, allow, add, insert
-        //takeout isn't affected by forbids
-        const string deckShuffleProperty = "deckShuffle";
-        const string deckForbidProperty = "deckForbid";
-        const string deckTakeOutProperty = "deckTakeOut";
-        const string deckAllowProperty = "deckAllow";
-        const string deckAddProperty = "deckAdd";
-        const string deckInsertProperty = "deckInsert";
-
-        static DealersTable dtable;
-
+        private static DealersTable dealerstable;
+        private static Dealer dealer;
+        
         internal static void Enact()
         {
-            Machine.ClaimProperty<DeckSpec, bool>(deckAutoShuffleProperty);
-
-            Machine.ClaimProperty<Recipe, List<string>>(deckShuffleProperty);
-            Machine.ClaimProperty<Recipe, Dictionary<string, List<string>>>(deckForbidProperty);
-            Machine.ClaimProperty<Recipe, Dictionary<string, List<string>>>(deckAllowProperty);
-            Machine.ClaimProperty<Recipe, Dictionary<string, List<string>>>(deckAddProperty);
-            Machine.ClaimProperty<Recipe, Dictionary<string, List<Funcine<bool>>>>(deckTakeOutProperty);
-            Machine.ClaimProperty<Recipe, Dictionary<string, List<Funcine<bool>>>>(deckInsertProperty);
+            Machine.ClaimProperty<DeckSpec, bool>(DECK_AUTO_SHUFFLE);
 
             AtTimeOfPower.NewGameStarted.Schedule(CatchNewGame, PatchType.Postfix);
             AtTimeOfPower.TabletopLoaded.Schedule(ReshuffleDecksOnNewGame, PatchType.Postfix);
-            AtTimeOfPower.RecipeDeckEffects.Schedule<RecipeCompletionEffectCommand, Sphere>(DeckEffectsPre, PatchType.Prefix);
-            AtTimeOfPower.RecipeDeckEffects.Schedule<RecipeCompletionEffectCommand, Sphere>(DeckEffectsPost, PatchType.Postfix);
 
             Machine.Patch(
                 original: typeof(Dealer).GetMethod("Deal", new Type[] { typeof(DeckSpec) }),
                 prefix: typeof(Legerdemain).GetMethodInvariant("Deal"));
         }
 
-        static bool newGameAndIShouldReshuffleAllTheDecks = false;
-        static void CatchNewGame()
+        private static bool newGameAndIShouldReshuffleAllTheDecks = false;
+        private static void CatchNewGame()
         {
             newGameAndIShouldReshuffleAllTheDecks = true;
         }
-        static void ReshuffleDecksOnNewGame()
+        private static void ReshuffleDecksOnNewGame()
         {
-            dtable = Watchman.Get<DealersTable>();
+            dealerstable = Watchman.Get<DealersTable>();
+            dealer = new Dealer(dealerstable);
 
             if (newGameAndIShouldReshuffleAllTheDecks)
             {
-                Dealer dealer = new Dealer(dtable);
                 string currentLegacyFamily = Watchman.Get<Stable>().Protag().ActiveLegacy.Family;
 
                 foreach (DeckSpec deck in Watchman.Get<Compendium>().GetEntitiesAsList<DeckSpec>())
                     if (string.IsNullOrEmpty(deck.ForLegacyFamily) || currentLegacyFamily == deck.ForLegacyFamily)
                     {
                         dealer.Shuffle(deck);
-                        IHasElementTokens drawPile = dtable.GetDrawPile(deck.Id);
+                        IHasElementTokens drawPile = dealerstable.GetDrawPile(deck.Id);
 
                         if (drawPile.GetTotalStacksCount() == 0)
                         {
@@ -90,7 +73,7 @@ namespace TheRoost.LocalApplications
 
             __result = drawPile.GetElementTokens()[drawPile.GetTotalStacksCount() - 1];
 
-            if (fromDeckSpec.RetrieveProperty<bool>(deckAutoShuffleProperty))
+            if (fromDeckSpec.RetrieveProperty<bool>(DECK_AUTO_SHUFFLE))
                 ____dealersTable.RenewDeck(__instance, fromDeckSpec.Id);
             else if (drawPile.GetTotalStacksCount() == 0 && fromDeckSpec.ResetOnExhaustion)
                 __instance.Shuffle(fromDeckSpec);
@@ -109,40 +92,35 @@ namespace TheRoost.LocalApplications
             return false;
         }
 
-        private static void DeckEffectsPre(RecipeCompletionEffectCommand __instance, Sphere sphere)
+        public static void RunExtendedDeckEffects(GrandEffects effectsGroup, Sphere onSphere)
         {
-            DeckShuffles(__instance.Recipe);
-            DeckForbids(__instance.Recipe);
+            DeckShuffles(effectsGroup.deckShuffles);
+            DeckForbids(effectsGroup.deckForbids);
+            DeckDraws(effectsGroup.deckDraws, onSphere);
+            DeckTakeOuts(effectsGroup.deckTakeOuts, onSphere);
+            DeckAllows(effectsGroup.deckAllows);
+            DeckAdds(effectsGroup.deckAdds);
+            DeckInserts(effectsGroup.deckInserts, onSphere);
         }
 
-        private static void DeckEffectsPost(RecipeCompletionEffectCommand __instance, Sphere sphere)
+        private static void DeckShuffles(List<string> deckShuffles)
         {
-            DeckAllows(__instance.Recipe);
-            DeckTakeOuts(__instance.Recipe, sphere);
-            DeckAdds(__instance.Recipe);
-            DeckInserts(__instance.Recipe, sphere);
-        }
-
-        private static void DeckShuffles(Recipe recipe)
-        {
-            var deckShuffles = recipe.RetrieveProperty<List<string>>(deckShuffleProperty);
             if (deckShuffles == null)
                 return;
 
-            Dealer dealer = new Dealer(dtable);
+            Dealer dealer = new Dealer(dealerstable);
             foreach (string deckId in deckShuffles)
-                dtable.RenewDeck(dealer, deckId);
+                dealerstable.RenewDeck(dealer, deckId);
         }
 
-        private static void DeckForbids(Recipe recipe)
+        private static void DeckForbids(Dictionary<string, List<string>> deckForbids)
         {
-            var deckForbids = recipe.RetrieveProperty<Dictionary<string, List<string>>>(deckForbidProperty);
             if (deckForbids == null)
                 return;
 
             foreach (string deckId in deckForbids.Keys)
             {
-                IHasElementTokens forbiddenPile = dtable.GetForbiddenPile(deckId);
+                IHasElementTokens forbiddenPile = dealerstable.GetForbiddenPile(deckId);
                 List<string> forbids = deckForbids[deckId];
 
                 foreach (string elementId in forbids)
@@ -151,15 +129,45 @@ namespace TheRoost.LocalApplications
             }
         }
 
-        private static void DeckAllows(Recipe recipe)
+        private static void DeckDraws(Dictionary<string, Funcine<int>> deckDraws, Sphere situationStorage)
         {
-            var deckAllows = recipe.RetrieveProperty<Dictionary<string, List<string>>>(deckAllowProperty);
+            if (deckDraws == null)
+                return;
+
+            Dealer dealer = new Dealer(dealerstable);
+            foreach (string deckId in deckDraws.Keys)
+            {
+                int draws = deckDraws[deckId].value;
+                for (int i = 0; i++ < draws; )
+                    dealer.Deal(deckId);
+            }
+        }
+
+        private static void DeckTakeOuts(Dictionary<string, List<Funcine<bool>>> deckTakeOuts, Sphere situationStorage)
+        {
+            if (deckTakeOuts == null)
+                return;
+
+            Context context = new Context(Context.ActionSource.SituationCreated);
+
+            foreach (string deckId in deckTakeOuts.Keys)
+            {
+                List<Token> tokens = dealerstable.GetDrawPile(deckId).GetElementTokens();
+
+                foreach (Funcine<bool> filter in deckTakeOuts[deckId])
+                    foreach (Token token in tokens.FilterTokens(filter))
+                        situationStorage.AcceptToken(token, context);
+            }
+        }
+
+        private static void DeckAllows(Dictionary<string, List<string>> deckAllows)
+        {
             if (deckAllows == null)
                 return;
 
             foreach (string deckId in deckAllows.Keys)
             {
-                IHasElementTokens forbiddenPile = dtable.GetForbiddenPile(deckId);
+                IHasElementTokens forbiddenPile = dealerstable.GetForbiddenPile(deckId);
                 List<string> allows = deckAllows[deckId];
 
                 foreach (string elementId in allows)
@@ -171,27 +179,8 @@ namespace TheRoost.LocalApplications
             }
         }
 
-        private static void DeckTakeOuts(Recipe recipe, Sphere situationStorage)
+        private static void DeckInserts(Dictionary<string, List<Funcine<bool>>> deckInserts, Sphere sphere)
         {
-            var deckTakeOuts = recipe.RetrieveProperty<Dictionary<string, List<Funcine<bool>>>>(deckTakeOutProperty);
-            if (deckTakeOuts == null)
-                return;
-
-            Context context = new Context(Context.ActionSource.SituationCreated);
-
-            foreach (string deckId in deckTakeOuts.Keys)
-            {
-                List<Token> tokens = dtable.GetDrawPile(deckId).GetElementTokens();
-
-                foreach (Funcine<bool> filter in deckTakeOuts[deckId])
-                    foreach (Token token in tokens.FilterTokens(filter))
-                        situationStorage.AcceptToken(token, context);
-            }
-        }
-
-        private static void DeckInserts(Recipe recipe, Sphere sphere)
-        {
-            var deckInserts = recipe.RetrieveProperty<Dictionary<string, List<Funcine<bool>>>>(deckInsertProperty);
             if (deckInserts == null)
                 return;
 
@@ -200,7 +189,7 @@ namespace TheRoost.LocalApplications
 
             foreach (string deckId in deckInserts.Keys)
             {
-                IHasElementTokens drawPile = dtable.GetDrawPile(deckId);
+                IHasElementTokens drawPile = dealerstable.GetDrawPile(deckId);
 
                 foreach (Funcine<bool> filter in deckInserts[deckId])
                     foreach (Token token in tokens.FilterTokens(filter))
@@ -208,15 +197,14 @@ namespace TheRoost.LocalApplications
             }
         }
 
-        private static void DeckAdds(Recipe recipe)
+        private static void DeckAdds(Dictionary<string, List<string>> deckAdds)
         {
-            var deckAdds = recipe.RetrieveProperty<Dictionary<string, List<string>>>(deckAddProperty);
             if (deckAdds == null)
                 return;
 
             foreach (string deckId in deckAdds.Keys)
                 foreach (string elementId in deckAdds[deckId])
-                    dtable.GetDrawPile(deckId).ProvisionElementToken(elementId, 1);
+                    dealerstable.GetDrawPile(deckId).ProvisionElementToken(elementId, 1);
         }
 
         private static void RenewDeck(this DealersTable dtable, Dealer dealer, string deckId)

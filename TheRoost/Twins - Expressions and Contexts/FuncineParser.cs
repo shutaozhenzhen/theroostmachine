@@ -8,9 +8,9 @@ using SecretHistories.Fucine;
 using SecretHistories.Enums;
 using SecretHistories.UI;
 
-using TheRoost.Twins.Entities;
+using Roost.Twins.Entities;
 
-namespace TheRoost.Twins
+namespace Roost.Twins
 {
     public static class FuncineParser
     {
@@ -127,6 +127,7 @@ namespace TheRoost.Twins
         private static string NormalizeAsContextPath(this string path)
         {
             path = path.ToLower();
+            path = path.Replace("tabletop", "table");
 
             if (path.Length > 0 && scopeSeparators.Contains(path[0]))
                 path = path.Substring(1);

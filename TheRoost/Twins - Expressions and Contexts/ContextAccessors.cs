@@ -5,12 +5,25 @@ using SecretHistories.UI;
 using SecretHistories.Fucine;
 using SecretHistories.Spheres;
 
-using TheRoost.Twins.Entities;
+using Roost.Twins.Entities;
 
-namespace TheRoost.Twins
+namespace Roost.Twins
 {
     public static class TokenContextAccessors
     {
+        private static bool initialized = false;
+        internal static void Enact()
+        {
+            if (!initialized)
+            {
+                Roost.Vagabond.CommandLine.AddCommand("ref", TwinsDebug.TestReference);
+                Roost.Vagabond.CommandLine.AddCommand("exp", TwinsDebug.TestExpression);
+                Roost.Vagabond.CommandLine.AddCommand("spheres", TwinsDebug.LogAllSpheres);
+                Roost.Vagabond.CommandLine.AddCommand("sphere", TwinsDebug.SphereContent);
+                initialized = true;
+            }
+        }
+
         private static Situation local_situation = SecretHistories.NullObjects.NullSituation.Create();
         private static readonly List<Token> local_token = new List<Token>();
         private static List<Token> local_sphere = new List<Token>();
@@ -105,7 +118,7 @@ namespace TheRoost.Twins
             foreach (Token token in tokens)
             {
                 SetLocalToken(token);
-                if (filter.result == true)
+                if (filter.value == true)
                     result.Add(token);
             }
 

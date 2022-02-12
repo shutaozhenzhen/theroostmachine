@@ -11,7 +11,7 @@ using SecretHistories.Fucine;
 using SecretHistories.Entities;
 using SecretHistories.Fucine.DataImport;
 
-namespace TheRoost.Beachcomber
+namespace Roost.Beachcomber
 {
     internal static class Usurper
     {
@@ -95,37 +95,42 @@ namespace TheRoost.Beachcomber
 
             try
             {
+                Hoard.InterceptClaimedProperties(entity, entityData, typeof(T));
+
                 foreach (CachedFucineProperty<T> cachedProperty in TypeInfoCache<T>.GetCachedFucinePropertiesForType())
-                    if (cachedProperty.LowerCaseName != "id")
+                {
+                    if (cachedProperty.LowerCaseName == "id" || Ostrich.Ignores(typeof(T), cachedProperty.LowerCaseName))
+                        continue;
+
+                    string propertyName = cachedProperty.LowerCaseName;
+                    Type propertyType = cachedProperty.ThisPropInfo.PropertyType;
+
+                    object propertyValue;
+                    if (entityData.ValuesTable.Contains(propertyName))
                     {
-                        string propertyName = cachedProperty.LowerCaseName;
-                        Type propertyType = cachedProperty.ThisPropInfo.PropertyType;
-
-                        object propertyValue;
-                        if (entityData.ValuesTable.Contains(propertyName))
-                        {
-                            propertyValue = Panimporter.ImportProperty(entity, entityData.ValuesTable[propertyName], propertyType, propertyName);
-                            entityData.ValuesTable.Remove(propertyName);
-                        }
+                        propertyValue = Panimporter.ImportProperty(entity, entityData.ValuesTable[propertyName], propertyType, propertyName);
+                        entityData.ValuesTable.Remove(propertyName);
+                    }
+                    else
+                    {
+                        if (propertyType.isStruct() && cachedProperty.FucineAttribute.DefaultValue != null)
+                            propertyValue = Panimporter.ImportStruct(cachedProperty.FucineAttribute.DefaultValue, propertyType);
+                        else if (propertyType.isList() || propertyType.isDict() || propertyType.isFucineEntity() || propertyType.isStruct())
+                            propertyValue = FactoryInstantiator.CreateObjectWithDefaultConstructor(propertyType);
                         else
-                        {
-                            if (propertyType.isStruct() && cachedProperty.FucineAttribute.DefaultValue != null)
-                                propertyValue = Panimporter.ImportStruct(cachedProperty.FucineAttribute.DefaultValue, propertyType);
-                            else if (propertyType.isList() || propertyType.isDict() || propertyType.isFucineEntity() || propertyType.isStruct())
-                                propertyValue = FactoryInstantiator.CreateObjectWithDefaultConstructor(propertyType);
-                            else
-                                propertyValue = cachedProperty.FucineAttribute.DefaultValue;
-                        }
-
-                        cachedProperty.SetViaFastInvoke(entity as T, propertyValue);
+                            propertyValue = cachedProperty.FucineAttribute.DefaultValue;
                     }
 
+                    cachedProperty.SetViaFastInvoke(entity as T, propertyValue);
+                }
+
+                AbstractEntity<T> abstractEntity = entity as AbstractEntity<T>;
                 foreach (object key in entityData.ValuesTable.Keys)
-                    (entity as AbstractEntity<T>).PushUnknownProperty(key, entityData.ValuesTable[key]);
+                    abstractEntity.PushUnknownProperty(key, entityData.ValuesTable[key]);
             }
             catch (Exception ex)
             {
-                throw Birdsong.Cack(ex);
+                throw Birdsong.Cack("Failed to import entity {0} '{1}', reason:\n{2}", typeof(T).Name, entity.Id, ex);
             }
         }
 
@@ -151,7 +156,9 @@ namespace TheRoost.Beachcomber
     {
         private const string INHERIT_ADDITIVE = "$derives";
         private const string INHERIT_OVERRIDE = "$overrides";
-        private const string IHERIDE_OVERRIDE_LEGACY = "extends";
+        private const string INHERIT_OVERRIDE_LEGACY = "extends";
+        private const string IGNORE_GROUPS = "$ignored";
+        private const string VANILLA_GROUP = "vanilla";
 
         private const string PRIORITY = "$priority";
 
@@ -160,6 +167,11 @@ namespace TheRoost.Beachcomber
         private static void ApplyModsToData(EntityTypeDataLoader loader, ref Dictionary<string, EntityData> alreadyLoadedEntities, List<LoadedDataFile> modContentFiles, ContentImportLog log)
         {
             var unpackObjectDataIntoCollection = typeof(EntityTypeDataLoader).GetMethodInvariant("UnpackObjectDataIntoCollection").CreateDelegate(typeof(Action<JToken, FucineUniqueIdBuilder, Dictionary<string, EntityData>, LoadedDataFile>), loader) as Action<JToken, FucineUniqueIdBuilder, Dictionary<string, EntityData>, LoadedDataFile>;
+
+            //:^)
+            if (Ostrich.ignroneVanillaContent
+                && loader.EntityType != typeof(Culture) && loader.EntityType != typeof(Dictum) && loader.EntityType != typeof(Setting))
+                alreadyLoadedEntities.Clear();
 
             List<EntityData> allModdedEntities = new List<EntityData>();
             Dictionary<string, EntityData> moddedEntityData = new Dictionary<string, EntityData>();
@@ -170,11 +182,23 @@ namespace TheRoost.Beachcomber
                     FucineUniqueIdBuilder containerBuilder = new FucineUniqueIdBuilder(contentFile.EntityContainer);
                     unpackObjectDataIntoCollection(eachObject, containerBuilder, moddedEntityData, contentFile);
 
-                    foreach (EntityData modeEntity in moddedEntityData.Values)
+                    foreach (EntityData modEntity in moddedEntityData.Values)
                     {
-                        allModdedEntities.Add(modeEntity);
-                        if (!alreadyLoadedEntities.ContainsKey(modeEntity.Id))
-                            alreadyLoadedEntities.Add(modeEntity.Id, new EntityData(modeEntity.ValuesTable));
+                        ArrayList ignoredGroups = modEntity.GetArrayList(IGNORE_GROUPS);
+                        bool skipImport = false;
+                        foreach (string ignoreGroupId in ignoredGroups)
+                            if (Ostrich.Ignores(ignoreGroupId))
+                            {
+                                skipImport = true;
+                                break;
+                            }
+
+                        if (skipImport)
+                            continue;
+
+                        allModdedEntities.Add(modEntity);
+                        if (!alreadyLoadedEntities.ContainsKey(modEntity.Id))
+                            alreadyLoadedEntities.Add(modEntity.Id, new EntityData(modEntity.ValuesTable));
                     }
                 }
 
@@ -201,24 +225,24 @@ namespace TheRoost.Beachcomber
             }
         }
 
-        private static ArrayList GetParentsOfInheritanceType(this EntityData data, string inheritanceProperty)
+        private static ArrayList GetArrayList(this EntityData data, string propertyName)
         {
-            if (!data.ValuesTable.ContainsKey(inheritanceProperty))
+            if (!data.ValuesTable.ContainsKey(propertyName))
                 return new ArrayList();
 
-            ArrayList arrayList = data.ValuesTable[inheritanceProperty] as ArrayList;
+            ArrayList arrayList = data.ValuesTable[propertyName] as ArrayList;
             if (arrayList == null)
-                arrayList = new ArrayList { data.ValuesTable[inheritanceProperty] };
+                arrayList = new ArrayList { data.ValuesTable[propertyName] };
 
-            data.ValuesTable.Remove(inheritanceProperty);
+            data.ValuesTable.Remove(propertyName);
 
             return arrayList;
         }
 
         private static void ApplyOverrideParentInheritance(this EntityData child, Dictionary<string, EntityData> allCoreEntitiesOfType)
         {
-            ArrayList extendsList = child.GetParentsOfInheritanceType(INHERIT_OVERRIDE);
-            extendsList.AddRange(child.GetParentsOfInheritanceType(IHERIDE_OVERRIDE_LEGACY));
+            ArrayList extendsList = child.GetArrayList(INHERIT_OVERRIDE);
+            extendsList.AddRange(child.GetArrayList(INHERIT_OVERRIDE_LEGACY));
 
             foreach (string extendId in extendsList)
             {
@@ -242,7 +266,7 @@ namespace TheRoost.Beachcomber
 
         private static void ApplyAdditiveInheritance(this EntityData derivative, Dictionary<string, EntityData> allCoreEntitiesOfType)
         {
-            ArrayList deriveFromEntities = derivative.GetParentsOfInheritanceType(INHERIT_ADDITIVE);
+            ArrayList deriveFromEntities = derivative.GetArrayList(INHERIT_ADDITIVE);
 
             foreach (string rootId in deriveFromEntities)
                 if (allCoreEntitiesOfType.ContainsKey(rootId))

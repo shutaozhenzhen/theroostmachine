@@ -12,9 +12,9 @@ using SecretHistories.Constants;
 using SecretHistories.Core;
 
 using UnityEngine;
-using TheRoost.Elegiast.Entities;
+using Roost.Elegiast.Entities;
 
-namespace TheRoost.Elegiast
+namespace Roost.Elegiast
 {
     public static class CustomAchievementsManager
     {
@@ -40,7 +40,7 @@ namespace TheRoost.Elegiast
             if (propertiesClaimed == false)
             {
                 Machine.ClaimProperty<SecretHistories.Entities.Recipe, List<string>>(UNLOCK_PROPERTY);
-                TheRoost.Vagabond.CommandLine.AddCommand("achievements", AchievementsDebug);
+                Roost.Vagabond.CommandLine.AddCommand("achievements", AchievementsDebug);
                 propertiesClaimed = true;
             }
 
@@ -71,12 +71,12 @@ namespace TheRoost.Elegiast
             CustomAchievement achievement = Watchman.Get<Compendium>().GetEntityById<CustomAchievement>(id);
             if (achievement == null)
             {
-                Birdsong.Sing(VerbosityLevel.SystemChatter, 0, "Attempt to unlock achievement '{0}' - no such achievement exists", id);
+                Birdsong.Sing(VerbosityLevel.Significants, 0, "Attempt to unlock achievement '{0}' - no such achievement exists", id);
                 return false;
             }
             else if (isUnlocked(achievement))
             {
-                Birdsong.Sing(VerbosityLevel.SystemChatter, 0, "Attempt to unlock achievement '{0}' - but it is already unlocked", id);
+                Birdsong.Sing(VerbosityLevel.Significants, 0, "Attempt to unlock achievement '{0}' - but it is already unlocked", id);
                 return false;
             }
 

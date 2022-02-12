@@ -11,9 +11,9 @@ using TMPro;
 using SecretHistories.UI;
 using SecretHistories.Services;
 
-using TheRoost.Elegiast.Entities;
+using Roost.Elegiast.Entities;
 
-namespace TheRoost.Elegiast
+namespace Roost.Elegiast
 {
     public class CustomAchievementInterface
     {
@@ -334,7 +334,7 @@ namespace TheRoost.Elegiast
 
         private void OpenAchievementsMenu()
         {
-            TheRoost.Vagabond.MenuMask.ShowOverlay(achievementsOverlay);
+            Roost.Vagabond.MenuMask.ShowOverlay(achievementsOverlay);
             currentCategory = 0;
             SetCategory(categories[currentCategory]);
         }
@@ -381,7 +381,7 @@ namespace TheRoost.Elegiast
     }
 }
 
-namespace TheRoost
+namespace Roost
 {
     public partial class Machine
     {

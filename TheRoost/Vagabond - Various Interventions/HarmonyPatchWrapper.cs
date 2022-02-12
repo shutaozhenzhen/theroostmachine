@@ -10,7 +10,7 @@ using SecretHistories.Infrastructure;
 
 using HarmonyLib;
 
-namespace TheRoost.Vagabond
+namespace Roost.Vagabond
 {
     public delegate bool CodeInstructionMask(CodeInstruction instruction);
     internal static class HarmonyMask
@@ -121,6 +121,21 @@ namespace TheRoost.Vagabond
  { AtTimeOfPower.RecipePurges, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("RunElementPurges") },
  { AtTimeOfPower.RecipePortals, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("OpenPortals") },
  { AtTimeOfPower.RecipeVfx, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("DoRecipeVfx") },
+
+ { AtTimeOfPower.OnPostImportCulture, typeof(Culture).GetMethodInvariant("OnPostImportForSpecificEntity") },
+ { AtTimeOfPower.OnPostImportDeck, typeof(DeckSpec).GetMethodInvariant("OnPostImportForSpecificEntity") },
+ { AtTimeOfPower.OnPostImportElement, typeof(Element).GetMethodInvariant("OnPostImportForSpecificEntity") },
+ { AtTimeOfPower.OnPostImportEnding, typeof(Ending).GetMethodInvariant("OnPostImportForSpecificEntity") },
+ { AtTimeOfPower.OnPostImportExpulsion, typeof(Expulsion).GetMethodInvariant("OnPostImportForSpecificEntity") },
+ { AtTimeOfPower.OnPostImportLegacy, typeof(Legacy).GetMethodInvariant("OnPostImportForSpecificEntity") },
+ { AtTimeOfPower.OnPostImportLink, typeof(LinkedRecipeDetails).GetMethodInvariant("OnPostImportForSpecificEntity") },
+ { AtTimeOfPower.OnPostImportXTrigger, typeof(MorphDetails).GetMethodInvariant("OnPostImportForSpecificEntity") },
+ { AtTimeOfPower.OnPostImportMutation, typeof(MutationEffect).GetMethodInvariant("OnPostImportForSpecificEntity") },
+ { AtTimeOfPower.OnPostImportPortal, typeof(Portal).GetMethodInvariant("OnPostImportForSpecificEntity") },
+ { AtTimeOfPower.OnPostImportRecipe, typeof(Recipe).GetMethodInvariant("OnPostImportForSpecificEntity") },
+ { AtTimeOfPower.OnPostImpostSetting, typeof(Setting).GetMethodInvariant("OnPostImportForSpecificEntity") },
+ { AtTimeOfPower.OnPostImportSlot, typeof(SphereSpec).GetMethodInvariant("OnPostImportForSpecificEntity") },
+ { AtTimeOfPower.OnPostImportVerb, typeof(Verb).GetMethodInvariant("OnPostImportForSpecificEntity") },
         };
 
         internal static void Unite(AtTimeOfPower time, Delegate patchMethod, PatchType patchType, string patchId)
@@ -230,7 +245,7 @@ namespace TheRoost.Vagabond
     }
 }
 
-namespace TheRoost
+namespace Roost
 {
     //get members methods
     public static partial class Machine
@@ -292,6 +307,8 @@ namespace TheRoost
         MainMenuLoaded, NewGameStarted, TabletopLoaded,
         RecipeRequirementsCheck, RecipeExecution,
         RecipeMutations, RecipeXtriggers, RecipeDeckEffects, RecipeEffects, RecipeVerbManipulations, RecipePurges, RecipePortals, RecipeVfx,
+        OnPostImportCulture, OnPostImportDeck, OnPostImportElement, OnPostImportEnding, OnPostImportExpulsion, OnPostImportLegacy, OnPostImportLink,
+        OnPostImportXTrigger, OnPostImportMutation, OnPostImportPortal, OnPostImportRecipe, OnPostImpostSetting, OnPostImportSlot, OnPostImportVerb
     }
 
     //times of power scheduling methods

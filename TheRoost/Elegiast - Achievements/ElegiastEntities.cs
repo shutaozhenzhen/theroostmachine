@@ -2,7 +2,7 @@
 using SecretHistories.Fucine;
 using UnityEngine;
 
-namespace TheRoost.Elegiast.Entities
+namespace Roost.Elegiast.Entities
 {
     public interface IFucineAchievement
     {
