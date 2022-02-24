@@ -365,7 +365,7 @@ namespace Roost
             time.Schedule(func as Delegate, PatchType.Prefix);
         }
 
-        public static void Schedule<T1, T2>(this AtTimeOfPower time, Func<T1, T2, bool> func)
+        public static void Schedule<T1, T2>(this AtTimeOfPower time, Func<T1, T2, bool> func, string patchId = DEFAULT_PATCH_ID)
         {
             time.Schedule(func as Delegate, PatchType.Prefix);
         }

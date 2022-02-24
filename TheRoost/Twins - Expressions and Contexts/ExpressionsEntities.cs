@@ -112,6 +112,7 @@ namespace Roost.Twins.Entities
         {
             this.idInExpression = referenceId;
             FuncineParser.PopulateFucineReference(referenceData, out targetElementId, out tokensFilter, out GetTargetTokens, out special);
+            Watchman.Get<Compendium>().SupplyElementIdsForValidation(targetElementId);
         }
 
         public bool Equals(FuncineRef otherReference)

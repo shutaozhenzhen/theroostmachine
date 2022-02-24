@@ -3,12 +3,12 @@ using System.Collections.Generic;
 
 namespace Roost.Beachcomber
 {
-    internal class Ostrich
+    internal static class Ostrich
     {
         private readonly static Dictionary<Type, List<string>> ignoredProperties = new Dictionary<Type, List<string>>();
-        private readonly static HashSet<string> ignoredEntityGroups = new HashSet<string>();
+        private readonly static HashSet<string> ignoredEntityGroups = new HashSet<string>() { "examples" };
 
-        internal static bool ignroneVanillaContent { get; set; }
+        internal static bool ignoreVanillaContent { get; set; }
 
         internal static void AddIgnoredProperty<TEntity>(string propertyName)
         {

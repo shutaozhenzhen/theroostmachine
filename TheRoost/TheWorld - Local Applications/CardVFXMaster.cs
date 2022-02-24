@@ -37,9 +37,9 @@ namespace Roost.World.Elements
                 original: typeof(Token).GetMethodInvariant("OnPayloadChanged"),
                 transpiler: typeof(CardVFXMaster).GetMethodInvariant("RemanifestWithVFXTranspiler"));
 
-            Machine.Patch(
-                original: typeof(Token).GetMethodInvariant("ReplaceManifestation"),
-                prefix: typeof(CardVFXMaster).GetMethodInvariant("PlaceVFXOnTop"));
+           // Machine.Patch(
+                //original: typeof(Token).GetMethodInvariant("ReplaceManifestation"),
+                //prefix: typeof(CardVFXMaster).GetMethodInvariant("PlaceVFXOnTop"));
         }
 
         private static IEnumerable<CodeInstruction> ElementDecayTranspiler(IEnumerable<CodeInstruction> instructions)
@@ -94,10 +94,10 @@ namespace Roost.World.Elements
             token.Remanifest(VFXforCurrentTransformation);
         }
 
-        private static void PlaceVFXOnTop(IManifestation oldManifestation)
-        {
-            oldManifestation.Transform.SetAsLastSibling();
-        }
+        //private static void PlaceVFXOnTop(IManifestation oldManifestation)
+        //{
+            //oldManifestation.Transform.SetAsLastSibling();
+        //}
     }
 
 }

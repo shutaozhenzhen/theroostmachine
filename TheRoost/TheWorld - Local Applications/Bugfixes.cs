@@ -11,9 +11,9 @@ namespace Roost.World
             Machine.Patch(
                 original: typeof(ResourcesManager).GetMethodInvariant("GetSprite"),
                 prefix: typeof(BugsPicker).GetMethodInvariant("GetSpriteFix"));
-            //why this keeps happening
-            Machine.Patch(typeof(ElementStack).GetMethodInvariant("SetMutation"),
-                postfix: typeof(BugsPicker).GetMethodInvariant("FixMutationsDisplay"));
+            
+            //Machine.Patch(typeof(ElementStack).GetMethodInvariant("SetMutation"),
+            //    postfix: typeof(BugsPicker).GetMethodInvariant("FixMutationsDisplay"));
         }
 
         private static void GetSpriteFix(ref string folder)

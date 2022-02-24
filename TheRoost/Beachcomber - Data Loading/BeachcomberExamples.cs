@@ -15,7 +15,7 @@ namespace Roost.Beachcomber.Entities
     [FucineImportable("beachcomberexample")]
     //the class itself needs to derive from AbstractEntity<T> where T is the name of the class
     //IQuickSpecEntity and IWeirdSpecEntity are optional, explained below
-    public class ExampleFucineClass : AbstractEntity<ExampleFucineClass>, IQuickSpecEntity, IWeirdSpecEntity
+    public class ExampleFucineClass : AbstractEntity<ExampleFucineClass>, IQuickSpecEntity, ICustomSpecEntity
     {
 
         //each loadable property needs to have FucineValue attribute
@@ -44,7 +44,7 @@ namespace Roost.Beachcomber.Entities
 
         //you can even load structs; in JSON structs are defined like "myVectorProperty": [ 1, 1 ], i.e. as lists, with []
         //similarly, a default value is passed to the property as param object[]
-        [FucineStruct(0.5f, 100f)]
+        [FucineSpecial(0.5f, 100f)]
         public UnityEngine.Vector2 Vector { get; set; }
 
         //finally, your entity needs to implement two methods of AbstractEntity<T> - constructor and OnPostImportForSpecificEntity()
@@ -78,7 +78,7 @@ namespace Roost.Beachcomber.Entities
             //here in this method you interpret this single string and assign entity properties accordingly
         }
 
-        public void WeirdSpec(Hashtable data)
+        public void CustomSpec(Hashtable data)
         {
             //ok, this one, as its name states, is weird
             //this one allows you to shape your entity using properties from JSON that won't be recognized normally

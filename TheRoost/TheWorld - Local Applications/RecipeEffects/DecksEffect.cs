@@ -92,15 +92,15 @@ namespace Roost.World.Recipes
             return false;
         }
 
-        public static void RunExtendedDeckEffects(GrandEffects effectsGroup, Sphere onSphere)
+        public static void RunExtendedDeckEffects(RecipeEffectsGroup effectsGroup, Sphere onSphere)
         {
-            DeckShuffles(effectsGroup.deckShuffles);
-            DeckForbids(effectsGroup.deckForbids);
-            DeckDraws(effectsGroup.deckDraws, onSphere);
-            DeckTakeOuts(effectsGroup.deckTakeOuts, onSphere);
-            DeckAllows(effectsGroup.deckAllows);
-            DeckAdds(effectsGroup.deckAdds);
-            DeckInserts(effectsGroup.deckInserts, onSphere);
+            DeckShuffles(effectsGroup.DeckShuffles);
+            DeckForbids(effectsGroup.DeckForbids);
+            DeckDraws(effectsGroup.DeckDraws, onSphere);
+            DeckTakeOuts(effectsGroup.DeckTakeOuts, onSphere);
+            DeckAllows(effectsGroup.DeckAllows);
+            DeckAdds(effectsGroup.DeckAdds);
+            DeckInserts(effectsGroup.DeckInserts, onSphere);
         }
 
         private static void DeckShuffles(List<string> deckShuffles)

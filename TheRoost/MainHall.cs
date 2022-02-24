@@ -41,6 +41,7 @@ namespace Roost.Enactors
         {
             Roost.Beachcomber.Cuckoo.Enact();
             Roost.Beachcomber.Usurper.OverthrowNativeImporting();
+            Roost.Beachcomber.ModOpManager.Enact();
         }
     }
 
@@ -76,17 +77,17 @@ namespace Roost.Enactors
 
     internal static class World
     {
-        public const string enabledSettingId = "ExpressionsEnabled";
+        public const string enabledSettingId = "EffectsExtensions";
         public const string patchId = "theroostmachine.theworld";
 
         internal static void Enact()
         {
-          if (Machine.GetConfigValue<int>(enabledSettingId, 1) == 1)
-              Roost.World.Recipes.RecipeEffectsExtension.Enact();
+          //if (Machine.GetConfigValue<int>(enabledSettingId, 1) == 1)
+              //Roost.World.Recipes.RecipeEffectsMaster.Enact();
 
-            Roost.World.Recipes.Legerdemain.Enact();
-            Roost.World.Elements.CardVFXMaster.Enact();
-            Roost.World.Recipes.Inductions.InductionsExtensions.Enact();
+            //Roost.World.Recipes.Legerdemain.Enact();
+            //Roost.World.Elements.CardVFXMaster.Enact();
+            //Roost.World.Recipes.RecipeLinkMaster.Enact();
             Roost.World.BugsPicker.Fix();
         }
     }

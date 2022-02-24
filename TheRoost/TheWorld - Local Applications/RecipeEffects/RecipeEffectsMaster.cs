@@ -16,11 +16,12 @@ using Roost.World.Recipes.Entities;
 
 namespace Roost.World.Recipes
 {
-    public static class RecipeEffectsExtension
+    public static class RecipeEffectsMaster
     {
         const string REF_REQS = "grandreqs";
-        const string ORDERED_EFFECTS = "furthermore";
+        const string EXECUTE = "execute";
         const string REF_ELEMENT_XTRIGGERS = "xtriggers";
+        static string[] orderedNativeExecutionProperties = new string[] { "mutations", "aspects", "deckeffects", "effects" };
 
         private static bool propertiesClaimed = false;
 
@@ -29,48 +30,47 @@ namespace Roost.World.Recipes
             //in case player disables/enables the module several times, so it won't clog the log with "already claimed" messages
             if (propertiesClaimed == false)
             {
-                //so, the actual execution of all new effects happens via the ORDERED_EFFECTS list that contains GrandEffects entities
+                Machine.ClaimProperty<Element, Dictionary<string, List<RefMorphDetails>>>(REF_ELEMENT_XTRIGGERS);
+
+                //so, the actual execution of all new effects happens via the ORDERED_EFFECTS list that contains IRecipeExecutionEffect entities
                 //so, technically, I don't need to claim anything else from these:
                 Machine.ClaimProperty<Recipe, Dictionary<Funcine<int>, Funcine<int>>>(REF_REQS);
-                Machine.ClaimProperty<Recipe, List<GrandEffects>>(ORDERED_EFFECTS);
+                Machine.ClaimProperty<Recipe, List<IRecipeExecutionEffect>>(EXECUTE);
 
-                //but I don't want to force the user to wrap everything inside the list, so first batch of effects can be defined in recipe's main corebody
-                //for that end I claim every property of GrandEffects for the recipe, so they are loaded correctly;
-                //later on, after the loading is completed, I combine these properties into another GrandEffect
-                //then I insert it into the ORDERED_LIST, so it's executed first
-                Dictionary<string, Type> allGrandEffectsProperties = new Dictionary<string, Type>();
-                foreach (CachedFucineProperty<GrandEffects> cachedProperty in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
-                    allGrandEffectsProperties.Add(cachedProperty.LowerCaseName, cachedProperty.ThisPropInfo.PropertyType);
-                Machine.ClaimProperties<Recipe>(allGrandEffectsProperties);
-
-                Machine.ClaimProperty<Element, Dictionary<string, List<RefMorphDetails>>>(REF_ELEMENT_XTRIGGERS);
+                //but, as part of my overall design aimed to reduce the overall verbosity of jsons, 
+                //I allow to define "vanilla" part of that list in recipe's "root" definition instead of forcing to always nest it inside the list
+                //for that end I claim every property of RecipeEffectsGroup for the recipe, so they are imported as correct, new value types (expressions etc)
+                //later on, after the loading is completed, I insert these properties into ordered effects list in vanilla's order
+                Dictionary<string, Type> allRecipeEffectsProperties = new Dictionary<string, Type>();
+                foreach (CachedFucineProperty<RecipeEffectsGroup> cachedProperty in TypeInfoCache<RecipeEffectsGroup>.GetCachedFucinePropertiesForType())
+                    allRecipeEffectsProperties.Add(cachedProperty.LowerCaseName, cachedProperty.ThisPropInfo.PropertyType);
+                Machine.ClaimProperties<Recipe>(allRecipeEffectsProperties);
 
                 propertiesClaimed = true;
             }
 
-            AtTimeOfPower.RecipeRequirementsCheck.Schedule<Recipe, AspectsInContext, bool>(RefReqs, Enactors.World.patchId);
-            AtTimeOfPower.RecipeExecution.Schedule<RecipeCompletionEffectCommand, Situation, bool>(ExecuteEffectsWithReferences, PatchType.Prefix, Enactors.World.patchId);
+            AtTimeOfPower.RecipeRequirementsCheck.Schedule<Recipe, AspectsInContext>(RefReqs, Enactors.World.patchId);
+            AtTimeOfPower.RecipeExecution.Schedule<RecipeCompletionEffectCommand, Situation>(ExecuteEffectsWithReferences, PatchType.Prefix, Enactors.World.patchId);
             AtTimeOfPower.OnPostImportRecipe.Schedule<Recipe>(FlushEffectsToEffectsOrder, PatchType.Postfix, Enactors.World.patchId);
 
             Machine.Patch(typeof(Beachcomber.Usurper).GetMethodInvariant("InvokeGenericImporterForAbstractRootEntity"),
-                prefix: typeof(RecipeEffectsExtension).GetMethodInvariant("ConvertLegacyMutationDefinitions"), 
+                prefix: typeof(RecipeEffectsMaster).GetMethodInvariant("ConvertLegacyMutationDefinitions"),
                 patchId: Enactors.World.patchId);
 
             Machine.Patch(typeof(Sphere).GetMethodInvariant("NotifyTokensChangedForSphere"),
-                postfix: typeof(RecipeEffectsExtension).GetMethodInvariant("NotifyTokensChangedForSphere"),
+                postfix: typeof(RecipeEffectsMaster).GetMethodInvariant("NotifyTokensChangedForSphere"),
                 patchId: Enactors.World.patchId);
 
             Machine.Patch(typeof(SituationStorageSphere).GetPropertyInvariant("AllowStackMerge").GetGetMethod(),
-                prefix: typeof(RecipeEffectsExtension).GetMethodInvariant("AllowStackMerge"),
+                prefix: typeof(RecipeEffectsMaster).GetMethodInvariant("AllowStackMerge"),
                 patchId: Enactors.World.patchId);
         }
 
         private static void NotifyTokensChangedForSphere(SecretHistories.Constants.Events.SphereContentsChangedEventArgs args)
         {
-            if (args.TokenAdded != null)
+            if (args.TokenAdded != null && args.Sphere != Watchman.Get<HornedAxe>().GetDefaultSphere())
                 RecipeExecutionBuffer.StackTokens(args.Sphere);
         }
-
 
         private static bool AllowStackMerge(ref bool __result)
         {
@@ -81,24 +81,21 @@ namespace Roost.World.Recipes
         //Recipe.OnPostImportForSpecificEntity()
         private static void FlushEffectsToEffectsOrder(Recipe __instance)
         {
-            List<GrandEffects> effectsList = __instance.RetrieveProperty<List<GrandEffects>>(ORDERED_EFFECTS);
-            if (effectsList == null)
-            {
-                effectsList = new List<GrandEffects>();
-                __instance.SetProperty(ORDERED_EFFECTS, effectsList);
-            }
-
-            GrandEffects firstEffectsBatch = new GrandEffects();
-            bool atLeastOneExtendedEffect = false;
-            foreach (CachedFucineProperty<GrandEffects> cachedProperty in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
-                if (__instance.HasCustomProperty(cachedProperty.LowerCaseName))
+            List<IRecipeExecutionEffect> nativeEffects = new List<IRecipeExecutionEffect>();
+            foreach (string executionProperty in orderedNativeExecutionProperties)
+                if (__instance.HasCustomProperty(executionProperty))
                 {
-                    atLeastOneExtendedEffect = true;
-                    cachedProperty.SetViaFastInvoke(firstEffectsBatch, __instance.RetrieveProperty(cachedProperty.LowerCaseName));
+                    nativeEffects.Add(__instance.RetrieveProperty(executionProperty) as IRecipeExecutionEffect);
+                    __instance.RemoveProperty(executionProperty);
                 }
 
-            if (atLeastOneExtendedEffect)
-                effectsList.Insert(0, firstEffectsBatch);
+            List<IRecipeExecutionEffect> effectsList = __instance.RetrieveProperty<List<IRecipeExecutionEffect>>(EXECUTE);
+            if (effectsList == null)
+            {
+                effectsList = new List<IRecipeExecutionEffect>();
+                __instance.SetProperty(EXECUTE, effectsList);
+            }
+            effectsList.AddRange(nativeEffects);
         }
 
         //Usurper.InvokeGenericImporterForAbstractRootEntity()
@@ -124,15 +121,14 @@ namespace Roost.World.Recipes
                 }
         }
 
-        private static void ExecuteEffectsWithReferences(RecipeCompletionEffectCommand __instance, Situation situation, bool __result)
+        private static void ExecuteEffectsWithReferences(RecipeCompletionEffectCommand __instance, Situation situation)
         {
             TokenContextAccessors.SetLocalSituation(situation);
             Sphere storage = situation.GetSingleSphereByCategory(SphereCategory.SituationStorage);
-
-            List<GrandEffects> effectGroupsInOrder = __instance.Recipe.RetrieveProperty(ORDERED_EFFECTS) as List<GrandEffects>;
-            foreach (GrandEffects effectsGroup in effectGroupsInOrder)
+            List<IRecipeExecutionEffect> effectGroupsInOrder = __instance.Recipe.RetrieveProperty(EXECUTE) as List<IRecipeExecutionEffect>;
+            foreach (IRecipeExecutionEffect executionEffect in effectGroupsInOrder)
             {
-                effectsGroup.Run(situation, storage);
+                executionEffect.Execute(storage, situation);
                 RecipeExecutionBuffer.Execute();
             }
         }
@@ -143,7 +139,7 @@ namespace Roost.World.Recipes
             return xtriggers != null;
         }
 
-        private static bool RefReqs(Recipe __instance, AspectsInContext aspectsinContext, bool __result)
+        private static bool RefReqs(Recipe __instance, AspectsInContext aspectsinContext)
         {
             Dictionary<Funcine<int>, Funcine<int>> reqs = __instance.RetrieveProperty(REF_REQS) as Dictionary<Funcine<int>, Funcine<int>>;
             if (reqs == null)
@@ -162,8 +158,6 @@ namespace Roost.World.Recipes
             if (!situationFound)
                 throw Birdsong.Cack("Something strange happened. Cannot identify the current situation for requirements check.");
 
-            bool result = true;
-
             //Birdsong.Sing("Checking _reqs for {0}", __instance.Id);
             foreach (KeyValuePair<Funcine<int>, Funcine<int>> req in reqs)
             {
@@ -175,23 +169,16 @@ namespace Roost.World.Recipes
                 if (requiredValue <= -1)
                 {
                     if (presentValue >= -requiredValue)
-                    {
-                        result = false;
-                        break;
-                    }
+                        return false;
                 }
                 else
                 {
                     if (presentValue < requiredValue)
-                    {
-                        result = false;
-                        break;
-                    }
+                        return false;
                 }
             }
 
-            __result = result;
-            return result;
+            return true;
         }
 
         private static bool AspectsEqual(this AspectsDictionary dictionary1, AspectsDictionary dictionary2)

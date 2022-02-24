@@ -12,120 +12,6 @@ using UnityEngine;
 
 namespace Roost.Beachcomber
 {
-    internal static class Hoard
-    {
-        readonly static Dictionary<IEntityWithId, Dictionary<string, object>> loadedData = new Dictionary<IEntityWithId, Dictionary<string, object>>();
-        readonly static Dictionary<Type, Dictionary<string, CustomProperty>> claimedProperties = new Dictionary<Type, Dictionary<string, CustomProperty>>();
-
-        internal static void AddCustomProperty<TEntity, TProperty>(string propertyName, bool localize, TProperty defaultValue)
-            where TEntity : AbstractEntity<TEntity>
-        {
-            Type entityType = typeof(TEntity);
-
-            if (typeof(TProperty).IsValueType == false && typeof(TProperty) != typeof(string) && defaultValue != null)
-            {
-                Birdsong.Sing("Trying to assign default value for a {0} property '{1}'; but its type - {2} - is a reference type and thus can only be null.", entityType.Name, propertyName, typeof(TProperty).Name);
-                defaultValue = default(TProperty);
-            }
-
-            if (claimedProperties.ContainsKey(entityType) == false)
-                claimedProperties.Add(entityType, new Dictionary<string, CustomProperty>());
-
-            propertyName = propertyName.ToLower();
-            if (claimedProperties[entityType].ContainsKey(propertyName))
-                Birdsong.Sing("Trying to add {1} property '{0}', but the property of the same name for the same type is already added", propertyName, entityType.Name);
-            else
-                claimedProperties[entityType][propertyName] = new CustomProperty(typeof(TProperty), defaultValue, localize);
-        }
-
-        internal static void InterceptClaimedProperties(IEntityWithId entity, EntityData entityData, Type entityType)
-        {
-            if (claimedProperties.ContainsKey(entityType))
-                foreach (string propertyName in claimedProperties[entityType].Keys)
-                    if (entityData.ValuesTable.ContainsKey(propertyName))
-                    {
-                        Birdsong.Sing(VerbosityLevel.Trivia, 0, "Known-Unknown property '{0}' for {1} '{2}'", propertyName, entityType.Name, entity.Id);
-                        LoadCustomProperty(entity, propertyName, entityData.ValuesTable[propertyName]);
-                        entityData.ValuesTable.Remove(propertyName);
-                    }
-        }
-
-        internal static void LoadCustomProperty(IEntityWithId entity, object key, object data)
-        {
-            Type entityType = entity.GetType();
-            string propertyName = key.ToString();
-
-            if (claimedProperties.ContainsKey(entityType) && claimedProperties[entityType].ContainsKey(propertyName))
-            {
-                if (Ostrich.Ignores(entityType, propertyName))
-                {
-                    Birdsong.Sing(VerbosityLevel.SystemChatter, 0, "Ignoring custom property '{0}' for '{1}' {2}", propertyName, entity.Id, entityType.Name);
-                    return;
-                }
-
-                object importedValue = Panimporter.ImportProperty(entity, data, claimedProperties[entityType][propertyName].type, propertyName);
-
-                if (loadedData.ContainsKey(entity) == false)
-                    loadedData[entity] = new Dictionary<string, object>();
-                loadedData[entity].Add(propertyName, importedValue);
-            }
-        }
-
-        internal static object RetrieveProperty(IEntityWithId entity, string propertyName)
-        {
-            propertyName = propertyName.ToLower();
-            Type entityType = entity.GetType();
-
-            if (loadedData.ContainsKey(entity) && loadedData[entity].ContainsKey(propertyName))
-                return loadedData[entity][propertyName];
-            else if (claimedProperties.ContainsKey(entityType) && claimedProperties[entityType].ContainsKey(propertyName))
-                return claimedProperties[entityType][propertyName].defaultValue;
-            else 
-                return null;
-        }
-
-        internal static void SetProperty(IEntityWithId owner, string propertyName, object value)
-        {
-            propertyName = propertyName.ToLower();
-            Type ownerType = owner.GetType();
-
-            if (claimedProperties.ContainsKey(ownerType) == false || claimedProperties[ownerType].ContainsKey(propertyName) == false)
-                Birdsong.Sing("Setting an unclaimed property '{0}' for {1} '{2}'; possible typo", propertyName, ownerType.Name, owner.Id);
-
-            if (loadedData.ContainsKey(owner) == false)
-                loadedData[owner] = new Dictionary<string, object>();
-
-            loadedData[owner][propertyName] = value;
-        }
-
-        internal static bool HasCustomProperty(IEntityWithId owner, string propertyName)
-        {
-            return loadedData.ContainsKey(owner) && loadedData[owner].ContainsKey(propertyName.ToLower());
-        }
-
-        internal static IEnumerable<string> GetLocalizableProperties(Type type)
-        {
-            if (claimedProperties.ContainsKey(type))
-                return claimedProperties[type].Where(property => property.Value.localize == true).Select(property => property.Key);
-            else
-                return new List<string>();
-        }
-
-        struct CustomProperty
-        {
-            public Type type;
-            public readonly bool localize;
-            public readonly object defaultValue;
-
-            public CustomProperty(Type type, object value, bool localize)
-            {
-                this.type = type;
-                this.defaultValue = value;
-                this.localize = localize;
-            }
-        }
-    }
-
     //class that ensures loading of custom properties and entities by planting them inside the game's loading pipeline
     internal static class Cuckoo
     {
@@ -203,13 +89,144 @@ namespace Roost.Beachcomber
             return (assemblyLocation.Contains(modLocationLocal) || assemblyLocation.Contains(modLocationWorkshop));
         }
     }
+
+    //class that stores custom properties info and loaded state
+    internal static class Hoard
+    {
+        readonly static Dictionary<IEntityWithId, Dictionary<string, object>> loadedData = new Dictionary<IEntityWithId, Dictionary<string, object>>();
+        readonly static Dictionary<Type, Dictionary<string, CustomProperty>> claimedProperties = new Dictionary<Type, Dictionary<string, CustomProperty>>();
+
+        internal static void AddCustomProperty<TEntity, TProperty>(string propertyName, bool localize, TProperty defaultValue)
+            where TEntity : AbstractEntity<TEntity>
+        {
+            Type entityType = typeof(TEntity);
+
+            if (typeof(TProperty).IsValueType == false && typeof(TProperty) != typeof(string) && defaultValue != null)
+            {
+                Birdsong.Sing("Trying to assign default value for a {0} property '{1}'; but its type - {2} - is a reference type and thus can only be null.", entityType.Name, propertyName, typeof(TProperty).Name);
+                defaultValue = default(TProperty);
+            }
+
+            if (claimedProperties.ContainsKey(entityType) == false)
+                claimedProperties.Add(entityType, new Dictionary<string, CustomProperty>());
+
+            propertyName = propertyName.ToLower();
+            if (claimedProperties[entityType].ContainsKey(propertyName))
+                Birdsong.Sing("Trying to add {1} property '{0}', but the property of the same name for the same type is already added", propertyName, entityType.Name);
+            else
+                claimedProperties[entityType][propertyName] = new CustomProperty(typeof(TProperty), defaultValue, localize);
+        }
+
+        internal static void InterceptClaimedProperties(IEntityWithId entity, EntityData entityData, Type entityType)
+        {
+            if (claimedProperties.ContainsKey(entityType))
+                foreach (string propertyName in claimedProperties[entityType].Keys)
+                    if (entityData.ValuesTable.ContainsKey(propertyName))
+                    {
+                        Birdsong.Sing(VerbosityLevel.Trivia, 0, "Known-Unknown property '{0}' for {1} '{2}'", propertyName, entityType.Name, entity.Id);
+                        LoadCustomProperty(entity, propertyName, entityData.ValuesTable[propertyName]);
+                        entityData.ValuesTable.Remove(propertyName);
+                    }
+        }
+
+        internal static void LoadCustomProperty(IEntityWithId entity, string propertyName, object data)
+        {
+            Type entityType = entity.GetType();
+            propertyName = propertyName.ToLower();
+
+            if (claimedProperties.ContainsKey(entityType) && claimedProperties[entityType].ContainsKey(propertyName))
+            {
+                if (Ostrich.Ignores(entityType, propertyName))
+                {
+                    Birdsong.Sing(VerbosityLevel.SystemChatter, 0, "Ignoring custom property '{0}' for '{1}' {2}", propertyName, entity.Id, entityType.Name);
+                    return;
+                }
+
+                object importedValue = Panimporter.ImportProperty(entity, data, claimedProperties[entityType][propertyName].type, propertyName);
+
+                if (loadedData.ContainsKey(entity) == false)
+                    loadedData[entity] = new Dictionary<string, object>();
+                loadedData[entity].Add(propertyName, importedValue);
+            }
+        }
+
+        internal static object RetrieveProperty(IEntityWithId entity, string propertyName)
+        {
+            propertyName = propertyName.ToLower();
+
+            if (loadedData.ContainsKey(entity) && loadedData[entity].ContainsKey(propertyName))
+                return loadedData[entity][propertyName];
+            else
+            {
+                Type entityType = entity.GetType();
+                if (claimedProperties.ContainsKey(entityType) && claimedProperties[entityType].ContainsKey(propertyName))
+                    return claimedProperties[entityType][propertyName].defaultValue;
+                else
+                    return null;
+            }
+        }
+
+        internal static void RemoveProperty(IEntityWithId entity, string propertyName)
+        {
+            propertyName = propertyName.ToLower();
+
+            if (loadedData.ContainsKey(entity) && loadedData[entity].ContainsKey(propertyName))
+            {
+                loadedData[entity].Remove(propertyName);
+                if (loadedData[entity].Count == 0)
+                    loadedData.Remove(entity);
+            }
+            else
+                Birdsong.Sing("Trying to remove property {0} from {1} {2}, but that property isn't loaded", propertyName, entity.GetType().Name, entity.Id);
+        }
+
+        internal static void SetProperty(IEntityWithId owner, string propertyName, object value)
+        {
+            propertyName = propertyName.ToLower();
+            Type ownerType = owner.GetType();
+
+            if (claimedProperties.ContainsKey(ownerType) == false || claimedProperties[ownerType].ContainsKey(propertyName) == false)
+                Birdsong.Sing("Setting an unclaimed property '{0}' for {1} '{2}'; possible typo", propertyName, ownerType.Name, owner.Id);
+
+            if (loadedData.ContainsKey(owner) == false)
+                loadedData[owner] = new Dictionary<string, object>();
+
+            loadedData[owner][propertyName] = value;
+        }
+
+        internal static bool HasCustomProperty(IEntityWithId owner, string propertyName)
+        {
+            return loadedData.ContainsKey(owner) && loadedData[owner].ContainsKey(propertyName.ToLower());
+        }
+
+        internal static IEnumerable<string> GetLocalizableProperties(Type type)
+        {
+            if (claimedProperties.ContainsKey(type))
+                return claimedProperties[type].Where(property => property.Value.localize == true).Select(property => property.Key);
+            else
+                return new List<string>();
+        }
+
+        struct CustomProperty
+        {
+            public Type type;
+            public readonly bool localize;
+            public readonly object defaultValue;
+
+            public CustomProperty(Type type, object value, bool localize)
+            {
+                this.type = type;
+                this.defaultValue = value;
+                this.localize = localize;
+            }
+        }
+    }
 }
 
 namespace Roost
 {
     public partial class Machine
     {
-
         public static void ClaimProperty<TEntity, TProperty>(string propertyName, bool localize = false, TProperty defaultValue = default(TProperty))
             where TEntity : AbstractEntity<TEntity>
         {
@@ -258,9 +275,19 @@ namespace Roost
             Beachcomber.Hoard.SetProperty(owner, propertyName, value);
         }
 
+        public static void RemoveProperty(this IEntityWithId owner, string propertyName)
+        {
+            Beachcomber.Hoard.RemoveProperty(owner, propertyName);
+        }
+
         public static bool HasCustomProperty(this IEntityWithId owner, string propertyName)
         {
             return Beachcomber.Hoard.HasCustomProperty(owner, propertyName);
+        }
+
+        public static T GetEntity<T>(string id) where T : AbstractEntity<T>
+        {
+            return SecretHistories.UI.Watchman.Get<Compendium>().GetEntityById<T>(id);
         }
     }
 }

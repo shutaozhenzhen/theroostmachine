@@ -45,12 +45,13 @@ namespace Roost.World.Recipes
 
             foreach (Sphere sphere in creations.Keys)
             {
-                dirtySpheres.Add(sphere);
                 foreach (FutureCreation creation in creations[sphere])
                     creation.Apply(sphere);
+                dirtySpheres.Add(sphere);
             }
             creations.Clear();
 
+            dirtySpheres.Remove(Watchman.Get<HornedAxe>().GetDefaultSphere());
             foreach (Sphere sphere in dirtySpheres)
                 StackTokens(sphere);
             dirtySpheres.Clear();

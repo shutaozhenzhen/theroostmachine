@@ -34,16 +34,20 @@ namespace Roost.Beachcomber
                 return ImportDictionary;
             else if (type.isFucineEntity())
                 return ImportFucineEntity;
-            else if (type.isStruct())
-                return ImportStruct;
-
-            return ImportSimpleValue;
+            else if (type.isSomething())
+                return ConstuctWithParameters;
+            else
+                return ImportSimpleValue;
         }
 
         public static bool isList(this Type type) { return typeof(IList).IsAssignableFrom(type); }
         public static bool isDict(this Type type) { return typeof(IDictionary).IsAssignableFrom(type); }
         public static bool isFucineEntity(this Type type) { return typeof(IEntityWithId).IsAssignableFrom(type); }
-        public static bool isStruct(this Type type) { return type.IsValueType && !type.IsEnum && type.Namespace != "System"; }
+        public static bool isSomething(this Type type)
+        { //either non-AbstractEntity class or a struct 
+            return (type.IsClass && type != typeof(string) & !type.isList() && !type.isDict() && !type.isFucineEntity()) || //type is a stray class
+                   (type.IsValueType && !type.IsEnum && type.Namespace != "System"); //type is a struct
+        }
 
         public static IList ImportList(object listData, Type listType)
         {
@@ -139,9 +143,12 @@ namespace Roost.Beachcomber
 
                 if (fullSpecEntityData != null)
                 {
+                    if (entityType.IsAbstract || entityType.IsInterface)
+                        entityType = SpecifyType(fullSpecEntityData, entityType);
+
                     IEntityWithId entity = FactoryInstantiator.CreateEntity(entityType, entityData as EntityData, null);
-                    if (typeof(IWeirdSpecEntity).IsAssignableFrom(entityType))
-                        (entity as IWeirdSpecEntity).WeirdSpec(fullSpecEntityData.ValuesTable);
+                    if (typeof(ICustomSpecEntity).IsAssignableFrom(entityType))
+                        (entity as ICustomSpecEntity).CustomSpec(fullSpecEntityData.ValuesTable);
 
                     return entity;
                 }
@@ -163,44 +170,79 @@ namespace Roost.Beachcomber
             }
         }
 
-        public static object ImportStruct(object structData, Type structType)
+        private static readonly System.Collections.Generic.Dictionary<string, Type> quickTypeId = new System.Collections.Generic.Dictionary<string, Type>();
+        private const string TYPE_SPECIFIER = "$type";
+        private static Type SpecifyType(EntityData data, Type originalType)
+        {
+            string typeId = null;
+            if (data.ValuesTable.ContainsKey(TYPE_SPECIFIER))
+                typeId = data.ValuesTable[TYPE_SPECIFIER].ToString().ToLower();
+            else if (data.ValuesTable.Count == 1) foreach (DictionaryEntry entry in data.ValuesTable)
+                {
+                    typeId = entry.Key.ToString();
+                    break;
+                }
+            else
+                throw Birdsong.Cack("Unspecified type for an abstract entity or interface.");
+
+            Type newType;
+            if (quickTypeId.ContainsKey(typeId))
+                newType = quickTypeId[typeId];
+            else
+                newType = Type.GetType(typeId, true, false);
+
+            if (originalType.IsAssignableFrom(newType) == false)
+                throw Birdsong.Cack("Type '{0}' tries to substitute '{1}', but doesn't inherit from it.", newType, originalType);
+
+            return newType;
+        }
+
+        public static object ConstuctWithParameters(object parametersData, Type type)
         {
             try
             {
-                ArrayList dataAsList = structData as ArrayList;
+                if (parametersData == null)
+                    return FactoryInstantiator.CreateObjectWithDefaultConstructor(type);
 
-                if (dataAsList == null)
-                    dataAsList = new ArrayList() { structData };
+                ArrayList parametersList = parametersData as ArrayList;
+                if (parametersList == null)
+                    parametersList = new ArrayList() { parametersData };
 
-                Type[] parameterTypes = new Type[dataAsList.Count];
+                Type[] parameterTypes = new Type[parametersList.Count];
                 for (int n = 0; n < parameterTypes.Length; n++)
-                    parameterTypes[n] = dataAsList[n].GetType();
+                {
+                    //temporary (hopefully) solution; 
+                    if (parametersList[n].GetType().IsClass)
+                        parametersList[n] = parametersList[n].ToString();
+
+                    parameterTypes[n] = parametersList[n].GetType();
+                }
 
                 //trying to find a ctor that matches passed parameter types
-                ConstructorInfo matchingConstructor = structType.GetConstructor(parameterTypes);
+                ConstructorInfo matchingConstructor = type.GetConstructor(parameterTypes);
                 //but since these types are loaded and interpreted by JSON, they can be borked and this won't always work
                 if (matchingConstructor != null)
-                    return matchingConstructor.Invoke(dataAsList.ToArray());
+                    return matchingConstructor.Invoke(parametersList.ToArray());
 
                 //in this case we are trying to at least find a constructor with the matching number of arguments (now *this* should work in most cases)
-                foreach (ConstructorInfo constructor in structType.GetConstructors())
+                foreach (ConstructorInfo constructor in type.GetConstructors())
                 {
                     ParameterInfo[] parameters = constructor.GetParameters();
-                    if (parameters.Length == dataAsList.Count)
+                    if (parameters.Length == parametersList.Count)
                     {
                         //need to cast these parameters to be usable
-                        for (int n = 0; n < dataAsList.Count; n++)
-                            dataAsList[n] = ConvertValue(dataAsList[n], parameters[n].ParameterType);
+                        for (int n = 0; n < parametersList.Count; n++)
+                            parametersList[n] = ConvertValue(parametersList[n], parameters[n].ParameterType);
 
-                        return constructor.Invoke(dataAsList.ToArray());
+                        return constructor.Invoke(parametersList.ToArray());
                     }
                 }
 
-                throw Birdsong.Cack("NO MATCHING CONSTRUCTOR FOUND FOR {0} WITH ARGUMENTS '{1}'", structType.Name, parameterTypes.UnpackAsString());
+                throw Birdsong.Cack("NO MATCHING CONSTRUCTOR FOUND FOR {0} WITH ARGUMENTS '{1}'", type.Name, parameterTypes.UnpackAsString());
             }
             catch (Exception ex)
             {
-                throw Birdsong.Cack("STRUCT DATA[] IS MALFORMED - {0}", ex.Message);
+                throw Birdsong.Cack("PROPERTY DATA IS MALFORMED - {0}", ex.Message);
             }
         }
 
@@ -236,17 +278,17 @@ namespace Roost.Beachcomber
 
 namespace SecretHistories.Fucine
 {
-    public interface IWeirdSpecEntity
+    public interface ICustomSpecEntity
     {
-        void WeirdSpec(Hashtable data);
+        void CustomSpec(Hashtable data);
     }
 
     [AttributeUsage(AttributeTargets.Property)]
-    public class FucineStruct : Fucine
+    public class FucineSpecial : Fucine
     {
-        public FucineStruct() { }
+        public FucineSpecial() { }
 
-        public FucineStruct(params object[] defaultValue)
+        public FucineSpecial(params object[] defaultValue)
         {
             DefaultValue = new ArrayList(defaultValue);
         }

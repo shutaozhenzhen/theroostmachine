@@ -26,7 +26,7 @@ namespace Roost.Vagabond
         {
             new MinimizePromo(minimizePromo);
             new EnableAchievements(Enactors.Elegiast.enabledSettingId, Enactors.Elegiast.patchId, Roost.Elegiast.CustomAchievementsManager.Enact);
-            new PatchSwitcher(Enactors.World.enabledSettingId, Enactors.World.patchId, Roost.World.Recipes.RecipeEffectsExtension.Enact);
+            new PatchSwitcher(Enactors.World.enabledSettingId, Enactors.World.patchId, Roost.World.Recipes.RecipeEffectsMaster.Enact);
         }
 
         internal static T GetConfigValueSafe<T>(string configId, T valueIfNotDefined)

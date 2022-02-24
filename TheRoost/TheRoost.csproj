@@ -36,11 +36,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Beachcomber - Data Loading\BeachcomberIgnore.cs" />
+    <Compile Include="Beachcomber - Data Loading\BeachcomberJSON.cs" />
     <Compile Include="TheWorld - Local Applications\Bugfixes.cs" />
-    <Compile Include="TheWorld - Local Applications\Elements\CardVFXMaster.cs" />
-    <Compile Include="TheWorld - Local Applications\Inductions.cs" />
+    <Compile Include="TheWorld - Local Applications\CardVFXMaster.cs" />
+    <Compile Include="TheWorld - Local Applications\RecipeEffects\RecipeExecutionEntities.cs" />
+    <Compile Include="TheWorld - Local Applications\RecipeLinksMaster.cs" />
     <Compile Include="TheWorld - Local Applications\RecipeEffects\RecipeExecutionBuffer.cs" />
-    <Compile Include="TheWorld - Local Applications\RecipeEffects\RecipeEffectsExtension.cs" />
+    <Compile Include="TheWorld - Local Applications\RecipeEffects\RecipeEffectsMaster.cs" />
     <Compile Include="Twins - Expressions and Contexts\ContextAccessors.cs" />
     <Compile Include="TheWorld - Local Applications\RecipeEffects\RecipeEffectsEntities.cs" />
     <Compile Include="Twins - Expressions and Contexts\FuncineParser.cs" />
