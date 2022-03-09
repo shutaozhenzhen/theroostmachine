@@ -35,7 +35,7 @@ namespace Roost.Beachcomber
             else if (type.isFucineEntity())
                 return ImportFucineEntity;
             else if (type.isSomething())
-                return ConstuctWithParameters;
+                return ConstuctFromParameters;
             else
                 return ImportSimpleValue;
         }
@@ -143,9 +143,6 @@ namespace Roost.Beachcomber
 
                 if (fullSpecEntityData != null)
                 {
-                    if (entityType.IsAbstract || entityType.IsInterface)
-                        entityType = SpecifyType(fullSpecEntityData, entityType);
-
                     IEntityWithId entity = FactoryInstantiator.CreateEntity(entityType, entityData as EntityData, null);
                     if (typeof(ICustomSpecEntity).IsAssignableFrom(entityType))
                         (entity as ICustomSpecEntity).CustomSpec(fullSpecEntityData.ValuesTable);
@@ -170,34 +167,7 @@ namespace Roost.Beachcomber
             }
         }
 
-        private static readonly System.Collections.Generic.Dictionary<string, Type> quickTypeId = new System.Collections.Generic.Dictionary<string, Type>();
-        private const string TYPE_SPECIFIER = "$type";
-        private static Type SpecifyType(EntityData data, Type originalType)
-        {
-            string typeId = null;
-            if (data.ValuesTable.ContainsKey(TYPE_SPECIFIER))
-                typeId = data.ValuesTable[TYPE_SPECIFIER].ToString().ToLower();
-            else if (data.ValuesTable.Count == 1) foreach (DictionaryEntry entry in data.ValuesTable)
-                {
-                    typeId = entry.Key.ToString();
-                    break;
-                }
-            else
-                throw Birdsong.Cack("Unspecified type for an abstract entity or interface.");
-
-            Type newType;
-            if (quickTypeId.ContainsKey(typeId))
-                newType = quickTypeId[typeId];
-            else
-                newType = Type.GetType(typeId, true, false);
-
-            if (originalType.IsAssignableFrom(newType) == false)
-                throw Birdsong.Cack("Type '{0}' tries to substitute '{1}', but doesn't inherit from it.", newType, originalType);
-
-            return newType;
-        }
-
-        public static object ConstuctWithParameters(object parametersData, Type type)
+        public static object ConstuctFromParameters(object parametersData, Type type)
         {
             try
             {
@@ -283,6 +253,7 @@ namespace SecretHistories.Fucine
         void CustomSpec(Hashtable data);
     }
 
+    //normal FucineValue won't accept array as DefaultValue; but we need that to construct some structs/classes
     [AttributeUsage(AttributeTargets.Property)]
     public class FucineSpecial : Fucine
     {
