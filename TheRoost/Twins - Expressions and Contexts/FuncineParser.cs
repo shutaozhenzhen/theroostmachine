@@ -63,8 +63,8 @@ namespace Roost.Twins
             //semi-solved by parser catching all-digits element names
             return (expression.IndexOfAny(referenceOpening) == -1 && expression.IndexOfAny(operationSigns) == -1
                 && char.IsDigit(expression[0]) == false && expression.Any(char.IsLetter) == true
-                && expression.StartsWith("true") == false
-                && expression.StartsWith("false") == false);
+                && expression.Equals("true", StringComparison.InvariantCultureIgnoreCase) == false
+                && expression.Equals("false", StringComparison.InvariantCultureIgnoreCase) == false);
         }
 
         public static void PopulateFucineReference(string referenceData, out string elementId, out Funcine<bool> filter, out FuncineRef.SphereTokensRef targetTokens, out FuncineRef.SpecialOperation special)

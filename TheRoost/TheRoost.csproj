@@ -36,10 +36,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Beachcomber - Data Loading\BeachcomberIgnore.cs" />
-    <Compile Include="Beachcomber - Data Loading\BeachcomberJSON.cs" />
+    <Compile Include="Beachcomber - Data Loading\BeachcomberJSONops.cs" />
     <Compile Include="TheWorld - Local Applications\Bugfixes.cs" />
     <Compile Include="TheWorld - Local Applications\CardVFXMaster.cs" />
-    <Compile Include="TheWorld - Local Applications\RecipeEffects\RecipeExecutionEntities.cs" />
     <Compile Include="TheWorld - Local Applications\RecipeLinksMaster.cs" />
     <Compile Include="TheWorld - Local Applications\RecipeEffects\RecipeExecutionBuffer.cs" />
     <Compile Include="TheWorld - Local Applications\RecipeEffects\RecipeEffectsMaster.cs" />
@@ -73,7 +72,8 @@
       <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\GalaxyCSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="NCalc">
+    <Reference Include="NCalc, Version=3.5.0.2, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\NCalc.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
@@ -83,10 +83,6 @@
     </Reference>
     <Reference Include="OrbCreations">
       <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\OrbCreations.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="SecretHistories.Constants">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\SecretHistories.Constants.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="SecretHistories.Enums">

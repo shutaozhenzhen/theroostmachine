@@ -19,9 +19,7 @@ namespace Roost.Beachcomber
         private const string INHERIT_ADDITIVE = "$derives";
         private const string INHERIT_OVERRIDE = "$extends";
         private const string INHERIT_OVERRIDE_LEGACY = "extends";
-        private const string IGNORE_GROUPS = "$ignoregroups";
-        private const string VANILLA_GROUP = "vanilla";
-
+        private const string CONTENT_GROUPS = "$contentgroups";
         private const string PRIORITY = "$priority";
 
         internal static void Enact()
@@ -79,10 +77,10 @@ namespace Roost.Beachcomber
 
                     foreach (EntityData modEntity in moddedEntityData.Values)
                     {
-                        ArrayList ignoredGroups = modEntity.GetArrayList(IGNORE_GROUPS);
+                        ArrayList contentgroups = modEntity.GetArrayList(CONTENT_GROUPS);
                         bool skipImport = false;
-                        foreach (string ignoreGroupId in ignoredGroups)
-                            if (Ostrich.Ignores(ignoreGroupId))
+                        foreach (string groupId in contentgroups)
+                            if (Ostrich.Ignores(groupId))
                             {
                                 skipImport = true;
                                 break;

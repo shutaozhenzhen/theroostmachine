@@ -21,7 +21,7 @@ namespace Roost.World.Recipes
 
         private static DealersTable dealerstable;
         private static Dealer dealer;
-        
+
         internal static void Enact()
         {
             Machine.ClaimProperty<DeckSpec, bool>(DECK_AUTO_SHUFFLE);
@@ -72,6 +72,8 @@ namespace Roost.World.Recipes
             IHasElementTokens drawPile = ____dealersTable.GetDrawPile(fromDeckSpec.Id);
 
             __result = drawPile.GetElementTokens()[drawPile.GetTotalStacksCount() - 1];
+            //need to exclude the token from the deck sphere right now so the next calculations and operations are correct
+            __result.SetSphere(Watchman.Get<HornedAxe>().GetDefaultSphere(), new Context(Context.ActionSource.SituationEffect));
 
             if (fromDeckSpec.RetrieveProperty<bool>(DECK_AUTO_SHUFFLE))
                 ____dealersTable.RenewDeck(__instance, fromDeckSpec.Id);
@@ -92,7 +94,7 @@ namespace Roost.World.Recipes
             return false;
         }
 
-        public static void RunExtendedDeckEffects(RecipeEffectsGroup effectsGroup, Sphere onSphere)
+        public static void RunExtendedDeckEffects(GrandEffects effectsGroup, Sphere onSphere)
         {
             DeckShuffles(effectsGroup.DeckShuffles);
             DeckForbids(effectsGroup.DeckForbids);

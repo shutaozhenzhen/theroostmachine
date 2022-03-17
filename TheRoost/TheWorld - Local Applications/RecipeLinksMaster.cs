@@ -19,7 +19,7 @@ namespace Roost.World.Recipes
             Machine.ClaimProperty<Recipe, int>(RECIPE_PRIORITY);
 
             Machine.Patch(typeof(AttemptAspectInductionCommand).GetMethodInvariant("Execute"),
-                prefix: typeof(RecipeLinkMaster).GetMethodInvariant("StoreSituation"));
+                prefix: typeof(RecipeLinkMaster).GetMethodInvariant("StoreSituationFromWhichInductionHappens"));
 
             Machine.Patch(typeof(AttemptAspectInductionCommand).GetMethodInvariant("PerformAspectInduction"),
                 prefix: typeof(RecipeLinkMaster).GetMethodInvariant("PerformAspectInduction"));
@@ -38,13 +38,13 @@ namespace Roost.World.Recipes
             if (__instance.HasCustomProperty(RECIPE_PRIORITY))
             {
                 __result = __instance.RetrieveProperty<int>(RECIPE_PRIORITY);
-                Birdsong.Sing(__instance.Id, __result);
                 return false;
             }
             return true;
         }
 
-        private static void StoreSituation(Situation situation)
+        //AttemptAspectInductionCommand.Execute()
+        private static void StoreSituationFromWhichInductionHappens(Situation situation)
         {
             currentSituation = situation;
         }

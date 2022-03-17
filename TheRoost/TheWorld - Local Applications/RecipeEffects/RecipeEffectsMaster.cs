@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
+
+using System.Reflection.Emit;
 
 using SecretHistories.Core;
 using SecretHistories.Entities;
@@ -14,14 +17,15 @@ using Roost.Twins;
 using Roost.Twins.Entities;
 using Roost.World.Recipes.Entities;
 
+using HarmonyLib;
+
 namespace Roost.World.Recipes
 {
     public static class RecipeEffectsMaster
     {
         const string REF_REQS = "grandreqs";
-        const string EXECUTE = "execute";
-        const string REF_ELEMENT_XTRIGGERS = "xtriggers";
-        static string[] orderedNativeExecutionProperties = new string[] { "mutations", "aspects", "deckeffects", "effects" };
+        const string GRAND_EFFECTS = "grandeffects";
+        const string ROOST_EFFECTS = "$roostrecipeeffects";
 
         private static bool propertiesClaimed = false;
 
@@ -30,35 +34,34 @@ namespace Roost.World.Recipes
             //in case player disables/enables the module several times, so it won't clog the log with "already claimed" messages
             if (propertiesClaimed == false)
             {
-                Machine.ClaimProperty<Element, Dictionary<string, List<RefMorphDetails>>>(REF_ELEMENT_XTRIGGERS);
+                Machine.ClaimProperty<Element, Dictionary<string, List<RefMorphDetails>>>("xtriggers");
 
-                //so, the actual execution of all new effects happens via the ORDERED_EFFECTS list that contains IRecipeExecutionEffect entities
-                //so, technically, I don't need to claim anything else from these:
                 Machine.ClaimProperty<Recipe, Dictionary<Funcine<int>, Funcine<int>>>(REF_REQS);
-                Machine.ClaimProperty<Recipe, List<IRecipeExecutionEffect>>(EXECUTE);
+                Machine.ClaimProperty<Recipe, Dictionary<Funcine<int>, Funcine<int>>>(GRAND_EFFECTS);
+                Machine.ClaimProperty<Recipe, Dictionary<Funcine<int>, Funcine<int>>>(ROOST_EFFECTS);
 
-                //but, as part of my overall design aimed to reduce the overall verbosity of jsons, 
-                //I allow to define "vanilla" part of that list in recipe's "root" definition instead of forcing to always nest it inside the list
-                //for that end I claim every property of RecipeEffectsGroup for the recipe, so they are imported as correct, new value types (expressions etc)
-                //later on, after the loading is completed, I insert these properties into ordered effects list in vanilla's order
                 Dictionary<string, Type> allRecipeEffectsProperties = new Dictionary<string, Type>();
-                foreach (CachedFucineProperty<RecipeEffectsGroup> cachedProperty in TypeInfoCache<RecipeEffectsGroup>.GetCachedFucinePropertiesForType())
+                foreach (CachedFucineProperty<GrandEffects> cachedProperty in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
                     allRecipeEffectsProperties.Add(cachedProperty.LowerCaseName, cachedProperty.ThisPropInfo.PropertyType);
                 Machine.ClaimProperties<Recipe>(allRecipeEffectsProperties);
 
                 propertiesClaimed = true;
             }
+            /*
+                       AtTimeOfPower.OnPostImportRecipe.Schedule<Recipe>(FlushEffects, PatchType.Postfix, Enactors.World.patchId);
+            
+                        AtTimeOfPower.RecipeRequirementsCheck.Schedule<Recipe, AspectsInContext>(RefReqs, Enactors.World.patchId);
 
-            AtTimeOfPower.RecipeRequirementsCheck.Schedule<Recipe, AspectsInContext>(RefReqs, Enactors.World.patchId);
-            AtTimeOfPower.RecipeExecution.Schedule<RecipeCompletionEffectCommand, Situation>(ExecuteEffectsWithReferences, PatchType.Prefix, Enactors.World.patchId);
-            AtTimeOfPower.OnPostImportRecipe.Schedule<Recipe>(FlushEffectsToEffectsOrder, PatchType.Postfix, Enactors.World.patchId);
-
+                        Machine.Patch(typeof(RecipeCompletionEffectCommand).GetMethodInvariant("Execute"),
+                            transpiler: typeof(RecipeEffectsMaster).GetMethodInvariant("RunRefEffectsTranspiler"),
+                            patchId: Enactors.World.patchId);
+                        */
             Machine.Patch(typeof(Beachcomber.Usurper).GetMethodInvariant("InvokeGenericImporterForAbstractRootEntity"),
-                prefix: typeof(RecipeEffectsMaster).GetMethodInvariant("ConvertLegacyMutationDefinitions"),
-                patchId: Enactors.World.patchId);
+                 prefix: typeof(RecipeEffectsMaster).GetMethodInvariant("ConvertLegacyMutationDefinitions"),
+                 patchId: Enactors.World.patchId);
 
             Machine.Patch(typeof(Sphere).GetMethodInvariant("NotifyTokensChangedForSphere"),
-                postfix: typeof(RecipeEffectsMaster).GetMethodInvariant("NotifyTokensChangedForSphere"),
+                postfix: typeof(RecipeEffectsMaster).GetMethodInvariant("TryStackTokens"),
                 patchId: Enactors.World.patchId);
 
             Machine.Patch(typeof(SituationStorageSphere).GetPropertyInvariant("AllowStackMerge").GetGetMethod(),
@@ -66,9 +69,9 @@ namespace Roost.World.Recipes
                 patchId: Enactors.World.patchId);
         }
 
-        private static void NotifyTokensChangedForSphere(SecretHistories.Constants.Events.SphereContentsChangedEventArgs args)
+        private static void TryStackTokens(SecretHistories.Constants.Events.SphereContentsChangedEventArgs args)
         {
-            if (args.TokenAdded != null && args.Sphere != Watchman.Get<HornedAxe>().GetDefaultSphere())
+            if (args.TokenAdded != null && args.Sphere.AllowStackMerge && args.Sphere != Watchman.Get<HornedAxe>().GetDefaultSphere())
                 RecipeExecutionBuffer.StackTokens(args.Sphere);
         }
 
@@ -79,23 +82,18 @@ namespace Roost.World.Recipes
         }
 
         //Recipe.OnPostImportForSpecificEntity()
-        private static void FlushEffectsToEffectsOrder(Recipe __instance)
+        private static void FlushEffects(Recipe __instance)
         {
-            List<IRecipeExecutionEffect> nativeEffects = new List<IRecipeExecutionEffect>();
-            foreach (string executionProperty in orderedNativeExecutionProperties)
-                if (__instance.HasCustomProperty(executionProperty))
+            GrandEffects recipeEffects = new GrandEffects();
+            bool atLeastOneEffect = false;
+            foreach (CachedFucineProperty<GrandEffects> cachedProperty in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
+                if (__instance.HasCustomProperty(cachedProperty.LowerCaseName))
                 {
-                    nativeEffects.Add(__instance.RetrieveProperty(executionProperty) as IRecipeExecutionEffect);
-                    __instance.RemoveProperty(executionProperty);
+                    atLeastOneEffect = true;
+                    cachedProperty.SetViaFastInvoke(recipeEffects, __instance.RetrieveProperty(cachedProperty.LowerCaseName));
                 }
-
-            List<IRecipeExecutionEffect> effectsList = __instance.RetrieveProperty<List<IRecipeExecutionEffect>>(EXECUTE);
-            if (effectsList == null)
-            {
-                effectsList = new List<IRecipeExecutionEffect>();
-                __instance.SetProperty(EXECUTE, effectsList);
-            }
-            effectsList.AddRange(nativeEffects);
+            if (atLeastOneEffect)
+                __instance.SetProperty(ROOST_EFFECTS, recipeEffects);
         }
 
         //Usurper.InvokeGenericImporterForAbstractRootEntity()
@@ -121,22 +119,29 @@ namespace Roost.World.Recipes
                 }
         }
 
-        private static void ExecuteEffectsWithReferences(RecipeCompletionEffectCommand __instance, Situation situation)
+        private static IEnumerable<CodeInstruction> RunRefEffectsTranspiler(IEnumerable<CodeInstruction> instructions)
         {
-            TokenContextAccessors.SetLocalSituation(situation);
-            Sphere storage = situation.GetSingleSphereByCategory(SphereCategory.SituationStorage);
-            List<IRecipeExecutionEffect> effectGroupsInOrder = __instance.Recipe.RetrieveProperty(EXECUTE) as List<IRecipeExecutionEffect>;
-            foreach (IRecipeExecutionEffect executionEffect in effectGroupsInOrder)
+            ///transpiler is very simple this time - we just wait until the native code does the actual object creation
+            ///after it's done, we call InvokeGenericImporterForAbstractRootEntity() to modify the object as we please
+            ///all other native transmutations are skipped
+            List<CodeInstruction> myCode = new List<CodeInstruction>()
             {
-                executionEffect.Execute(storage, situation);
-                RecipeExecutionBuffer.Execute();
-            }
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Ldarg_1),
+                new CodeInstruction(OpCodes.Call, typeof(RecipeEffectsMaster).GetMethodInvariant("RefEffects")),
+            };
+
+            Vagabond.CodeInstructionMask mask = instruction => instruction.operand as System.Reflection.MethodInfo == typeof(RecipeCompletionEffectCommand).GetMethodInvariant("RunRecipeEffects");
+            return instructions.ReplaceAllBeforeMask(mask, myCode, false);
         }
 
-        public static bool TryGetRefXTriggers(string elementId, out Dictionary<string, List<RefMorphDetails>> xtriggers)
+        private static void RefEffects(RecipeCompletionEffectCommand command, Situation situation)
         {
-            xtriggers = Watchman.Get<Compendium>().GetEntityById<Element>(elementId).RetrieveProperty(REF_ELEMENT_XTRIGGERS) as Dictionary<string, List<RefMorphDetails>>;
-            return xtriggers != null;
+            Birdsong.Sing(VerbosityLevel.SystemChatter, 0, "EXECUTING: {0} ", command.Recipe.Id);
+            situation.Recipe = command.Recipe;
+            GrandEffects recipeEffects = situation.Recipe.RetrieveProperty<GrandEffects>(ROOST_EFFECTS);
+            if (recipeEffects != null)
+                recipeEffects.Run(situation, situation.GetSingleSphereByCategory(SphereCategory.SituationStorage));
         }
 
         private static bool RefReqs(Recipe __instance, AspectsInContext aspectsinContext)

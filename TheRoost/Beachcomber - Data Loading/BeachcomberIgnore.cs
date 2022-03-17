@@ -6,7 +6,7 @@ namespace Roost.Beachcomber
     internal static class Ostrich
     {
         private readonly static Dictionary<Type, List<string>> ignoredProperties = new Dictionary<Type, List<string>>();
-        private readonly static HashSet<string> ignoredEntityGroups = new HashSet<string>() { "examples" };
+        private readonly static HashSet<string> ignoredEntityGroups = new HashSet<string>() { "dontload" };
 
         internal static bool ignoreVanillaContent { get; set; }
 

@@ -237,8 +237,41 @@ namespace Roost.Vagabond
             return finalCodes.AsEnumerable();
         }
 
+        internal static IEnumerable<CodeInstruction> TranspilerReplaceAllBeforeMask(IEnumerable<CodeInstruction> instructions, CodeInstructionMask checkMask, List<CodeInstruction> myCode, bool inclusive, int skipOccurences)
+        {
+            if (myCode == null || myCode.Count == 0)
+                return instructions;
+
+            List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+            List<CodeInstruction> finalCodes = myCode;
+
+            int currentOccurence = 0;
+            while (codes.Count > 0)
+            {
+                if (checkMask(codes[0]))
+                {
+                    currentOccurence++;
+                    if (currentOccurence <= skipOccurences)
+                        continue;
+                    else
+                    {
+                        if (!inclusive)
+                            codes.RemoveAt(0);
+
+                        break;
+                    }
+                }
+
+                codes.RemoveAt(0);
+            }
+
+            finalCodes.AddRange(codes);
+            return finalCodes.AsEnumerable();
+        }
+
         internal static void LogILCodes(IEnumerable<CodeInstruction> instructions)
         {
+            Birdsong.Sing("IL CODE:");
             foreach (CodeInstruction instruction in instructions)
                 Birdsong.Sing(instruction.opcode, instruction.operand == null ? string.Empty : instruction.operand, instruction.labels.UnpackAsString());
         }
@@ -293,6 +326,11 @@ namespace Roost
         public static IEnumerable<CodeInstruction> ReplaceAllAfterMask(this IEnumerable<CodeInstruction> original, Vagabond.CodeInstructionMask codePointMask, List<CodeInstruction> myCode, bool inclusive, int occurencesNumber = 0)
         {
             return Vagabond.HarmonyMask.TranspilerReplaceAllAfterMask(original, codePointMask, myCode, inclusive, occurencesNumber);
+        }
+
+        public static IEnumerable<CodeInstruction> ReplaceAllBeforeMask(this IEnumerable<CodeInstruction> original, Vagabond.CodeInstructionMask codePointMask, List<CodeInstruction> myCode, bool inclusive, int occurencesNumber = 0)
+        {
+            return Vagabond.HarmonyMask.TranspilerReplaceAllBeforeMask(original, codePointMask, myCode, inclusive, occurencesNumber);
         }
 
         public static void LogILCodes(this IEnumerable<CodeInstruction> codes)

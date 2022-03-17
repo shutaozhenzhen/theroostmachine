@@ -82,12 +82,12 @@ namespace Roost.Enactors
 
         internal static void Enact()
         {
-          //if (Machine.GetConfigValue<int>(enabledSettingId, 1) == 1)
-              //Roost.World.Recipes.RecipeEffectsMaster.Enact();
+            if (Machine.GetConfigValue<int>(enabledSettingId, 1) == 1)
+                Roost.World.Recipes.RecipeEffectsMaster.Enact();
 
-            //Roost.World.Recipes.Legerdemain.Enact();
-            //Roost.World.Elements.CardVFXMaster.Enact();
-            //Roost.World.Recipes.RecipeLinkMaster.Enact();
+            Roost.World.Recipes.Legerdemain.Enact();
+            Roost.World.Elements.CardVFXMaster.Enact();
+            Roost.World.Recipes.RecipeLinkMaster.Enact();
             Roost.World.BugsPicker.Fix();
         }
     }

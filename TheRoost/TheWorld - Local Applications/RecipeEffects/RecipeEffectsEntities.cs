@@ -16,6 +16,149 @@ using UnityEngine;
 
 namespace Roost.World.Recipes.Entities
 {
+    public class GrandEffects : AbstractEntity<GrandEffects>
+    {
+        [FucineValue] public string comments { get; set; }
+
+        [FucineValue] public Dictionary<Funcine<bool>, List<RefMutationEffect>> Mutations { get; set; }
+        [FucineValue] public Dictionary<string, Funcine<int>> Aspects { get; set; }
+
+        [FucineValue] public List<string> DeckShuffles { get; set; }
+        [FucineValue] public Dictionary<string, List<string>> DeckForbids { get; set; }
+        [FucineValue] public Dictionary<string, List<string>> DeckAllows { get; set; }
+        [FucineValue] public Dictionary<string, Funcine<int>> DeckDraws { get; set; }
+        [FucineValue] public Dictionary<string, List<string>> DeckAdds { get; set; }
+        [FucineValue] public Dictionary<string, List<Funcine<bool>>> DeckTakeOuts { get; set; }
+        [FucineValue] public Dictionary<string, List<Funcine<bool>>> DeckInserts { get; set; }
+
+        [FucineValue] public Dictionary<Funcine<bool>, Funcine<int>> Effects { get; set; }
+        [FucineValue] public Dictionary<Funcine<bool>, Funcine<int>> Decays { get; set; }
+
+        [FucineValue(DefaultValue = RetirementVFX.None)] public RetirementVFX DeckEffectsVFX { get; set; }
+        [FucineValue(DefaultValue = RetirementVFX.None)] public RetirementVFX EffectsVFX { get; set; }
+        [FucineValue(DefaultValue = RetirementVFX.CardLight)] public RetirementVFX DecaysVFX { get; set; }
+
+        public GrandEffects() { }
+        public GrandEffects(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
+        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
+
+        public void Run(Situation situation, Sphere onSphere)
+        {
+            RunRefMutations(onSphere);
+            RecipeExecutionBuffer.ApplyMutations();
+
+            RunXTriggers(onSphere, situation);
+            RecipeExecutionBuffer.ApplyAll();
+
+            Legerdemain.RunExtendedDeckEffects(this, onSphere);
+
+            RunRefEffects(onSphere);
+            RecipeExecutionBuffer.ApplyRetirements();
+            RecipeExecutionBuffer.ApplyCreations();
+
+            RunRefDecays(onSphere);
+            RecipeExecutionBuffer.ApplyRetirements();
+            RecipeExecutionBuffer.ApplyTransformations();
+        }
+
+        public void RunRefMutations(Sphere sphere)
+        {
+            if (Mutations == null)
+                return;
+
+            List<Token> tokens = sphere.GetElementTokens();
+
+            foreach (Funcine<bool> filter in Mutations.Keys)
+            {
+                List<Token> targets = tokens.FilterTokens(filter);
+
+                if (targets.Count > 0)
+                    foreach (RefMutationEffect mutationEffect in Mutations[filter])
+                        RecipeExecutionBuffer.ScheduleMutation(targets, mutationEffect.Mutate, mutationEffect.Level.value, mutationEffect.Additive, mutationEffect.VFX);
+            }
+        }
+
+        private static readonly AspectsDictionary allCatalystsInSphere = new AspectsDictionary();
+        public void RunXTriggers(Sphere sphere, Situation situation)
+        {
+            allCatalystsInSphere.Clear();
+            if (Aspects != null)
+                foreach (KeyValuePair<string, Funcine<int>> catalyst in Aspects)
+                    allCatalystsInSphere[catalyst.Key] = catalyst.Value.value;
+            allCatalystsInSphere.ApplyMutations(sphere.GetTotalAspects());
+
+            if (allCatalystsInSphere.Count == 0)
+                return;
+
+            Dictionary<string, List<RefMorphDetails>> xtriggers;
+            foreach (Token token in sphere.GetElementTokens())
+            {
+                if (token.IsValidElementStack() == false)
+                    continue;
+
+                xtriggers = Watchman.Get<Compendium>().GetEntityById<Element>(token.PayloadEntityId).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
+
+                if (xtriggers != null)
+                    foreach (KeyValuePair<string, int> catalyst in allCatalystsInSphere)
+                        if (xtriggers.ContainsKey(catalyst.Key)) foreach (RefMorphDetails morphDetails in xtriggers[catalyst.Key])
+                                morphDetails.Execute(situation, token, token.PayloadEntityId, 1, catalyst.Value, true);
+
+                AspectsDictionary tokenAspects = new AspectsDictionary(Machine.GetEntity<Element>(token.PayloadEntityId).Aspects);
+                tokenAspects.ApplyMutations(token.GetCurrentMutations());
+
+                foreach (KeyValuePair<string, int> aspect in tokenAspects)
+                {
+                    xtriggers = Watchman.Get<Compendium>().GetEntityById<Element>(token.PayloadEntityId).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
+                    if (xtriggers != null)
+                        foreach (KeyValuePair<string, int> catalyst in allCatalystsInSphere)
+                            if (xtriggers.ContainsKey(catalyst.Key)) foreach (RefMorphDetails morphDetails in xtriggers[catalyst.Key])
+                                    morphDetails.Execute(situation, token, aspect.Key, aspect.Value, catalyst.Value, false);
+                }
+            }
+
+            TokenContextAccessors.ResetLocalToken();
+        }
+
+        public void RunRefEffects(Sphere storage)
+        {
+            if (Effects == null)
+                return;
+
+            List<Token> allTokens = storage.GetElementTokens();
+            foreach (Funcine<bool> filter in Effects.Keys)
+            {
+                int level = Effects[filter].value;
+                if (level < 0)
+                {
+                    List<Token> filteredTokens = allTokens.FilterTokens(filter);
+                    while (level < 0 && filteredTokens.Count > 0)
+                    {
+                        RecipeExecutionBuffer.ScheduleRetirement(filteredTokens[UnityEngine.Random.Range(0, filteredTokens.Count)], EffectsVFX);
+                        level++;
+                    }
+                }
+                else
+                    RecipeExecutionBuffer.ScheduleCreation(storage, filter.formula, level, EffectsVFX);
+            }
+        }
+
+        public void RunRefDecays(Sphere sphere)
+        {
+            if (Decays == null)
+                return;
+
+            List<Token> tokens = sphere.GetElementTokens();
+
+            foreach (Funcine<bool> filter in Decays.Keys)
+            {
+                List<Token> targets = tokens.FilterTokens(filter);
+                if (targets.Count > 0)
+                    foreach (Token token in targets)
+                        RecipeExecutionBuffer.ScheduleDecay(token, DecaysVFX);
+            }
+        }
+    }
+
     public class RefMutationEffect : AbstractEntity<RefMutationEffect>, ICustomSpecEntity
     {
         [FucineValue(ValidateAsElementId = true, DefaultValue = null)]
@@ -144,46 +287,4 @@ namespace Roost.World.Recipes.Entities
             }
         }
     }
-
-    public abstract class RecipeEffectsGroup : AbstractEntity<RecipeEffectsGroup>
-    {
-        [FucineValue]
-        public string comments { get; set; }
-
-        [FucineValue]
-        public Dictionary<Funcine<bool>, List<RefMutationEffect>> Mutations { get; set; }
-        [FucineValue]
-        public Dictionary<string, Funcine<int>> Aspects { get; set; }
-        [FucineValue]
-        public bool ElementsAsCatalysts { get; set; }
-
-        [FucineValue]
-        public List<string> DeckShuffles { get; set; }
-        [FucineValue]
-        public Dictionary<string, List<string>> DeckForbids { get; set; }
-        [FucineValue]
-        public Dictionary<string, List<string>> DeckAllows { get; set; }
-        [FucineValue]
-        public Dictionary<string, Funcine<int>> DeckDraws { get; set; }
-        [FucineValue]
-        public Dictionary<string, List<string>> DeckAdds { get; set; }
-        [FucineValue]
-        public Dictionary<string, List<Funcine<bool>>> DeckTakeOuts { get; set; }
-        [FucineValue]
-        public Dictionary<string, List<Funcine<bool>>> DeckInserts { get; set; }
-
-        [FucineValue]
-        public Dictionary<Funcine<bool>, Funcine<int>> Effects { get; set; }
-        [FucineValue]
-        public Dictionary<Funcine<bool>, Funcine<int>> Decays { get; set; }
-
-        [FucineValue]
-        public Dictionary<SphereRef, List<IRecipeExecutionEffect>> GrandEffects { get; set; }
-
-        public RecipeEffectsGroup(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
-        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
-
-
-    }
-
 }

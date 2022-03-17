@@ -14,19 +14,33 @@ namespace Roost.World.Recipes
         private static readonly Dictionary<ElementStack, FutureTransformation> transformations = new Dictionary<ElementStack, FutureTransformation>();
         private static readonly Dictionary<Sphere, List<FutureCreation>> creations = new Dictionary<Sphere, List<FutureCreation>>();
         private static readonly HashSet<Sphere> dirtySpheres = new HashSet<Sphere>();
-        private static readonly Context context = new Context(Context.ActionSource.SituationEffect);
+        public static readonly Context context = new Context(Context.ActionSource.SituationEffect);
 
-        public static void Execute()
+        public static void ApplyAll()
+        {
+            ApplyRetirements();
+            ApplyMutations();
+            ApplyTransformations();
+            ApplyCreations();
+        }
+
+        public static void ApplyRetirements()
         {
             foreach (Token token in retirements.Keys)
                 token.Retire(retirements[token]);
             retirements.Clear();
+        }
 
+        public static void ApplyMutations()
+        {
             foreach (FutureMutation mutation in mutations.Keys)
                 foreach (Token onToken in mutations[mutation])
                     mutation.Apply(onToken);
             mutations.Clear();
+        }
 
+        public static void ApplyTransformations()
+        {
             foreach (ElementStack stack in transformations.Keys)
             {
                 transformations[stack].Apply(stack);
@@ -34,6 +48,14 @@ namespace Roost.World.Recipes
             }
             transformations.Clear();
 
+            dirtySpheres.Remove(Watchman.Get<HornedAxe>().GetDefaultSphere());
+            foreach (Sphere sphere in dirtySpheres)
+                StackTokens(sphere);
+            dirtySpheres.Clear();
+        }
+        
+        public static void ApplyCreations()
+        {
             Sphere table = Watchman.Get<HornedAxe>().GetDefaultSphere();
             if (creations.ContainsKey(table))
             {

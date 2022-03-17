@@ -55,7 +55,7 @@ namespace Roost.Beachcomber
             };
 
             Vagabond.CodeInstructionMask mask = instruction => instruction.opcode == OpCodes.Call;
-            return instructions.ReplaceAllAfterMask(mask, myCode, true); ;
+            return instructions.ReplaceAllAfterMask(mask, myCode, true);
         }
 
         private static readonly Dictionary<Type, MethodInfo> genericImportMethods = new Dictionary<Type, MethodInfo>();
@@ -98,7 +98,7 @@ namespace Roost.Beachcomber
                     else
                     {
                         if (propertyType.isSomething())
-                            propertyValue = Panimporter.ConstuctWithParameters(cachedProperty.FucineAttribute.DefaultValue, propertyType);
+                            propertyValue = Panimporter.ConstuctFromParameters(cachedProperty.FucineAttribute.DefaultValue, propertyType);
                         else if (propertyType.IsValueType || propertyType == typeof(string))
                             propertyValue = cachedProperty.FucineAttribute.DefaultValue;
                         else
