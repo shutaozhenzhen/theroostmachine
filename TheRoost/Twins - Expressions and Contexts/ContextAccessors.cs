@@ -154,7 +154,7 @@ namespace Roost.Twins
         {
             string path = command[0];
             HornedAxe hornedaxe = Watchman.Get<HornedAxe>();
-            Sphere sphere = hornedaxe.GetSphereByPath(new FucinePath(path));
+            Sphere sphere = hornedaxe.GetSphereByAbsolutePath(new FucinePath(path));
             if (sphere == hornedaxe.GetDefaultSphere() && path != hornedaxe.GetDefaultSpherePath().ToString())
             {
                 Birdsong.Sing("Unknown sphere {0}", path);

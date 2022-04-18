@@ -26,7 +26,6 @@ namespace Roost.Vagabond
         {
             new MinimizePromo(minimizePromo);
             new EnableAchievements(Enactors.Elegiast.enabledSettingId, Enactors.Elegiast.patchId, Roost.Elegiast.CustomAchievementsManager.Enact);
-            new PatchSwitcher(Enactors.World.enabledSettingId, Enactors.World.patchId, Roost.World.Recipes.RecipeEffectsMaster.Enact);
         }
 
         internal static T GetConfigValueSafe<T>(string configId, T valueIfNotDefined)
@@ -72,15 +71,19 @@ namespace Roost.Vagabond.SettingSubscribers
         public MinimizePromo(string settingId)
             : base(settingId)
         {
-            RectTransform promo = GameObject.Find("PromoBtns").GetComponent<RectTransform>();
-            promo.pivot = new Vector2(1, 1);
-            promo.anchoredPosition = Vector2.zero;
+            RectTransform promo = GameObject.Find("MenuBlocksHolder").GetComponent<RectTransform>();
+            //it shouldn't be null, but in case it will be, let's not break the entire menu
+            if (promo != null)
+            {
+                promo.pivot = new Vector2(1, 1);
+                promo.anchoredPosition = Vector2.zero;
+            }
             WhenSettingUpdated(settingValue);
         }
 
         public override void WhenSettingUpdated(object value)
         {
-            GameObject promo = GameObject.Find("PromoBtns");
+            GameObject promo = GameObject.Find("MenuBlocksHolder");
             if (promo != null)
             {
                 if (settingValue == 1)

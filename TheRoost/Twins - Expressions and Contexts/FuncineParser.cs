@@ -143,7 +143,7 @@ namespace Roost.Twins
             if (path.StartsWith("~"))
             {
                 FucinePath fucinePath = new FucinePath(path);
-                return () => Watchman.Get<HornedAxe>().GetSphereByPath(fucinePath).GetElementTokens();
+                return () => Watchman.Get<HornedAxe>().GetSphereByAbsolutePath(fucinePath).GetElementTokens();
             }
 
             string initial_path = path;
@@ -210,7 +210,7 @@ namespace Roost.Twins
             if (path.StartsWith("~"))
             {
                 FucinePath fucinePath = new FucinePath(path);
-                return () => Watchman.Get<HornedAxe>().GetSphereByPath(fucinePath);
+                return () => Watchman.Get<HornedAxe>().GetSphereByAbsolutePath(fucinePath);
             }
 
             string initial_path = path;

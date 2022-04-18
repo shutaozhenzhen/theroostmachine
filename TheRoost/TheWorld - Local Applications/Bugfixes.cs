@@ -1,4 +1,5 @@
 ﻿using SecretHistories.UI;
+using SecretHistories.Constants.Modding;
 
 namespace Roost.World
 {
@@ -7,18 +8,8 @@ namespace Roost.World
     {
         internal static void Fix()
         {
-            //why this keeps happening
-            Machine.Patch(
-                original: typeof(ResourcesManager).GetMethodInvariant("GetSprite"),
-                prefix: typeof(BugsPicker).GetMethodInvariant("GetSpriteFix"));
-
             Machine.Patch(typeof(ElementStack).GetMethodInvariant("SetMutation"),
                 postfix: typeof(BugsPicker).GetMethodInvariant("FixMutationsDisplay"));
-        }
-
-        private static void GetSpriteFix(ref string folder)
-        {
-            folder = folder.Replace('/', '\\');
         }
 
         private static void FixMutationsDisplay(ElementStack __instance)

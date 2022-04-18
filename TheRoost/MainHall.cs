@@ -7,12 +7,17 @@ public static class TheRoostMachine
 
     public static void Initialise()
     {
+        //Fallback handler could not load library E:/Games/Steam/steamapps/common/Cultist Simulator/cultistsimulator_Data/MonoBleedingEdge/data-28B2E008.dll
+        //the error happens solely (to reiterate, SOLELY) because of Harmony.Patch() method; it's not a weird reference or wrapping problem or something
+        //even an empty project trying to call for Harmony.Patch() of any content (or PatchAll()) causes the error
+        //the only possiblity is that it's some kind of weird properties/framework version bug, but I've no idea about that
+
         if (alreadyAssembled == true)
             Birdsong.Sing("Trying to initialise the Roost Machine for the second time (don't do that!)");
         else
             try
             {
-                Birdsong.currentVerbosity = (VerbosityLevel)SecretHistories.UI.Watchman.Get<Config>().GetConfigValueAsInt("verbosity");
+                Birdsong.currentVerbosity = (VerbosityLevel) (SecretHistories.UI.Watchman.Get<Config>().GetConfigValueAsInt("verbosity") ?? 0);
                 //in case something breaks during the setup
                 SecretHistories.UI.Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
 
@@ -77,14 +82,9 @@ namespace Roost.Enactors
 
     internal static class World
     {
-        public const string enabledSettingId = "EffectsExtensions";
-        public const string patchId = "theroostmachine.theworld";
-
         internal static void Enact()
         {
-            if (Machine.GetConfigValue<int>(enabledSettingId, 1) == 1)
-                Roost.World.Recipes.RecipeEffectsMaster.Enact();
-
+            Roost.World.Recipes.RecipeEffectsMaster.Enact();
             Roost.World.Recipes.Legerdemain.Enact();
             Roost.World.Elements.CardVFXMaster.Enact();
             Roost.World.Recipes.RecipeLinkMaster.Enact();

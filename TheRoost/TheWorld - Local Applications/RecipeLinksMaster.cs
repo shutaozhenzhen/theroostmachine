@@ -4,20 +4,18 @@ using SecretHistories.Entities;
 using SecretHistories.UI;
 using SecretHistories.Commands.SituationCommands;
 using SecretHistories.Core;
+using SecretHistories.Fucine;
 
 namespace Roost.World.Recipes
 {
     public static class RecipeLinkMaster
     {
-        public static Action<Situation, Recipe, Expulsion> SpawnNewSituation;
+        public static Action<Situation, Recipe, Expulsion, FucinePath> SpawnNewSituation;
         private static Situation currentSituation;
         private static List<Recipe> xtriggerLinks = new List<Recipe>();
-        private const string RECIPE_PRIORITY = "priority";
 
         internal static void Enact()
         {
-            Machine.ClaimProperty<Recipe, int>(RECIPE_PRIORITY);
-
             Machine.Patch(typeof(AttemptAspectInductionCommand).GetMethodInvariant("Execute"),
                 prefix: typeof(RecipeLinkMaster).GetMethodInvariant("StoreSituationFromWhichInductionHappens"));
 
@@ -27,20 +25,8 @@ namespace Roost.World.Recipes
             Machine.Patch(typeof(RecipeConductor).GetMethodInvariant("GetLinkedRecipe"),
                 prefix: typeof(RecipeLinkMaster).GetMethodInvariant("CheckXtriggerLinks"));
 
-            Machine.Patch(typeof(Recipe).GetPropertyInvariant("Priority").GetGetMethod(),
-                prefix: typeof(RecipeLinkMaster).GetMethodInvariant("GetPriority"));
 
-            SpawnNewSituation = Delegate.CreateDelegate(typeof(Action<Situation, Recipe, Expulsion>), typeof(Situation).GetMethodInvariant("SpawnNewSituation")) as Action<Situation, Recipe, Expulsion>;
-        }
-
-        private static bool GetPriority(Recipe __instance, ref int __result)
-        {
-            if (__instance.HasCustomProperty(RECIPE_PRIORITY))
-            {
-                __result = __instance.RetrieveProperty<int>(RECIPE_PRIORITY);
-                return false;
-            }
-            return true;
+            SpawnNewSituation = Delegate.CreateDelegate(typeof(Action<Situation, Recipe, Expulsion, FucinePath>), typeof(Situation).GetMethodInvariant("SpawnNewSituation")) as Action<Situation, Recipe, Expulsion, FucinePath>;
         }
 
         //AttemptAspectInductionCommand.Execute()
@@ -52,13 +38,14 @@ namespace Roost.World.Recipes
         //AttemptAspectInductionCommand.PerformAspectInduction()
         private static bool PerformAspectInduction(Element aspectElement, Situation situation)
         {
-            AspectsInContext aspectsInContext = Watchman.Get<HornedAxe>().GetAspectsInContext(situation.GetAspects(true));
+            AspectsInContext aspectsInContext = Watchman.Get<HornedAxe>().GetAspectsInContext(situation.GetAspects(true), null);
             foreach (LinkedRecipeDetails linkedRecipeDetails in aspectElement.Induces)
                 if (Watchman.Get<IDice>().Rolld100(null) <= linkedRecipeDetails.Chance)
                 {
                     Recipe recipe = Watchman.Get<Compendium>().GetEntityById<Recipe>(linkedRecipeDetails.Id);
                     if (recipe.RequirementsSatisfiedBy(aspectsInContext))
-                        SpawnNewSituation(currentSituation, recipe, linkedRecipeDetails.Expulsion);
+
+                        SpawnNewSituation(currentSituation, recipe, linkedRecipeDetails.Expulsion, FucinePath.Current());
                 }
 
             return false;

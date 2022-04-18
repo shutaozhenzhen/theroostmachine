@@ -77,7 +77,7 @@ namespace Roost.Beachcomber
 
                     foreach (EntityData modEntity in moddedEntityData.Values)
                     {
-                        ArrayList contentgroups = modEntity.GetArrayList(CONTENT_GROUPS);
+                        ArrayList contentgroups = modEntity.GetInheritanceList(CONTENT_GROUPS);
                         bool skipImport = false;
                         foreach (string groupId in contentgroups)
                             if (Ostrich.Ignores(groupId))
@@ -117,24 +117,25 @@ namespace Roost.Beachcomber
             }
         }
 
-        private static ArrayList GetArrayList(this EntityData data, string propertyName)
+        private static ArrayList GetInheritanceList(this EntityData data, string propertyName)
         {
             if (!data.ValuesTable.ContainsKey(propertyName))
                 return new ArrayList();
 
-            ArrayList arrayList = data.ValuesTable[propertyName] as ArrayList;
-            if (arrayList == null)
-                arrayList = new ArrayList { data.ValuesTable[propertyName] };
+            ArrayList inheritanceList = data.ValuesTable[propertyName] as ArrayList;
+            //to simplify the syntax (and since most entities will inherit from a single entity anyway) we allow inheritanceList to be parsed from a non-list definition
+            if (inheritanceList == null) 
+                inheritanceList = new ArrayList { data.ValuesTable[propertyName].ToString() };
 
             data.ValuesTable.Remove(propertyName);
 
-            return arrayList;
+            return inheritanceList;
         }
 
         private static void ApplyOverrideParentInheritance(this EntityData child, Dictionary<string, EntityData> allCoreEntitiesOfType)
         {
-            ArrayList extendsList = child.GetArrayList(INHERIT_OVERRIDE);
-            extendsList.AddRange(child.GetArrayList(INHERIT_OVERRIDE_LEGACY));
+            ArrayList extendsList = child.GetInheritanceList(INHERIT_OVERRIDE);
+            extendsList.AddRange(child.GetInheritanceList(INHERIT_OVERRIDE_LEGACY));
 
             foreach (string extendId in extendsList)
             {
@@ -158,7 +159,7 @@ namespace Roost.Beachcomber
 
         private static void ApplyAdditiveInheritance(this EntityData derivative, Dictionary<string, EntityData> allCoreEntitiesOfType)
         {
-            ArrayList deriveFromEntities = derivative.GetArrayList(INHERIT_ADDITIVE);
+            ArrayList deriveFromEntities = derivative.GetInheritanceList(INHERIT_ADDITIVE);
 
             foreach (string rootId in deriveFromEntities)
                 if (allCoreEntitiesOfType.ContainsKey(rootId))

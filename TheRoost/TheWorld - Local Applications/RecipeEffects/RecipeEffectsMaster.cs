@@ -47,26 +47,21 @@ namespace Roost.World.Recipes
 
                 propertiesClaimed = true;
             }
-            /*
-                       AtTimeOfPower.OnPostImportRecipe.Schedule<Recipe>(FlushEffects, PatchType.Postfix, Enactors.World.patchId);
-            
-                        AtTimeOfPower.RecipeRequirementsCheck.Schedule<Recipe, AspectsInContext>(RefReqs, Enactors.World.patchId);
+            AtTimeOfPower.OnPostImportRecipe.Schedule<Recipe>(FlushEffects, PatchType.Postfix);
 
-                        Machine.Patch(typeof(RecipeCompletionEffectCommand).GetMethodInvariant("Execute"),
-                            transpiler: typeof(RecipeEffectsMaster).GetMethodInvariant("RunRefEffectsTranspiler"),
-                            patchId: Enactors.World.patchId);
-                        */
+            AtTimeOfPower.RecipeRequirementsCheck.Schedule<Recipe, AspectsInContext>(RefReqs);
+
+            Machine.Patch(typeof(RecipeCompletionEffectCommand).GetMethodInvariant("Execute"),
+                transpiler: typeof(RecipeEffectsMaster).GetMethodInvariant("RunRefEffectsTranspiler"));
+
             Machine.Patch(typeof(Beachcomber.Usurper).GetMethodInvariant("InvokeGenericImporterForAbstractRootEntity"),
-                 prefix: typeof(RecipeEffectsMaster).GetMethodInvariant("ConvertLegacyMutationDefinitions"),
-                 patchId: Enactors.World.patchId);
+                 prefix: typeof(RecipeEffectsMaster).GetMethodInvariant("ConvertLegacyMutationDefinitions"));
 
             Machine.Patch(typeof(Sphere).GetMethodInvariant("NotifyTokensChangedForSphere"),
-                postfix: typeof(RecipeEffectsMaster).GetMethodInvariant("TryStackTokens"),
-                patchId: Enactors.World.patchId);
+                postfix: typeof(RecipeEffectsMaster).GetMethodInvariant("TryStackTokens"));
 
             Machine.Patch(typeof(SituationStorageSphere).GetPropertyInvariant("AllowStackMerge").GetGetMethod(),
-                prefix: typeof(RecipeEffectsMaster).GetMethodInvariant("AllowStackMerge"),
-                patchId: Enactors.World.patchId);
+                prefix: typeof(RecipeEffectsMaster).GetMethodInvariant("AllowStackMerge"));
         }
 
         private static void TryStackTokens(SecretHistories.Constants.Events.SphereContentsChangedEventArgs args)
