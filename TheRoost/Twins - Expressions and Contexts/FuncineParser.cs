@@ -157,7 +157,7 @@ namespace Roost.Twins
                 case "verb": return InterpretVerbPath(ref path, entityId, initial_path);
                 case "deck": return () => Watchman.Get<SecretHistories.Infrastructure.DealersTable>().GetDrawPile(entityId).GetElementTokens();
                 case "deck_forbidden": return () => Watchman.Get<SecretHistories.Infrastructure.DealersTable>().GetForbiddenPile(entityId).GetElementTokens();
-                case "table": return () => Watchman.Get<HornedAxe>().GetDefaultSphere().GetElementTokens();
+                case "table": return () => Watchman.Get<HornedAxe>().GetDefaultSphere(OccupiesSpaceAs.Intangible).GetElementTokens();
                 case "extant": return TokenContextAccessors.GetExtantTokens;
                 case "token": return TokenContextAccessors.GetLocalTokenAsTokens;
                 case "": return TokenContextAccessors.GetLocalSphereTokens;
@@ -221,7 +221,7 @@ namespace Roost.Twins
 
             switch (referenceType)
             {
-                case "table": return () => Watchman.Get<HornedAxe>().GetDefaultSphere();
+                case "table": return () => Watchman.Get<HornedAxe>().GetDefaultSphere(OccupiesSpaceAs.Intangible);
                 case "local": return () => TokenContextAccessors.GetLocalSituation().GetSituationStorage();
                 case "verb": return () => TokenContextAccessors.GetSituation(entityId).GetSituationStorage();
                 case "deck": return () => Watchman.Get<SecretHistories.Infrastructure.DealersTable>().GetDrawPile(entityId) as Sphere;

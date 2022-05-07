@@ -7,6 +7,7 @@ using SecretHistories.Infrastructure;
 using Assets.Logic;
 using SecretHistories.Abstract;
 using SecretHistories.Spheres;
+using SecretHistories.Enums;
 
 using Roost.Twins;
 using Roost.Twins.Entities;
@@ -73,7 +74,7 @@ namespace Roost.World.Recipes
 
             __result = drawPile.GetElementTokens()[drawPile.GetTotalStacksCount() - 1];
             //need to exclude the token from the deck sphere right now so the next calculations and operations are correct
-            __result.SetSphere(Watchman.Get<HornedAxe>().GetDefaultSphere(), new Context(Context.ActionSource.SituationEffect));
+            __result.SetSphere(Watchman.Get<HornedAxe>().GetDefaultSphere(OccupiesSpaceAs.Intangible), new Context(Context.ActionSource.SituationEffect));
 
             if (fromDeckSpec.RetrieveProperty<bool>(DECK_AUTO_SHUFFLE))
                 ____dealersTable.RenewDeck(__instance, fromDeckSpec.Id);

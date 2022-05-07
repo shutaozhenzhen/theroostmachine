@@ -20,7 +20,7 @@ namespace Roost.Beachcomber
             }
             catch (Exception ex)
             {
-                Birdsong.Sing("FAILED TO LOAD PROPERTY '{0}' FOR {1} ID '{2}' - {3}", propertyName, parentEntity.GetType().Name.ToUpper(), parentEntity.Id, ex.Message);
+                Birdsong.Sing($"FAILED TO LOAD PROPERTY '{propertyName}' FOR {parentEntity.GetType().Name.ToUpper()} ID '{parentEntity.Id}' - {ex.Message}");
                 throw;
             }
         }
@@ -28,25 +28,20 @@ namespace Roost.Beachcomber
         public delegate object ImporterForType(object valueData, Type propertyType);
         public static ImporterForType GetImporterForType(Type type)
         {
-            if (type.isList())
+            if (typeof(IList).IsAssignableFrom(type)) //is a list
                 return ImportList;
-            else if (type.isDict())
+
+            else if (typeof(IDictionary).IsAssignableFrom(type)) //is a dictionary
                 return ImportDictionary;
-            else if (type.isFucineEntity())
+
+            else if (typeof(AbstractEntity<>).IsAssignableFrom(type)) //is a Fucine entity
                 return ImportFucineEntity;
-            else if (type.isSomething())
+
+            else if (type != typeof(string) && (type.IsClass || (type.IsValueType && !type.IsEnum && type.Namespace != "System"))) //either non-AbstractEntity class or a struct
                 return ConstuctFromParameters;
+
             else
                 return ImportSimpleValue;
-        }
-
-        public static bool isList(this Type type) { return typeof(IList).IsAssignableFrom(type); }
-        public static bool isDict(this Type type) { return typeof(IDictionary).IsAssignableFrom(type); }
-        public static bool isFucineEntity(this Type type) { return typeof(IEntityWithId).IsAssignableFrom(type); }
-        public static bool isSomething(this Type type)
-        { //either non-AbstractEntity class or a struct 
-            return (type.IsClass && type != typeof(string) & !type.isList() && !type.isDict() && !type.isFucineEntity()) || //type is a stray class
-                   (type.IsValueType && !type.IsEnum && type.Namespace != "System"); //type is a struct
         }
 
         public static IList ImportList(object listData, Type listType)
@@ -82,7 +77,7 @@ namespace Roost.Beachcomber
             }
             catch (Exception ex)
             {
-                throw Birdsong.Cack("LIST[] IS MALFORMED - {0}", ex.Message);
+                throw Birdsong.Cack($"LIST[] IS MALFORMED - {ex.Message}");
             }
         }
 
@@ -106,7 +101,7 @@ namespace Roost.Beachcomber
                 EntityData entityData = dictionaryData as EntityData;
 
                 if (entityData == null)
-                    throw Birdsong.Cack("DICTIONARY IS DEFINED AS {0}", dictionaryData.GetType().Name.ToUpper());
+                    throw Birdsong.Cack($"DICTIONARY IS DEFINED AS {dictionaryData.GetType().Name.ToUpper()}");
 
                 foreach (DictionaryEntry dictionaryEntry in entityData.ValuesTable)
                 {
@@ -119,7 +114,7 @@ namespace Roost.Beachcomber
             }
             catch (Exception ex)
             {
-                throw Birdsong.Cack("{1} IS MALFORMED - {0}", ex.Message, "DICTIONARY{}");
+                throw Birdsong.Cack($"DICTIONARY{{}} IS MALFORMED - {ex.Message}");
             }
         }
 
@@ -163,7 +158,7 @@ namespace Roost.Beachcomber
             }
             catch (Exception ex)
             {
-                throw Birdsong.Cack("ENTITY DATA IS MALFORMED - {0}", ex.Message);
+                throw Birdsong.Cack($"ENTITY DATA{{}} IS MALFORMED - {ex.Message}");
             }
         }
 
@@ -208,11 +203,11 @@ namespace Roost.Beachcomber
                     }
                 }
 
-                throw Birdsong.Cack("NO MATCHING CONSTRUCTOR FOUND FOR {0} WITH ARGUMENTS '{1}'", type.Name, parameterTypes.UnpackAsString());
+                throw Birdsong.Cack($"NO MATCHING CONSTRUCTOR FOUND FOR {type.Name} WITH ARGUMENTS '{parameterTypes.UnpackAsString()}'");
             }
             catch (Exception ex)
             {
-                throw Birdsong.Cack("PROPERTY DATA IS MALFORMED - {0}", ex.Message);
+                throw Birdsong.Cack($"PROPERTY DATA IS MALFORMED - {ex.Message}");
             }
         }
 
@@ -226,7 +221,7 @@ namespace Roost.Beachcomber
 
                 if ((sourceType.IsValueType == false && sourceType != typeof(string))
                     || (destinationType.IsValueType == false && destinationType != typeof(string)))
-                    throw Birdsong.Cack("Trying to convert data '{0}' to {1}, but at least one of these two is not a value type", data, destinationType.Name);
+                    throw Birdsong.Cack($"Trying to convert data '{data}' to {destinationType.Name}, but at least one of these two is not a value type");
 
                 if (data is string)
                     return TypeDescriptor.GetConverter(destinationType).ConvertFromInvariantString(data.ToString());
@@ -240,34 +235,69 @@ namespace Roost.Beachcomber
             }
             catch (Exception ex)
             {
-                throw Birdsong.Cack("UNABLE TO PARSE A VALUE DATA: '{0}' AS {1}: {2}", data, destinationType.Name.ToUpper(), ex.Message);
+                throw Birdsong.Cack($"UNABLE TO PARSE A VALUE: '{data}' AS {destinationType.Name.ToUpper()}: {ex.Message}");
             }
         }
     }
+
 }
 
 namespace SecretHistories.Fucine
 {
+    //normal FucineValue won't accept array as DefaultValue; but we need that to construct some structs/classes
+    [AttributeUsage(AttributeTargets.Property)]
+    public class FucineUniValue : Fucine
+    {
+        public FucineUniValue() { }
+        public FucineUniValue(object defaultValue) { DefaultValue = defaultValue; }
+        public FucineUniValue(params object[] defaultValue) { DefaultValue = new ArrayList(defaultValue); }
+
+        public override AbstractImporter CreateImporterInstance()
+        {
+            return new PanimporterInstance();
+        }
+    }
+
+
+    public class PanimporterInstance : AbstractImporter
+    {
+        public override bool TryImportProperty<T>(T entity, CachedFucineProperty<T> cachedProperty, EntityData entityData, ContentImportLog log)
+        {
+            try
+            {
+                string propertyName = cachedProperty.LowerCaseName;
+                Type propertyType = cachedProperty.ThisPropInfo.PropertyType;
+
+                object propertyValue;
+                if (entityData.ValuesTable.Contains(propertyName))
+                {
+                    propertyValue = Roost.Beachcomber.Panimporter.ImportProperty(entity, entityData.ValuesTable[propertyName], propertyType, propertyName);
+                    entityData.ValuesTable.Remove(propertyName);
+                }
+                else
+                {
+                    if (cachedProperty.FucineAttribute.DefaultValue is ArrayList)
+                        propertyValue = Roost.Beachcomber.Panimporter.ConstuctFromParameters(cachedProperty.FucineAttribute.DefaultValue, propertyType);
+                    else if (propertyType.IsValueType || propertyType == typeof(string))
+                        propertyValue = cachedProperty.FucineAttribute.DefaultValue;
+                    else
+                        propertyValue = FactoryInstantiator.CreateObjectWithDefaultConstructor(propertyType);
+                }
+
+                cachedProperty.SetViaFastInvoke(entity as T, propertyValue);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                log.LogProblem(ex.ToString());
+                return false;
+            }
+        }
+    }
+
     public interface ICustomSpecEntity
     {
         void CustomSpec(Hashtable data);
-    }
-
-    //normal FucineValue won't accept array as DefaultValue; but we need that to construct some structs/classes
-    [AttributeUsage(AttributeTargets.Property)]
-    public class FucineSpecial : Fucine
-    {
-        public FucineSpecial() { }
-
-        public FucineSpecial(params object[] defaultValue)
-        {
-            DefaultValue = new ArrayList(defaultValue);
-        }
-
-        //won't work with the normal game importer, and Panimporter doesn't use this at all, but compiler wants this to exist
-        public override AbstractImporter CreateImporterInstance()
-        {
-            throw new NotImplementedException();
-        }
     }
 }

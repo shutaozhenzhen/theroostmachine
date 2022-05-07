@@ -66,7 +66,7 @@ namespace Roost.World.Recipes
 
         private static void TryStackTokens(SecretHistories.Constants.Events.SphereContentsChangedEventArgs args)
         {
-            if (args.TokenAdded != null && args.Sphere.AllowStackMerge && args.Sphere != Watchman.Get<HornedAxe>().GetDefaultSphere())
+            if (args.TokenAdded != null && args.Sphere.AllowStackMerge && args.Sphere != Watchman.Get<HornedAxe>().GetDefaultSphere(OccupiesSpaceAs.Intangible))
                 RecipeExecutionBuffer.StackTokens(args.Sphere);
         }
 

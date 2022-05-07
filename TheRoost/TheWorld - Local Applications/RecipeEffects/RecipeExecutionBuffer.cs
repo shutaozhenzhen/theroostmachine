@@ -48,7 +48,7 @@ namespace Roost.World.Recipes
             }
             transformations.Clear();
 
-            dirtySpheres.Remove(Watchman.Get<HornedAxe>().GetDefaultSphere());
+            dirtySpheres.Remove(Watchman.Get<HornedAxe>().GetDefaultSphere(OccupiesSpaceAs.Intangible));
             foreach (Sphere sphere in dirtySpheres)
                 StackTokens(sphere);
             dirtySpheres.Clear();
@@ -56,7 +56,7 @@ namespace Roost.World.Recipes
         
         public static void ApplyCreations()
         {
-            Sphere table = Watchman.Get<HornedAxe>().GetDefaultSphere();
+            Sphere table = Watchman.Get<HornedAxe>().GetDefaultSphere(OccupiesSpaceAs.Intangible);
             if (creations.ContainsKey(table))
             {
                 Context context = new Context(Context.ActionSource.SituationEffect);
@@ -73,7 +73,7 @@ namespace Roost.World.Recipes
             }
             creations.Clear();
 
-            dirtySpheres.Remove(Watchman.Get<HornedAxe>().GetDefaultSphere());
+            dirtySpheres.Remove(Watchman.Get<HornedAxe>().GetDefaultSphere(OccupiesSpaceAs.Intangible));
             foreach (Sphere sphere in dirtySpheres)
                 StackTokens(sphere);
             dirtySpheres.Clear();

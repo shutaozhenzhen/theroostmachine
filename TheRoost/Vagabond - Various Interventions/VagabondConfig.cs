@@ -64,6 +64,8 @@ namespace Roost.Vagabond.SettingSubscribers
         }
 
         public virtual void WhenSettingUpdated(object newValue) { }
+
+        public void BeforeSettingUpdated(object oldValue) { }
     }
 
     internal class MinimizePromo : ModSettingSubscriber<int>

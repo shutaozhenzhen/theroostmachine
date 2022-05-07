@@ -4,7 +4,7 @@ using SecretHistories.Entities;
 using SecretHistories.UI;
 using SecretHistories.Fucine;
 using SecretHistories.Spheres;
-
+using SecretHistories.Enums;
 using Roost.Twins.Entities;
 
 namespace Roost.Twins
@@ -30,7 +30,7 @@ namespace Roost.Twins
 
         public static List<Token> GetExtantTokens()
         {
-            List<Token> tokens = Watchman.Get<HornedAxe>().GetDefaultSphere().GetElementTokens();
+            List<Token> tokens = Watchman.Get<HornedAxe>().GetDefaultSphere(OccupiesSpaceAs.Intangible).GetElementTokens();
             foreach (Situation situation in Watchman.Get<HornedAxe>().GetRegisteredSituations())
                 tokens.AddRange(situation.GetElementTokensInSituation());
 
@@ -155,9 +155,9 @@ namespace Roost.Twins
             string path = command[0];
             HornedAxe hornedaxe = Watchman.Get<HornedAxe>();
             Sphere sphere = hornedaxe.GetSphereByAbsolutePath(new FucinePath(path));
-            if (sphere == hornedaxe.GetDefaultSphere() && path != hornedaxe.GetDefaultSpherePath().ToString())
+            if (sphere == hornedaxe.GetDefaultSphere(OccupiesSpaceAs.Intangible) && path != hornedaxe.GetDefaultSpherePath().ToString())
             {
-                Birdsong.Sing("Unknown sphere {0}", path);
+                Birdsong.Sing($"Unknown sphere {path}");
                 return;
             }
 

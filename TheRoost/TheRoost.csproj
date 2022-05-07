@@ -32,11 +32,10 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
-    <LangVersion>5</LangVersion>
+    <LangVersion>6</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Beachcomber - Data Loading\BeachcomberIgnore.cs" />
-    <Compile Include="Beachcomber - Data Loading\BeachcomberJSONops.cs" />
     <Compile Include="TheWorld - Local Applications\Bugfixes.cs" />
     <Compile Include="TheWorld - Local Applications\CardVFXMaster.cs" />
     <Compile Include="TheWorld - Local Applications\RecipeLinksMaster.cs" />
@@ -131,7 +130,7 @@
     </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>

@@ -47,61 +47,47 @@ namespace Roost.Vagabond
             return Harmony.HasAnyPatches(patchId);
         }
 
-        static List<BindingFlags> bindingFlagsPriority = new List<BindingFlags> { 
-            (BindingFlags.Instance | BindingFlags.Public), 
-            (BindingFlags.Instance | BindingFlags.NonPublic),
-            (BindingFlags.Static | BindingFlags.Public),
-            (BindingFlags.Static | BindingFlags.NonPublic),
-        };
-
-        internal static MethodInfo GetMethodInvariant(Type definingClass, string methodName)
+        internal static MethodInfo GetMethodInvariant(Type definingClass, string name)
         {
-            if (string.IsNullOrWhiteSpace(methodName))
-                Birdsong.Sing("Trying to find whitespace method for class {0} (don't!)", definingClass.Name);
+            if (string.IsNullOrWhiteSpace(name))
+                Birdsong.Sing($"Trying to find whitespace method for class {definingClass.Name} (don't!)");
 
-            MethodInfo method;
-            foreach (BindingFlags flag in bindingFlagsPriority)
-            {
-                method = definingClass.GetMethod(methodName, flag);
-                if (method != null)
-                    return method;
-            }
+            MethodInfo method = definingClass.GetMethod(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic);
 
-            Birdsong.Sing("Method {0} not found in class {1}", methodName, definingClass.Name);
-            return null;
+            if (method == null)
+                Birdsong.Sing($"Method {name} is not found in class {definingClass.Name}");
+
+            return method;
         }
 
-        internal static MethodInfo GetMethodInvariant(Type definingClass, string methodName, params Type[] args)
+        internal static MethodInfo GetMethodInvariant(Type definingClass, string name, params Type[] args)
         {
-            return definingClass.GetMethod(methodName, args);
+            return definingClass.GetMethod(name, args);
         }
 
-        internal static FieldInfo GetFieldInvariant(this Type definingClass, string fieldName)
+        internal static FieldInfo GetFieldInvariant(this Type definingClass, string name)
         {
-            FieldInfo field;
-            foreach (BindingFlags flag in bindingFlagsPriority)
-            {
-                field = definingClass.GetField(fieldName, flag);
-                if (field != null)
-                    return field;
-            }
+            if (string.IsNullOrWhiteSpace(name))
+                Birdsong.Sing($"Trying to find whitespace field for class {definingClass.Name} (don't!)");
 
-            Birdsong.Sing("Field {0} not found in class {1}", fieldName, definingClass.Name);
-            return null;
+            FieldInfo field = definingClass.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic);
+            if (field == null)
+                Birdsong.Sing($"Field {name} is not found in class {definingClass.Name}");
+
+            return field;
         }
 
-        internal static PropertyInfo GetPropertyInvariant(this Type definingClass, string propertyName)
+        internal static PropertyInfo GetPropertyInvariant(this Type definingClass, string name)
         {
-            PropertyInfo property;
-            foreach (BindingFlags flag in bindingFlagsPriority)
-            {
-                property = definingClass.GetProperty(propertyName, flag);
-                if (property != null)
-                    return property;
-            }
+            if (string.IsNullOrWhiteSpace(name))
+                Birdsong.Sing($"Trying to find whitespace property for class {definingClass.Name} (don't!)");
 
-            Birdsong.Sing("Property {0} not found in class {1}", propertyName, definingClass.Name);
-            return null;
+            PropertyInfo property = definingClass.GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic);
+
+            if (property == null)
+                Birdsong.Sing($"Property {name} not found in class {definingClass.Name}");
+
+            return property;
         }
 
         private static readonly Dictionary<AtTimeOfPower, MethodBase> methodsToPatch = new Dictionary<AtTimeOfPower, MethodBase>()
@@ -175,11 +161,11 @@ namespace Roost.Vagabond
             return codes.AsEnumerable();
         }
 
-        internal static IEnumerable<CodeInstruction> TranspilerInsertAtMethod(IEnumerable<CodeInstruction> instructions, MethodInfo insertCodeNearThisMethodCall, List<CodeInstruction> myCode, PatchType patchType, int skipCallsCount)
+        internal static IEnumerable<CodeInstruction> TranspilerInsertAtMethod(IEnumerable<CodeInstruction> instructions, MethodInfo insertCodeNearThisMethodCall, List<CodeInstruction> myCode, bool insertBefore, int skipCallsCount)
         {
             List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
             int lineShift;
-            if (patchType == PatchType.Prefix)
+            if (insertBefore)
                 lineShift = -(insertCodeNearThisMethodCall.GetParameters().Length + (insertCodeNearThisMethodCall.IsStatic ? 0 : 1));
             else
                 lineShift = 1;
@@ -193,7 +179,7 @@ namespace Roost.Vagabond
                         continue;
 
                     i += lineShift;
-                    if (patchType == PatchType.Postfix && codes[i].opcode == OpCodes.Pop)
+                    if (insertBefore == false && codes[i].opcode == OpCodes.Pop)
                         i++;
 
                     codes.InsertRange(i, myCode);
@@ -318,9 +304,14 @@ namespace Roost
             return Vagabond.HarmonyMask.TranspilerReplaceMethodCall(original, methodToReplace, myCode, methodCallNumber);
         }
 
-        public static IEnumerable<CodeInstruction> InsertNearMethodCall(this IEnumerable<CodeInstruction> original, MethodInfo nearMethodCall, List<CodeInstruction> myCode, PatchType beforeOrAfter, int methodCallNumber = 0)
+        public static IEnumerable<CodeInstruction> InsertBeforeMethodCall(this IEnumerable<CodeInstruction> original, MethodInfo nearMethodCall, List<CodeInstruction> myCode, int methodCallNumber = 0)
         {
-            return Vagabond.HarmonyMask.TranspilerInsertAtMethod(original, nearMethodCall, myCode, beforeOrAfter, methodCallNumber);
+            return Vagabond.HarmonyMask.TranspilerInsertAtMethod(original, nearMethodCall, myCode, true, methodCallNumber);
+        }
+
+        public static IEnumerable<CodeInstruction> InsertAfterMethodCall(this IEnumerable<CodeInstruction> original, MethodInfo nearMethodCall, List<CodeInstruction> myCode, int methodCallNumber = 0)
+        {
+            return Vagabond.HarmonyMask.TranspilerInsertAtMethod(original, nearMethodCall, myCode, false, methodCallNumber);
         }
 
         public static IEnumerable<CodeInstruction> ReplaceAllAfterMask(this IEnumerable<CodeInstruction> original, Vagabond.CodeInstructionMask codePointMask, List<CodeInstruction> myCode, bool inclusive, int occurencesNumber = 0)

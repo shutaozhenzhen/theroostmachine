@@ -383,7 +383,7 @@ namespace Roost.Elegiast
 
 namespace Roost
 {
-    public partial class Machine
+    public static partial class Machine
     {
         public static void SetBabelLabel(this Babelfish babelfish, string locLabel)
         {

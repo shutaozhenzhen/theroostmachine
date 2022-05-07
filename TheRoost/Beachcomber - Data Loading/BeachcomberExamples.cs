@@ -26,25 +26,25 @@ namespace Roost.Beachcomber.Entities
         //as thing stand now, you don't really need to use specific annotations like FucineList, FucineDict and FucineSubEntity - FucineValue suffice
         //but you may want to use them just in case something will change
 
-        [FucineValue(DefaultValue = 0)]
+        [FucineUniValue(DefaultValue = 0)]
         public int Number { get; set; }
 
-        [FucineValue(DefaultValue = "", Localise = true)]
+        [FucineUniValue(DefaultValue = "", Localise = true)]
         public string Text { get; set; }
 
-        [FucineList(ValidateAsElementId = true)]
+        [FucineUniValue(ValidateAsElementId = true)]
         public List<string> ListOfElements { get; set; }
 
-        [FucineDict]
+        [FucineUniValue]
         public Dictionary<int, int> MyDict { get; set; }
 
         //you can load enums - both by int and string
-        [FucineValue(DefaultValue = SecretHistories.Entities.EndingFlavour.Grand)]
+        [FucineUniValue(DefaultValue = SecretHistories.Entities.EndingFlavour.Grand)]
         public SecretHistories.Entities.EndingFlavour MyEnum { get; set; }
 
         //you can even load structs; in JSON structs are defined like "myVectorProperty": [ 1, 1 ], i.e. as lists, with []
         //similarly, a default value is passed to the property as param object[]
-        [FucineSpecial(0.5f, 100f)]
+        [FucineUniValue(0.5f, 100f)]
         public UnityEngine.Vector2 Vector { get; set; }
 
         //finally, your entity needs to implement two methods of AbstractEntity<T> - constructor and OnPostImportForSpecificEntity()

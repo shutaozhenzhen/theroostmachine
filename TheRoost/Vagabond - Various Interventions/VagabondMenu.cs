@@ -108,7 +108,7 @@ namespace Roost.Vagabond
 
 namespace Roost
 {
-    public partial class Machine
+    public static partial class Machine
     {
         public static void ShowOverlay(this MenuScreenController menuScreenController, CanvasGroupFader overlay)
         {

@@ -18,10 +18,10 @@ namespace Roost.Beachcomber
         internal static void Enact()
         {
             //in a rare case we want some of our custom properties to be localizable
-            //we ask the main game very gently to look it up for us
+            //we ask the main game very politely to look it up for us
             Machine.Patch(
                 original: typeof(EntityTypeDataLoader).GetMethodInvariant("GetLocalisableKeysForEntityType"),
-                postfix: typeof(Cuckoo).GetMethodInvariant("InsertCustomLocalizableKeys"));
+                postfix: typeof(Cuckoo).GetMethodInvariant(nameof(InsertCustomLocalizableKeys)));
 
             //sometimes, a single property just isn't enough; sometimes we want to inject the whole class so it's loaded on par with native entities
             //now, I really don't want to handle the loading of these custom classes
@@ -31,8 +31,8 @@ namespace Roost.Beachcomber
             //so the game now courteously loads them for us
             //the operation requires a bit of :knock: since we need to modify the local variables of PopulateCompendium(), but the result well worth it
             Machine.Patch(
-                original: typeof(CompendiumLoader).GetMethodInvariant("PopulateCompendium"),
-                transpiler: typeof(Cuckoo).GetMethodInvariant("CuckooTranspiler"));
+                original: typeof(CompendiumLoader).GetMethodInvariant(nameof(CompendiumLoader.PopulateCompendium)),
+                transpiler: typeof(Cuckoo).GetMethodInvariant(nameof(CuckooTranspiler)));
         }
 
         //EntityTypeDataLoader.GetLocalisableKeysForEntityType() postfix
@@ -53,11 +53,11 @@ namespace Roost.Beachcomber
                 new CodeInstruction(OpCodes.Ldarg_0), //instance itself (is needed to locate its private variable next)
                 new CodeInstruction(OpCodes.Ldfld, typeof(CompendiumLoader).GetFieldInvariant("_log")),//locating instance's private variable _log
                 //finally, calling InsertCustomTypesForLoading() with all these arguments
-                new CodeInstruction(OpCodes.Call, typeof(Cuckoo).GetMethodInvariant("InsertCustomTypesForLoading"))
+                new CodeInstruction(OpCodes.Call, typeof(Cuckoo).GetMethodInvariant(nameof(InsertCustomTypesForLoading))),
             };
-            MethodInfo injectingMyCodeRightBeforeThisMethod = typeof(Compendium).GetMethodInvariant("InitialiseForEntityTypes");
+            MethodInfo injectingMyCodeRightBeforeThisMethod = typeof(Compendium).GetMethodInvariant(nameof(Compendium.InitialiseForEntityTypes));
 
-            return instructions.InsertNearMethodCall(injectingMyCodeRightBeforeThisMethod, myCode, PatchType.Prefix);
+            return instructions.InsertBeforeMethodCall(injectingMyCodeRightBeforeThisMethod, myCode);
         }
 
         //called from CuckooTranspiler() (previous method), schedules custom types loading
@@ -90,20 +90,22 @@ namespace Roost.Beachcomber
         }
     }
 
-    //class that stores custom properties info and loaded state
+    //class that stores custom properties info
     internal static class Hoard
     {
         readonly static Dictionary<IEntityWithId, Dictionary<string, object>> loadedData = new Dictionary<IEntityWithId, Dictionary<string, object>>();
         readonly static Dictionary<Type, Dictionary<string, CustomProperty>> claimedProperties = new Dictionary<Type, Dictionary<string, CustomProperty>>();
 
+        //registers a custom/hijacked property for an entity type
         internal static void AddCustomProperty<TEntity, TProperty>(string propertyName, bool localize, TProperty defaultValue)
             where TEntity : AbstractEntity<TEntity>
         {
             Type entityType = typeof(TEntity);
 
-            if (typeof(TProperty).IsValueType == false && typeof(TProperty) != typeof(string) && defaultValue != null)
+            if (defaultValue != null 
+                && typeof(TProperty).IsValueType == false && typeof(TProperty) != typeof(string))
             {
-                Birdsong.Sing("Trying to assign default value for a {0} property '{1}'; but its type - {2} - is a reference type and thus can only be null.", entityType.Name, propertyName, typeof(TProperty).Name);
+                Birdsong.Sing($"Trying to assign default value for a {entityType.Name} property '{propertyName}'; but its type - {nameof(TProperty)} - is a reference type and thus can only be null.");
                 defaultValue = default(TProperty);
             }
 
@@ -112,9 +114,58 @@ namespace Roost.Beachcomber
 
             propertyName = propertyName.ToLower();
             if (claimedProperties[entityType].ContainsKey(propertyName))
-                Birdsong.Sing("Trying to add {1} property '{0}', but the property of the same name for the same type is already added", propertyName, entityType.Name);
+                Birdsong.Sing($"Trying to add {entityType.Name} property '{propertyName}', but the property of the same name for the same type is already added.");
             else
                 claimedProperties[entityType][propertyName] = new CustomProperty(typeof(TProperty), defaultValue, localize);
+        }
+
+        internal static object RetrieveProperty(IEntityWithId entity, string propertyName)
+        {
+            propertyName = propertyName.ToLower();
+
+            if (entity.HasCustomProperty(propertyName))
+                return loadedData[entity][propertyName];
+            else
+            {
+                Type entityType = entity.GetType();
+                if (claimedProperties.ContainsKey(entityType) && claimedProperties[entityType].ContainsKey(propertyName))
+                    return claimedProperties[entityType][propertyName].defaultValue;
+                else
+                    return false;
+            }
+        }
+
+        internal static void RemoveProperty(IEntityWithId entity, string propertyName)
+        {
+            propertyName = propertyName.ToLower();
+
+            if (entity.HasCustomProperty(propertyName))
+            {
+                loadedData[entity].Remove(propertyName);
+                if (loadedData[entity].Count == 0)
+                    loadedData.Remove(entity);
+            }
+            else
+                Birdsong.Sing($"Trying to remove property {propertyName} from {entity.GetType().Name} {entity.Id}, but that property isn't set.");
+        }
+
+        internal static void SetProperty(IEntityWithId owner, string propertyName, object value)
+        {
+            propertyName = propertyName.ToLower();
+            Type ownerType = owner.GetType();
+
+            if (claimedProperties.ContainsKey(ownerType) == false || claimedProperties[ownerType].ContainsKey(propertyName) == false)
+                Birdsong.Sing($"Setting an unclaimed property '{propertyName}' for {ownerType.Name} '{owner.Id}'; possible typo.");
+
+            if (loadedData.ContainsKey(owner) == false)
+                loadedData[owner] = new Dictionary<string, object>();
+
+            loadedData[owner][propertyName] = value;
+        }
+
+        internal static bool HasCustomProperty(IEntityWithId entity, string propertyName)
+        {
+            return loadedData.ContainsKey(entity) && loadedData[entity].ContainsKey(propertyName.ToLower());
         }
 
         internal static void InterceptClaimedProperties(IEntityWithId entity, EntityData entityData, Type entityType)
@@ -123,7 +174,7 @@ namespace Roost.Beachcomber
                 foreach (string propertyName in claimedProperties[entityType].Keys)
                     if (entityData.ValuesTable.ContainsKey(propertyName))
                     {
-                        Birdsong.Sing(VerbosityLevel.Trivia, 0, "Known-Unknown property '{0}' for {1} '{2}'", propertyName, entityType.Name, entity.Id);
+                        Birdsong.Sing(VerbosityLevel.Trivia, 0, $"Known-Unknown property '{propertyName}' for {entityType.Name} '{entity.Id}'");
                         LoadCustomProperty(entity, propertyName, entityData.ValuesTable[propertyName]);
                         entityData.ValuesTable.Remove(propertyName);
                     }
@@ -148,55 +199,6 @@ namespace Roost.Beachcomber
                     loadedData[entity] = new Dictionary<string, object>();
                 loadedData[entity].Add(propertyName, importedValue);
             }
-        }
-
-        internal static object RetrieveProperty(IEntityWithId entity, string propertyName)
-        {
-            propertyName = propertyName.ToLower();
-
-            if (loadedData.ContainsKey(entity) && loadedData[entity].ContainsKey(propertyName))
-                return loadedData[entity][propertyName];
-            else
-            {
-                Type entityType = entity.GetType();
-                if (claimedProperties.ContainsKey(entityType) && claimedProperties[entityType].ContainsKey(propertyName))
-                    return claimedProperties[entityType][propertyName].defaultValue;
-                else
-                    return null;
-            }
-        }
-
-        internal static void RemoveProperty(IEntityWithId entity, string propertyName)
-        {
-            propertyName = propertyName.ToLower();
-
-            if (loadedData.ContainsKey(entity) && loadedData[entity].ContainsKey(propertyName))
-            {
-                loadedData[entity].Remove(propertyName);
-                if (loadedData[entity].Count == 0)
-                    loadedData.Remove(entity);
-            }
-            else
-                Birdsong.Sing("Trying to remove property {0} from {1} {2}, but that property isn't loaded", propertyName, entity.GetType().Name, entity.Id);
-        }
-
-        internal static void SetProperty(IEntityWithId owner, string propertyName, object value)
-        {
-            propertyName = propertyName.ToLower();
-            Type ownerType = owner.GetType();
-
-            if (claimedProperties.ContainsKey(ownerType) == false || claimedProperties[ownerType].ContainsKey(propertyName) == false)
-                Birdsong.Sing("Setting an unclaimed property '{0}' for {1} '{2}'; possible typo", propertyName, ownerType.Name, owner.Id);
-
-            if (loadedData.ContainsKey(owner) == false)
-                loadedData[owner] = new Dictionary<string, object>();
-
-            loadedData[owner][propertyName] = value;
-        }
-
-        internal static bool HasCustomProperty(IEntityWithId owner, string propertyName)
-        {
-            return loadedData.ContainsKey(owner) && loadedData[owner].ContainsKey(propertyName.ToLower());
         }
 
         internal static IEnumerable<string> GetLocalizableProperties(Type type)
@@ -225,7 +227,7 @@ namespace Roost.Beachcomber
 
 namespace Roost
 {
-    public partial class Machine
+    public static partial class Machine
     {
         public static void ClaimProperty<TEntity, TProperty>(string propertyName, bool localize = false, TProperty defaultValue = default(TProperty))
             where TEntity : AbstractEntity<TEntity>
