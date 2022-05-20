@@ -31,8 +31,8 @@ namespace Roost.World.Recipes
             AtTimeOfPower.TabletopLoaded.Schedule(ReshuffleDecksOnNewGame, PatchType.Postfix);
 
             Machine.Patch(
-                original: typeof(Dealer).GetMethod("Deal", new Type[] { typeof(DeckSpec) }),
-                prefix: typeof(Legerdemain).GetMethodInvariant("Deal"));
+                original: typeof(Dealer).GetMethod(nameof(Dealer.Deal), new Type[] { typeof(DeckSpec) }),
+                prefix: typeof(Legerdemain).GetMethodInvariant(nameof(Deal)));
         }
 
         private static bool newGameAndIShouldReshuffleAllTheDecks = false;
@@ -141,7 +141,7 @@ namespace Roost.World.Recipes
             foreach (string deckId in deckDraws.Keys)
             {
                 int draws = deckDraws[deckId].value;
-                for (int i = 0; i++ < draws; )
+                for (int i = 0; i++ < draws;)
                     dealer.Deal(deckId);
             }
         }

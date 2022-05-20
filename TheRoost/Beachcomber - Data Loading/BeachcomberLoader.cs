@@ -102,7 +102,7 @@ namespace Roost.Beachcomber
         {
             Type entityType = typeof(TEntity);
 
-            if (defaultValue != null 
+            if (defaultValue != null
                 && typeof(TProperty).IsValueType == false && typeof(TProperty) != typeof(string))
             {
                 Birdsong.Sing($"Trying to assign default value for a {entityType.Name} property '{propertyName}'; but its type - {nameof(TProperty)} - is a reference type and thus can only be null.");
@@ -168,19 +168,18 @@ namespace Roost.Beachcomber
             return loadedData.ContainsKey(entity) && loadedData[entity].ContainsKey(propertyName.ToLower());
         }
 
-        internal static void InterceptClaimedProperties(IEntityWithId entity, EntityData entityData, Type entityType)
+        internal static void InterceptClaimedProperties(IEntityWithId entity, EntityData entityData, Type entityType, ContentImportLog log)
         {
             if (claimedProperties.ContainsKey(entityType))
                 foreach (string propertyName in claimedProperties[entityType].Keys)
                     if (entityData.ValuesTable.ContainsKey(propertyName))
                     {
-                        Birdsong.Sing(VerbosityLevel.Trivia, 0, $"Known-Unknown property '{propertyName}' for {entityType.Name} '{entity.Id}'");
-                        LoadCustomProperty(entity, propertyName, entityData.ValuesTable[propertyName]);
+                        LoadCustomProperty(entity, propertyName, entityData.ValuesTable[propertyName], log);
                         entityData.ValuesTable.Remove(propertyName);
                     }
         }
 
-        internal static void LoadCustomProperty(IEntityWithId entity, string propertyName, object data)
+        internal static void LoadCustomProperty(IEntityWithId entity, string propertyName, object data, ContentImportLog log)
         {
             Type entityType = entity.GetType();
             propertyName = propertyName.ToLower();
@@ -193,11 +192,18 @@ namespace Roost.Beachcomber
                     return;
                 }
 
-                object importedValue = Panimporter.ImportProperty(entity, data, claimedProperties[entityType][propertyName].type, propertyName);
+                try
+                {
+                    object importedValue = Panimporter.ImportProperty(data, claimedProperties[entityType][propertyName].type, log);
 
-                if (loadedData.ContainsKey(entity) == false)
-                    loadedData[entity] = new Dictionary<string, object>();
-                loadedData[entity].Add(propertyName, importedValue);
+                    if (loadedData.ContainsKey(entity) == false)
+                        loadedData[entity] = new Dictionary<string, object>();
+                    loadedData[entity].Add(propertyName, importedValue);
+                }
+                catch (Exception ex)
+                {
+                    log.LogProblem($"FAILED TO IMPORT CUSTOM PROPERTY '{propertyName}' FOR {entityType.Name.ToUpper()} '{entity.Id}', error:\n{ex.FormatException()}");
+                }
             }
         }
 
@@ -241,7 +247,6 @@ namespace Roost
             MethodInfo claim = typeof(Machine).GetMethodInvariant("ClaimProperty");
             Type[] invokeGenericTypes = new Type[] { typeof(TEntity), null };
             object[] invokeArguments = new object[] { null, localize, null };
-
 
             foreach (string propertyName in propertiesNamesAndTypes.Keys)
             {

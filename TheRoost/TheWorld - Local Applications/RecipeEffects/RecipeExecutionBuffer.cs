@@ -53,7 +53,7 @@ namespace Roost.World.Recipes
                 StackTokens(sphere);
             dirtySpheres.Clear();
         }
-        
+
         public static void ApplyCreations()
         {
             Sphere table = Watchman.Get<HornedAxe>().GetDefaultSphere(OccupiesSpaceAs.Intangible);
@@ -160,7 +160,7 @@ namespace Roost.World.Recipes
                     return;
 
                 onToken.Payload.SetMutation(mutate, level, additive);
-                if (onToken.Sphere.GetAbsolutePath() == Watchman.Get<HornedAxe>().GetDefaultSpherePath())
+                if (onToken.Sphere.isDefaultSphere())
                     onToken.Remanifest(vfx);
             }
         }
@@ -177,7 +177,7 @@ namespace Roost.World.Recipes
                     return;
 
                 onStack.ChangeTo(toElementId);
-                if (onStack.Token.Sphere.GetAbsolutePath() == Watchman.Get<HornedAxe>().GetDefaultSpherePath())
+                if (onStack.Token.Sphere.isDefaultSphere())
                     onStack.Token.Remanifest(vfx);
             }
         }
@@ -190,7 +190,9 @@ namespace Roost.World.Recipes
 
             public void Apply(Sphere onSphere)
             {
-                onSphere.ProvisionElementToken(element, amount);
+                Token token = onSphere.ProvisionElementToken(element, amount);
+                if (onSphere.isDefaultSphere() == false)
+                    token.Shroud();
             }
 
             public void ApplyAnimated(Sphere onSphere)
@@ -203,5 +205,12 @@ namespace Roost.World.Recipes
             public bool Identical(string element, RetirementVFX vfx) { return (element == this.element && vfx == this.vfx); }
             public FutureCreation IncreaseAmount(int add) { return new FutureCreation(this.element, this.amount + add, this.vfx); }
         }
+
+        public static bool isDefaultSphere(this Sphere sphere)
+        {
+            return sphere.GetAbsolutePath() == Watchman.Get<HornedAxe>().GetDefaultSpherePath();
+        }
     }
 }
+
+

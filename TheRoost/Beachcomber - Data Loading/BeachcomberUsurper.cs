@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -41,24 +42,13 @@ namespace Roost.Beachcomber
             //thus, I have to create an intermediary - InvokeGenericImporterForAbstractRootEntity() - which calls the actual type-specific method
             //(generics are needed to mimic CS's own structure and since it makes accessing properties much more easierester)
 
-            MethodInfo overrideImporter;
             string nativeMethodName = nameof(Fucine.CreateImporterInstance);
 
-            overrideImporter = typeof(Usurper.DictImporer).GetMethodInvariant(nameof(Usurper.DictImporer.CreateImporterInstance));
-            Machine.Patch(typeof(FucineDict).GetMethodInvariant(nativeMethodName), prefix: overrideImporter);
-            Machine.Patch(typeof(FucineAspects).GetMethodInvariant(nativeMethodName), prefix: overrideImporter);
-
-            overrideImporter = typeof(Usurper.ListImporter).GetMethodInvariant(nameof(Usurper.ListImporter.CreateImporterInstance));
-            Machine.Patch(typeof(FucineList).GetMethodInvariant(nativeMethodName), prefix: overrideImporter);
-
-            overrideImporter = typeof(Usurper.ValueImporter).GetMethodInvariant(nameof(Usurper.ValueImporter.CreateImporterInstance));
-            Machine.Patch(typeof(FucineValue).GetMethodInvariant(nativeMethodName), prefix: overrideImporter);
-
-            overrideImporter = typeof(Usurper.SubEntityImporter).GetMethodInvariant(nameof(Usurper.SubEntityImporter.CreateImporterInstance));
-            Machine.Patch(typeof(FucineSubEntity).GetMethodInvariant(nativeMethodName), prefix: overrideImporter);
-
-            overrideImporter = typeof(Usurper.ImporterConstructor).GetMethodInvariant(nameof(Usurper.ImporterConstructor.CreateImporterInstance));
-            Machine.Patch(typeof(FucinePathValue).GetMethodInvariant(nativeMethodName), prefix: overrideImporter);
+            Machine.Patch(typeof(FucineList).GetMethodInvariant(nativeMethodName), prefix: typeof(ListPanImporter).GetMethodInvariant(nativeMethodName));
+            Machine.Patch(typeof(FucineDict).GetMethodInvariant(nativeMethodName), prefix: typeof(DictPanImporer).GetMethodInvariant(nativeMethodName));
+            Machine.Patch(typeof(FucineValue).GetMethodInvariant(nativeMethodName), prefix: typeof(ValuePanImporter).GetMethodInvariant(nativeMethodName));
+            Machine.Patch(typeof(FucineSubEntity).GetMethodInvariant(nativeMethodName), prefix: typeof(SubEntityPanImporter).GetMethodInvariant(nativeMethodName));
+            //not touching any specific importers: AspectImporter, PathImporter, IdImporter - they are suitable
         }
 
         private static IEnumerable<CodeInstruction> AbstractEntityConstructorTranspiler(IEnumerable<CodeInstruction> instructions)
@@ -75,7 +65,7 @@ namespace Roost.Beachcomber
             };
 
             Vagabond.CodeInstructionMask mask = instruction => instruction.opcode == OpCodes.Call;
-            return instructions.ReplaceAllAfterMask(mask, myCode, true);
+            return instructions.ReplaceAfterMask(mask, myCode, true);
         }
 
 
@@ -101,76 +91,30 @@ namespace Roost.Beachcomber
                 importDataForEntity.ValuesTable.Remove("id");
             }
 
-            try
+            Hoard.InterceptClaimedProperties(entity, importDataForEntity, typeof(T), log);
+
+            foreach (CachedFucineProperty<T> cachedFucineProperty in TypeInfoCache<T>.GetCachedFucinePropertiesForType())
             {
-                Hoard.InterceptClaimedProperties(entity, importDataForEntity, typeof(T));
+                if (cachedFucineProperty.LowerCaseName == "id")
+                    continue;
 
-                foreach (CachedFucineProperty<T> cachedFucineProperty in TypeInfoCache<T>.GetCachedFucinePropertiesForType())
+                try
                 {
-                    if (cachedFucineProperty.LowerCaseName == "id")
-                        continue;
-
                     if (!Ostrich.Ignores(typeof(T), cachedFucineProperty.LowerCaseName))
                         cachedFucineProperty.GetImporterForProperty().TryImportProperty<T>(entity as T, cachedFucineProperty, importDataForEntity, log);
 
                     importDataForEntity.ValuesTable.Remove(cachedFucineProperty.LowerCaseName);
                 }
-                AbstractEntity<T> abstractEntity = entity as AbstractEntity<T>;
-                foreach (object key in importDataForEntity.ValuesTable.Keys)
-                    abstractEntity.PushUnknownProperty(key, importDataForEntity.ValuesTable[key]);
+                catch (Exception ex)
+                {
+                    log.LogProblem($"Failed to import property '{cachedFucineProperty.LowerCaseName}' of {typeof(T).Name} '{entity.Id}', reason:\n{ex}");
+                }
             }
-            catch (Exception ex)
-            {
-                log.LogProblem($"Failed to import {typeof(T).Name} id '{entity.Id ?? importDataForEntity.Id}', reason:\n{ex}");
-            }
+            AbstractEntity<T> abstractEntity = entity as AbstractEntity<T>;
+            foreach (object key in importDataForEntity.ValuesTable.Keys)
+                abstractEntity.PushUnknownProperty(key, importDataForEntity.ValuesTable[key]);
         }
-        abstract class PanimporterShard : AbstractImporter
-        {
-            protected abstract object Import(object data, Type type);
-            public override bool TryImportProperty<T>(T entity, CachedFucineProperty<T> cachedProperty, EntityData entityData, ContentImportLog log)
-            {
-                if (entityData.ValuesTable.Contains(cachedProperty.LowerCaseName))
-                    try
-                    {
-                        object result = Import(entityData.ValuesTable[cachedProperty.LowerCaseName], cachedProperty.ThisPropInfo.PropertyType);
 
-                        cachedProperty.SetViaFastInvoke(entity, result);
-                        return true;
-                    }
-                    catch (Exception ex)
-                    {
-                        throw ex;
-                    }
 
-                object defaultValue = cachedProperty.FucineAttribute.DefaultValue ?? FactoryInstantiator.CreateObjectWithDefaultConstructor(cachedProperty.ThisPropInfo.PropertyType);
-                cachedProperty.SetViaFastInvoke(entity, defaultValue);
-                return false;
-            }
-        }
-        class DictImporer : PanimporterShard
-        {
-            public static bool CreateImporterInstance(ref AbstractImporter __result) { __result = new Usurper.DictImporer(); return false; }
-            protected override object Import(object data, Type type) { return Panimporter.ImportDictionary(data, type); }
-        }
-        class ListImporter : PanimporterShard
-        {
-            public static bool CreateImporterInstance(ref AbstractImporter __result) { __result = new Usurper.ListImporter(); return false; }
-            protected override object Import(object data, Type type) { return Panimporter.ImportList(data, type); }
-        }
-        class ValueImporter : PanimporterShard
-        {
-            public static bool CreateImporterInstance(ref AbstractImporter __result) { __result = new Usurper.ValueImporter(); return false; }
-            protected override object Import(object data, Type type) { return Panimporter.ImportSimpleValue(data, type); }
-        }
-        class SubEntityImporter : PanimporterShard
-        {
-            public static bool CreateImporterInstance(ref AbstractImporter __result) { __result = new Usurper.SubEntityImporter(); return false; }
-            protected override object Import(object data, Type type) { return Panimporter.ImportFucineEntity(data, type); }
-        }
-        class ImporterConstructor : PanimporterShard
-        {
-            public static bool CreateImporterInstance(ref AbstractImporter __result) { __result = new Usurper.ImporterConstructor(); return false; }
-            protected override object Import(object data, Type type) { return Panimporter.ConstuctFromParameters(data, type); }
-        }
     }
 }

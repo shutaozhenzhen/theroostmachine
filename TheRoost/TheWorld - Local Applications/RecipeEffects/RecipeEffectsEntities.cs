@@ -18,25 +18,25 @@ namespace Roost.World.Recipes.Entities
 {
     public class GrandEffects : AbstractEntity<GrandEffects>
     {
-        [FucineUniValue] public string comments { get; set; }
+        [FucUniValue] public string comments { get; set; }
 
-        [FucineUniValue] public Dictionary<Funcine<bool>, List<RefMutationEffect>> Mutations { get; set; }
-        [FucineUniValue] public Dictionary<string, Funcine<int>> Aspects { get; set; }
+        [FucUniValue] public Dictionary<Funcine<bool>, List<RefMutationEffect>> Mutations { get; set; }
+        [FucUniValue] public Dictionary<string, Funcine<int>> Aspects { get; set; }
 
-        [FucineUniValue] public List<string> DeckShuffles { get; set; }
-        [FucineUniValue] public Dictionary<string, List<string>> DeckForbids { get; set; }
-        [FucineUniValue] public Dictionary<string, List<string>> DeckAllows { get; set; }
-        [FucineUniValue] public Dictionary<string, Funcine<int>> DeckDraws { get; set; }
-        [FucineUniValue] public Dictionary<string, List<string>> DeckAdds { get; set; }
-        [FucineUniValue] public Dictionary<string, List<Funcine<bool>>> DeckTakeOuts { get; set; }
-        [FucineUniValue] public Dictionary<string, List<Funcine<bool>>> DeckInserts { get; set; }
+        [FucUniValue] public List<string> DeckShuffles { get; set; }
+        [FucUniValue] public Dictionary<string, List<string>> DeckForbids { get; set; }
+        [FucUniValue] public Dictionary<string, List<string>> DeckAllows { get; set; }
+        [FucUniValue] public Dictionary<string, Funcine<int>> DeckDraws { get; set; }
+        [FucUniValue] public Dictionary<string, List<string>> DeckAdds { get; set; }
+        [FucUniValue] public Dictionary<string, List<Funcine<bool>>> DeckTakeOuts { get; set; }
+        [FucUniValue] public Dictionary<string, List<Funcine<bool>>> DeckInserts { get; set; }
 
-        [FucineUniValue] public Dictionary<Funcine<bool>, Funcine<int>> Effects { get; set; }
-        [FucineUniValue] public Dictionary<Funcine<bool>, Funcine<int>> Decays { get; set; }
+        [FucUniValue] public Dictionary<Funcine<bool>, Funcine<int>> Effects { get; set; }
+        [FucUniValue] public Dictionary<Funcine<bool>, Funcine<int>> Decays { get; set; }
 
-        [FucineUniValue(DefaultValue = RetirementVFX.None)] public RetirementVFX DeckEffectsVFX { get; set; }
-        [FucineUniValue(DefaultValue = RetirementVFX.None)] public RetirementVFX EffectsVFX { get; set; }
-        [FucineUniValue(DefaultValue = RetirementVFX.CardLight)] public RetirementVFX DecaysVFX { get; set; }
+        [FucUniValue(DefaultValue = RetirementVFX.None)] public RetirementVFX DeckEffectsVFX { get; set; }
+        [FucUniValue(DefaultValue = RetirementVFX.None)] public RetirementVFX EffectsVFX { get; set; }
+        [FucUniValue(DefaultValue = RetirementVFX.CardLight)] public RetirementVFX DecaysVFX { get; set; }
 
         public GrandEffects() { }
         public GrandEffects(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
@@ -161,13 +161,13 @@ namespace Roost.World.Recipes.Entities
 
     public class RefMutationEffect : AbstractEntity<RefMutationEffect>, ICustomSpecEntity
     {
-        [FucineUniValue(ValidateAsElementId = true, DefaultValue = null)]
+        [FucUniValue(ValidateAsElementId = true, DefaultValue = null)]
         public string Mutate { get; set; }
-        [FucineUniValue("1")]
+        [FucUniValue("1")]
         public Funcine<int> Level { get; set; }
-        [FucineValue(false)]
+        [FucUniValue(false)]
         public bool Additive { get; set; }
-        [FucineUniValue(DefaultValue = RetirementVFX.CardLight)]
+        [FucUniValue(DefaultValue = RetirementVFX.CardLight)]
         public RetirementVFX VFX { get; set; }
 
         public RefMutationEffect(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
@@ -191,15 +191,15 @@ namespace Roost.World.Recipes.Entities
     public enum MorphEffectsExtended { Transform, Spawn, MutateSet, Mutate, Destroy, Decay, Induce, Link }
     public class RefMorphDetails : AbstractEntity<RefMorphDetails>, IQuickSpecEntity, ICustomSpecEntity
     {
-        [FucineUniValue(DefaultValue = MorphEffectsExtended.Transform)]
+        [FucUniValue(DefaultValue = MorphEffectsExtended.Transform)]
         public MorphEffectsExtended MorphEffect { get; set; }
-        [FucineUniValue(DefaultValue = 1)]
+        [FucUniValue(DefaultValue = 1)]
         public Funcine<int> Level { get; set; }
-        [FucineUniValue(DefaultValue = 100)]
+        [FucUniValue(DefaultValue = 100)]
         public Funcine<int> Chance { get; set; }
-        [FucineUniValue]
+        [FucUniValue]
         public Expulsion Expulsion { get; set; }
-        [FucineUniValue(DefaultValue = RetirementVFX.CardBurn)]
+        [FucUniValue(DefaultValue = RetirementVFX.CardBurn)]
         public RetirementVFX VFX { get; set; }
 
         public void QuickSpec(string value)

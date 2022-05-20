@@ -17,15 +17,15 @@ public static class TheRoostMachine
         else
             try
             {
-                Birdsong.currentVerbosity = (VerbosityLevel) (SecretHistories.UI.Watchman.Get<Config>().GetConfigValueAsInt("verbosity") ?? 0);
+                Birdsong.currentVerbosity = (VerbosityLevel)(SecretHistories.UI.Watchman.Get<Config>().GetConfigValueAsInt("verbosity") ?? 0);
                 //in case something breaks during the setup
                 SecretHistories.UI.Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
 
                 Roost.Enactors.Beachcomber.Enact();
-                //Roost.Enactors.Elegiast.Enact();
-                //Roost.Enactors.Vagabond.Enact();
-               // Roost.Enactors.Twins.Enact();
-                //Roost.Enactors.World.Enact();
+                Roost.Enactors.Elegiast.Enact();
+                Roost.Enactors.Vagabond.Enact();
+                Roost.Enactors.Twins.Enact();
+                Roost.Enactors.World.Enact();
 
                 SecretHistories.UI.Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
 

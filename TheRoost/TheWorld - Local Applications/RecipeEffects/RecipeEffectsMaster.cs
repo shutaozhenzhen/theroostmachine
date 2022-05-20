@@ -27,41 +27,38 @@ namespace Roost.World.Recipes
         const string GRAND_EFFECTS = "grandeffects";
         const string ROOST_EFFECTS = "$roostrecipeeffects";
 
-        private static bool propertiesClaimed = false;
-
         internal static void Enact()
         {
-            //in case player disables/enables the module several times, so it won't clog the log with "already claimed" messages
-            if (propertiesClaimed == false)
-            {
-                Machine.ClaimProperty<Element, Dictionary<string, List<RefMorphDetails>>>("xtriggers");
+            Machine.ClaimProperty<Element, Dictionary<string, List<RefMorphDetails>>>("xtriggers");
 
-                Machine.ClaimProperty<Recipe, Dictionary<Funcine<int>, Funcine<int>>>(REF_REQS);
-                Machine.ClaimProperty<Recipe, Dictionary<Funcine<int>, Funcine<int>>>(GRAND_EFFECTS);
-                Machine.ClaimProperty<Recipe, Dictionary<Funcine<int>, Funcine<int>>>(ROOST_EFFECTS);
+            Machine.ClaimProperty<Recipe, Dictionary<Funcine<int>, Funcine<int>>>(REF_REQS);
+            Machine.ClaimProperty<Recipe, Dictionary<Funcine<int>, Funcine<int>>>(GRAND_EFFECTS);
+            Machine.ClaimProperty<Recipe, Dictionary<Funcine<int>, Funcine<int>>>(ROOST_EFFECTS);
 
-                Dictionary<string, Type> allRecipeEffectsProperties = new Dictionary<string, Type>();
-                foreach (CachedFucineProperty<GrandEffects> cachedProperty in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
-                    allRecipeEffectsProperties.Add(cachedProperty.LowerCaseName, cachedProperty.ThisPropInfo.PropertyType);
-                Machine.ClaimProperties<Recipe>(allRecipeEffectsProperties);
+            Dictionary<string, Type> allRecipeEffectsProperties = new Dictionary<string, Type>();
+            foreach (CachedFucineProperty<GrandEffects> cachedProperty in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
+                allRecipeEffectsProperties.Add(cachedProperty.LowerCaseName, cachedProperty.ThisPropInfo.PropertyType);
+            Machine.ClaimProperties<Recipe>(allRecipeEffectsProperties);
 
-                propertiesClaimed = true;
-            }
             AtTimeOfPower.OnPostImportRecipe.Schedule<Recipe>(FlushEffects, PatchType.Postfix);
 
             AtTimeOfPower.RecipeRequirementsCheck.Schedule<Recipe, AspectsInContext>(RefReqs);
 
-            Machine.Patch(typeof(RecipeCompletionEffectCommand).GetMethodInvariant("Execute"),
+            Machine.Patch(
+                original: typeof(RecipeCompletionEffectCommand).GetMethodInvariant("Execute"),
                 transpiler: typeof(RecipeEffectsMaster).GetMethodInvariant("RunRefEffectsTranspiler"));
 
-            Machine.Patch(typeof(Beachcomber.Usurper).GetMethodInvariant("InvokeGenericImporterForAbstractRootEntity"),
-                 prefix: typeof(RecipeEffectsMaster).GetMethodInvariant("ConvertLegacyMutationDefinitions"));
+            Machine.Patch(
+                 original: typeof(Beachcomber.Usurper).GetMethodInvariant("InvokeGenericImporterForAbstractRootEntity"),
+                 prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(ConvertLegacyMutationDefinitions)));
+            
+          Machine.Patch(
+              original: typeof(Sphere).GetMethodInvariant("NotifyTokensChangedForSphere"),
+              postfix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(TryStackTokens))); ;
 
-            Machine.Patch(typeof(Sphere).GetMethodInvariant("NotifyTokensChangedForSphere"),
-                postfix: typeof(RecipeEffectsMaster).GetMethodInvariant("TryStackTokens"));
-
-            Machine.Patch(typeof(SituationStorageSphere).GetPropertyInvariant("AllowStackMerge").GetGetMethod(),
-                prefix: typeof(RecipeEffectsMaster).GetMethodInvariant("AllowStackMerge"));
+          Machine.Patch(
+              original: typeof(SituationStorageSphere).GetPropertyInvariant("AllowStackMerge").GetGetMethod(),
+              prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(AllowStackMerge))); 
         }
 
         private static void TryStackTokens(SecretHistories.Constants.Events.SphereContentsChangedEventArgs args)
@@ -92,26 +89,33 @@ namespace Roost.World.Recipes
         }
 
         //Usurper.InvokeGenericImporterForAbstractRootEntity()
-        private static void ConvertLegacyMutationDefinitions(IEntityWithId entity, EntityData entityData)
+        private static void ConvertLegacyMutationDefinitions(IEntityWithId entity, EntityData entityData, ContentImportLog log)
         {
-            if (entity is Recipe)
-                if (entityData.ValuesTable.ContainsKey("mutations") && entityData.ValuesTable["mutations"] is ArrayList)
-                {
-                    ArrayList oldMutations = entityData.ValuesTable["mutations"] as ArrayList;
-                    EntityData newMutations = new EntityData();
-
-                    foreach (EntityData data in oldMutations)
+            try
+            {
+                if (entity is Recipe)
+                    if (entityData.ValuesTable.ContainsKey("mutations") && entityData.ValuesTable["mutations"] is ArrayList)
                     {
-                        string key = data.ValuesTable["filter"].ToString();
-                        if (newMutations.ValuesTable.ContainsKey(key) == false)
-                            newMutations.ValuesTable[key] = new ArrayList();
+                        ArrayList oldMutations = entityData.ValuesTable["mutations"] as ArrayList;
+                        EntityData newMutations = new EntityData();
 
-                        (newMutations.ValuesTable[key] as ArrayList).Add(data);
-                        data.ValuesTable.Remove("filter");
+                        foreach (EntityData data in oldMutations)
+                        {
+                            string key = data.ValuesTable["filter"].ToString();
+                            if (newMutations.ValuesTable.ContainsKey(key) == false)
+                                newMutations.ValuesTable[key] = new ArrayList();
+
+                            (newMutations.ValuesTable[key] as ArrayList).Add(data);
+                            data.ValuesTable.Remove("filter");
+                        }
+
+                        entityData.ValuesTable["mutations"] = newMutations;
                     }
-
-                    entityData.ValuesTable["mutations"] = newMutations;
-                }
+            }
+            catch (Exception ex)
+            {
+                log.LogProblem($"Failed to convert legacy mutation:\n{ex.FormatException()}");
+            }
         }
 
         private static IEnumerable<CodeInstruction> RunRefEffectsTranspiler(IEnumerable<CodeInstruction> instructions)
@@ -127,7 +131,7 @@ namespace Roost.World.Recipes
             };
 
             Vagabond.CodeInstructionMask mask = instruction => instruction.operand as System.Reflection.MethodInfo == typeof(RecipeCompletionEffectCommand).GetMethodInvariant("RunRecipeEffects");
-            return instructions.ReplaceAllBeforeMask(mask, myCode, false);
+            return instructions.ReplaceBeforeMask(mask, myCode, false);
         }
 
         private static void RefEffects(RecipeCompletionEffectCommand command, Situation situation)

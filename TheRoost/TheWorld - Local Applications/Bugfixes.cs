@@ -8,8 +8,9 @@ namespace Roost.World
     {
         internal static void Fix()
         {
-            Machine.Patch(typeof(ElementStack).GetMethodInvariant("SetMutation"),
-                postfix: typeof(BugsPicker).GetMethodInvariant("FixMutationsDisplay"));
+            Machine.Patch(
+                original: typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.SetMutation)),
+                postfix: typeof(BugsPicker).GetMethodInvariant(nameof(FixMutationsDisplay)));
         }
 
         private static void FixMutationsDisplay(ElementStack __instance)

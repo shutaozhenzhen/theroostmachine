@@ -93,8 +93,8 @@ namespace Roost.Vagabond
         private static readonly Dictionary<AtTimeOfPower, MethodBase> methodsToPatch = new Dictionary<AtTimeOfPower, MethodBase>()
         {
  { AtTimeOfPower.MainMenuLoaded, typeof(MenuScreenController).GetMethodInvariant("InitialiseServices") },
- { AtTimeOfPower.NewGameStarted, typeof(MenuScreenController).GetMethodInvariant("BeginNewSaveWithSpecifiedLegacy") },
- { AtTimeOfPower.TabletopLoaded, typeof(GameGateway).GetMethodInvariant("Start") },
+ { AtTimeOfPower.NewGameStarted, typeof(MenuScreenController).GetMethodInvariant(nameof(MenuScreenController.BeginNewSaveWithSpecifiedLegacy)) },
+ { AtTimeOfPower.TabletopLoaded, typeof(GameGateway).GetMethodInvariant(nameof(GameGateway.LoadAfresh)) },
 
  { AtTimeOfPower.RecipeRequirementsCheck, typeof(Recipe).GetMethodInvariant("RequirementsSatisfiedBy") },
 
@@ -255,6 +255,39 @@ namespace Roost.Vagabond
             return finalCodes.AsEnumerable();
         }
 
+        internal static IEnumerable<CodeInstruction> TranspilerInsertAtMask(IEnumerable<CodeInstruction> instructions, CodeInstructionMask checkMask, List<CodeInstruction> myCode, int occurence, bool insertBefore)
+        {
+            if (myCode == null || myCode.Count == 0)
+            {
+                Birdsong.Sing("Trying to transpile with an empty myCode!");
+                return instructions;
+            }
+
+            List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+
+            int currentOccurence = 0;
+            int i = 0;
+            while (i < codes.Count)
+            {
+                if (checkMask(codes[i]))
+                {
+                    currentOccurence++;
+                    if (currentOccurence <= occurence)
+                        continue;
+                    else
+                    {
+                        codes.InsertRange(insertBefore ? i : i + 1, myCode);
+
+                        break;
+                    }
+                }
+
+                i++;
+            }
+
+            return codes.AsEnumerable();
+        }
+
         internal static void LogILCodes(IEnumerable<CodeInstruction> instructions)
         {
             Birdsong.Sing("IL CODE:");
@@ -314,14 +347,19 @@ namespace Roost
             return Vagabond.HarmonyMask.TranspilerInsertAtMethod(original, nearMethodCall, myCode, false, methodCallNumber);
         }
 
-        public static IEnumerable<CodeInstruction> ReplaceAllAfterMask(this IEnumerable<CodeInstruction> original, Vagabond.CodeInstructionMask codePointMask, List<CodeInstruction> myCode, bool inclusive, int occurencesNumber = 0)
+        public static IEnumerable<CodeInstruction> ReplaceAfterMask(this IEnumerable<CodeInstruction> original, Vagabond.CodeInstructionMask codePointMask, List<CodeInstruction> myCode, bool inclusive, int occurencesNumber = 0)
         {
             return Vagabond.HarmonyMask.TranspilerReplaceAllAfterMask(original, codePointMask, myCode, inclusive, occurencesNumber);
         }
 
-        public static IEnumerable<CodeInstruction> ReplaceAllBeforeMask(this IEnumerable<CodeInstruction> original, Vagabond.CodeInstructionMask codePointMask, List<CodeInstruction> myCode, bool inclusive, int occurencesNumber = 0)
+        public static IEnumerable<CodeInstruction> ReplaceBeforeMask(this IEnumerable<CodeInstruction> original, Vagabond.CodeInstructionMask codePointMask, List<CodeInstruction> myCode, bool inclusive, int occurencesNumber = 0)
         {
             return Vagabond.HarmonyMask.TranspilerReplaceAllBeforeMask(original, codePointMask, myCode, inclusive, occurencesNumber);
+        }
+
+        internal static IEnumerable<CodeInstruction> InsertAtMask(this IEnumerable<CodeInstruction> instructions, Vagabond.CodeInstructionMask checkMask, List<CodeInstruction> myCode, bool insertBefore = true, int occurence = 0)
+        {
+            return Vagabond.HarmonyMask.TranspilerInsertAtMask(instructions, checkMask, myCode, occurence, insertBefore);
         }
 
         public static void LogILCodes(this IEnumerable<CodeInstruction> codes)

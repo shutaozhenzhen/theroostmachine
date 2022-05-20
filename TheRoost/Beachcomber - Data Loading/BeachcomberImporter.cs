@@ -11,44 +11,42 @@ namespace Roost.Beachcomber
     //leaving this one public in case someone/me will need to load something directly
     public static class Panimporter
     {
-        public static object ImportProperty(IEntityWithId parentEntity, object valueData, Type propertyType, string propertyName)
-        {
-            try
-            {
-                ImporterForType Import = GetImporterForType(propertyType);
-                return Import(valueData, propertyType);
-            }
-            catch (Exception ex)
-            {
-                Birdsong.Sing($"FAILED TO LOAD PROPERTY '{propertyName}' FOR {parentEntity.GetType().Name.ToUpper()} ID '{parentEntity.Id}' - {ex.Message}");
-                throw;
-            }
-        }
-
-        public delegate object ImporterForType(object valueData, Type propertyType);
+        public delegate object ImporterForType(object valueData, Type propertyType, ContentImportLog log);
         public static ImporterForType GetImporterForType(Type type)
         {
             if (typeof(IList).IsAssignableFrom(type)) //is a list
                 return ImportList;
 
-            else if (typeof(IDictionary).IsAssignableFrom(type)) //is a dictionary
+            if (typeof(IDictionary).IsAssignableFrom(type)) //is a dictionary
                 return ImportDictionary;
 
-            else if (typeof(AbstractEntity<>).IsAssignableFrom(type)) //is a Fucine entity
+            if (typeof(IEntityWithId).IsAssignableFrom(type)) //is a Fucine entity
                 return ImportFucineEntity;
 
-            else if (type != typeof(string) && (type.IsClass || (type.IsValueType && !type.IsEnum && type.Namespace != "System"))) //either non-AbstractEntity class or a struct
+            if (type != typeof(string) && (type.IsClass || (type.IsValueType && !type.IsEnum && type.Namespace != "System"))) //either non-AbstractEntity class or a struct
                 return ConstuctFromParameters;
 
-            else
-                return ImportSimpleValue;
+            return ImportSimpleValue;
         }
 
-        public static IList ImportList(object listData, Type listType)
+        public static object ImportProperty(object valueData, Type propertyType, ContentImportLog log)
+        {
+            try
+            {
+                ImporterForType Import = GetImporterForType(propertyType);
+                return Import(valueData, propertyType, log);
+            }
+            catch (Exception ex)
+            {
+                throw Birdsong.Cack($"UNABLE TO IMPORT PROPERTY - {ex.FormatException()}");
+            }
+        }
+
+        public static IList ImportList(object listData, Type listType, ContentImportLog log)
         {
             IList list = FactoryInstantiator.CreateObjectWithDefaultConstructor(listType) as IList;
 
-            //in case we are loading a custom type that derives from List (a la AspectsDictionary : Dictionary<string,int>)
+            //in case we are loading a custom type that derives from List (a la AspectsList : List<string>)
             //to know the actual value type we need to find its base List class
             while (listType.IsGenericType == false)
                 listType = listType.BaseType;
@@ -62,14 +60,14 @@ namespace Roost.Beachcomber
 
                 if (dataAsArrayList == null)
                 {
-                    //to reduce boilerplate in json, I allow loading of a single-entry lists from plain strings
+                    //to reduce boilerplate in json, allow loading of a single-entry lists from plain strings
                     //i.e. { "someList": [ "entry" ] } and { "someList": "entry" } will yield the same result
-                    object importedSingleEntry = ImportEntity(listData, expectedEntryType);
+                    object importedSingleEntry = ImportEntity(listData, expectedEntryType, log);
                     list.Add(importedSingleEntry);
                 }
                 else foreach (object entry in dataAsArrayList)
                     {
-                        object importedEntry = ImportEntity(entry, expectedEntryType);
+                        object importedEntry = ImportEntity(entry, expectedEntryType, log);
                         list.Add(importedEntry);
                     }
 
@@ -77,11 +75,11 @@ namespace Roost.Beachcomber
             }
             catch (Exception ex)
             {
-                throw Birdsong.Cack($"LIST[] IS MALFORMED - {ex.Message}");
+                throw Birdsong.Cack($"LIST[] IS MALFORMED - {ex.FormatException()}");
             }
         }
 
-        public static IDictionary ImportDictionary(object dictionaryData, Type dictionaryType)
+        public static IDictionary ImportDictionary(object dictionaryData, Type dictionaryType, ContentImportLog log)
         {
             IDictionary dictionary = FactoryInstantiator.CreateObjectWithDefaultConstructor(dictionaryType) as IDictionary;
 
@@ -105,8 +103,8 @@ namespace Roost.Beachcomber
 
                 foreach (DictionaryEntry dictionaryEntry in entityData.ValuesTable)
                 {
-                    object key = ImportKey(dictionaryEntry.Key, dictionaryKeyType);
-                    object value = ImportValue(dictionaryEntry.Value, dictionaryValueType);
+                    object key = ImportKey(dictionaryEntry.Key, dictionaryKeyType, log);
+                    object value = ImportValue(dictionaryEntry.Value, dictionaryValueType, log);
                     dictionary.Add(key, value);
                 }
 
@@ -114,23 +112,11 @@ namespace Roost.Beachcomber
             }
             catch (Exception ex)
             {
-                throw Birdsong.Cack($"DICTIONARY{{}} IS MALFORMED - {ex.Message}");
+                throw Birdsong.Cack($"DICTIONARY{{}} IS MALFORMED - {ex.FormatException()}");
             }
         }
 
-        public static object ImportSimpleValue(object valueData, Type destinationType)
-        {
-            try
-            {
-                return ConvertValue(valueData, destinationType);
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
-        public static IEntityWithId ImportFucineEntity(object entityData, Type entityType)
+        public static IEntityWithId ImportFucineEntity(object entityData, Type entityType, ContentImportLog log)
         {
             try
             {
@@ -138,7 +124,7 @@ namespace Roost.Beachcomber
 
                 if (fullSpecEntityData != null)
                 {
-                    IEntityWithId entity = FactoryInstantiator.CreateEntity(entityType, entityData as EntityData, null);
+                    IEntityWithId entity = FactoryInstantiator.CreateEntity(entityType, entityData as EntityData, log);
                     if (typeof(ICustomSpecEntity).IsAssignableFrom(entityType))
                         (entity as ICustomSpecEntity).CustomSpec(fullSpecEntityData.ValuesTable);
 
@@ -158,11 +144,11 @@ namespace Roost.Beachcomber
             }
             catch (Exception ex)
             {
-                throw Birdsong.Cack($"ENTITY DATA{{}} IS MALFORMED - {ex.Message}");
+                throw Birdsong.Cack($"ENTITY DATA{{}} IS MALFORMED:\n{ex.FormatException()}");
             }
         }
 
-        public static object ConstuctFromParameters(object parametersData, Type type)
+        public static object ConstuctFromParameters(object parametersData, Type type, ContentImportLog log)
         {
             try
             {
@@ -211,14 +197,26 @@ namespace Roost.Beachcomber
             }
         }
 
-        public static object ConvertValue(object data, Type destinationType)
+        public static object ImportSimpleValue(object valueData, Type destinationType, ContentImportLog log)
         {
             try
             {
-                Type sourceType = data.GetType();
-                if (sourceType == destinationType)
-                    return data;
+                return ConvertValue(valueData, destinationType);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
 
+        public static object ConvertValue(object data, Type destinationType)
+        {
+            Type sourceType = data.GetType();
+            if (sourceType == destinationType)
+                return data;
+
+            try
+            {
                 if ((sourceType.IsValueType == false && sourceType != typeof(string))
                     || (destinationType.IsValueType == false && destinationType != typeof(string)))
                     throw Birdsong.Cack($"Trying to convert data '{data}' to {destinationType.Name}, but at least one of these two is not a value type");
@@ -231,68 +229,125 @@ namespace Roost.Beachcomber
                 if (data is bool && destinationType != typeof(string))
                     data = ((bool)data == true) ? 1 : -1;
 
-                return System.Convert.ChangeType(data, destinationType);
+                return TypeDescriptor.GetConverter(sourceType).ConvertTo(data, destinationType);// System.Convert.ChangeType(data, destinationType);
             }
             catch (Exception ex)
             {
-                throw Birdsong.Cack($"UNABLE TO PARSE A VALUE: '{data}' AS {destinationType.Name.ToUpper()}: {ex.Message}");
+                throw Birdsong.Cack($"UNABLE TO CONVERT {sourceType.Name} '{data}' TO {destinationType.Name}: {ex.FormatException()}");
             }
         }
     }
 
+    public class PanimporterShard : AbstractImporter
+    {
+        public override bool TryImportProperty<T>(T entity, CachedFucineProperty<T> cachedFucineProperty, EntityData entityData, ContentImportLog log)
+        {
+            string propertyName = cachedFucineProperty.LowerCaseName;
+            Type propertyType = cachedFucineProperty.ThisPropInfo.PropertyType;
+
+            try
+            {
+                if (entityData.ValuesTable.Contains(propertyName))
+                {
+                    object result = Import(entityData.ValuesTable[propertyName], propertyType, log);
+
+                    cachedFucineProperty.SetViaFastInvoke(entity, result);
+
+                    return true;
+                }
+
+                cachedFucineProperty.SetViaFastInvoke(entity, GetDefaultValue(cachedFucineProperty, log));
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        protected virtual object Import(object data, Type type, ContentImportLog log)
+        {
+            return Panimporter.ImportProperty(data, type, log);
+        }
+
+        protected virtual object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty, ContentImportLog log) where T : AbstractEntity<T>
+        {
+            Type propertyType = cachedFucineProperty.ThisPropInfo.PropertyType;
+
+            if (propertyType.Namespace == "System" || propertyType.IsEnum)
+                return cachedFucineProperty.FucineAttribute.DefaultValue;
+            else if (cachedFucineProperty.FucineAttribute.DefaultValue != null)
+                return Panimporter.ConstuctFromParameters(cachedFucineProperty.FucineAttribute.DefaultValue, propertyType, log);
+            else
+                return FactoryInstantiator.CreateObjectWithDefaultConstructor(propertyType);
+        }
+    }
+    class ListPanImporter : PanimporterShard
+    {
+        public static bool CreateImporterInstance(ref AbstractImporter __result) { __result = new ListPanImporter(); return false; }
+        protected override object Import(object data, Type type, ContentImportLog log) { return Panimporter.ImportList(data, type, log); }
+
+        protected override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty, ContentImportLog log)
+        { return FactoryInstantiator.CreateObjectWithDefaultConstructor(cachedFucineProperty.ThisPropInfo.PropertyType); }
+    }
+    class DictPanImporer : PanimporterShard
+    {
+        public static bool CreateImporterInstance(ref AbstractImporter __result) { __result = new DictPanImporer(); return false; }
+        protected override object Import(object data, Type type, ContentImportLog log) { return Panimporter.ImportDictionary(data, type, log); }
+
+        protected override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty, ContentImportLog log)
+        { return FactoryInstantiator.CreateObjectWithDefaultConstructor(cachedFucineProperty.ThisPropInfo.PropertyType); }
+    }
+
+    class ValuePanImporter : PanimporterShard
+    {
+        public static bool CreateImporterInstance(ref AbstractImporter __result) { __result = new ValuePanImporter(); return false; }
+        protected override object Import(object data, Type type, ContentImportLog log) { return Panimporter.ImportSimpleValue(data, type, log); }
+
+        protected override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty, ContentImportLog log)
+        { return cachedFucineProperty.FucineAttribute.DefaultValue; }
+    }
+    class SubEntityPanImporter : PanimporterShard
+    {
+        public static bool CreateImporterInstance(ref AbstractImporter __result) { __result = new SubEntityPanImporter(); return false; }
+        protected override object Import(object data, Type type, ContentImportLog log) { return Panimporter.ImportFucineEntity(data, type, log); }
+        protected override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty, ContentImportLog log)
+        {
+            if (cachedFucineProperty.FucineAttribute.DefaultValue != null)
+                return Panimporter.ConstuctFromParameters(cachedFucineProperty.FucineAttribute.DefaultValue, cachedFucineProperty.ThisPropInfo.PropertyType, log);
+            else
+                return FactoryInstantiator.CreateObjectWithDefaultConstructor(cachedFucineProperty.ThisPropInfo.PropertyType);
+        }
+    }
+    class ConstructorPanImporter : PanimporterShard
+    {
+        public static bool CreateImporterInstance(ref AbstractImporter __result) { __result = new ConstructorPanImporter(); return false; }
+        protected override object Import(object data, Type type, ContentImportLog log) { return Panimporter.ConstuctFromParameters(data, type, log); }
+        protected override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty, ContentImportLog log)
+        {
+            if (cachedFucineProperty.FucineAttribute.DefaultValue != null)
+                return Panimporter.ConstuctFromParameters(cachedFucineProperty.FucineAttribute.DefaultValue, cachedFucineProperty.ThisPropInfo.PropertyType, log);
+            else
+                return FactoryInstantiator.CreateObjectWithDefaultConstructor(cachedFucineProperty.ThisPropInfo.PropertyType);
+        }
+    }
 }
+
+
 
 namespace SecretHistories.Fucine
 {
     //normal FucineValue won't accept array as DefaultValue; but we need that to construct some structs/classes
     [AttributeUsage(AttributeTargets.Property)]
-    public class FucineUniValue : Fucine
+    public class FucUniValue : Fucine
     {
-        public FucineUniValue() { }
-        public FucineUniValue(object defaultValue) { DefaultValue = defaultValue; }
-        public FucineUniValue(params object[] defaultValue) { DefaultValue = new ArrayList(defaultValue); }
+        public FucUniValue() { }
+        public FucUniValue(object defaultValue) { DefaultValue = defaultValue; }
+        public FucUniValue(params object[] defaultValue) { DefaultValue = new ArrayList(defaultValue); }
 
         public override AbstractImporter CreateImporterInstance()
         {
-            return new PanimporterInstance();
-        }
-    }
-
-
-    public class PanimporterInstance : AbstractImporter
-    {
-        public override bool TryImportProperty<T>(T entity, CachedFucineProperty<T> cachedProperty, EntityData entityData, ContentImportLog log)
-        {
-            try
-            {
-                string propertyName = cachedProperty.LowerCaseName;
-                Type propertyType = cachedProperty.ThisPropInfo.PropertyType;
-
-                object propertyValue;
-                if (entityData.ValuesTable.Contains(propertyName))
-                {
-                    propertyValue = Roost.Beachcomber.Panimporter.ImportProperty(entity, entityData.ValuesTable[propertyName], propertyType, propertyName);
-                    entityData.ValuesTable.Remove(propertyName);
-                }
-                else
-                {
-                    if (cachedProperty.FucineAttribute.DefaultValue is ArrayList)
-                        propertyValue = Roost.Beachcomber.Panimporter.ConstuctFromParameters(cachedProperty.FucineAttribute.DefaultValue, propertyType);
-                    else if (propertyType.IsValueType || propertyType == typeof(string))
-                        propertyValue = cachedProperty.FucineAttribute.DefaultValue;
-                    else
-                        propertyValue = FactoryInstantiator.CreateObjectWithDefaultConstructor(propertyType);
-                }
-
-                cachedProperty.SetViaFastInvoke(entity as T, propertyValue);
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                log.LogProblem(ex.ToString());
-                return false;
-            }
+            return new Roost.Beachcomber.PanimporterShard();
         }
     }
 

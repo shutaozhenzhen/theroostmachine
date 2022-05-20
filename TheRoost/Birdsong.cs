@@ -55,6 +55,18 @@ namespace Roost
                 result += (obj == null ? "null" : obj.ToString()) + ' ';
             return result;
         }
+
+        public static string FormatException(this Exception ex)
+        {
+            string errorMessage = ex.Message;
+            while (ex.InnerException != null)
+            {
+                errorMessage += " - " + ex.InnerException.Message;
+                ex = ex.InnerException;
+            }
+
+            return errorMessage;
+        }
     }
 
     public class Rooster : MonoBehaviour

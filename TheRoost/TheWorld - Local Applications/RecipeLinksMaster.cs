@@ -16,14 +16,17 @@ namespace Roost.World.Recipes
 
         internal static void Enact()
         {
-            Machine.Patch(typeof(AttemptAspectInductionCommand).GetMethodInvariant("Execute"),
-                prefix: typeof(RecipeLinkMaster).GetMethodInvariant("StoreSituationFromWhichInductionHappens"));
+            Machine.Patch(
+                original: typeof(AttemptAspectInductionCommand).GetMethodInvariant(nameof(AttemptAspectInductionCommand.Execute)),
+                prefix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(StoreSituationFromWhichInductionHappens)));
 
-            Machine.Patch(typeof(AttemptAspectInductionCommand).GetMethodInvariant("PerformAspectInduction"),
-                prefix: typeof(RecipeLinkMaster).GetMethodInvariant("PerformAspectInduction"));
+            Machine.Patch(
+                original: typeof(AttemptAspectInductionCommand).GetMethodInvariant("PerformAspectInduction"),
+                prefix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(PerformAspectInduction)));
 
-            Machine.Patch(typeof(RecipeConductor).GetMethodInvariant("GetLinkedRecipe"),
-                prefix: typeof(RecipeLinkMaster).GetMethodInvariant("CheckXtriggerLinks"));
+            Machine.Patch(
+                original: typeof(RecipeConductor).GetMethodInvariant(nameof(RecipeConductor.GetLinkedRecipe)),
+                prefix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(CheckXtriggerLinks)));
 
 
             SpawnNewSituation = Delegate.CreateDelegate(typeof(Action<Situation, Recipe, Expulsion, FucinePath>), typeof(Situation).GetMethodInvariant("SpawnNewSituation")) as Action<Situation, Recipe, Expulsion, FucinePath>;
@@ -44,7 +47,6 @@ namespace Roost.World.Recipes
                 {
                     Recipe recipe = Watchman.Get<Compendium>().GetEntityById<Recipe>(linkedRecipeDetails.Id);
                     if (recipe.RequirementsSatisfiedBy(aspectsInContext))
-
                         SpawnNewSituation(currentSituation, recipe, linkedRecipeDetails.Expulsion, FucinePath.Current());
                 }
 
