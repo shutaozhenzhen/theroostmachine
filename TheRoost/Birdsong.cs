@@ -67,6 +67,17 @@ namespace Roost
 
             return errorMessage;
         }
+
+        static int alarmCount = 0;
+        public static void Notice()
+        {
+            Sing(alarmCount++);
+        }
+
+        public static void NoticeReset()
+        {
+            alarmCount = 0;
+        }
     }
 
     public class Rooster : MonoBehaviour

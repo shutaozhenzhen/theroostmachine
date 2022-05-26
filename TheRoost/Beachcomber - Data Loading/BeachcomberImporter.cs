@@ -155,6 +155,37 @@ namespace Roost.Beachcomber
                 if (parametersData == null)
                     return FactoryInstantiator.CreateObjectWithDefaultConstructor(type);
 
+                if (parametersData is EntityData)
+                {
+                    EntityData namedParametersData = parametersData as EntityData;
+
+
+                    ConstructorInfo[] constructors = type.GetConstructors();
+                    foreach (ConstructorInfo constructor in constructors)
+                    {
+                        ParameterInfo[] constructorParameters = constructor.GetParameters();
+                        if (constructorParameters.Length != namedParametersData.ValuesTable.Count)
+                            continue;
+
+                        foreach (ParameterInfo parameter in constructorParameters)
+                            if (namedParametersData.ContainsKey(parameter.Name.ToLower()) == false)
+                                goto NEXT_CONSTRUCTOR;
+
+                        //all parameter names match, set up the array and invoke
+                        object[] parametersInOrder = new object[namedParametersData.ValuesTable.Count];
+                        foreach (ParameterInfo parameter in constructorParameters)
+                            parametersInOrder[parameter.Position] = ConvertValue(namedParametersData[parameter.Name.ToLower()], parameter.ParameterType);
+
+                        return constructor.Invoke(parametersInOrder);
+
+                    NEXT_CONSTRUCTOR:
+                        continue;
+                    }
+
+
+                    throw Birdsong.Cack($"NO MATCHING CONSTRUCTOR FOUND FOR {type.Name} FOR PARAMETER NAMES '{namedParametersData.ValuesTable.Keys.UnpackAsString()}'");
+                }
+
                 ArrayList parametersList = parametersData as ArrayList;
                 if (parametersList == null)
                     parametersList = new ArrayList() { parametersData };
@@ -189,11 +220,11 @@ namespace Roost.Beachcomber
                     }
                 }
 
-                throw Birdsong.Cack($"NO MATCHING CONSTRUCTOR FOUND FOR {type.Name} WITH ARGUMENTS '{parameterTypes.UnpackAsString()}'");
+                throw Birdsong.Cack($"NO MATCHING CONSTRUCTOR FOUND FOR {type.Name} WITH PARAMETER TYPES '{parameterTypes.UnpackAsString()}'");
             }
             catch (Exception ex)
             {
-                throw Birdsong.Cack($"PROPERTY DATA IS MALFORMED - {ex.Message}");
+                throw Birdsong.Cack($"PROPERTY DATA IS MALFORMED - {ex.FormatException()}");
             }
         }
 
@@ -339,16 +370,22 @@ namespace SecretHistories.Fucine
 {
     //normal FucineValue won't accept array as DefaultValue; but we need that to construct some structs/classes
     [AttributeUsage(AttributeTargets.Property)]
-    public class FucUniValue : Fucine
+    public class FucineEverValue : Fucine
     {
-        public FucUniValue() { }
-        public FucUniValue(object defaultValue) { DefaultValue = defaultValue; }
-        public FucUniValue(params object[] defaultValue) { DefaultValue = new ArrayList(defaultValue); }
+        public FucineEverValue() { DefaultValue = new ArrayList(); }
+        public FucineEverValue(object defaultValue) { DefaultValue = defaultValue; }
+        public FucineEverValue(params object[] defaultValue) { DefaultValue = new ArrayList(defaultValue); }
 
-        public override AbstractImporter CreateImporterInstance()
-        {
-            return new Roost.Beachcomber.PanimporterShard();
-        }
+        public override AbstractImporter CreateImporterInstance() { return new Roost.Beachcomber.PanimporterShard(); }
+    }
+
+    public class FucineConstruct : Fucine
+    {
+        public FucineConstruct() { DefaultValue = new ArrayList(); }
+        public FucineConstruct(object defaultValue) { DefaultValue = defaultValue; }
+        public FucineConstruct(params object[] defaultValue) { DefaultValue = new ArrayList(defaultValue); }
+
+        public override AbstractImporter CreateImporterInstance() { return new Roost.Beachcomber.ConstructorPanImporter(); }
     }
 
     public interface ICustomSpecEntity

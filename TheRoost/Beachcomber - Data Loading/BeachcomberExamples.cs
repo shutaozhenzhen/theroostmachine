@@ -14,43 +14,51 @@ namespace Roost.Beachcomber.Entities
     //Accordingly, entities of this type will be loaded from JSON of the form {"beachcomberexample":[ content ]}
     [FucineImportable("beachcomberexample")]
     //the class itself needs to derive from AbstractEntity<T> where T is the name of the class
-    //IQuickSpecEntity and IWeirdSpecEntity are optional, explained below
+    //IQuickSpecEntity and ICustomSpecEntity are optional, explained below
     public class ExampleFucineClass : AbstractEntity<ExampleFucineClass>, IQuickSpecEntity, ICustomSpecEntity
     {
 
-        //each loadable property needs to have FucineValue attribute
-        //you can add a DefaultValue (which it'll have if property isn't specified in JSON definition)
-        //and whether it needs to be Localised or ValidatedAsElementId - all three are optional
-        //properties are case-insenstive for purposes of JSON loading
-
-        //as thing stand now, you don't really need to use specific annotations like FucineList, FucineDict and FucineSubEntity - FucineValue suffice
-        //but you may want to use them just in case something will change
-
-        [FucUniValue(DefaultValue = 0)]
+        //each loadable property needs to have a corresponding FucineValue attribute
+        //all struct types generally should have a default value
+        
+        [FucineValue(DefaultValue = 0)]
         public int Number { get; set; }
-
-        [FucUniValue(DefaultValue = "", Localise = true)]
+        [FucineValue(DefaultValue = "", Localise = true)]
         public string Text { get; set; }
 
-        [FucUniValue(ValidateAsElementId = true)]
-        public List<string> ListOfElements { get; set; }
-
-        [FucUniValue]
-        public Dictionary<int, int> MyDict { get; set; }
-
-        //you can load enums - both by int and string
-        [FucUniValue(DefaultValue = SecretHistories.Entities.EndingFlavour.Grand)]
+        //enums can be loaded both by string and int
+        [FucineValue(DefaultValue = SecretHistories.Entities.EndingFlavour.Grand)]
         public SecretHistories.Entities.EndingFlavour MyEnum { get; set; }
+
+        [FucineList(ValidateAsElementId = true)]
+        public List<string> ListOfElements { get; set; }
+        [FucineDict]
+        public Dictionary<int, int> MyDict { get; set; }
 
         //you can even load structs; in JSON structs are defined like "myVectorProperty": [ 1, 1 ], i.e. as lists, with []
         //similarly, a default value is passed to the property as param object[]
-        [FucUniValue(0.5f, 100f)]
-        public UnityEngine.Vector2 Vector { get; set; }
+        [FucineConstruct(0.5f, 100f)]
+        public UnityEngine.Vector2 MyVector { get; set; }
+
+        //or, if you're lazy, just use FucineEverValue for everything; it'll recognize the type by itself, and import it correctly
+        [FucineEverValue(DefaultValue = 1)]
+        public int LazyInt { get; set; }
+        [FucineEverValue]
+        public List<ExampleFucineClass> LazyList { get; set; }
+        [FucineEverValue]
+        public Dictionary<int, string> LazyDict { get; set; }
+
+        [FucineEverValue(100f, 0.5f)]
+        public UnityEngine.Vector2 LazyVector { get; set; }
 
         //finally, your entity needs to implement two methods of AbstractEntity<T> - constructor and OnPostImportForSpecificEntity()
-        //both of them can remain empty but the second one is sometimes useful - it's called right after all entities were imported from JSONs and created
+        //both of them can remain empty but the second one is sometimes useful - it's called right after all entities are imported
         public ExampleFucineClass(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
-        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
+        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
+        {
+            foreach (CachedFucineProperty<ExampleFucineClass> property in TypeInfoCache<ExampleFucineClass>.GetCachedFucinePropertiesForType())
+                Birdsong.Sing($"Example entity '{this.Id}' - '{property.ThisPropInfo.Name}': {property.ThisPropInfo.GetValue(this)}");
+        }
 
         //and of course, entity can have any amount of its own methods 
         void Examples()
@@ -58,13 +66,12 @@ namespace Roost.Beachcomber.Entities
             //to add a custom property to any entity type: TheRoostMachine.ClaimProperty<entityType, propertyType>(propertyName)
             Machine.ClaimProperty<SecretHistories.Entities.Verb, string>("someProperty");
 
-            //can be done with a custom class too
+            //you can add a custom property to a custom class
             Machine.ClaimProperty<ExampleFucineClass, int>("someProperty");
 
             //to get the property value: entity.RetrieveProperty<propertyType>(propertyName)
             this.RetrieveProperty<int>("someProperty");
-            //or cast directly
-            int value = (int)this.RetrieveProperty("someProperty");
+            int value = (int)this.RetrieveProperty("someProperty"); //or cast directly
         }
 
         public void QuickSpec(string value)
@@ -80,10 +87,9 @@ namespace Roost.Beachcomber.Entities
 
         public void CustomSpec(Hashtable data)
         {
-            //ok, this one, as its name states, is weird
-            //this one allows you to shape your entity using properties from JSON that won't be recognized normally
+            //some people want weird things; ICustomSpec is for you
+            //it allows you to shape your entity using properties from JSON that won't be recognized normally
             //I'll leave the possible use-cases to your imagination
-            //(but these unknown properties, for example, can be other entity ids)
         }
     }
 }
