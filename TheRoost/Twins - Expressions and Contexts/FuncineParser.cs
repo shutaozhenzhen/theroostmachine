@@ -124,7 +124,7 @@ namespace Roost.Twins
                 {
                     string specialOpName = parts[0].Substring(1);
                     TokenValueRef.ValueOperation specialOp;
-                    if (Enum.TryParse(specialOpName, out specialOp))
+                    if (Enum.TryParse(specialOpName, true, out specialOp))
                         return new TokenValueRef(null, TokenValueRef.ValueArea.Special, specialOp);
                     else
                         throw Birdsong.Cack($"Unknown special token value reference '{parts[0]}'");
