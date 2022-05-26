@@ -18,28 +18,28 @@ namespace Roost.Elegiast.Entities
     [FucineImportable("achievements")]
     public class CustomAchievement : AbstractEntity<CustomAchievement>, IFucineAchievement
     {
-        [FucUniValue(false)]
+        [FucineEverValue(false)]
         public bool isCategory { get; set; }
 
-        [FucUniValue(DefaultValue = "", Localise = true)]
+        [FucineEverValue(DefaultValue = "", Localise = true)]
         public string label { get; set; }
-        [FucUniValue(DefaultValue = "ACH_CATEGORY_MODS")]
+        [FucineEverValue(DefaultValue = "ACH_CATEGORY_MODS")]
         public string category { get; set; }
 
-        [FucUniValue(DefaultValue = "", Localise = true)]
+        [FucineEverValue(DefaultValue = "", Localise = true)]
         public string lockdesc { get; set; }
-        [FucUniValue(DefaultValue = "", Localise = true)]
+        [FucineEverValue(DefaultValue = "", Localise = true)]
         public string unlockdesc { get; set; }
 
-        [FucUniValue("")]
+        [FucineEverValue("")]
         public string iconLocked { get; set; }
-        [FucUniValue("_x")]
+        [FucineEverValue("_x")]
         public string iconUnlocked { get; set; }
 
-        [FucUniValue(DefaultValue = "", Localise = true)]
+        [FucineEverValue(DefaultValue = "", Localise = true)]
         public string unlockMessage { get; set; }
 
-        [FucUniValue(false)]
+        [FucineEverValue(false)]
         public bool hidden { get; set; }
 
         public string description { get { if (unlocked) return unlockdesc; else return lockdesc; } }
@@ -65,13 +65,13 @@ namespace Roost.Elegiast.Entities
     [FucineImportable("vachievements")]
     public class VanillaAchievement : AbstractEntity<VanillaAchievement>, IFucineAchievement
     {
-        [FucUniValue(DefaultValue = "", Localise = true)]
+        [FucineEverValue(DefaultValue = "", Localise = true)]
         public string label { get; set; }
-        [FucUniValue(DefaultValue = "ACH_CATEGORY_CSVANILLA")]
+        [FucineEverValue(DefaultValue = "ACH_CATEGORY_CSVANILLA")]
         public string category { get; set; }
-        [FucUniValue(DefaultValue = "", Localise = true)]
+        [FucineEverValue(DefaultValue = "", Localise = true)]
         public string description { get; set; }
-        [FucUniValue("_x")]
+        [FucineEverValue("_x")]
         public string icon { get; set; }
 
         public bool hidden { get { return _hidden; } } readonly bool _hidden;
