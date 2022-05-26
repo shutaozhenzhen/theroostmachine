@@ -1,7 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Reflection;
+using System.Collections.Generic;
+
 using SecretHistories.Core;
 using SecretHistories.UI;
 using NCalc;
+using SecretHistories.Fucine;
 
 namespace Roost.Twins.Entities
 {
@@ -11,11 +15,18 @@ namespace Roost.Twins.Entities
         readonly FuncineRef[] references;
         public readonly string formula;
 
-        public Funcine(string expression)
+        public Funcine(string stringExpression)
         {
-            this.formula = expression;
-            this.references = FuncineParser.LoadReferences(ref expression).ToArray();
-            this.expression = new Expression(Expression.Compile(expression, false));
+            try
+            {
+                this.formula = stringExpression;
+                this.references = FuncineParser.LoadReferences(ref stringExpression).ToArray();
+                this.expression = new Expression(Expression.Compile(stringExpression, false));
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
 
         public T value
@@ -47,85 +58,163 @@ namespace Roost.Twins.Entities
         public delegate List<Token> SphereTokensRef();
 
         public readonly string idInExpression;
-        public readonly string targetElementId;
-        public readonly SphereTokensRef GetTargetTokens;
-        public readonly Funcine<bool> tokensFilter;
-        public readonly SpecialOperation special;
 
-        public enum SpecialOperation { None, SingleLowest, SingleHighest, CountCards, PayloadProperty, ElementProperty };
-        public const string opCountKeyword = "$any";
-        public const string opMaxKeyword = "$max";
-        public const string opMinKeyword = "$min";
+        public readonly FucinePath path;
+        public readonly Funcine<bool> filter;
+        public readonly TokenValueRef target;
 
-        public int value
+        public float value
         {
             get
             {
-                List<Token> tokens = GetTargetTokens();
+                List<Token> tokens = TokenContextAccessors.GetTokensByPath(path);
 
                 //!~!!!!!!!!!!!!!!!!!!!!!NB temp and dirty solution
                 foreach (Token token in tokens.ToArray())
                     if (token.PayloadEntityId == "tlg.note")
                         tokens.Remove(token);
 
-                if (this.tokensFilter.isUndefined == false)
-                    tokens = tokens.FilterTokens(tokensFilter);
+                if (this.filter.isUndefined == false)
+                    tokens = tokens.FilterTokens(filter);
 
-                switch (special)
-                {
-                    case SpecialOperation.None:
-                        AspectsDictionary aspects = new AspectsDictionary();
-                        foreach (Token token in tokens)
-                            aspects.CombineAspects(token.GetAspects());
-                        return aspects.AspectValue(targetElementId);
-
-                    case SpecialOperation.SingleHighest:
-                        int maxValue = 0; int currentTokenValue;
-                        foreach (Token token in tokens)
-                        {
-                            currentTokenValue = token.GetAspects().AspectValue(targetElementId);
-                            if (currentTokenValue > maxValue)
-                                maxValue = currentTokenValue;
-                        }
-                        return maxValue;
-                    case SpecialOperation.SingleLowest:
-                        int minValue = int.MaxValue;
-                        foreach (Token token in tokens)
-                        {
-                            currentTokenValue = token.GetAspects().AspectValue(targetElementId);
-                            if (currentTokenValue != 0 && currentTokenValue < minValue)
-                                minValue = currentTokenValue;
-                        }
-                        
-                        return minValue == int.MaxValue ? 0 : minValue;
-                    case SpecialOperation.CountCards:
-                        int amount = 0;
-                        foreach (Token token in tokens)
-                            amount += (token.Payload as ElementStack).Quantity;
-                            return amount;
-                    default: throw Birdsong.Cack("Something strange happened. Unknown reference special operation '{0}'", special);
-                }
+                return target.GetValueFromTokens(tokens);
             }
         }
 
-        public FuncineRef(string referenceData, string referenceId)
+        public FuncineRef(string referenceId, FucinePath path, Funcine<bool> filter, TokenValueRef target)
         {
             this.idInExpression = referenceId;
-            FuncineParser.PopulateFucineReference(referenceData, out targetElementId, out tokensFilter, out GetTargetTokens, out special);
-            Watchman.Get<Compendium>().SupplyElementIdsForValidation(targetElementId);
+            this.path = path;
+            this.filter = filter;
+            this.target = target;
         }
 
         public bool Equals(FuncineRef otherReference)
         {
-            return otherReference.GetTargetTokens == this.GetTargetTokens && otherReference.targetElementId == this.targetElementId && otherReference.tokensFilter.isUndefined && this.tokensFilter.isUndefined;
+            return false;//otherReference.path == this.path && otherReference.targetElementId == this.targetElementId && otherReference.filter.isUndefined && this.filter.isUndefined;
         }
     }
 
-    public struct SphereRef
+    public struct TokenValueRef
     {
-        public SphereRef(string reference) { GetSphere = FuncineParser.GetSphereRef(reference); }
+        ValueArea area;
+        ValueOperation operation;
+        string target;
+        public enum ValueArea { Aspect, Aspects, Token, Payload, Entity, Special };
+        public enum ValueOperation { Count, Sum, Max, Min, Rand };
 
-        private System.Func<SecretHistories.Spheres.Sphere> GetSphere;
-        public SecretHistories.Spheres.Sphere referencedSphere { get { return GetSphere(); } }
+        Func<List<Token>, float> resultGet;
+
+        public float GetValueFromTokens(List<Token> tokens)
+        {
+            if (tokens == null || tokens.Count == 0)
+                return 0;
+
+            return resultGet(tokens);
+        }
+
+        public TokenValueRef(string target) : this(target, ValueArea.Aspect, ValueOperation.Sum) { }
+
+        public TokenValueRef(string target, ValueArea area, ValueOperation operation)
+        {
+            this.target = target;
+            this.area = area;
+            this.operation = operation;
+
+            Func<Token, float> tokenValue;
+            switch (area)
+            {
+                default:
+                case ValueArea.Aspect:
+                case ValueArea.Aspects:
+                    tokenValue = token => token.GetAspects().AspectValue(target) / token.Quantity;
+                    break;
+                case ValueArea.Token:
+                    PropertyInfo targetPropertyInfo = typeof(Token).GetProperty(target, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+                    MethodInfo propertyReturnCreator = typeof(TokenValueRef).GetMethod(nameof(CreatePropertyReturner), BindingFlags.Static | BindingFlags.NonPublic).MakeGenericMethod(typeof(Token), targetPropertyInfo.PropertyType);
+
+                    tokenValue = propertyReturnCreator.Invoke(null, new object[] { targetPropertyInfo.GetGetMethod() }) as Func<Token, float>;
+                    break;
+                case ValueArea.Payload:
+                    tokenValue = token => (float)token.Payload.GetType().GetProperty(target).GetValue(token.Payload);
+                    break;
+            }
+
+            switch (operation)
+            {
+                default:
+                case ValueOperation.Sum:
+                    //sum of values of all tokens
+                    resultGet = tokens =>
+                    {
+                        float result = 0;
+                        foreach (Token token in tokens)
+                            result += tokenValue(token);
+                        return result;
+                    };
+                    break;
+                case ValueOperation.Max:
+                    //max value among all tokens
+                    resultGet = tokens =>
+                    {
+                        float maxValue = 0; float currentTokenValue;
+                        foreach (Token token in tokens)
+                        {
+                            currentTokenValue = tokenValue(token);
+                            if (currentTokenValue != 0 && (currentTokenValue > maxValue || (currentTokenValue == maxValue && UnityEngine.Random.Range(0, 99) > 50)))
+                                maxValue = currentTokenValue;
+                        }
+                        return maxValue;
+                    };
+                    break;
+                case ValueOperation.Min:
+                    //min value among all tokens
+                    resultGet = tokens =>
+                    {
+                        float minValue = float.MaxValue; float currentTokenValue;
+                        foreach (Token token in tokens)
+                        {
+                            currentTokenValue = tokenValue(token);
+                            if (currentTokenValue != 0 && (currentTokenValue < minValue || (currentTokenValue == minValue && UnityEngine.Random.Range(0, 100) > 50)))
+                                minValue = currentTokenValue;
+                        }
+                        return minValue == float.MaxValue ? 0 : minValue;
+                    };
+                    break;
+                case ValueOperation.Rand:
+                    //value of a random token
+                    resultGet = tokens =>
+                    {
+                        int i = UnityEngine.Random.Range(0, tokens.Count - 1);
+                        return tokenValue(tokens[i]);
+                    };
+                    break;
+                case ValueOperation.Count:
+                    //number of tokens
+                    resultGet = tokens =>
+                    {
+                        int result = 0;
+                        foreach (Token token in tokens)
+                            result += token.Quantity;
+                        return result;
+                    };
+                    break;
+            }
+        }
+
+        static Func<TClass, float> CreatePropertyReturner<TClass, TProperty>(MethodInfo getMethod)
+        {
+            try
+            {
+                Func<TClass, TProperty> func = getMethod.CreateDelegate(typeof(Func<TClass, TProperty>)) as Func<TClass, TProperty>;
+                return token => (float)Beachcomber.Panimporter.ConvertValue(func(token), typeof(float));
+            }
+            catch (Exception ex)
+            {
+                Birdsong.Sing(ex.FormatException());
+            }
+
+            return null;
+        }
     }
 }

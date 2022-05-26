@@ -276,7 +276,6 @@ namespace Roost.World.Recipes.Entities
                     RecipeExecutionBuffer.ScheduleMutation(token, this.Id, Level.value * catalystAmount * aspectAmount, true, VFX);
                     break;
                 case MorphEffectsExtended.DeckDraw:
-
                     Legerdemain.Deal(this.Id, token.Sphere, Level.value * catalystAmount * aspectAmount);
                     break;
                 case MorphEffectsExtended.Destroy:

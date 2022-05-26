@@ -46,32 +46,13 @@ namespace Roost.World.Recipes
 
             Machine.Patch(
                 original: typeof(RecipeCompletionEffectCommand).GetMethodInvariant("Execute"),
-                transpiler: typeof(RecipeEffectsMaster).GetMethodInvariant("RunRefEffectsTranspiler"));
+                transpiler: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(RunRefEffectsTranspiler)));
 
             Machine.Patch(
                  original: typeof(Beachcomber.Usurper).GetMethodInvariant("InvokeGenericImporterForAbstractRootEntity"),
                  prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(ConvertLegacyMutationDefinitions)));
-            
-          Machine.Patch(
-              original: typeof(Sphere).GetMethodInvariant("NotifyTokensChangedForSphere"),
-              postfix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(TryStackTokens))); ;
-
-          Machine.Patch(
-              original: typeof(SituationStorageSphere).GetPropertyInvariant("AllowStackMerge").GetGetMethod(),
-              prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(AllowStackMerge))); 
         }
 
-        private static void TryStackTokens(SecretHistories.Constants.Events.SphereContentsChangedEventArgs args)
-        {
-            if (args.TokenAdded != null && args.Sphere.AllowStackMerge && args.Sphere != Watchman.Get<HornedAxe>().GetDefaultSphere(OccupiesSpaceAs.Intangible))
-                RecipeExecutionBuffer.StackTokens(args.Sphere);
-        }
-
-        private static bool AllowStackMerge(ref bool __result)
-        {
-            __result = true;
-            return false;
-        }
 
         //Recipe.OnPostImportForSpecificEntity()
         private static void FlushEffects(Recipe __instance)
@@ -144,11 +125,16 @@ namespace Roost.World.Recipes
 
         private static void RefEffects(RecipeCompletionEffectCommand command, Situation situation)
         {
-            Birdsong.Sing(VerbosityLevel.SystemChatter, 0, "EXECUTING: {0} ", command.Recipe.Id);
+            //Birdsong.Sing(VerbosityLevel.SystemChatter, 0, $"EXECUTING: {command.Recipe.Id}");
+
             situation.Recipe = command.Recipe;
             GrandEffects recipeEffects = situation.Recipe.RetrieveProperty<GrandEffects>(ROOST_EFFECTS);
             if (recipeEffects != null)
+            {
+                TokenContextAccessors.SetLocalSituation(situation);
                 recipeEffects.Run(situation, situation.GetSingleSphereByCategory(SphereCategory.SituationStorage));
+                TokenContextAccessors.ResetCache();
+            }
         }
 
         private static bool RefReqs(Recipe __instance, AspectsInContext aspectsinContext)
