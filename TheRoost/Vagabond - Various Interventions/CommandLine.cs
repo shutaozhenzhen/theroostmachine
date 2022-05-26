@@ -75,6 +75,12 @@ namespace Roost.Vagabond
             if (Keyboard.current.backquoteKey.wasPressedThisFrame)
                 if (GameObject.FindObjectOfType<DebugTools>() == null)
                     Watchman.Get<Concursum>().ToggleSecretHistory();
+
+           DoSomething();
+        }
+
+        void DoSomething()
+        {
         }
 
         private static void CreateCommandLine()

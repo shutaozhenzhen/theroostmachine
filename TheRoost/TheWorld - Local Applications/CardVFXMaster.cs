@@ -36,10 +36,6 @@ namespace Roost.World.Elements
             Machine.Patch(
                 original: typeof(Token).GetMethodInvariant("OnPayloadChanged"),
                 transpiler: typeof(CardVFXMaster).GetMethodInvariant("RemanifestWithVFXTranspiler"));
-
-           // Machine.Patch(
-                //original: typeof(Token).GetMethodInvariant("ReplaceManifestation"),
-                //prefix: typeof(CardVFXMaster).GetMethodInvariant("PlaceVFXOnTop"));
         }
 
         private static IEnumerable<CodeInstruction> ElementDecayTranspiler(IEnumerable<CodeInstruction> instructions)

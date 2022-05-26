@@ -28,7 +28,6 @@ namespace Roost.World.Recipes
                 original: typeof(RecipeConductor).GetMethodInvariant(nameof(RecipeConductor.GetLinkedRecipe)),
                 prefix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(CheckXtriggerLinks)));
 
-
             SpawnNewSituation = Delegate.CreateDelegate(typeof(Action<Situation, Recipe, Expulsion, FucinePath>), typeof(Situation).GetMethodInvariant("SpawnNewSituation")) as Action<Situation, Recipe, Expulsion, FucinePath>;
         }
 
