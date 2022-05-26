@@ -18,25 +18,25 @@ namespace Roost.World.Recipes.Entities
 {
     public class GrandEffects : AbstractEntity<GrandEffects>
     {
-        [FucUniValue] public string comments { get; set; }
+        [FucineEverValue] public string comments { get; set; }
 
-        [FucUniValue] public Dictionary<Funcine<bool>, List<RefMutationEffect>> Mutations { get; set; }
-        [FucUniValue] public Dictionary<string, Funcine<int>> Aspects { get; set; }
+        [FucineEverValue] public Dictionary<Funcine<bool>, List<RefMutationEffect>> Mutations { get; set; }
+        [FucineEverValue] public Dictionary<string, Funcine<int>> Aspects { get; set; }
 
-        [FucUniValue] public List<string> DeckShuffles { get; set; }
-        [FucUniValue] public Dictionary<string, List<string>> DeckForbids { get; set; }
-        [FucUniValue] public Dictionary<string, List<string>> DeckAllows { get; set; }
-        [FucUniValue] public Dictionary<string, Funcine<int>> DeckDraws { get; set; }
-        [FucUniValue] public Dictionary<string, List<string>> DeckAdds { get; set; }
-        [FucUniValue] public Dictionary<string, List<Funcine<bool>>> DeckTakeOuts { get; set; }
-        [FucUniValue] public Dictionary<string, List<Funcine<bool>>> DeckInserts { get; set; }
+        [FucineEverValue] public List<string> DeckShuffles { get; set; }
+        [FucineEverValue] public Dictionary<string, List<string>> DeckForbids { get; set; }
+        [FucineEverValue] public Dictionary<string, List<string>> DeckAllows { get; set; }
+        [FucineEverValue] public Dictionary<string, Funcine<int>> DeckEffects { get; set; }
+        [FucineEverValue] public Dictionary<string, List<string>> DeckAdds { get; set; }
+        [FucineEverValue] public Dictionary<string, List<Funcine<bool>>> DeckTakeOuts { get; set; }
+        [FucineEverValue] public Dictionary<string, List<Funcine<bool>>> DeckInserts { get; set; }
 
-        [FucUniValue] public Dictionary<Funcine<bool>, Funcine<int>> Effects { get; set; }
-        [FucUniValue] public Dictionary<Funcine<bool>, Funcine<int>> Decays { get; set; }
+        [FucineEverValue] public Dictionary<Funcine<bool>, Funcine<int>> Effects { get; set; }
+        [FucineEverValue] public Dictionary<Funcine<bool>, Funcine<int>> Decays { get; set; }
 
-        [FucUniValue(DefaultValue = RetirementVFX.None)] public RetirementVFX DeckEffectsVFX { get; set; }
-        [FucUniValue(DefaultValue = RetirementVFX.None)] public RetirementVFX EffectsVFX { get; set; }
-        [FucUniValue(DefaultValue = RetirementVFX.CardLight)] public RetirementVFX DecaysVFX { get; set; }
+        [FucineEverValue(DefaultValue = RetirementVFX.None)] public RetirementVFX DeckEffectsVFX { get; set; }
+        [FucineEverValue(DefaultValue = RetirementVFX.None)] public RetirementVFX EffectsVFX { get; set; }
+        [FucineEverValue(DefaultValue = RetirementVFX.CardLight)] public RetirementVFX DecaysVFX { get; set; }
 
         public GrandEffects() { }
         public GrandEffects(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
@@ -51,6 +51,8 @@ namespace Roost.World.Recipes.Entities
             RecipeExecutionBuffer.ApplyAll();
 
             Legerdemain.RunExtendedDeckEffects(this, onSphere);
+            RecipeExecutionBuffer.ApplyMovements();
+            RecipeExecutionBuffer.ApplyRenews();
 
             RunRefEffects(onSphere);
             RecipeExecutionBuffer.ApplyRetirements();
@@ -59,6 +61,8 @@ namespace Roost.World.Recipes.Entities
             RunRefDecays(onSphere);
             RecipeExecutionBuffer.ApplyRetirements();
             RecipeExecutionBuffer.ApplyTransformations();
+
+            //RecipeExecutionBuffer.StackTokensInDirtySpheres();
         }
 
         public void RunRefMutations(Sphere sphere)
@@ -161,13 +165,13 @@ namespace Roost.World.Recipes.Entities
 
     public class RefMutationEffect : AbstractEntity<RefMutationEffect>, ICustomSpecEntity
     {
-        [FucUniValue(ValidateAsElementId = true, DefaultValue = null)]
+        [FucineEverValue(ValidateAsElementId = true, DefaultValue = null)]
         public string Mutate { get; set; }
-        [FucUniValue("1")]
+        [FucineEverValue("1")]
         public Funcine<int> Level { get; set; }
-        [FucUniValue(false)]
+        [FucineEverValue(false)]
         public bool Additive { get; set; }
-        [FucUniValue(DefaultValue = RetirementVFX.CardLight)]
+        [FucineEverValue(DefaultValue = RetirementVFX.CardLight)]
         public RetirementVFX VFX { get; set; }
 
         public RefMutationEffect(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
@@ -188,18 +192,18 @@ namespace Roost.World.Recipes.Entities
         }
     }
 
-    public enum MorphEffectsExtended { Transform, Spawn, MutateSet, Mutate, Destroy, Decay, Induce, Link }
+    public enum MorphEffectsExtended { Transform, Spawn, MutateSet, Mutate, DeckDraw, DeckShuffle, Destroy, Decay, Induce, Link }
     public class RefMorphDetails : AbstractEntity<RefMorphDetails>, IQuickSpecEntity, ICustomSpecEntity
     {
-        [FucUniValue(DefaultValue = MorphEffectsExtended.Transform)]
+        [FucineEverValue(DefaultValue = MorphEffectsExtended.Transform)]
         public MorphEffectsExtended MorphEffect { get; set; }
-        [FucUniValue(DefaultValue = 1)]
+        [FucineEverValue(DefaultValue = 1)]
         public Funcine<int> Level { get; set; }
-        [FucUniValue(DefaultValue = 100)]
+        [FucineEverValue(DefaultValue = 100)]
         public Funcine<int> Chance { get; set; }
-        [FucUniValue]
+        [FucineEverValue]
         public Expulsion Expulsion { get; set; }
-        [FucUniValue(DefaultValue = RetirementVFX.CardBurn)]
+        [FucineEverValue(DefaultValue = RetirementVFX.CardBurn)]
         public RetirementVFX VFX { get; set; }
 
         public void QuickSpec(string value)
@@ -255,7 +259,7 @@ namespace Roost.World.Recipes.Entities
             {
                 case MorphEffectsExtended.Transform:
                     if (onToken)
-                        RecipeExecutionBuffer.ScheduleTransformation(token, Id, VFX);
+                        RecipeExecutionBuffer.ScheduleTransformation(token, this.Id, VFX);
                     else
                     {
                         RecipeExecutionBuffer.ScheduleMutation(token, elementId, aspectAmount, true, RetirementVFX.None);
@@ -263,13 +267,17 @@ namespace Roost.World.Recipes.Entities
                     }
                     break;
                 case MorphEffectsExtended.Spawn:
-                    RecipeExecutionBuffer.ScheduleCreation(token.Sphere, Id, token.Quantity * Level.value * catalystAmount, VFX);
+                    RecipeExecutionBuffer.ScheduleCreation(token.Sphere, this.Id, token.Quantity * Level.value * catalystAmount, VFX);
                     break;
                 case MorphEffectsExtended.MutateSet:
-                    RecipeExecutionBuffer.ScheduleMutation(token, Id, Level.value * catalystAmount * aspectAmount, false, VFX);
+                    RecipeExecutionBuffer.ScheduleMutation(token, this.Id, Level.value * catalystAmount * aspectAmount, false, VFX);
                     break;
                 case MorphEffectsExtended.Mutate:
-                    RecipeExecutionBuffer.ScheduleMutation(token, Id, Level.value * catalystAmount * aspectAmount, true, VFX);
+                    RecipeExecutionBuffer.ScheduleMutation(token, this.Id, Level.value * catalystAmount * aspectAmount, true, VFX);
+                    break;
+                case MorphEffectsExtended.DeckDraw:
+
+                    Legerdemain.Deal(this.Id, token.Sphere, Level.value * catalystAmount * aspectAmount);
                     break;
                 case MorphEffectsExtended.Destroy:
                     if (onToken)
@@ -282,7 +290,7 @@ namespace Roost.World.Recipes.Entities
                     for (int i = Level.value; i > 0; i--)
                         Roost.World.Recipes.RecipeLinkMaster.SpawnNewSituation(situation, recipeToInduce, Expulsion, FucinePath.Current());
                     break;
-                case MorphEffectsExtended.Link: Machine.PushXtriggerLink(Id, Level.value); break;
+                case MorphEffectsExtended.Link: Machine.PushXtriggerLink(this.Id, Level.value); break;
                 default: Birdsong.Sing("Unknown trigger '{0}' for element stack '{1}'", MorphEffect, token.PayloadEntityId); break;
             }
         }
