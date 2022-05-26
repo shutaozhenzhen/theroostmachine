@@ -85,9 +85,10 @@ namespace Roost.Enactors
         {
             Roost.World.Recipes.RecipeEffectsMaster.Enact();
             Roost.World.Recipes.Legerdemain.Enact();
-            Roost.World.Elements.CardVFXMaster.Enact();
             Roost.World.Recipes.RecipeLinkMaster.Enact();
-            Roost.World.BugsPicker.Fix();
+            Roost.World.Recipes.SituationWindowMaster.Enact();
+
+            Roost.World.Elements.CardVFXMaster.Enact();
         }
     }
 }

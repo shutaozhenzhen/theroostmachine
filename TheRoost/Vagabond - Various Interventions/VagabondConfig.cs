@@ -16,7 +16,7 @@ namespace Roost.Vagabond
         private static Dictionary<string, string> configValues;
 
         public const string minimizePromo = "MinimizePromo";
-
+        public const string storageSpherePlacement = "StorageSpherePlacement";
         internal static void Enact()
         {
             AtTimeOfPower.MainMenuLoaded.Schedule(ApplyConfigs, PatchType.Postfix);
@@ -26,6 +26,8 @@ namespace Roost.Vagabond
         {
             new MinimizePromo(minimizePromo);
             new EnableAchievements(Enactors.Elegiast.enabledSettingId, Enactors.Elegiast.patchId, Roost.Elegiast.CustomAchievementsManager.Enact);
+            new StorageSphereDisplay(storageSpherePlacement);
+
         }
 
         internal static T GetConfigValueSafe<T>(string configId, T valueIfNotDefined)
@@ -93,6 +95,35 @@ namespace Roost.Vagabond.SettingSubscribers
                 else
                     promo.transform.localScale = Vector2.one;
             }
+        }
+    }
+
+    internal class StorageSphereDisplay : ModSettingSubscriber<int>
+    {
+        public StorageSphereDisplay(string settingId)
+            : base(settingId)
+        {
+            WhenSettingUpdated(settingValue);
+        }
+
+        System.Reflection.FieldInfo situationWindowPayload = typeof(SituationWindow).GetFieldInvariant("_payload");
+        public override void WhenSettingUpdated(object newValue)
+        {
+            int setting = (int)newValue;
+
+            SituationWindow situationWindowPrefab = Watchman.Get<SecretHistories.Services.PrefabFactory>().GetPrefabObjectFromResources<SituationWindow>();
+            GameObject storageSpherePrefab = Watchman.Get<SecretHistories.Services.PrefabFactory>().GetPrefabObjectFromResources<SituationStorageSphere>().gameObject;
+            Roost.World.Recipes.SituationWindowMaster.SetSituationWindowSettings(situationWindowPrefab.gameObject, storageSpherePrefab, Machine.GetConfigValue<int>(Vagabond.ConfigMask.storageSpherePlacement, setting));
+
+            SituationWindow[] allWindows = GameObject.FindObjectsOfType<SituationWindow>();
+            foreach (SituationWindow window in allWindows)
+            {
+                GameObject storageSphere = window.gameObject.GetComponentInChildren<SituationStorageSphere>().gameObject;
+                Situation situation = situationWindowPayload.GetValue(window) as Situation;
+                Roost.World.Recipes.SituationWindowMaster.SetSituationWindowSettings(window.gameObject, storageSphere, setting);
+                Roost.World.Recipes.SituationWindowMaster.ResizeSituationWindowForStorageTokens(situation, window);
+            }
+
         }
     }
 
