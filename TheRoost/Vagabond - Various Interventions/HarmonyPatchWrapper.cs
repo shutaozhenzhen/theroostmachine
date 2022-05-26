@@ -94,7 +94,7 @@ namespace Roost.Vagabond
         {
  { AtTimeOfPower.MainMenuLoaded, typeof(MenuScreenController).GetMethodInvariant("InitialiseServices") },
  { AtTimeOfPower.NewGameStarted, typeof(MenuScreenController).GetMethodInvariant(nameof(MenuScreenController.BeginNewSaveWithSpecifiedLegacy)) },
- { AtTimeOfPower.TabletopLoaded, typeof(GameGateway).GetMethodInvariant(nameof(GameGateway.LoadAfresh)) },
+ { AtTimeOfPower.TabletopLoaded, typeof(GameGateway).GetMethodInvariant("PopulateEnvironment") },
 
  { AtTimeOfPower.RecipeRequirementsCheck, typeof(Recipe).GetMethodInvariant("RequirementsSatisfiedBy") },
 

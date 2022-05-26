@@ -13,15 +13,20 @@ namespace Roost.World.Recipes
         private static readonly Dictionary<FutureMutation, List<Token>> mutations = new Dictionary<FutureMutation, List<Token>>();
         private static readonly Dictionary<ElementStack, FutureTransformation> transformations = new Dictionary<ElementStack, FutureTransformation>();
         private static readonly Dictionary<Sphere, List<FutureCreation>> creations = new Dictionary<Sphere, List<FutureCreation>>();
-        private static readonly HashSet<Sphere> dirtySpheres = new HashSet<Sphere>();
-        public static readonly Context context = new Context(Context.ActionSource.SituationEffect);
+        private static readonly Dictionary<Token, Sphere> movements = new Dictionary<Token, Sphere>();
+        private static readonly List<string> deckRenews = new List<string>();
+
+        //private static readonly HashSet<Sphere> dirtySpheres = new HashSet<Sphere>();
+        public static readonly Context situationEffectContext = new Context(Context.ActionSource.SituationEffect);
 
         public static void ApplyAll()
         {
             ApplyRetirements();
+            ApplyRenews();
             ApplyMutations();
             ApplyTransformations();
             ApplyCreations();
+            ApplyMovements();
         }
 
         public static void ApplyRetirements()
@@ -44,14 +49,9 @@ namespace Roost.World.Recipes
             foreach (ElementStack stack in transformations.Keys)
             {
                 transformations[stack].Apply(stack);
-                dirtySpheres.Add(stack.Token.Sphere);
+                //dirtySpheres.Add(stack.Token.Sphere);
             }
             transformations.Clear();
-
-            dirtySpheres.Remove(Watchman.Get<HornedAxe>().GetDefaultSphere(OccupiesSpaceAs.Intangible));
-            foreach (Sphere sphere in dirtySpheres)
-                StackTokens(sphere);
-            dirtySpheres.Clear();
         }
 
         public static void ApplyCreations()
@@ -69,28 +69,54 @@ namespace Roost.World.Recipes
             {
                 foreach (FutureCreation creation in creations[sphere])
                     creation.Apply(sphere);
-                dirtySpheres.Add(sphere);
+                //dirtySpheres.Add(sphere);
             }
             creations.Clear();
+        }
 
+        public static void ApplyMovements()
+        {
+            Context context = new Context(Context.ActionSource.SituationEffect);
+            foreach (KeyValuePair<Token, Sphere> movement in movements)
+                if (movement.Value.Defunct == false)
+                {
+                    movement.Value.AcceptToken(movement.Key, context);
+                    //dirtySpheres.Add(movement.Value);
+                }
+
+            movements.Clear();
+        }
+
+        public static void ApplyRenews()
+        {
+            foreach (string deckId in deckRenews)
+                Legerdemain.RenewDeck(deckId);
+            deckRenews.Clear();
+        }
+        /*
+        public static void StackTokensInDirtySpheres()
+        {
             dirtySpheres.Remove(Watchman.Get<HornedAxe>().GetDefaultSphere(OccupiesSpaceAs.Intangible));
             foreach (Sphere sphere in dirtySpheres)
                 StackTokens(sphere);
             dirtySpheres.Clear();
         }
-
-        public static void StackTokens(Sphere inSphere)
+        */
+        public static void StackTokens(Sphere sphere)
         {
-            List<Token> tokens = inSphere.Tokens;
+            List<Token> tokens = sphere.Tokens;
             for (int n = 0; n < tokens.Count; n++)
                 for (int m = n + 1; m < tokens.Count; m++)
+                {
                     if (tokens[n].CanMergeWithToken(tokens[m]))
                     {
-                        tokens[n].Payload.ModifyQuantity(tokens[m].Quantity, context);
+                        tokens[n].Payload.ModifyQuantity(tokens[m].Quantity, situationEffectContext);
+
                         tokens[m].Retire();
                         tokens.Remove(tokens[m]);
                         m--;
                     }
+                }
         }
 
         public static void ScheduleMutation(Token token, string mutate, int level, bool additive, RetirementVFX vfx)
@@ -141,6 +167,16 @@ namespace Roost.World.Recipes
 
             FutureCreation futureCreation = new FutureCreation(element, amount, vfx);
             creations[sphere].Add(futureCreation);
+        }
+
+        public static void ScheduleMovement(Token token, Sphere toSphere)
+        {
+            movements[token] = toSphere;
+        }
+
+        public static void ScheduleDeckRenew(string deckId)
+        {
+            deckRenews.Add(deckId);
         }
 
         public static void ScheduleRetirement(Token token, RetirementVFX vfx)
@@ -198,7 +234,7 @@ namespace Roost.World.Recipes
             public void ApplyAnimated(Sphere onSphere)
             {
                 Token token = onSphere.ProvisionElementToken(element, amount);
-                token.Payload.GetEnRouteSphere().ProcessEvictedToken(token, context);
+                token.Payload.GetEnRouteSphere().ProcessEvictedToken(token, situationEffectContext);
                 token.Remanifest(vfx);
             }
 

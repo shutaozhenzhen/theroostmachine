@@ -84,8 +84,16 @@ namespace Roost.World.Recipes
                     atLeastOneEffect = true;
                     cachedProperty.SetViaFastInvoke(recipeEffects, __instance.RetrieveProperty(cachedProperty.LowerCaseName));
                 }
+
             if (atLeastOneEffect)
+            {
                 __instance.SetProperty(ROOST_EFFECTS, recipeEffects);
+
+                //to keep the correct (well, somewhat) deck preview, we reassign deck effects to the main recipe
+                if (recipeEffects.DeckEffects != null)
+                    foreach (string deckId in recipeEffects.DeckEffects.Keys)
+                        __instance.DeckEffects.Add(deckId, 1);
+            }
         }
 
         //Usurper.InvokeGenericImporterForAbstractRootEntity()

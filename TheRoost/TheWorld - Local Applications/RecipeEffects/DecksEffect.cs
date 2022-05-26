@@ -7,50 +7,47 @@ using SecretHistories.Infrastructure;
 using Assets.Logic;
 using SecretHistories.Abstract;
 using SecretHistories.Spheres;
-using SecretHistories.Enums;
 
 using Roost.Twins;
 using Roost.Twins.Entities;
 using Roost.World.Recipes.Entities;
+
 
 namespace Roost.World.Recipes
 {
     //order: shuffle, forbid, normal draws, normal effects with references, takeout, allow, add, insert
     public static class Legerdemain
     {
-        const string DECK_AUTO_SHUFFLE = "shuffleAfterDraw";
-
+        public const string DECK_AUTO_SHUFFLE = "shuffleAfterDraw";
+        public const string DECK_IS_HIDDEN = "isHidden";
         private static DealersTable dealerstable;
         private static Dealer dealer;
 
         internal static void Enact()
         {
             Machine.ClaimProperty<DeckSpec, bool>(DECK_AUTO_SHUFFLE);
+            Machine.ClaimProperty<DeckSpec, bool>(DECK_IS_HIDDEN);
 
-            AtTimeOfPower.NewGameStarted.Schedule(CatchNewGame, PatchType.Postfix);
-            AtTimeOfPower.TabletopLoaded.Schedule(ReshuffleDecksOnNewGame, PatchType.Postfix);
-
-            Machine.Patch(
-                original: typeof(Dealer).GetMethod(nameof(Dealer.Deal), new Type[] { typeof(DeckSpec) }),
-                prefix: typeof(Legerdemain).GetMethodInvariant(nameof(Deal)));
+            AtTimeOfPower.NewGameStarted.Schedule(CatchNewGame, PatchType.Prefix);
+            AtTimeOfPower.TabletopLoaded.Schedule(OnGameStarted, PatchType.Postfix);
         }
 
-        private static bool newGameAndIShouldReshuffleAllTheDecks = false;
+        private static bool itsANewGameAndWeShouldReshuffleAllTheDecks = false;
         private static void CatchNewGame()
         {
-            newGameAndIShouldReshuffleAllTheDecks = true;
+            itsANewGameAndWeShouldReshuffleAllTheDecks = true;
         }
-        private static void ReshuffleDecksOnNewGame()
+        private static void OnGameStarted()
         {
             dealerstable = Watchman.Get<DealersTable>();
             dealer = new Dealer(dealerstable);
 
-            if (newGameAndIShouldReshuffleAllTheDecks)
+            if (itsANewGameAndWeShouldReshuffleAllTheDecks)
             {
                 string currentLegacyFamily = Watchman.Get<Stable>().Protag().ActiveLegacy.Family;
 
                 foreach (DeckSpec deck in Watchman.Get<Compendium>().GetEntitiesAsList<DeckSpec>())
-                    if (string.IsNullOrEmpty(deck.ForLegacyFamily) || currentLegacyFamily == deck.ForLegacyFamily)
+                    if (String.IsNullOrEmpty(deck.ForLegacyFamily) || currentLegacyFamily == deck.ForLegacyFamily)
                     {
                         dealer.Shuffle(deck);
                         IHasElementTokens drawPile = dealerstable.GetDrawPile(deck.Id);
@@ -60,46 +57,19 @@ namespace Roost.World.Recipes
                             if (deck.DefaultCard != "")
                                 drawPile.ProvisionElementToken(deck.DefaultCard, 1);
                             else
-                                Birdsong.Sing("For whatever reason, deck {0} is completely empty, can't be reshuffled and has no default card", deck.Id);
+                                Birdsong.Sing($"For whatever reason, deck {deck.Id} is completely empty, can't be reshuffled and has no default card");
                         }
                     }
 
-                newGameAndIShouldReshuffleAllTheDecks = false;
+                itsANewGameAndWeShouldReshuffleAllTheDecks = false;
             }
-        }
-
-        private static bool Deal(Dealer __instance, DeckSpec fromDeckSpec, DealersTable ____dealersTable, ref Token __result)
-        {
-            IHasElementTokens drawPile = ____dealersTable.GetDrawPile(fromDeckSpec.Id);
-
-            __result = drawPile.GetElementTokens()[drawPile.GetTotalStacksCount() - 1];
-            //need to exclude the token from the deck sphere right now so the next calculations and operations are correct
-            __result.SetSphere(Watchman.Get<HornedAxe>().GetDefaultSphere(OccupiesSpaceAs.Intangible), new Context(Context.ActionSource.SituationEffect));
-
-            if (fromDeckSpec.RetrieveProperty<bool>(DECK_AUTO_SHUFFLE))
-                ____dealersTable.RenewDeck(__instance, fromDeckSpec.Id);
-            else if (drawPile.GetTotalStacksCount() == 0 && fromDeckSpec.ResetOnExhaustion)
-                __instance.Shuffle(fromDeckSpec);
-
-            if (drawPile.GetTotalStacksCount() == 0)
-            {
-                if (fromDeckSpec.DefaultCard != "")
-                    drawPile.ProvisionElementToken(fromDeckSpec.DefaultCard, 1);
-                else
-                    Birdsong.Sing("For whatever reason, deck {0} is completely empty, can't be reshuffled and has no default card", fromDeckSpec.Id);
-            }
-
-            if (fromDeckSpec.DrawMessages.ContainsKey(__result.PayloadEntityId))
-                __result.Payload.SetIllumination("mansusjournal", fromDeckSpec.DrawMessages[__result.PayloadEntityId]);
-
-            return false;
         }
 
         public static void RunExtendedDeckEffects(GrandEffects effectsGroup, Sphere onSphere)
         {
             DeckShuffles(effectsGroup.DeckShuffles);
             DeckForbids(effectsGroup.DeckForbids);
-            DeckDraws(effectsGroup.DeckDraws, onSphere);
+            DeckEffects(effectsGroup.DeckEffects, onSphere);
             DeckTakeOuts(effectsGroup.DeckTakeOuts, onSphere);
             DeckAllows(effectsGroup.DeckAllows);
             DeckAdds(effectsGroup.DeckAdds);
@@ -111,9 +81,8 @@ namespace Roost.World.Recipes
             if (deckShuffles == null)
                 return;
 
-            Dealer dealer = new Dealer(dealerstable);
             foreach (string deckId in deckShuffles)
-                dealerstable.RenewDeck(dealer, deckId);
+                RenewDeck(deckId);
         }
 
         private static void DeckForbids(Dictionary<string, List<string>> deckForbids)
@@ -132,26 +101,19 @@ namespace Roost.World.Recipes
             }
         }
 
-        private static void DeckDraws(Dictionary<string, Funcine<int>> deckDraws, Sphere situationStorage)
+        private static void DeckEffects(Dictionary<string, Funcine<int>> deckEffects, Sphere toSphere)
         {
-            if (deckDraws == null)
+            if (deckEffects == null)
                 return;
 
-            Dealer dealer = new Dealer(dealerstable);
-            foreach (string deckId in deckDraws.Keys)
-            {
-                int draws = deckDraws[deckId].value;
-                for (int i = 0; i++ < draws;)
-                    dealer.Deal(deckId);
-            }
+            foreach (string deckId in deckEffects.Keys)
+                Deal(deckId, toSphere, deckEffects[deckId].value);
         }
 
-        private static void DeckTakeOuts(Dictionary<string, List<Funcine<bool>>> deckTakeOuts, Sphere situationStorage)
+        private static void DeckTakeOuts(Dictionary<string, List<Funcine<bool>>> deckTakeOuts, Sphere toSphere)
         {
             if (deckTakeOuts == null)
                 return;
-
-            Context context = new Context(Context.ActionSource.SituationCreated);
 
             foreach (string deckId in deckTakeOuts.Keys)
             {
@@ -159,7 +121,7 @@ namespace Roost.World.Recipes
 
                 foreach (Funcine<bool> filter in deckTakeOuts[deckId])
                     foreach (Token token in tokens.FilterTokens(filter))
-                        situationStorage.AcceptToken(token, context);
+                        RecipeExecutionBuffer.ScheduleMovement(token, toSphere);
             }
         }
 
@@ -182,21 +144,19 @@ namespace Roost.World.Recipes
             }
         }
 
-        private static void DeckInserts(Dictionary<string, List<Funcine<bool>>> deckInserts, Sphere sphere)
+        private static void DeckInserts(Dictionary<string, List<Funcine<bool>>> deckInserts, Sphere fromSphere)
         {
             if (deckInserts == null)
                 return;
-
-            Context context = new Context(Context.ActionSource.SituationCreated);
-            List<Token> tokens = sphere.GetElementTokens();
+            List<Token> tokens = fromSphere.GetElementTokens();
 
             foreach (string deckId in deckInserts.Keys)
             {
-                IHasElementTokens drawPile = dealerstable.GetDrawPile(deckId);
+                Sphere drawPile = dealerstable.GetDrawPile(deckId) as Sphere;
 
                 foreach (Funcine<bool> filter in deckInserts[deckId])
                     foreach (Token token in tokens.FilterTokens(filter))
-                        drawPile.AcceptToken(token, context);
+                        RecipeExecutionBuffer.ScheduleMovement(token, drawPile);
             }
         }
 
@@ -210,13 +170,47 @@ namespace Roost.World.Recipes
                     dealerstable.GetDrawPile(deckId).ProvisionElementToken(elementId, 1);
         }
 
-        private static void RenewDeck(this DealersTable dtable, Dealer dealer, string deckId)
+        public static void Deal(string deckId, Sphere toSphere, int draws = 1)
         {
-            IHasElementTokens drawPile = dtable.GetDrawPile(deckId);
+            DeckSpec deckSpec = Watchman.Get<Compendium>().GetEntityById<DeckSpec>(deckId);
+            if (deckSpec == null)
+                throw Birdsong.Cack($"TRYING TO DRAW FROM NON-EXISTENT DECK '{deckId}'");
+
+            IHasElementTokens drawPile = dealerstable.GetDrawPile(deckId);
+            Limbo limbo = Watchman.Get<Limbo>();
+            for (int i = 0; i < draws; i++)
+            {
+                Token token = drawPile.GetElementTokens()[drawPile.GetTotalStacksCount() - 1];
+                RecipeExecutionBuffer.ScheduleMovement(token, toSphere);
+                token.SetSphere(limbo, RecipeExecutionBuffer.situationEffectContext);
+                //need to exclude the token from the deck sphere right now so the next calculations and operations are correct
+
+                if (drawPile.GetTotalStacksCount() == 0 && deckSpec.ResetOnExhaustion)
+                    dealer.Shuffle(deckSpec);
+                //if we've shuffled the deck, but it's still empty, add default card; (if it's not defined it'll be a blank card, so better don't draw it!)
+                if (drawPile.GetTotalStacksCount() == 0)
+                {
+                    if (String.IsNullOrEmpty(deckSpec.DefaultCard))
+                        throw Birdsong.Cack($"DECK '{deckId}' IS EMPTY, WON'T SHUFFLE AND HAS NO DEFAULT CARD");
+
+                    drawPile.ProvisionElementToken(deckSpec.DefaultCard, 1);
+                }
+
+                if (deckSpec.DrawMessages.ContainsKey(token.PayloadEntityId))
+                    token.Payload.SetIllumination("mansusjournal", deckSpec.DrawMessages[token.PayloadEntityId]);
+            }
+
+            if (deckSpec.RetrieveProperty<bool>(DECK_AUTO_SHUFFLE) == true)
+                RecipeExecutionBuffer.ScheduleDeckRenew(deckSpec.Id);
+        }
+
+        public static void RenewDeck(string deckId)
+        {
+            IHasElementTokens drawPile = dealerstable.GetDrawPile(deckId);
             int tokenCount = drawPile.GetTotalStacksCount();
             List<Token> tokens = drawPile.GetElementTokens();
             for (int n = 0; n < tokenCount; n++)
-                tokens[n].Retire(SecretHistories.Enums.RetirementVFX.None);
+                tokens[n].Retire();
 
             dealer.Shuffle(deckId);
         }
