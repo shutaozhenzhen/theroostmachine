@@ -20,7 +20,6 @@ namespace Roost.Twins
                 Roost.Vagabond.CommandLine.AddCommand("ref", TwinsDebug.TestReference);
                 Roost.Vagabond.CommandLine.AddCommand("exp", TwinsDebug.TestExpression);
                 Roost.Vagabond.CommandLine.AddCommand("sphere", TwinsDebug.SphereFind);
-                Roost.Vagabond.CommandLine.AddCommand("spheres", TwinsDebug.LogAllSpheres);
                 initialized = true;
             }
         }
@@ -57,7 +56,7 @@ namespace Roost.Twins
                 else
                     comparisonPath = sphere => sphere.GetAbsolutePath();
 
-                int maxAmount = ((FucineMultiPath)path).maxSpheresFind;
+                int maxAmount = ((FucineMultiPath)path).maxSpheresToFind;
 
                 string desiredPath = path.ToString();
 
@@ -141,8 +140,8 @@ namespace Roost.Twins
 
     public class FucineMultiPath : FucinePath
     {
-        public FucineMultiPath(string path, int amount) : base(path) { maxSpheresFind = amount; }
-        public readonly int maxSpheresFind;
+        public FucineMultiPath(string path, int maxSpheresToFind) : base(path) { this.maxSpheresToFind = maxSpheresToFind; }
+        public readonly int maxSpheresToFind;
     }
 
     internal class TwinsDebug
@@ -164,20 +163,23 @@ namespace Roost.Twins
         public static void TestExpression(params string[] command)
         {
             string formula = string.Concat(command);
-            Birdsong.Sing(new Funcine<int>(formula));
-        }
-
-        public static void LogAllSpheres(params string[] command)
-        {
-            string result = string.Empty;
-            foreach (Sphere sphere in Watchman.Get<HornedAxe>().GetSpheres())
-                result += $"Sphere '{sphere.GetAbsolutePath()}', wild path '{sphere.GetWildPath()}'\n";
-
-            Birdsong.Sing(result);
+            Birdsong.Sing(new Funcine<float>(formula));
         }
 
         public static void SphereFind(params string[] command)
         {
+            string result = string.Empty;
+
+            if (command.Length == 0)
+            {
+                foreach (Sphere sphere in Watchman.Get<HornedAxe>().GetSpheres())
+                    result += $"Sphere '{sphere.GetAbsolutePath()}', wild path '{sphere.GetWildPath()}'\n";
+
+                Birdsong.Sing(result);
+
+                return;
+            }
+
             FucinePath path = FuncineParser.ParseFuncineSpherePath(command[0]);
 
             List<Sphere> foundSpheres = TokenContextAccessors.GetSpheresByPath(path);
@@ -187,7 +189,6 @@ namespace Roost.Twins
                 return;
             }
 
-            string result = string.Empty;
             foreach (Sphere sphere in foundSpheres)
             {
                 result += $"Found sphere {sphere.GetAbsolutePath()}, wild path '{sphere.GetWildPath()}', content:\n";
@@ -201,19 +202,12 @@ namespace Roost.Twins
     public class SingleTokenSphere : Sphere
     {
 
-        public override SphereCategory SphereCategory
-        {
-            get
-            {
-                return SphereCategory.Meta;
-            }
-        }
+        public override SphereCategory SphereCategory { get { return SphereCategory.Meta; } }
 
         public void Set(Token token)
         {
             _tokens.Clear();
             _tokens.Add(token);
-            //this._tokens[0] = token;
         }
 
         public void Clear()

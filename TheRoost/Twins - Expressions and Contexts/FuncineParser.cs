@@ -16,7 +16,6 @@ namespace Roost.Twins
     {
         static readonly char[] referenceOpening = new char[] { '[', '{', };
         static readonly char[] referenceClosing = new char[] { ']', '}', };
-        static readonly char[] scopeSeparators = new char[] { '/', '\\' };
         static readonly char[] operationSigns = new char[] { '(', ')', '|', '&', '!', '~', '=', '<', '>', '^', '+', '-', '*', /*'/',*/ '%' };
 
         public static List<FuncineRef> LoadReferences(ref string expression)
@@ -65,8 +64,6 @@ namespace Roost.Twins
 
         static bool isSingleReferenceExpression(string expression)
         {
-            //there's a miniscule problem wthat it won't distinguish things like 'verb/element' and 'element/2'
-            //semi-solved by parser catching all-digits element names
             return expression.IndexOfAny(referenceOpening) == -1 && expression.IndexOfAny(operationSigns) == -1
                 && char.IsDigit(expression[0]) == false && expression.Any(char.IsLetter) == true
                 && expression.Equals("true", StringComparison.InvariantCultureIgnoreCase) == false
@@ -85,6 +82,8 @@ namespace Roost.Twins
                 return new FuncineRef(referenceId, TokenContextAccessors.localSphere, default(Funcine<bool>), ParseTokenValueRef(pathParts[0]));
             else if (pathParts.Length == 2)
                 return new FuncineRef(referenceId, ParseFuncineSpherePath(pathParts[0]), default(Funcine<bool>), ParseTokenValueRef(pathParts[1]));
+            else if (pathParts.Length == 3)
+                return new FuncineRef(referenceId, ParseFuncineSpherePath(pathParts[0]), new Funcine<bool>(pathParts[1]), ParseTokenValueRef(pathParts[2]));
             else
                 throw Birdsong.Cack($"Malformed reference '{path}' - too many parts (possibly a separation symbol in an entity id?)");
         }
