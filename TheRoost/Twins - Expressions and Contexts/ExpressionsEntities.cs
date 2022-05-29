@@ -67,15 +67,7 @@ namespace Roost.Twins.Entities
         {
             get
             {
-                List<Token> tokens = TokenContextAccessors.GetTokensByPath(path);
-
-                //!~!!!!!!!!!!!!!!!!!!!!!NB temp and dirty solution
-                foreach (Token token in tokens.ToArray())
-                    if (token.PayloadEntityId == "tlg.note")
-                        tokens.Remove(token);
-
-                if (this.filter.isUndefined == false)
-                    tokens = tokens.FilterTokens(filter);
+                List<Token> tokens = TokenContextAccessors.GetTokensByPath(path).FilterTokens(filter);
 
                 return target.GetValueFromTokens(tokens);
             }

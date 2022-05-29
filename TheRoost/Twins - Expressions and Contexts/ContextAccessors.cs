@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 
 using SecretHistories.Entities;
@@ -6,76 +7,74 @@ using SecretHistories.UI;
 using SecretHistories.Fucine;
 using SecretHistories.Spheres;
 using SecretHistories.Enums;
+using SecretHistories.States;
+using SecretHistories.Commands.SituationCommands;
+
 using Roost.Twins.Entities;
 
 namespace Roost.Twins
 {
     public static class TokenContextAccessors
     {
-        private static bool initialized = false;
         internal static void Enact()
         {
-            if (!initialized)
-            {
-                Roost.Vagabond.CommandLine.AddCommand("ref", TwinsDebug.TestReference);
-                Roost.Vagabond.CommandLine.AddCommand("exp", TwinsDebug.TestExpression);
-                Roost.Vagabond.CommandLine.AddCommand("sphere", TwinsDebug.SphereFind);
-                initialized = true;
-            }
+            Roost.Vagabond.CommandLine.AddCommand("ref", TwinsDebug.TestReference);
+            Roost.Vagabond.CommandLine.AddCommand("exp", TwinsDebug.TestExpression);
+            Roost.Vagabond.CommandLine.AddCommand("sphere", TwinsDebug.SphereFind);
+            Roost.Vagabond.CommandLine.AddCommand("spheres", TwinsDebug.SphereFind);
+            Roost.Vagabond.CommandLine.AddCommand("tokens", TwinsDebug.SphereContent);
+
+            //the game keeps slot and output spheres even when they are unused; to avoid confusion in references, clear them
+            Machine.Patch(
+                original: typeof(OngoingState).GetMethodInvariant(nameof(OngoingState.Enter)),
+                postfix: typeof(TokenContextAccessors).GetMethodInvariant(nameof(ClearThresholds)));
+            Machine.Patch(
+                original: typeof(CompleteState).GetMethodInvariant(nameof(CompleteState.Exit)),
+                postfix: typeof(TokenContextAccessors).GetMethodInvariant(nameof(ClearOutput)));
         }
 
-        public static readonly FucinePath localSphere = new FucinePath("~/localSphere");
-        public static readonly FucinePath localSituation = new FucinePath("~/localSituation");
-        public static readonly FucinePath localToken = new FucinePath("~/localToken");
+        static readonly string VERB_THRESHOLDS_SPHERE = SituationDominionEnum.VerbThresholds.ToString();
+        static readonly string RECIPE_THRESHOLDS_SPHERE = SituationDominionEnum.RecipeThresholds.ToString();
+        static readonly string OUTPUT_SPHERE = SituationDominionEnum.Output.ToString();
+        static void ClearThresholds(Situation situation)
+        {
+            situation.AddCommand(new ClearDominionCommand(VERB_THRESHOLDS_SPHERE, SphereRetirementType.Graceful));
+        }
+        static void ClearOutput(Situation situation)
+        {
+            situation.AddCommand(new ClearDominionCommand(OUTPUT_SPHERE, SphereRetirementType.Graceful));
+        }
+
+        public static readonly FucinePath currentLocal = new FucinePath("*/local");
+        public static readonly FucinePath currentSituation = new FucinePath("*/situation");
+        public static readonly FucinePath currentToken = new FucinePath("*/token");
 
         private static readonly SingleTokenSphere localTokenSphere = new SingleTokenSphere();
-        private static readonly List<Sphere> defaultScope = new List<Sphere> { Assets.Scripts.Application.Entities.NullEntities.NullSphere.Create() };
-
-        private static Dictionary<FucinePath, List<Sphere>> convenienceSpheres = new Dictionary<FucinePath, List<Sphere>>()
+        private static Dictionary<FucinePath, HashSet<Sphere>> convenienceSpheres = new Dictionary<FucinePath, HashSet<Sphere>>()
             {
-                {  localSphere, null },
-                {  localSituation, null },
-                {  localToken, new List<Sphere> { localTokenSphere } }
+                {  currentLocal, null },
+                {  currentSituation, null },
+                {  currentToken, new HashSet<Sphere> { localTokenSphere } }
             };
-        private static Dictionary<FucinePath, List<Sphere>> cachedSpheres = new Dictionary<FucinePath, List<Sphere>>();
+        private static Dictionary<FucinePath, HashSet<Sphere>> cachedSpheres = new Dictionary<FucinePath, HashSet<Sphere>>();
 
-        public static List<Sphere> GetSpheresByPath(FucinePath path)
+        public static HashSet<Sphere> GetSpheresByPath(FucinePath path)
         {
             if (cachedSpheres.ContainsKey(path))
                 return cachedSpheres[path];
             if (convenienceSpheres.ContainsKey(path))
                 return convenienceSpheres[path];
 
-            List<Sphere> result = new List<Sphere>();
+            HashSet<Sphere> result;
 
             if (path is FucineMultiPath)
-            {
-                Func<Sphere, FucinePath> comparisonPath;
-                if (path.IsWild())
-                    comparisonPath = sphere => sphere.GetWildPath();
-                else
-                    comparisonPath = sphere => sphere.GetAbsolutePath();
-
-                int maxAmount = ((FucineMultiPath)path).maxSpheresToFind;
-
-                string desiredPath = path.ToString();
-
-                foreach (Sphere sphere in Watchman.Get<HornedAxe>().GetSpheres())
-                    if (comparisonPath(sphere).ToString().Contains(desiredPath))
-                    {
-                        result.Add(sphere);
-
-                        maxAmount--;
-                        if (maxAmount == 0)
-                            break;
-                    }
-            }
+                result = (path as FucineMultiPath).GetSpheresByPath();
             else
             {
-                FucinePath defaultSpherePath = Watchman.Get<HornedAxe>().GetDefaultSpherePath();
+                result = new HashSet<Sphere>();
                 Sphere sphere = Watchman.Get<HornedAxe>().GetSphereByAbsolutePath(path);
-
-                if (sphere.GetAbsolutePath() != defaultSpherePath || path == defaultSpherePath)
+                //the game (unhelpfully) returns the default (tabletop) sphere when no sphere is found; gotta recheck that the sphere is correct
+                if (sphere.GetAbsolutePath() == path || sphere.GetWildPath() == path)
                     result.Add(sphere);
             }
 
@@ -86,7 +85,7 @@ namespace Roost.Twins
         public static List<Token> GetTokensByPath(FucinePath path)
         {
             List<Token> tokens = new List<Token>();
-            List<Sphere> spheres = GetSpheresByPath(path);
+            HashSet<Sphere> spheres = GetSpheresByPath(path);
             foreach (Sphere sphere in spheres)
                 tokens.AddRange(sphere.Tokens);
 
@@ -95,25 +94,19 @@ namespace Roost.Twins
 
         public static void SetLocalSituation(Situation situation)
         {
-            convenienceSpheres[localSituation] = situation.GetSpheresActiveForCurrentState();
-            convenienceSpheres[localSphere] = convenienceSpheres[localSituation];
-        }
-
-        public static void ResetLocalSituation()
-        {
-            convenienceSpheres[localSphere] = defaultScope;
-            convenienceSpheres[localSituation] = defaultScope;
+            convenienceSpheres[currentSituation] = new HashSet<Sphere>(situation.GetSpheresActiveForCurrentState());
+            convenienceSpheres[currentLocal] = convenienceSpheres[currentSituation];
         }
 
         public static void SetLocalToken(Token token)
         {
             localTokenSphere.Set(token);
-            convenienceSpheres[localSphere] = convenienceSpheres[localToken];
+            convenienceSpheres[currentLocal] = convenienceSpheres[currentToken];
         }
 
         public static void ResetLocalToken()
         {
-            convenienceSpheres[localSphere] = convenienceSpheres[localSituation];
+            convenienceSpheres[currentLocal] = convenienceSpheres[currentSituation];
             localTokenSphere.Clear();
         }
 
@@ -122,9 +115,13 @@ namespace Roost.Twins
             cachedSpheres.Clear();
         }
 
-        public static List<Token> FilterTokens(this IEnumerable<Token> tokens, Funcine<bool> filter)
+        public static List<Token> FilterTokens(this List<Token> tokens, Funcine<bool> filter)
         {
+            if (filter.isUndefined)
+                return tokens;
+
             List<Token> result = new List<Token>();
+
             foreach (Token token in tokens)
             {
                 SetLocalToken(token);
@@ -140,8 +137,70 @@ namespace Roost.Twins
 
     public class FucineMultiPath : FucinePath
     {
-        public FucineMultiPath(string path, int maxSpheresToFind) : base(path) { this.maxSpheresToFind = maxSpheresToFind; }
+        public FucineMultiPath(string path, int maxSpheresToFind, List<SphereCategory> acceptable = null, List<SphereCategory> excluded = null) : base(path)
+        {
+            this.maxSpheresToFind = maxSpheresToFind;
+
+            Birdsong.Sing(acceptable?.Count, excluded?.Count);
+
+            acceptableCategories = acceptable ?? defaultAcceptableCategories;
+            excludedSphereCategories = excluded ?? defaultExcludedCategories;
+
+            if (this.IsAbsolute())
+                GetRelevantSpherePath = getAbsolutePath;
+            else
+                GetRelevantSpherePath = getWildPath;
+        }
         public readonly int maxSpheresToFind;
+
+        public List<SphereCategory> acceptableCategories;
+        public List<SphereCategory> excludedSphereCategories;
+
+        static readonly SphereCategory[] allSphereCategories = (SphereCategory[])Enum.GetValues(typeof(SphereCategory));
+        private static readonly List<SphereCategory> defaultAcceptableCategories = allSphereCategories.ToList();
+        private static readonly List<SphereCategory> defaultExcludedCategories = new List<SphereCategory> { SphereCategory.Notes };
+
+        private static readonly Func<Sphere, string> getAbsolutePath = sphere => sphere.GetAbsolutePath().ToString();
+        private static readonly Func<Sphere, string> getWildPath = sphere => sphere.GetWildPath().ToString();
+        private Func<Sphere, string> GetRelevantSpherePath;
+
+        public HashSet<Sphere> GetSpheresByPath()
+        {
+            HashSet<Sphere> result = new HashSet<Sphere>();
+            string pathMask = this.ToString();
+            int maxAmount = maxSpheresToFind;
+
+            foreach (Sphere sphere in Watchman.Get<HornedAxe>().GetSpheres())
+                if (!excludedSphereCategories.Contains(sphere.SphereCategory) && acceptableCategories.Contains(sphere.SphereCategory) && !result.Contains(sphere)
+                    && GetRelevantSpherePath(sphere).Contains(pathMask))
+                {
+                    result.Add(sphere);
+
+                    maxAmount--;
+                    if (maxAmount == 0)
+                        break;
+                }
+
+            return result;
+        }
+
+
+        //it'd be handy to implement the ability to include nested spheres for wild paths
+        private HashSet<Sphere> FindSubSpheres(Sphere sphere)
+        {
+            HashSet<Sphere> spheres = new HashSet<Sphere>();
+            foreach (Token token in sphere.GetTokens())
+                foreach (SphereCategory category in allSphereCategories)
+                    if (category != SphereCategory.Notes)
+                    {
+                        List<Sphere> subSpheres = token.Payload.GetSpheresByCategory(category);
+                        spheres.UnionWith(subSpheres);
+                        foreach (Sphere subSphere in subSpheres)
+                            spheres.UnionWith(FindSubSpheres(subSphere));
+                    }
+
+            return spheres;
+        }
     }
 
     internal class TwinsDebug
@@ -170,49 +229,61 @@ namespace Roost.Twins
         {
             string result = string.Empty;
 
+            HashSet<Sphere> foundSpheres;
+            if (command.Length == 0)
+                foundSpheres = Watchman.Get<HornedAxe>().GetSpheres();
+            else
+            {
+                FucinePath targetPath = FuncineParser.ParseFuncineSpherePath(command[0]);
+
+                DateTime startTime = DateTime.Now;
+                foundSpheres = TokenContextAccessors.GetSpheresByPath(targetPath);
+                TimeSpan searchTime = DateTime.Now - startTime;
+
+                result += $"Search time {searchTime.TotalSeconds} sec\n";
+            }
+
+            if (foundSpheres.Count > 0)
+                foreach (Sphere sphere in foundSpheres)
+                    result += $"{sphere.SphereCategory.ToString().ToUpper()} SPHERE ID '{sphere.Id}'\nPath: '{sphere.GetAbsolutePath()}'\nWild: '{sphere.GetWildPath()}'\n";
+
+            Birdsong.Sing(result);
+        }
+
+        public static void SphereContent(params string[] command)
+        {
+            string result = string.Empty;
+
             if (command.Length == 0)
             {
-                foreach (Sphere sphere in Watchman.Get<HornedAxe>().GetSpheres())
-                    result += $"Sphere '{sphere.GetAbsolutePath()}', wild path '{sphere.GetWildPath()}'\n";
-
-                Birdsong.Sing(result);
-
+                Birdsong.Sing("Empty sphere reference");
                 return;
             }
 
             FucinePath path = FuncineParser.ParseFuncineSpherePath(command[0]);
 
-            List<Sphere> foundSpheres = TokenContextAccessors.GetSpheresByPath(path);
-            if (foundSpheres.Count == 0)
-            {
-                Birdsong.Sing($"No spheres found for path '{path}'");
-                return;
-            }
+            HashSet<Sphere> foundSpheres = TokenContextAccessors.GetSpheresByPath(path);
 
-            foreach (Sphere sphere in foundSpheres)
-            {
-                result += $"Found sphere {sphere.GetAbsolutePath()}, wild path '{sphere.GetWildPath()}', content:\n";
-                foreach (Token token in sphere.GetTokens())
-                    result += $"{token.PayloadTypeName} {token.PayloadEntityId}\n";
-            }
+            if (foundSpheres.Count > 0)
+                foreach (Sphere sphere in foundSpheres)
+                {
+                    result += $"{sphere.Id}:'\n--------------";
+                    foreach (Token token in sphere.GetTokens())
+                        result += $"{token.PayloadTypeName} {token.PayloadEntityId}\n";
+                    result += "--------------\n";
+                }
+            else
+                result = $"No spheres found for path '{path}'\n";
+
             Birdsong.Sing(result);
         }
     }
 
     public class SingleTokenSphere : Sphere
     {
-
         public override SphereCategory SphereCategory { get { return SphereCategory.Meta; } }
 
-        public void Set(Token token)
-        {
-            _tokens.Clear();
-            _tokens.Add(token);
-        }
-
-        public void Clear()
-        {
-            _tokens.Clear();
-        }
+        public void Set(Token token) { _tokens.Clear(); _tokens.Add(token); }
+        public void Clear() { _tokens.Clear(); }
     }
 }

@@ -14,8 +14,8 @@ namespace Roost.Twins
 {
     public static class FuncineParser
     {
-        static readonly char[] referenceOpening = new char[] { '[', '{', };
-        static readonly char[] referenceClosing = new char[] { ']', '}', };
+        static readonly char[] segmentOpening = new char[] { '[', '{', };
+        static readonly char[] segmentClosing = new char[] { ']', '}', };
         static readonly char[] operationSigns = new char[] { '(', ')', '|', '&', '!', '~', '=', '<', '>', '^', '+', '-', '*', /*'/',*/ '%' };
 
         public static List<FuncineRef> LoadReferences(ref string expression)
@@ -23,13 +23,13 @@ namespace Roost.Twins
             try
             {
                 if (string.IsNullOrWhiteSpace(expression))
-                    throw Birdsong.Cack("Expression definition is empty");
+                    throw Birdsong.Cack("Expression is empty");
 
                 List<FuncineRef> references = new List<FuncineRef>();
 
                 expression.Trim().ToLower();
                 if (isSingleReferenceExpression(expression))
-                    expression = string.Concat(referenceOpening[0], expression, referenceClosing[0]);
+                    expression = string.Concat(segmentOpening[0], expression, segmentClosing[0]);
 
                 int openingPosition, closingPosition;
                 string referenceData = GetBordersOfSeparatedArea(expression, out openingPosition, out closingPosition);
@@ -64,7 +64,7 @@ namespace Roost.Twins
 
         static bool isSingleReferenceExpression(string expression)
         {
-            return expression.IndexOfAny(referenceOpening) == -1 && expression.IndexOfAny(operationSigns) == -1
+            return expression.IndexOfAny(segmentOpening) == -1 && expression.IndexOfAny(operationSigns) == -1
                 && char.IsDigit(expression[0]) == false && expression.Any(char.IsLetter) == true
                 && expression.Equals("true", StringComparison.InvariantCultureIgnoreCase) == false
                 && expression.Equals("false", StringComparison.InvariantCultureIgnoreCase) == false;
@@ -79,7 +79,7 @@ namespace Roost.Twins
             if (pathParts.Length == 0)
                 throw Birdsong.Cack($"Malformed reference '{path}' - appears to be empty");
             else if (pathParts.Length == 1)
-                return new FuncineRef(referenceId, TokenContextAccessors.localSphere, default(Funcine<bool>), ParseTokenValueRef(pathParts[0]));
+                return new FuncineRef(referenceId, TokenContextAccessors.currentLocal, default(Funcine<bool>), ParseTokenValueRef(pathParts[0]));
             else if (pathParts.Length == 2)
                 return new FuncineRef(referenceId, ParseFuncineSpherePath(pathParts[0]), default(Funcine<bool>), ParseTokenValueRef(pathParts[1]));
             else if (pathParts.Length == 3)
@@ -91,22 +91,71 @@ namespace Roost.Twins
         public static FucinePath ParseFuncineSpherePath(string path)
         {
             const char multiPathSign = '+';
+            const char excludeCategorySign = '-';
+            const char categorySeparator = ',';
 
-            int lastPlusPosition = path.LastIndexOf(multiPathSign);
-
-            if (lastPlusPosition > -1)
+            if (PathisMultiPath())
             {
-                string endPathPart = path.Substring(lastPlusPosition, path.Length - lastPlusPosition);
-                if (endPathPart.Length == 1)
-                    return new FucineMultiPath(path.Substring(0, path.Length - 1), 0);
 
-                endPathPart = endPathPart.Substring(1);
-                int amount;
-                if (int.TryParse(endPathPart, out amount))
-                    return new FucineMultiPath(path.Remove(lastPlusPosition), amount);
+                List<SphereCategory> acceptedCategories = null;
+                List<SphereCategory> excludedCategories = null;
+                int categoriesStart = path.LastIndexOfAny(segmentOpening);
+                if (categoriesStart != -1)
+                {
+                    int categoriesEnd = path.LastIndexOfAny(segmentClosing);
+                    if (categoriesEnd == -1)
+                        throw Birdsong.Cack($"Unclosed category definition in path {path}");
+                    string[] categoryData = path.Substring(categoriesStart + 1, categoriesEnd - categoriesStart - 1).Split(categorySeparator);
+
+                    path = path.Remove(categoriesStart);
+
+                    acceptedCategories = new List<SphereCategory>();
+                    excludedCategories = new List<SphereCategory>();
+                    foreach (string category in categoryData)
+                    {
+                        SphereCategory parsedCategory;
+                        if (category[0] == excludeCategorySign)
+                        {
+                            if (Enum.TryParse(category.Substring(1), true, out parsedCategory) == false)
+                                throw Birdsong.Cack($"Unknown sphere category '{category.Substring(1)}'");
+
+                            excludedCategories.Add(parsedCategory);
+                            continue;
+                        }
+
+                        if (Enum.TryParse(category, true, out parsedCategory) == false)
+                            throw Birdsong.Cack($"Unknown sphere category '{category.Substring(1)}'");
+
+                        acceptedCategories.Add(parsedCategory);
+                    }
+                }
+
+                int amount = 0;
+                int lastPlusPosition = path.LastIndexOf(multiPathSign);
+                if (lastPlusPosition > -1)
+                {
+                    string endPathPart = path.Substring(lastPlusPosition, path.Length - lastPlusPosition);
+                    if (endPathPart.Length == 1)
+                        return new FucineMultiPath(path.Substring(0, path.Length - 1), 0);
+
+                    endPathPart = endPathPart.Substring(1);
+
+                    if (int.TryParse(endPathPart, out amount) == false)
+                        throw Birdsong.Cack($"Can't parse FicineMultiPath sphere limit {endPathPart}");
+
+                    path = path.Remove(lastPlusPosition);
+                }
+
+                return new FucineMultiPath(path, amount, acceptedCategories, excludedCategories);
             }
 
             return new FucinePath(path);
+
+            bool PathisMultiPath()
+            {
+                return segmentClosing.Contains(path[path.Length - 1]) || path.Contains(multiPathSign);
+
+            }
         }
 
         public static TokenValueRef ParseTokenValueRef(string data)
@@ -160,29 +209,29 @@ namespace Roost.Twins
 
         private static string GetBordersOfSeparatedArea(string expression, out int openingPosition, out int closingPosition)
         {
-            openingPosition = expression.IndexOfAny(referenceOpening);
-            closingPosition = expression.IndexOfAny(referenceClosing);
+            openingPosition = expression.IndexOfAny(segmentOpening);
+            closingPosition = expression.IndexOfAny(segmentClosing);
 
             if (openingPosition == -1)
                 return expression;
 
             if (closingPosition == -1)
-                throw Birdsong.Cack($"Reference in {expression} is not closed");
+                throw Birdsong.Cack($"Reference in expression '{expression}' is not closed");
 
             string referenceData = expression.Substring(openingPosition + 1, closingPosition - openingPosition - 1);
-            int innerOpeningsCount = referenceData.Split(referenceOpening).Length - 1;
+            int innerOpeningsCount = referenceData.Split(segmentOpening).Length - 1;
             int openingsAccounted = 0;
             while (innerOpeningsCount > openingsAccounted)
             {
                 for (; openingsAccounted < innerOpeningsCount; openingsAccounted++)
                 {
-                    closingPosition = expression.IndexOfAny(referenceClosing, closingPosition + 1);
+                    closingPosition = expression.IndexOfAny(segmentClosing, closingPosition + 1);
                     if (closingPosition == -1)
-                        throw Birdsong.Cack($"Reference in {expression} is not closed");
+                        throw Birdsong.Cack($"Reference in expression '{expression}' is not closed");
                 }
 
                 referenceData = expression.Substring(openingPosition + 1, closingPosition - openingPosition - 1);
-                innerOpeningsCount = referenceData.Split(referenceOpening).Length - 1;
+                innerOpeningsCount = referenceData.Split(segmentOpening).Length - 1;
             }
 
             return referenceData;
@@ -195,17 +244,17 @@ namespace Roost.Twins
             string result = string.Empty;
             while (number > 25)
             {
-                result += (number % 26).AsLetter();
+                result += ToLetter(number % 26);
                 number -= (26 + (number % 26));
             }
 
-            result += number.AsLetter();
+            result += ToLetter(number);
             return new string(result.ToCharArray().Reverse().ToArray());
-        }
 
-        private static char AsLetter(this int number)
-        {
-            return (char)(number + 65);
+            char ToLetter(int charNumber)
+            {
+                return (char)(charNumber + 65);
+            }
         }
     }
 }
