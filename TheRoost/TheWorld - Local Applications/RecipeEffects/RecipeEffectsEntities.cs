@@ -34,7 +34,7 @@ namespace Roost.World.Recipes.Entities
         [FucineDict] public Dictionary<Funcine<bool>, Funcine<int>> Effects { get; set; }
         [FucineDict] public Dictionary<Funcine<bool>, List<Funcine<int>>> Decays { get; set; }
 
-        [FucineDict] public Dictionary<FucinePath, List<GrandEffects>> SphereEffects { get; set; }
+        [FucineDict] public Dictionary<FucinePath, GrandEffects> SphereEffects { get; set; }
 
 
 
@@ -171,14 +171,15 @@ namespace Roost.World.Recipes.Entities
 
         public void RunSphereEffects(Situation situation)
         {
-            if (SphereEffects != null)
-                foreach (KeyValuePair<FucinePath, List<GrandEffects>> sphereEffect in SphereEffects)
-                {
-                    HashSet<Sphere> targetSpheres = TokenContextAccessors.GetSpheresByPath(sphereEffect.Key);
-                    foreach (GrandEffects effectGroup in sphereEffect.Value)
-                        foreach (Sphere sphere in targetSpheres)
-                            effectGroup.Run(situation, sphere);
-                }
+            if (SphereEffects == null)
+                return;
+
+            foreach (KeyValuePair<FucinePath, GrandEffects> sphereEffect in SphereEffects)
+            {
+                HashSet<Sphere> targetSpheres = TokenContextAccessors.GetSpheresByPath(sphereEffect.Key);
+                foreach (Sphere sphere in targetSpheres)
+                    sphereEffect.Value.Run(situation, sphere);
+            }
         }
     }
 

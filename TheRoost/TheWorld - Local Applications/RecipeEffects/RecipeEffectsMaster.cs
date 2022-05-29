@@ -32,15 +32,15 @@ namespace Roost.World.Recipes
             Machine.ClaimProperty<Element, Dictionary<string, List<RefMorphDetails>>>("xtriggers");
 
             Machine.ClaimProperty<Recipe, Dictionary<Funcine<int>, Funcine<int>>>(REF_REQS);
-            Machine.ClaimProperty<Recipe, List<GrandEffects>>(GRAND_EFFECTS);
-            Machine.ClaimProperty<Recipe, Dictionary<FucinePath, List<GrandEffects>>>(SPHERE_EFFECTS);
+            Machine.ClaimProperty<Recipe, GrandEffects>(GRAND_EFFECTS);
+            Machine.ClaimProperty<Recipe, Dictionary<FucinePath, GrandEffects>>(SPHERE_EFFECTS);
 
             Dictionary<string, Type> allRecipeEffectsProperties = new Dictionary<string, Type>();
             foreach (CachedFucineProperty<GrandEffects> cachedProperty in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
                 allRecipeEffectsProperties.Add(cachedProperty.LowerCaseName, cachedProperty.ThisPropInfo.PropertyType);
             Machine.ClaimProperties<Recipe>(allRecipeEffectsProperties);
 
-            AtTimeOfPower.OnPostImportRecipe.Schedule<Recipe>(FlushEffects, PatchType.Postfix);
+            AtTimeOfPower.OnPostImportRecipe.Schedule<Recipe, Compendium>(WrapAndFlushFirstPassEffects, PatchType.Prefix);
 
             AtTimeOfPower.RecipeRequirementsCheck.Schedule<Recipe, AspectsInContext>(RefReqs);
 
@@ -56,26 +56,27 @@ namespace Roost.World.Recipes
 
         //Recipe.OnPostImportForSpecificEntity()
         private static void FlushEffects(Recipe __instance)
+        private static void WrapAndFlushFirstPassEffects(Recipe __instance, Compendium populatedCompendium)
         {
+            Recipe recipe = __instance;
             GrandEffects firstPassEffects = new GrandEffects();
             bool atLeastOneEffect = false;
             foreach (CachedFucineProperty<GrandEffects> cachedProperty in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
-                if (__instance.HasCustomProperty(cachedProperty.LowerCaseName))
+                if (recipe.HasCustomProperty(cachedProperty.LowerCaseName))
                 {
                     atLeastOneEffect = true;
-                    cachedProperty.SetViaFastInvoke(firstPassEffects, __instance.RetrieveProperty(cachedProperty.LowerCaseName));
+                    cachedProperty.SetViaFastInvoke(firstPassEffects, recipe.RetrieveProperty(cachedProperty.LowerCaseName));
                 }
+
 
             if (atLeastOneEffect)
             {
-                List<GrandEffects> allRecipeEffects = __instance.RetrieveProperty<List<GrandEffects>>(GRAND_EFFECTS) ?? new List<GrandEffects>();
-                allRecipeEffects.Insert(0, firstPassEffects);
-                __instance.SetProperty(GRAND_EFFECTS, allRecipeEffects);
+                recipe.SetProperty(GRAND_EFFECTS, firstPassEffects);
 
                 //to keep the correct (well, somewhat) deck preview, we reassign deck effects to the main recipe
                 if (firstPassEffects.DeckEffects != null)
                     foreach (string deckId in firstPassEffects.DeckEffects.Keys)
-                        __instance.DeckEffects.Add(deckId, 1);
+                        recipe.DeckEffects.Add(deckId, 1);
             }
         }
 
@@ -130,13 +131,12 @@ namespace Roost.World.Recipes
             Birdsong.Sing(VerbosityLevel.SystemChatter, 0, $"EXECUTING: {command.Recipe.Id}");
 
             situation.Recipe = command.Recipe;
-            List<GrandEffects> recipeEffects = situation.Recipe.RetrieveProperty<List<GrandEffects>>(GRAND_EFFECTS);
-            foreach (GrandEffects effectGroup in recipeEffects)
-                if (recipeEffects != null)
-                {
-                    effectGroup.Run(situation, situation.GetSingleSphereByCategory(SphereCategory.SituationStorage));
-                    TokenContextAccessors.ResetCache();
-                }
+            GrandEffects recipeEffects = situation.Recipe.RetrieveProperty<GrandEffects>(GRAND_EFFECTS);
+            if (recipeEffects != null)
+            {
+                recipeEffects.Run(situation, situation.GetSingleSphereByCategory(SphereCategory.SituationStorage));
+                TokenContextAccessors.ResetCache();
+            }
         }
 
         private static bool RefReqs(Recipe __instance, AspectsInContext aspectsinContext)
