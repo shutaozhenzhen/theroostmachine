@@ -88,7 +88,7 @@ namespace Roost.World.Recipes
 
             GameObject quantityBadgeForStoredManifestation = GameObject.Instantiate(quantityBadgePrefab);
             GameObject.DestroyImmediate(quantityBadgeForStoredManifestation.GetComponent<ElementStackBadge>());
-            quantityBadgeForStoredManifestation.transform.parent = storedManifestation.transform;
+            quantityBadgeForStoredManifestation.transform.SetParent(storedManifestation.transform);
             quantityBadgeForStoredManifestation.SetActive(false);
             quantityBadgeForStoredManifestation.GetComponentInChildren<TextMeshProUGUI>().fontSizeMin = 4;
             RectTransform badgeTransform = quantityBadgeForStoredManifestation.GetComponent<RectTransform>();

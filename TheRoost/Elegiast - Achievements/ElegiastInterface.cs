@@ -364,7 +364,7 @@ namespace Roost.Elegiast
             foreach (GameObject entry in sortedAchievements[category])
                 entry.SetActive(true);
 
-            categoryText.text = Watchman.Get<Compendium>().GetEntityById<CustomAchievement>(category).label;
+            categoryText.text = Machine.GetEntity<CustomAchievement>(category).label;
 
             if (hiddenInCategory[category] == 0)
                 hiddenAchievementsInfo.gameObject.SetActive(false);

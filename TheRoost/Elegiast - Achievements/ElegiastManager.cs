@@ -47,8 +47,8 @@ namespace Roost.Elegiast
             //will I ever implement this
             if (Watchman.Get<SecretHistories.Services.StorefrontServicesProvider>().IsAvailable(StoreClient.Gog))
             {
-                cachedGogStats = GalaxyInstance.Stats();
-                cachedGogStats.RequestUserStatsAndAchievements();
+                //cachedGogStats = GalaxyInstance.Stats();
+                //cachedGogStats.RequestUserStatsAndAchievements();
             }
         }
 
@@ -68,7 +68,7 @@ namespace Roost.Elegiast
 
         private static bool UnlockAchievement(string id, int messageOrder = -1) //-1 for no message (if not inside the game scene currently, for example)
         {
-            CustomAchievement achievement = Watchman.Get<Compendium>().GetEntityById<CustomAchievement>(id);
+            CustomAchievement achievement = Machine.GetEntity<CustomAchievement>(id);
             if (achievement == null)
             {
                 Birdsong.Sing(VerbosityLevel.Significants, 0, "Attempt to unlock achievement '{0}' - no such achievement exists", id);
@@ -107,9 +107,9 @@ namespace Roost.Elegiast
                 unlocks.Add("custom_achievement_sample", DateInvariant(DateTime.Now));
                 TrySyncAchievementStorages();
             }
-            else
-                if (string.Concat(cloudData) != string.Concat(localData)) //if out of sync, sync
-                    TrySyncAchievementStorages();
+            else if (string.Concat(cloudData) != string.Concat(localData))
+                TrySyncAchievementStorages();
+
         }
 
         private static string[] GetLocalData()

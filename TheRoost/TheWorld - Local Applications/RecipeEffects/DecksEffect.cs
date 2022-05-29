@@ -172,7 +172,7 @@ namespace Roost.World.Recipes
 
         public static void Deal(string deckId, Sphere toSphere, int draws = 1)
         {
-            DeckSpec deckSpec = Watchman.Get<Compendium>().GetEntityById<DeckSpec>(deckId);
+            DeckSpec deckSpec = Machine.GetEntity<DeckSpec>(deckId);
             if (deckSpec == null)
                 throw Birdsong.Cack($"TRYING TO DRAW FROM NON-EXISTENT DECK '{deckId}'");
 
