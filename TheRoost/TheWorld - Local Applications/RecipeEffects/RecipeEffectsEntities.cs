@@ -18,25 +18,29 @@ namespace Roost.World.Recipes.Entities
 {
     public class GrandEffects : AbstractEntity<GrandEffects>
     {
-        [FucineEverValue] public string comments { get; set; }
+        [FucineValue] public string comments { get; set; }
 
-        [FucineEverValue] public Dictionary<Funcine<bool>, List<RefMutationEffect>> Mutations { get; set; }
-        [FucineEverValue] public Dictionary<string, Funcine<int>> Aspects { get; set; }
+        [FucineDict] public Dictionary<Funcine<bool>, List<RefMutationEffect>> Mutations { get; set; }
+        [FucineDict] public Dictionary<string, Funcine<int>> Aspects { get; set; }
 
-        [FucineEverValue] public List<string> DeckShuffles { get; set; }
-        [FucineEverValue] public Dictionary<string, List<string>> DeckForbids { get; set; }
-        [FucineEverValue] public Dictionary<string, List<string>> DeckAllows { get; set; }
-        [FucineEverValue] public Dictionary<string, Funcine<int>> DeckEffects { get; set; }
-        [FucineEverValue] public Dictionary<string, List<string>> DeckAdds { get; set; }
-        [FucineEverValue] public Dictionary<string, List<Funcine<bool>>> DeckTakeOuts { get; set; }
-        [FucineEverValue] public Dictionary<string, List<Funcine<bool>>> DeckInserts { get; set; }
+        [FucineList] public List<string> DeckShuffles { get; set; }
+        [FucineDict] public Dictionary<string, List<string>> DeckForbids { get; set; }
+        [FucineDict] public Dictionary<string, List<string>> DeckAllows { get; set; }
+        [FucineDict] public Dictionary<string, Funcine<int>> DeckEffects { get; set; }
+        [FucineDict] public Dictionary<string, List<string>> DeckAdds { get; set; }
+        [FucineDict] public Dictionary<string, List<Funcine<bool>>> DeckTakeOuts { get; set; }
+        [FucineDict] public Dictionary<string, List<Funcine<bool>>> DeckInserts { get; set; }
 
-        [FucineEverValue] public Dictionary<Funcine<bool>, Funcine<int>> Effects { get; set; }
-        [FucineEverValue] public Dictionary<Funcine<bool>, Funcine<int>> Decays { get; set; }
+        [FucineDict] public Dictionary<Funcine<bool>, Funcine<int>> Effects { get; set; }
+        [FucineDict] public Dictionary<Funcine<bool>, List<Funcine<int>>> Decays { get; set; }
 
-        [FucineEverValue(DefaultValue = RetirementVFX.None)] public RetirementVFX DeckEffectsVFX { get; set; }
-        [FucineEverValue(DefaultValue = RetirementVFX.None)] public RetirementVFX EffectsVFX { get; set; }
-        [FucineEverValue(DefaultValue = RetirementVFX.CardLight)] public RetirementVFX DecaysVFX { get; set; }
+        [FucineDict] public Dictionary<FucinePath, List<GrandEffects>> SphereEffects { get; set; }
+
+
+
+        [FucineValue(DefaultValue = RetirementVFX.None)] public RetirementVFX DeckEffectsVFX { get; set; }
+        [FucineValue(DefaultValue = RetirementVFX.None)] public RetirementVFX EffectsVFX { get; set; }
+        [FucineValue(DefaultValue = RetirementVFX.CardLight)] public RetirementVFX DecaysVFX { get; set; }
 
         public GrandEffects() { }
         public GrandEffects(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
@@ -44,6 +48,8 @@ namespace Roost.World.Recipes.Entities
 
         public void Run(Situation situation, Sphere onSphere)
         {
+            TokenContextAccessors.SetLocalSituation(situation);
+
             RunRefMutations(onSphere);
             RecipeExecutionBuffer.ApplyMutations();
 
@@ -62,7 +68,8 @@ namespace Roost.World.Recipes.Entities
             RecipeExecutionBuffer.ApplyRetirements();
             RecipeExecutionBuffer.ApplyTransformations();
 
-            //RecipeExecutionBuffer.StackTokensInDirtySpheres();
+            RunSphereEffects(situation);
+
         }
 
         public void RunRefMutations(Sphere sphere)
@@ -137,7 +144,7 @@ namespace Roost.World.Recipes.Entities
                     List<Token> filteredTokens = allTokens.FilterTokens(filter);
                     while (level < 0 && filteredTokens.Count > 0)
                     {
-                        RecipeExecutionBuffer.ScheduleRetirement(filteredTokens[UnityEngine.Random.Range(0, filteredTokens.Count)], EffectsVFX);
+                        RecipeExecutionBuffer.ScheduleRetirement(filteredTokens[Random.Range(0, filteredTokens.Count)], EffectsVFX);
                         level++;
                     }
                 }
@@ -160,6 +167,18 @@ namespace Roost.World.Recipes.Entities
                     foreach (Token token in targets)
                         RecipeExecutionBuffer.ScheduleDecay(token, DecaysVFX);
             }
+        }
+
+        public void RunSphereEffects(Situation situation)
+        {
+            if (SphereEffects != null)
+                foreach (KeyValuePair<FucinePath, List<GrandEffects>> sphereEffect in SphereEffects)
+                {
+                    HashSet<Sphere> targetSpheres = TokenContextAccessors.GetSpheresByPath(sphereEffect.Key);
+                    foreach (GrandEffects effectGroup in sphereEffect.Value)
+                        foreach (Sphere sphere in targetSpheres)
+                            effectGroup.Run(situation, sphere);
+                }
         }
     }
 

@@ -25,15 +25,15 @@ namespace Roost.World.Recipes
     {
         const string REF_REQS = "grandreqs";
         const string GRAND_EFFECTS = "grandeffects";
-        const string ROOST_EFFECTS = "$roostrecipeeffects";
+        const string SPHERE_EFFECTS = "sphereeffects";
 
         internal static void Enact()
         {
             Machine.ClaimProperty<Element, Dictionary<string, List<RefMorphDetails>>>("xtriggers");
 
             Machine.ClaimProperty<Recipe, Dictionary<Funcine<int>, Funcine<int>>>(REF_REQS);
-            Machine.ClaimProperty<Recipe, Dictionary<Funcine<int>, Funcine<int>>>(GRAND_EFFECTS);
-            Machine.ClaimProperty<Recipe, Dictionary<Funcine<int>, Funcine<int>>>(ROOST_EFFECTS);
+            Machine.ClaimProperty<Recipe, List<GrandEffects>>(GRAND_EFFECTS);
+            Machine.ClaimProperty<Recipe, Dictionary<FucinePath, List<GrandEffects>>>(SPHERE_EFFECTS);
 
             Dictionary<string, Type> allRecipeEffectsProperties = new Dictionary<string, Type>();
             foreach (CachedFucineProperty<GrandEffects> cachedProperty in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
@@ -45,7 +45,7 @@ namespace Roost.World.Recipes
             AtTimeOfPower.RecipeRequirementsCheck.Schedule<Recipe, AspectsInContext>(RefReqs);
 
             Machine.Patch(
-                original: typeof(RecipeCompletionEffectCommand).GetMethodInvariant("Execute"),
+                original: typeof(RecipeCompletionEffectCommand).GetMethodInvariant(nameof(RecipeCompletionEffectCommand.Execute)),
                 transpiler: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(RunRefEffectsTranspiler)));
 
             Machine.Patch(
@@ -57,22 +57,24 @@ namespace Roost.World.Recipes
         //Recipe.OnPostImportForSpecificEntity()
         private static void FlushEffects(Recipe __instance)
         {
-            GrandEffects recipeEffects = new GrandEffects();
+            GrandEffects firstPassEffects = new GrandEffects();
             bool atLeastOneEffect = false;
             foreach (CachedFucineProperty<GrandEffects> cachedProperty in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
                 if (__instance.HasCustomProperty(cachedProperty.LowerCaseName))
                 {
                     atLeastOneEffect = true;
-                    cachedProperty.SetViaFastInvoke(recipeEffects, __instance.RetrieveProperty(cachedProperty.LowerCaseName));
+                    cachedProperty.SetViaFastInvoke(firstPassEffects, __instance.RetrieveProperty(cachedProperty.LowerCaseName));
                 }
 
             if (atLeastOneEffect)
             {
-                __instance.SetProperty(ROOST_EFFECTS, recipeEffects);
+                List<GrandEffects> allRecipeEffects = __instance.RetrieveProperty<List<GrandEffects>>(GRAND_EFFECTS) ?? new List<GrandEffects>();
+                allRecipeEffects.Insert(0, firstPassEffects);
+                __instance.SetProperty(GRAND_EFFECTS, allRecipeEffects);
 
                 //to keep the correct (well, somewhat) deck preview, we reassign deck effects to the main recipe
-                if (recipeEffects.DeckEffects != null)
-                    foreach (string deckId in recipeEffects.DeckEffects.Keys)
+                if (firstPassEffects.DeckEffects != null)
+                    foreach (string deckId in firstPassEffects.DeckEffects.Keys)
                         __instance.DeckEffects.Add(deckId, 1);
             }
         }
@@ -125,16 +127,16 @@ namespace Roost.World.Recipes
 
         private static void RefEffects(RecipeCompletionEffectCommand command, Situation situation)
         {
-            //Birdsong.Sing(VerbosityLevel.SystemChatter, 0, $"EXECUTING: {command.Recipe.Id}");
+            Birdsong.Sing(VerbosityLevel.SystemChatter, 0, $"EXECUTING: {command.Recipe.Id}");
 
             situation.Recipe = command.Recipe;
-            GrandEffects recipeEffects = situation.Recipe.RetrieveProperty<GrandEffects>(ROOST_EFFECTS);
-            if (recipeEffects != null)
-            {
-                TokenContextAccessors.SetLocalSituation(situation);
-                recipeEffects.Run(situation, situation.GetSingleSphereByCategory(SphereCategory.SituationStorage));
-                TokenContextAccessors.ResetCache();
-            }
+            List<GrandEffects> recipeEffects = situation.Recipe.RetrieveProperty<List<GrandEffects>>(GRAND_EFFECTS);
+            foreach (GrandEffects effectGroup in recipeEffects)
+                if (recipeEffects != null)
+                {
+                    effectGroup.Run(situation, situation.GetSingleSphereByCategory(SphereCategory.SituationStorage));
+                    TokenContextAccessors.ResetCache();
+                }
         }
 
         private static bool RefReqs(Recipe __instance, AspectsInContext aspectsinContext)
