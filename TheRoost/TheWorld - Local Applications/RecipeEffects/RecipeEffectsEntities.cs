@@ -51,25 +51,11 @@ namespace Roost.World.Recipes.Entities
             TokenContextAccessors.SetLocalSituation(situation);
 
             RunRefMutations(onSphere);
-            RecipeExecutionBuffer.ApplyMutations();
-
             RunXTriggers(onSphere, situation);
-            RecipeExecutionBuffer.ApplyAll();
-
             Legerdemain.RunExtendedDeckEffects(this, onSphere);
-            RecipeExecutionBuffer.ApplyMovements();
-            RecipeExecutionBuffer.ApplyRenews();
-
             RunRefEffects(onSphere);
-            RecipeExecutionBuffer.ApplyRetirements();
-            RecipeExecutionBuffer.ApplyCreations();
-
             RunRefDecays(onSphere);
-            RecipeExecutionBuffer.ApplyRetirements();
-            RecipeExecutionBuffer.ApplyTransformations();
-
             RunSphereEffects(situation);
-
         }
 
         public void RunRefMutations(Sphere sphere)
@@ -87,6 +73,8 @@ namespace Roost.World.Recipes.Entities
                     foreach (RefMutationEffect mutationEffect in Mutations[filter])
                         RecipeExecutionBuffer.ScheduleMutation(targets, mutationEffect.Mutate, mutationEffect.Level.value, mutationEffect.Additive, mutationEffect.VFX);
             }
+
+            RecipeExecutionBuffer.ApplyMutations();
         }
 
         private static readonly AspectsDictionary allCatalystsInSphere = new AspectsDictionary();
@@ -102,12 +90,13 @@ namespace Roost.World.Recipes.Entities
                 return;
 
             Dictionary<string, List<RefMorphDetails>> xtriggers;
+            Compendium compendium = Watchman.Get<Compendium>();
             foreach (Token token in sphere.GetElementTokens())
             {
                 if (token.IsValidElementStack() == false)
                     continue;
 
-                xtriggers = Watchman.Get<Compendium>().GetEntityById<Element>(token.PayloadEntityId).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
+                xtriggers = compendium.GetEntityById<Element>(token.PayloadEntityId).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
 
                 if (xtriggers != null)
                     foreach (KeyValuePair<string, int> catalyst in allCatalystsInSphere)
@@ -119,7 +108,7 @@ namespace Roost.World.Recipes.Entities
 
                 foreach (KeyValuePair<string, int> aspect in tokenAspects)
                 {
-                    xtriggers = Watchman.Get<Compendium>().GetEntityById<Element>(token.PayloadEntityId).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
+                    xtriggers = compendium.GetEntityById<Element>(aspect.Key).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
                     if (xtriggers != null)
                         foreach (KeyValuePair<string, int> catalyst in allCatalystsInSphere)
                             if (xtriggers.ContainsKey(catalyst.Key)) foreach (RefMorphDetails morphDetails in xtriggers[catalyst.Key])
@@ -128,6 +117,7 @@ namespace Roost.World.Recipes.Entities
             }
 
             TokenContextAccessors.ResetLocalToken();
+            RecipeExecutionBuffer.ApplyAll();
         }
 
         public void RunRefEffects(Sphere storage)
@@ -151,6 +141,9 @@ namespace Roost.World.Recipes.Entities
                 else
                     RecipeExecutionBuffer.ScheduleCreation(storage, filter.formula, level, EffectsVFX);
             }
+
+            RecipeExecutionBuffer.ApplyRetirements();
+            RecipeExecutionBuffer.ApplyCreations();
         }
 
         public void RunRefDecays(Sphere sphere)
@@ -167,6 +160,9 @@ namespace Roost.World.Recipes.Entities
                     foreach (Token token in targets)
                         RecipeExecutionBuffer.ScheduleDecay(token, DecaysVFX);
             }
+
+            RecipeExecutionBuffer.ApplyRetirements();
+            RecipeExecutionBuffer.ApplyTransformations();
         }
 
         public void RunSphereEffects(Situation situation)

@@ -74,6 +74,9 @@ namespace Roost.World.Recipes
             DeckAllows(effectsGroup.DeckAllows);
             DeckAdds(effectsGroup.DeckAdds);
             DeckInserts(effectsGroup.DeckInserts, onSphere);
+
+            RecipeExecutionBuffer.ApplyMovements();
+            RecipeExecutionBuffer.ApplyRenews();
         }
 
         private static void DeckShuffles(List<string> deckShuffles)

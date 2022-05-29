@@ -30,6 +30,7 @@ namespace Roost.World.Recipes
         internal static void Enact()
         {
             Machine.ClaimProperty<Element, Dictionary<string, List<RefMorphDetails>>>("xtriggers");
+            Machine.ClaimProperty<DeckSpec, Funcine<int>>("draws");
 
             Machine.ClaimProperty<Recipe, Dictionary<Funcine<int>, Funcine<int>>>(REF_REQS);
             Machine.ClaimProperty<Recipe, GrandEffects>(GRAND_EFFECTS);
@@ -55,10 +56,28 @@ namespace Roost.World.Recipes
 
 
         //Recipe.OnPostImportForSpecificEntity()
-        private static void FlushEffects(Recipe __instance)
         private static void WrapAndFlushFirstPassEffects(Recipe __instance, Compendium populatedCompendium)
         {
             Recipe recipe = __instance;
+            if (recipe.InternalDeck.Spec.Count > 0)
+            {
+                recipe.InternalDeck.SetId("deck." + recipe.Id);
+
+                if (populatedCompendium.TryAddEntity(recipe.InternalDeck))
+                {
+                    Funcine<int> draws = recipe.InternalDeck.RetrieveProperty<Funcine<int>>("draws");
+
+                    if (recipe.HasCustomProperty("deckeffects") == false)
+                        recipe.SetProperty("deckeffects", new Dictionary<string, Funcine<int>>());
+
+                    recipe.RetrieveProperty<Dictionary<string, Funcine<int>>>("deckeffects").Add(recipe.InternalDeck.Id, draws);
+                }
+                else
+                    throw Birdsong.Cack("BAD");
+
+                recipe.InternalDeck = new DeckSpec();
+            }
+
             GrandEffects firstPassEffects = new GrandEffects();
             bool atLeastOneEffect = false;
             foreach (CachedFucineProperty<GrandEffects> cachedProperty in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
