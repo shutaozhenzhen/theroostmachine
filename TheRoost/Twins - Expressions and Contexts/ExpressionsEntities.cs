@@ -42,6 +42,7 @@ namespace Roost.Twins.Entities
         }
 
         public static implicit operator Funcine<T>(string formula) { return new Funcine<T>(formula); }
+        public static Funcine<T> one { get { return new Funcine<T>("1"); } }
 
         public bool isUndefined { get { return this.expression == null; } }
 

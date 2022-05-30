@@ -30,7 +30,8 @@ namespace Roost.World.Recipes
         internal static void Enact()
         {
             Machine.ClaimProperty<Element, Dictionary<string, List<RefMorphDetails>>>("xtriggers");
-            Machine.ClaimProperty<DeckSpec, Funcine<int>>("draws");
+            //DeckSpec.Draws is only used for recipe internal decks; to allow them to use expressions, this
+            Machine.ClaimProperty<DeckSpec, Funcine<int>>("draws", false, Funcine<int>.one);
 
             Machine.ClaimProperty<Recipe, Dictionary<Funcine<int>, Funcine<int>>>(REF_REQS);
             Machine.ClaimProperty<Recipe, GrandEffects>(GRAND_EFFECTS);
@@ -58,22 +59,19 @@ namespace Roost.World.Recipes
         //Recipe.OnPostImportForSpecificEntity()
         private static void WrapAndFlushFirstPassEffects(Recipe __instance, Compendium populatedCompendium)
         {
+            //internal deck is added to deckeffects manually; we need to do the same
             Recipe recipe = __instance;
-            if (recipe.InternalDeck.Spec.Count > 0)
+            if (recipe.InternalDeck.Spec.Count > 0 || recipe.InternalDeck.DefaultCard != string.Empty)
             {
                 recipe.InternalDeck.SetId("deck." + recipe.Id);
 
-                if (populatedCompendium.TryAddEntity(recipe.InternalDeck))
-                {
-                    Funcine<int> draws = recipe.InternalDeck.RetrieveProperty<Funcine<int>>("draws");
+                populatedCompendium.TryAddEntity(recipe.InternalDeck);
 
-                    if (recipe.HasCustomProperty("deckeffects") == false)
-                        recipe.SetProperty("deckeffects", new Dictionary<string, Funcine<int>>());
+                Funcine<int> draws = recipe.InternalDeck.RetrieveProperty<Funcine<int>>("draws");
+                if (recipe.HasCustomProperty("deckeffects") == false)
+                    recipe.SetProperty("deckeffects", new Dictionary<string, Funcine<int>>());
+                recipe.RetrieveProperty<Dictionary<string, Funcine<int>>>("deckeffects").Add(recipe.InternalDeck.Id, draws);
 
-                    recipe.RetrieveProperty<Dictionary<string, Funcine<int>>>("deckeffects").Add(recipe.InternalDeck.Id, draws);
-                }
-                else
-                    throw Birdsong.Cack("BAD");
 
                 recipe.InternalDeck = new DeckSpec();
             }
