@@ -84,15 +84,15 @@ namespace Roost.Twins.Entities
 
         public bool Equals(FuncineRef otherReference)
         {
-            return false;//otherReference.path == this.path && otherReference.targetElementId == this.targetElementId && otherReference.filter.isUndefined && this.filter.isUndefined;
+            return otherReference.path == this.path && otherReference.filter.formula == this.filter.formula && otherReference.target.Equals(this.target);
         }
     }
 
     public struct TokenValueRef
     {
-        ValueArea area;
-        ValueOperation operation;
-        string target;
+        public readonly ValueArea area;
+        public readonly ValueOperation operation;
+        public readonly string target;
         public enum ValueArea { Aspect, Aspects, Token, Payload, Entity, Special };
         public enum ValueOperation { Count, Sum, Max, Min, Rand };
 
@@ -104,6 +104,11 @@ namespace Roost.Twins.Entities
                 return 0;
 
             return resultGet(tokens);
+        }
+
+        public bool Equals(TokenValueRef otherValueRef)
+        {
+            return this.area == otherValueRef.area && this.operation == otherValueRef.operation && this.target == otherValueRef.target;
         }
 
         public TokenValueRef(string target) : this(target, ValueArea.Aspect, ValueOperation.Sum) { }
@@ -193,6 +198,9 @@ namespace Roost.Twins.Entities
                     };
                     break;
             }
+
+            if (this.area == ValueArea.Aspect || this.area == ValueArea.Aspects)
+                Watchman.Get<Compendium>().SupplyElementIdsForValidation(this.target);
         }
 
         static Func<TClass, float> CreatePropertyReturner<TClass, TProperty>(MethodInfo getMethod)
