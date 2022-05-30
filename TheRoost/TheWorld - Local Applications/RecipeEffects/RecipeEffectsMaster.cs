@@ -61,7 +61,7 @@ namespace Roost.World.Recipes
         {
             //internal deck is added to deckeffects manually; we need to do the same
             Recipe recipe = __instance;
-            if (recipe.InternalDeck.Spec.Count > 0 || recipe.InternalDeck.DefaultCard != string.Empty)
+            if (recipe.InternalDeck.Spec.Count > 0 || string.IsNullOrWhiteSpace(recipe.InternalDeck.DefaultCard)==false)
             {
                 recipe.InternalDeck.SetId("deck." + recipe.Id);
 
