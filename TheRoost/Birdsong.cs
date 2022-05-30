@@ -69,12 +69,12 @@ namespace Roost
         }
 
         static int alarmCount = 0;
-        public static void Notice()
+        public static int Incr()
         {
-            Sing(alarmCount++);
+            return alarmCount++;
         }
 
-        public static void NoticeReset()
+        public static void ResetIncr()
         {
             alarmCount = 0;
         }

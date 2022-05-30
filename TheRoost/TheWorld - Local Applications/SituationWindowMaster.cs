@@ -35,6 +35,10 @@ namespace Roost.World.Recipes
             Machine.Patch(
                 original: typeof(CardManifestation).GetMethodInvariant("Initialise"),
                 postfix: typeof(SituationWindowMaster).GetMethodInvariant(nameof(CardWithAspectIconOnTheTable)));
+
+            Machine.Patch(
+                original: typeof(SecretHistories.States.CompleteState).GetMethodInvariant("Enter"),
+                prefix: typeof(SituationWindowMaster).GetMethodInvariant(nameof(StackTokensAtCompletion)));
         }
 
         private static SphereContentsChangedEventArgs sphereContentsChangedEventArgs;
@@ -48,7 +52,7 @@ namespace Roost.World.Recipes
         //allow aspects to appear as a normal cards 
         private static void CardWithAspectIconOnTheTable(IManifestable manifestable, Image ___artwork)
         {
-            if (Watchman.Get<Compendium>().GetEntityById<Element>(manifestable.EntityId).IsAspect)
+            if (Machine.GetEntity<Element>(manifestable.EntityId).IsAspect)
                 ___artwork.sprite = ResourcesManager.GetSpriteForAspect(manifestable.Icon);
         }
 
@@ -309,6 +313,11 @@ namespace Roost.World.Recipes
                 ___deckEffectViews[i]?.gameObject.SetActive(false);
 
             return false;
+        }
+
+        static void StackTokensAtCompletion(Situation situation)
+        {
+            RecipeExecutionBuffer.StackTokens(situation.GetSingleSphereByCategory(SecretHistories.Enums.SphereCategory.SituationStorage));
         }
     }
 

@@ -8,7 +8,6 @@ using System.Reflection.Emit;
 using SecretHistories.Core;
 using SecretHistories.Entities;
 using SecretHistories.UI;
-using SecretHistories.Spheres;
 using SecretHistories.Enums;
 using SecretHistories.Fucine;
 using SecretHistories.Fucine.DataImport;
@@ -30,7 +29,7 @@ namespace Roost.World.Recipes
         {
             Machine.ClaimProperty<Element, Dictionary<string, List<RefMorphDetails>>>("xtriggers");
             //DeckSpec.Draws is only used for recipe internal decks; to allow them to use expressions, this
-            Machine.ClaimProperty<DeckSpec, Funcine<int>>("draws", false, Funcine<int>.one);
+            Machine.ClaimProperty<DeckSpec, Funcine<int>>("draws", false, "1");
 
             Machine.ClaimProperty<Recipe, Dictionary<Funcine<int>, Funcine<int>>>(REF_REQS);
             Machine.ClaimProperty<Recipe, GrandEffects>(GRAND_EFFECTS);
@@ -52,7 +51,6 @@ namespace Roost.World.Recipes
                  original: typeof(Beachcomber.Usurper).GetMethodInvariant("InvokeGenericImporterForAbstractRootEntity"),
                  prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(ConvertLegacyMutationDefinitions)));
         }
-
 
         //Recipe.OnPostImportForSpecificEntity()
         private static void WrapAndFlushFirstPassEffects(Recipe __instance, Compendium populatedCompendium)

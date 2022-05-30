@@ -59,14 +59,6 @@ namespace Roost.Enactors
         }
     }
 
-    internal static class Twins
-    {
-        internal static void Enact()
-        {
-            Roost.Twins.TokenContextAccessors.Enact();
-        }
-    }
-
     internal static class Elegiast
     {
         public const string enabledSettingId = "ElegiastEnabled";
@@ -79,14 +71,23 @@ namespace Roost.Enactors
         }
     }
 
+    internal static class Twins
+    {
+        internal static void Enact()
+        {
+            Roost.Twins.TokenContextAccessors.Enact();
+        }
+    }
+
     internal static class World
     {
         internal static void Enact()
         {
+            Roost.World.Recipes.SituationWindowMaster.Enact();
+
             Roost.World.Recipes.RecipeEffectsMaster.Enact();
             Roost.World.Recipes.Legerdemain.Enact();
             Roost.World.Recipes.RecipeLinkMaster.Enact();
-            Roost.World.Recipes.SituationWindowMaster.Enact();
 
             Roost.World.Elements.CardVFXMaster.Enact();
         }

@@ -10,9 +10,9 @@ namespace Roost.World.Recipes
     public static class RecipeExecutionBuffer
     {
         private static readonly Dictionary<Token, RetirementVFX> retirements = new Dictionary<Token, RetirementVFX>();
-        private static readonly Dictionary<FutureMutation, List<Token>> mutations = new Dictionary<FutureMutation, List<Token>>();
-        private static readonly Dictionary<ElementStack, FutureTransformation> transformations = new Dictionary<ElementStack, FutureTransformation>();
-        private static readonly Dictionary<Sphere, List<FutureCreation>> creations = new Dictionary<Sphere, List<FutureCreation>>();
+        private static readonly Dictionary<ScheduledMutation, List<Token>> mutations = new Dictionary<ScheduledMutation, List<Token>>();
+        private static readonly Dictionary<ElementStack, ScheduledTransformation> transformations = new Dictionary<ElementStack, ScheduledTransformation>();
+        private static readonly Dictionary<Sphere, List<ScheduledCreation>> creations = new Dictionary<Sphere, List<ScheduledCreation>>();
         private static readonly Dictionary<Token, Sphere> movements = new Dictionary<Token, Sphere>();
         private static readonly List<string> deckRenews = new List<string>();
 
@@ -38,7 +38,7 @@ namespace Roost.World.Recipes
 
         public static void ApplyMutations()
         {
-            foreach (FutureMutation mutation in mutations.Keys)
+            foreach (ScheduledMutation mutation in mutations.Keys)
                 foreach (Token onToken in mutations[mutation])
                     mutation.Apply(onToken);
             mutations.Clear();
@@ -58,11 +58,11 @@ namespace Roost.World.Recipes
         {
             foreach (Sphere sphere in creations.Keys)
             {
-                if (sphere.supportsVFX())
-                    foreach (FutureCreation creation in creations[sphere])
+                if (sphere.SupportsVFX())
+                    foreach (ScheduledCreation creation in creations[sphere])
                         creation.ApplyWithVFX(sphere);
                 else
-                    foreach (FutureCreation creation in creations[sphere])
+                    foreach (ScheduledCreation creation in creations[sphere])
                         creation.ApplyWithoutVFX(sphere);
                 //dirtySpheres.Add(sphere);
             }
@@ -91,7 +91,7 @@ namespace Roost.World.Recipes
 
         public static void ScheduleMutation(Token token, string mutate, int level, bool additive, RetirementVFX vfx)
         {
-            FutureMutation futureMutation = new FutureMutation(mutate, level, additive, vfx);
+            ScheduledMutation futureMutation = new ScheduledMutation(mutate, level, additive, vfx);
             if (mutations.ContainsKey(futureMutation) == false)
                 mutations[futureMutation] = new List<Token>();
             mutations[futureMutation].Add(token);
@@ -99,7 +99,7 @@ namespace Roost.World.Recipes
 
         public static void ScheduleMutation(List<Token> tokens, string mutate, int level, bool additive, RetirementVFX vfx)
         {
-            FutureMutation futureMutation = new FutureMutation(mutate, level, additive, vfx);
+            ScheduledMutation futureMutation = new ScheduledMutation(mutate, level, additive, vfx);
             if (mutations.ContainsKey(futureMutation) == false)
                 mutations[futureMutation] = new List<Token>();
             mutations[futureMutation].AddRange(tokens);
@@ -107,7 +107,7 @@ namespace Roost.World.Recipes
 
         public static void ScheduleTransformation(Token token, string transformTo, RetirementVFX vfx)
         {
-            FutureTransformation futureTransformation = new FutureTransformation(transformTo, vfx);
+            ScheduledTransformation futureTransformation = new ScheduledTransformation(transformTo, vfx);
             transformations[token.Payload as ElementStack] = futureTransformation;
         }
 
@@ -118,7 +118,7 @@ namespace Roost.World.Recipes
                 ScheduleRetirement(token, vfx);
             else
             {
-                FutureTransformation futureTransformation = new FutureTransformation(element.DecayTo, vfx);
+                ScheduledTransformation futureTransformation = new ScheduledTransformation(element.DecayTo, vfx);
                 transformations[token.Payload as ElementStack] = futureTransformation;
             }
         }
@@ -126,16 +126,16 @@ namespace Roost.World.Recipes
         public static void ScheduleCreation(Sphere sphere, string element, int amount, RetirementVFX vfx)
         {
             if (creations.ContainsKey(sphere) == false)
-                creations[sphere] = new List<FutureCreation>();
+                creations[sphere] = new List<ScheduledCreation>();
 
             for (int i = 0; i < creations[sphere].Count; i++)
-                if (creations[sphere][i].isSameElementWithSaveVFX(element, vfx))
+                if (creations[sphere][i].IsSameElementWithSameVFX(element, vfx))
                 {
                     creations[sphere][i] = creations[sphere][i].IncreaseAmount(amount);
                     return;
                 }
 
-            FutureCreation futureCreation = new FutureCreation(element, amount, vfx);
+            ScheduledCreation futureCreation = new ScheduledCreation(element, amount, vfx);
             creations[sphere].Add(futureCreation);
         }
 
@@ -154,39 +154,39 @@ namespace Roost.World.Recipes
             retirements[token] = vfx;
         }
 
-        private struct FutureMutation
+        private struct ScheduledMutation
         {
             string mutate; int level; bool additive; RetirementVFX vfx;
-            public FutureMutation(string mutate, int level, bool additive, RetirementVFX vfx)
+            public ScheduledMutation(string mutate, int level, bool additive, RetirementVFX vfx)
             { this.mutate = mutate; this.level = level; this.additive = additive; this.vfx = vfx; }
 
             public void Apply(Token onToken)
             {
                 onToken.Payload.SetMutation(mutate, level, additive);
-                if (onToken.Sphere.supportsVFX())
+                if (onToken.Sphere.SupportsVFX())
                     onToken.Remanifest(vfx);
             }
         }
 
-        private struct FutureTransformation
+        private struct ScheduledTransformation
         {
             string toElementId; RetirementVFX vfx;
-            public FutureTransformation(string toElementId, RetirementVFX vfx)
+            public ScheduledTransformation(string toElementId, RetirementVFX vfx)
             { this.toElementId = toElementId; this.vfx = vfx; }
 
             public void Apply(ElementStack onStack)
             {
                 onStack.ChangeTo(toElementId);
                 onStack.Token.Unshroud();
-                if (onStack.Token.Sphere.supportsVFX())
+                if (onStack.Token.Sphere.SupportsVFX())
                     onStack.Token.Remanifest(vfx);
             }
         }
 
-        private struct FutureCreation
+        private struct ScheduledCreation
         {
             string element; int amount; RetirementVFX vfx;
-            public FutureCreation(string element, int amount, RetirementVFX vfx)
+            public ScheduledCreation(string element, int amount, RetirementVFX vfx)
             { this.element = element; this.amount = amount; this.vfx = vfx; }
 
             public void ApplyWithoutVFX(Sphere onSphere)
@@ -202,11 +202,11 @@ namespace Roost.World.Recipes
                 token.Remanifest(vfx);
             }
 
-            public bool isSameElementWithSaveVFX(string element, RetirementVFX vfx) { return (element == this.element && vfx == this.vfx); }
-            public FutureCreation IncreaseAmount(int add) { return new FutureCreation(this.element, this.amount + add, this.vfx); }
+            public bool IsSameElementWithSameVFX(string element, RetirementVFX vfx) { return (element == this.element && vfx == this.vfx); }
+            public ScheduledCreation IncreaseAmount(int add) { return new ScheduledCreation(this.element, this.amount + add, this.vfx); }
         }
 
-        private static bool supportsVFX(this Sphere sphere)
+        private static bool SupportsVFX(this Sphere sphere)
         {
             return sphere.SphereCategory == SphereCategory.World;
         }
