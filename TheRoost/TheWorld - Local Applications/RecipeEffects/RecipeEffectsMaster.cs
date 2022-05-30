@@ -25,7 +25,6 @@ namespace Roost.World.Recipes
     {
         const string REF_REQS = "grandreqs";
         const string GRAND_EFFECTS = "grandeffects";
-        const string SPHERE_EFFECTS = "sphereeffects";
 
         internal static void Enact()
         {
@@ -35,7 +34,6 @@ namespace Roost.World.Recipes
 
             Machine.ClaimProperty<Recipe, Dictionary<Funcine<int>, Funcine<int>>>(REF_REQS);
             Machine.ClaimProperty<Recipe, GrandEffects>(GRAND_EFFECTS);
-            Machine.ClaimProperty<Recipe, Dictionary<FucinePath, GrandEffects>>(SPHERE_EFFECTS);
 
             Dictionary<string, Type> allRecipeEffectsProperties = new Dictionary<string, Type>();
             foreach (CachedFucineProperty<GrandEffects> cachedProperty in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())

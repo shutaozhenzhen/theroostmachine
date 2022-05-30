@@ -81,7 +81,7 @@ namespace Roost.World.Recipes
 
         private static void DeckShuffles(List<string> deckShuffles)
         {
-            if (deckShuffles == null)
+            if (deckShuffles == null || deckShuffles.Count == 0)
                 return;
 
             foreach (string deckId in deckShuffles)
@@ -90,7 +90,7 @@ namespace Roost.World.Recipes
 
         private static void DeckForbids(Dictionary<string, List<string>> deckForbids)
         {
-            if (deckForbids == null)
+            if (deckForbids == null || deckForbids.Count == 0)
                 return;
 
             foreach (string deckId in deckForbids.Keys)
@@ -106,7 +106,7 @@ namespace Roost.World.Recipes
 
         private static void DeckEffects(Dictionary<string, Funcine<int>> deckEffects, Sphere toSphere)
         {
-            if (deckEffects == null)
+            if (deckEffects == null || deckEffects.Count == 0)
                 return;
 
             foreach (string deckId in deckEffects.Keys)
@@ -115,7 +115,7 @@ namespace Roost.World.Recipes
 
         private static void DeckTakeOuts(Dictionary<string, List<Funcine<bool>>> deckTakeOuts, Sphere toSphere)
         {
-            if (deckTakeOuts == null)
+            if (deckTakeOuts == null || deckTakeOuts.Count == 0)
                 return;
 
             foreach (string deckId in deckTakeOuts.Keys)
@@ -130,7 +130,7 @@ namespace Roost.World.Recipes
 
         private static void DeckAllows(Dictionary<string, List<string>> deckAllows)
         {
-            if (deckAllows == null)
+            if (deckAllows == null || deckAllows.Count == 0)
                 return;
 
             foreach (string deckId in deckAllows.Keys)
@@ -149,10 +149,10 @@ namespace Roost.World.Recipes
 
         private static void DeckInserts(Dictionary<string, List<Funcine<bool>>> deckInserts, Sphere fromSphere)
         {
-            if (deckInserts == null)
+            if (deckInserts == null || deckInserts.Count == 0)
                 return;
-            List<Token> tokens = fromSphere.GetElementTokens();
 
+            List<Token> tokens = fromSphere.GetElementTokens();
             foreach (string deckId in deckInserts.Keys)
             {
                 Sphere drawPile = dealerstable.GetDrawPile(deckId) as Sphere;
@@ -165,7 +165,7 @@ namespace Roost.World.Recipes
 
         private static void DeckAdds(Dictionary<string, List<string>> deckAdds)
         {
-            if (deckAdds == null)
+            if (deckAdds == null || deckAdds.Count == 0)
                 return;
 
             foreach (string deckId in deckAdds.Keys)
