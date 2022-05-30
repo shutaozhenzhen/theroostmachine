@@ -39,8 +39,6 @@ namespace Roost.World.Recipes.Entities
 
         [FucineDict] public Dictionary<FucinePath, GrandEffects> DistantEffects { get; set; }
 
-
-
         [FucineValue(DefaultValue = RetirementVFX.None)] public RetirementVFX DeckEffectsVFX { get; set; }
         [FucineValue(DefaultValue = RetirementVFX.None)] public RetirementVFX EffectsVFX { get; set; }
         [FucineValue(DefaultValue = RetirementVFX.CardLight)] public RetirementVFX DecaysVFX { get; set; }

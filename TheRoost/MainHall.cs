@@ -17,7 +17,7 @@ public static class TheRoostMachine
         else
             try
             {
-                Birdsong.currentVerbosity = (VerbosityLevel)(SecretHistories.UI.Watchman.Get<Config>().GetConfigValueAsInt("verbosity") ?? 0);
+                Birdsong.currentVerbosity = (VerbosityLevel)(SecretHistories.UI.Watchman.Get<Config>().GetConfigValueAsInt("verbosity") ?? 4);
                 //in case something breaks during the setup
                 SecretHistories.UI.Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
 
