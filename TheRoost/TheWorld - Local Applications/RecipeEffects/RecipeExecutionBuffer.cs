@@ -56,19 +56,14 @@ namespace Roost.World.Recipes
 
         public static void ApplyCreations()
         {
-            Sphere table = Watchman.Get<HornedAxe>().GetDefaultSphere(OccupiesSpaceAs.Intangible);
-            if (creations.ContainsKey(table))
-            {
-                Context context = new Context(Context.ActionSource.SituationEffect);
-                foreach (FutureCreation creation in creations[table])
-                    creation.ApplyAnimated(table);
-                creations.Remove(table);
-            }
-
             foreach (Sphere sphere in creations.Keys)
             {
-                foreach (FutureCreation creation in creations[sphere])
-                    creation.Apply(sphere);
+                if (sphere.supportsVFX())
+                    foreach (FutureCreation creation in creations[sphere])
+                        creation.ApplyWithVFX(sphere);
+                else
+                    foreach (FutureCreation creation in creations[sphere])
+                        creation.ApplyWithoutVFX(sphere);
                 //dirtySpheres.Add(sphere);
             }
             creations.Clear();
@@ -92,31 +87,6 @@ namespace Roost.World.Recipes
             foreach (string deckId in deckRenews)
                 Legerdemain.RenewDeck(deckId);
             deckRenews.Clear();
-        }
-        /*
-        public static void StackTokensInDirtySpheres()
-        {
-            dirtySpheres.Remove(Watchman.Get<HornedAxe>().GetDefaultSphere(OccupiesSpaceAs.Intangible));
-            foreach (Sphere sphere in dirtySpheres)
-                StackTokens(sphere);
-            dirtySpheres.Clear();
-        }
-        */
-        public static void StackTokens(Sphere sphere)
-        {
-            List<Token> tokens = sphere.Tokens;
-            for (int n = 0; n < tokens.Count; n++)
-                for (int m = n + 1; m < tokens.Count; m++)
-                {
-                    if (tokens[n].CanMergeWithToken(tokens[m]))
-                    {
-                        tokens[n].Payload.ModifyQuantity(tokens[m].Quantity, situationEffectContext);
-
-                        tokens[m].Retire();
-                        tokens.Remove(tokens[m]);
-                        m--;
-                    }
-                }
         }
 
         public static void ScheduleMutation(Token token, string mutate, int level, bool additive, RetirementVFX vfx)
@@ -143,7 +113,7 @@ namespace Roost.World.Recipes
 
         public static void ScheduleDecay(Token token, RetirementVFX vfx)
         {
-            Element element = Watchman.Get<Compendium>().GetEntityById<Element>(token.PayloadEntityId);
+            Element element = Machine.GetEntity<Element>(token.PayloadEntityId);
             if (string.IsNullOrEmpty(element.DecayTo))
                 ScheduleRetirement(token, vfx);
             else
@@ -159,7 +129,7 @@ namespace Roost.World.Recipes
                 creations[sphere] = new List<FutureCreation>();
 
             for (int i = 0; i < creations[sphere].Count; i++)
-                if (creations[sphere][i].Identical(element, vfx))
+                if (creations[sphere][i].isSameElementWithSaveVFX(element, vfx))
                 {
                     creations[sphere][i] = creations[sphere][i].IncreaseAmount(amount);
                     return;
@@ -192,11 +162,8 @@ namespace Roost.World.Recipes
 
             public void Apply(Token onToken)
             {
-                if (!onToken.IsValidElementStack())
-                    return;
-
                 onToken.Payload.SetMutation(mutate, level, additive);
-                if (onToken.Sphere.isDefaultSphere())
+                if (onToken.Sphere.supportsVFX())
                     onToken.Remanifest(vfx);
             }
         }
@@ -209,11 +176,9 @@ namespace Roost.World.Recipes
 
             public void Apply(ElementStack onStack)
             {
-                if (!onStack.IsValidElementStack())
-                    return;
-
                 onStack.ChangeTo(toElementId);
-                if (onStack.Token.Sphere.isDefaultSphere())
+                onStack.Token.Unshroud();
+                if (onStack.Token.Sphere.supportsVFX())
                     onStack.Token.Remanifest(vfx);
             }
         }
@@ -224,27 +189,44 @@ namespace Roost.World.Recipes
             public FutureCreation(string element, int amount, RetirementVFX vfx)
             { this.element = element; this.amount = amount; this.vfx = vfx; }
 
-            public void Apply(Sphere onSphere)
+            public void ApplyWithoutVFX(Sphere onSphere)
             {
                 Token token = onSphere.ProvisionElementToken(element, amount);
-                if (onSphere.isDefaultSphere() == false)
-                    token.Shroud();
+                token.Shroud();
             }
 
-            public void ApplyAnimated(Sphere onSphere)
+            public void ApplyWithVFX(Sphere onSphere)
             {
                 Token token = onSphere.ProvisionElementToken(element, amount);
                 token.Payload.GetEnRouteSphere().ProcessEvictedToken(token, situationEffectContext);
                 token.Remanifest(vfx);
             }
 
-            public bool Identical(string element, RetirementVFX vfx) { return (element == this.element && vfx == this.vfx); }
+            public bool isSameElementWithSaveVFX(string element, RetirementVFX vfx) { return (element == this.element && vfx == this.vfx); }
             public FutureCreation IncreaseAmount(int add) { return new FutureCreation(this.element, this.amount + add, this.vfx); }
         }
 
-        public static bool isDefaultSphere(this Sphere sphere)
+        private static bool supportsVFX(this Sphere sphere)
         {
-            return sphere.GetAbsolutePath() == Watchman.Get<HornedAxe>().GetDefaultSpherePath();
+            return sphere.SphereCategory == SphereCategory.World;
+        }
+
+        //sensibly speaking this method shouldn't be here, but it requires Context, which Buffer has....
+        public static void StackTokens(Sphere sphere)
+        {
+            List<Token> tokens = sphere.Tokens;
+            for (int n = 0; n < tokens.Count; n++)
+                for (int m = n + 1; m < tokens.Count; m++)
+                {
+                    if (tokens[n].CanMergeWithToken(tokens[m]))
+                    {
+                        tokens[n].Payload.ModifyQuantity(tokens[m].Quantity, situationEffectContext);
+
+                        tokens[m].Retire();
+                        tokens.Remove(tokens[m]);
+                        m--;
+                    }
+                }
         }
     }
 }
