@@ -27,11 +27,12 @@ namespace Roost.World.Recipes
                 original: typeof(AttemptAspectInductionCommand).GetMethodInvariant("PerformAspectInduction"),
                 prefix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(PerformAspectInduction)));
 
-            //xtrigger links are evaluated
+            //there are xtrigger links
             Machine.Patch(
                 original: typeof(RecipeConductor).GetMethodInvariant(nameof(RecipeConductor.GetLinkedRecipe)),
-                prefix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(CheckXtriggerLinks)));
+                prefix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(CheckXTriggerLinks)));
 
+            //chance is an expression
             Machine.ClaimProperty<LinkedRecipeDetails, Funcine<int>>(CHANCE, false, "100");
             Machine.Patch(
                 original: typeof(LinkedRecipeDetails).GetPropertyInvariant(nameof(LinkedRecipeDetails.Chance)).GetGetMethod(),
@@ -55,8 +56,10 @@ namespace Roost.World.Recipes
 
         private static bool ShouldAlwaysSucceed(LinkedRecipeDetails __instance, ref bool __result)
         {
-            const string maxChance = "100";
-            __result = __instance.Challenges.Count == 0 && __instance.RetrieveProperty<Funcine<int>>(CHANCE).formula == maxChance;
+            if (__instance.Challenges.Count == 0)
+                if (int.TryParse(__instance.RetrieveProperty<Funcine<int>>(CHANCE).formula, out int chance))
+                    __result = chance >= 100;
+
             return false;
         }
 
@@ -64,8 +67,9 @@ namespace Roost.World.Recipes
         private static bool PerformAspectInduction(Element aspectElement, Situation situation)
         {
             AspectsInContext aspectsInContext = Watchman.Get<HornedAxe>().GetAspectsInContext(situation.GetAspects(true), null);
+
             foreach (LinkedRecipeDetails linkedRecipeDetails in aspectElement.Induces)
-                if (linkedRecipeDetails.Chance < UnityEngine.Random.Range(1, 101))
+                if (linkedRecipeDetails.ShouldAlwaysSucceed() || UnityEngine.Random.Range(1, 101) <= linkedRecipeDetails.Chance)
                 {
                     Recipe recipe = Watchman.Get<Compendium>().GetEntityById<Recipe>(linkedRecipeDetails.Id);
                     if (recipe.RequirementsSatisfiedBy(aspectsInContext))
@@ -76,7 +80,7 @@ namespace Roost.World.Recipes
         }
 
         //RecipeConductor.GetLinkedRecipe() prefix
-        private static bool CheckXtriggerLinks(ref Recipe __result, AspectsInContext ____aspectsInContext)
+        private static bool CheckXTriggerLinks(ref Recipe __result, AspectsInContext ____aspectsInContext)
         {
             foreach (Recipe recipe in xtriggerLinks)
                 if (recipe.RequirementsSatisfiedBy(____aspectsInContext))
