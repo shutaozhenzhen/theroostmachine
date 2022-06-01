@@ -22,26 +22,21 @@ namespace Roost.World.Recipes
 {
     public static class RecipeEffectsMaster
     {
-        const string REF_REQS = "grandreqs";
+        const string GRAND_REQS = "grandreqs";
         const string GRAND_EFFECTS = "grandeffects";
 
         internal static void Enact()
         {
-            Machine.ClaimProperty<Element, Dictionary<string, List<RefMorphDetails>>>("xtriggers");
-            //DeckSpec.Draws is only used for recipe internal decks; to allow them to use expressions, this
-            Machine.ClaimProperty<DeckSpec, Funcine<int>>("draws", false, "1");
+            Machine.ClaimProperty<Recipe, Dictionary<Funcine<int>, Funcine<int>>>(GRAND_REQS);
+            AtTimeOfPower.RecipeRequirementsCheck.Schedule<Recipe, AspectsInContext>(RefReqs);
 
-            Machine.ClaimProperty<Recipe, Dictionary<Funcine<int>, Funcine<int>>>(REF_REQS);
             Machine.ClaimProperty<Recipe, GrandEffects>(GRAND_EFFECTS);
-
             Dictionary<string, Type> allRecipeEffectsProperties = new Dictionary<string, Type>();
             foreach (CachedFucineProperty<GrandEffects> cachedProperty in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
                 allRecipeEffectsProperties.Add(cachedProperty.LowerCaseName, cachedProperty.ThisPropInfo.PropertyType);
             Machine.ClaimProperties<Recipe>(allRecipeEffectsProperties);
 
-            AtTimeOfPower.OnPostImportRecipe.Schedule<Recipe, Compendium>(WrapAndFlushFirstPassEffects, PatchType.Prefix);
-
-            AtTimeOfPower.RecipeRequirementsCheck.Schedule<Recipe, AspectsInContext>(RefReqs);
+            AtTimeOfPower.OnPostImportRecipe.Schedule<Recipe, ContentImportLog, Compendium>(WrapAndFlushFirstPassEffects, PatchType.Prefix);
 
             Machine.Patch(
                 original: typeof(RecipeCompletionEffectCommand).GetMethodInvariant(nameof(RecipeCompletionEffectCommand.Execute)),
@@ -50,14 +45,16 @@ namespace Roost.World.Recipes
             Machine.Patch(
                  original: typeof(Beachcomber.Usurper).GetMethodInvariant("InvokeGenericImporterForAbstractRootEntity"),
                  prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(ConvertLegacyMutationDefinitions)));
+
+            Machine.ClaimProperty<Element, Dictionary<string, List<RefMorphDetails>>>("xtriggers");
         }
 
         //Recipe.OnPostImportForSpecificEntity()
-        private static void WrapAndFlushFirstPassEffects(Recipe __instance, Compendium populatedCompendium)
+        private static void WrapAndFlushFirstPassEffects(Recipe __instance, ContentImportLog log, Compendium populatedCompendium)
         {
             //internal deck is added to deckeffects manually; we need to do the same
             Recipe recipe = __instance;
-            if (recipe.InternalDeck.Spec.Count > 0 || string.IsNullOrWhiteSpace(recipe.InternalDeck.DefaultCard)==false)
+            if (recipe.InternalDeck.Spec.Count > 0 || string.IsNullOrWhiteSpace(recipe.InternalDeck.DefaultCard) == false)
             {
                 recipe.InternalDeck.SetId("deck." + recipe.Id);
 
@@ -67,7 +64,6 @@ namespace Roost.World.Recipes
                 if (recipe.HasCustomProperty("deckeffects") == false)
                     recipe.SetProperty("deckeffects", new Dictionary<string, Funcine<int>>());
                 recipe.RetrieveProperty<Dictionary<string, Funcine<int>>>("deckeffects").Add(recipe.InternalDeck.Id, draws);
-
 
                 recipe.InternalDeck = new DeckSpec();
             }
@@ -81,15 +77,20 @@ namespace Roost.World.Recipes
                     cachedProperty.SetViaFastInvoke(firstPassEffects, recipe.RetrieveProperty(cachedProperty.LowerCaseName));
                 }
 
-
             if (atLeastOneEffect)
             {
+                firstPassEffects.OnPostImport(log, populatedCompendium);
                 recipe.SetProperty(GRAND_EFFECTS, firstPassEffects);
 
-                //to keep the correct (well, somewhat) deck preview, we reassign deck effects to the main recipe
+                //to keep the deck preview correct (well, somewhat), we reassign deck effects to the main recipe
                 if (firstPassEffects.DeckEffects != null)
                     foreach (string deckId in firstPassEffects.DeckEffects.Keys)
                         recipe.DeckEffects.Add(deckId, 1);
+                //to keep the inductions from recipe aspects correct, we reassign aspects to the main
+                //(it's also used in TokenValueRef's ValueArea.Recipe)
+                if (firstPassEffects.Aspects != null)
+                    foreach (string aspectId in firstPassEffects.Aspects.Keys)
+                        recipe.Aspects.Add(aspectId, 1);
             }
         }
 
@@ -141,57 +142,54 @@ namespace Roost.World.Recipes
 
         private static void RefEffects(RecipeCompletionEffectCommand command, Situation situation)
         {
-            Birdsong.Sing(VerbosityLevel.SystemChatter, 0, $"EXECUTING: {command.Recipe.Id}");
+            //Birdsong.Sing(VerbosityLevel.SystemChatter, 0, $"EXECUTING: {command.Recipe.Id}");
 
             situation.Recipe = command.Recipe;
             GrandEffects recipeEffects = situation.Recipe.RetrieveProperty<GrandEffects>(GRAND_EFFECTS);
             if (recipeEffects != null)
             {
+                Twins.Crossroads.MarkLocalSituation(situation);
                 recipeEffects.Run(situation, situation.GetSingleSphereByCategory(SphereCategory.SituationStorage));
-                TokenContextAccessors.ResetCache();
+                Twins.Crossroads.ResetCache();
             }
         }
 
         private static bool RefReqs(Recipe __instance, AspectsInContext aspectsinContext)
         {
-            Dictionary<Funcine<int>, Funcine<int>> reqs = __instance.RetrieveProperty(REF_REQS) as Dictionary<Funcine<int>, Funcine<int>>;
-            if (reqs == null)
+            Dictionary<Funcine<int>, Funcine<int>> grandreqs = __instance.RetrieveProperty(GRAND_REQS) as Dictionary<Funcine<int>, Funcine<int>>;
+            if (grandreqs == null || grandreqs.Count == 0)
                 return true;
 
             //what I am about to do here should be illegal (and will be at some point of time in the bright future of humankind)
             //but I really need to know a *situation* instead of just aspects; and there is no easier way to go about it
-            bool situationFound = false;
             foreach (Situation situation in Watchman.Get<HornedAxe>().GetRegisteredSituations())
                 if (situation.GetAspects(true).AspectsEqual(aspectsinContext.AspectsInSituation))
                 {
-                    TokenContextAccessors.SetLocalSituation(situation);
-                    situationFound = true;
-                    break;
+                    Crossroads.MarkLocalSituation(situation);
+
+                    // Birdsong.Sing($"Checking GrandReqs for {__instance.Id} in {situation.VerbId} verb");
+                    foreach (KeyValuePair<Funcine<int>, Funcine<int>> req in grandreqs)
+                    {
+                        int presentValue = req.Key.value;
+                        int requiredValue = req.Value.value;
+
+                        //Birdsong.Sing($"{req.Key.formula}: {req.Value.formula} --> {presentValue}: {requiredValue}");
+
+                        if (requiredValue <= -1)
+                        {
+                            if (presentValue >= -requiredValue)
+                                return false;
+                        }
+                        else
+                        {
+                            if (presentValue < requiredValue)
+                                return false;
+                        }
+                    }
+
+                    return true;
                 }
-            if (!situationFound)
-                throw Birdsong.Cack("Something strange happened. Cannot identify the current situation for requirements check.");
-
-            //Birdsong.Sing("Checking _reqs for {0}", __instance.Id);
-            foreach (KeyValuePair<Funcine<int>, Funcine<int>> req in reqs)
-            {
-                int presentValue = req.Key.value;
-                int requiredValue = req.Value.value;
-
-                //Birdsong.Sing("'{0}': '{1}' ---> '{2}': '{3}', {4}", req.Key.formula, req.Value.formula, presentValue, requiredValue, (requiredValue <= -1 && presentValue >= -requiredValue) || (requiredValue > -1 && presentValue < requiredValue) ? "not satisfied" : "satisfied");
-
-                if (requiredValue <= -1)
-                {
-                    if (presentValue >= -requiredValue)
-                        return false;
-                }
-                else
-                {
-                    if (presentValue < requiredValue)
-                        return false;
-                }
-            }
-
-            return true;
+            throw Birdsong.Cack($"Something strange happened. Cannot identify a situation for requirements check in the recipe {__instance}.");
         }
 
         private static bool AspectsEqual(this AspectsDictionary dictionary1, AspectsDictionary dictionary2)
@@ -205,6 +203,11 @@ namespace Roost.World.Recipes
                     return false;
 
             return true;
+        }
+
+        public static GrandEffects GetGrandEffects(this Recipe recipe)
+        {
+            return recipe.RetrieveProperty<GrandEffects>(GRAND_EFFECTS);
         }
     }
 }

@@ -7,6 +7,8 @@ using SecretHistories.Fucine;
 using SecretHistories.Fucine.DataImport;
 using SecretHistories.Entities;
 using SecretHistories.Core;
+using SecretHistories.Assets.Scripts.Application.Entities.NullEntities;
+using Assets.Logic;
 
 using Roost.Twins;
 using Roost.Twins.Entities;
@@ -20,24 +22,21 @@ namespace Roost.World.Recipes.Entities
     {
         [FucineValue] public string comments { get; set; }
 
+        [FucineDict] public Dictionary<string, Funcine<int>> RootEffects { get; set; }
+        [FucineDict] public Dictionary<FucinePath, TokenFilterSpec> Movements { get; set; }
+        [FucineDict] public Dictionary<FucinePath, GrandEffects> DistantEffects { get; set; }
         [FucineDict] public Dictionary<Funcine<bool>, List<RefMutationEffect>> Mutations { get; set; }
         [FucineDict] public Dictionary<string, Funcine<int>> Aspects { get; set; }
 
-        [FucineDict] public Dictionary<Funcine<bool>, List<RefMorphDetails>> Xtriggers { get; set; }
+        [FucineDict] public Dictionary<Funcine<bool>, List<RefMorphDetails>> XTriggers { get; set; }
 
         [FucineList] public List<string> DeckShuffles { get; set; }
-        [FucineDict] public Dictionary<string, List<string>> DeckForbids { get; set; }
-        [FucineDict] public Dictionary<string, List<string>> DeckAllows { get; set; }
         [FucineDict] public Dictionary<string, Funcine<int>> DeckEffects { get; set; }
-        [FucineDict] public Dictionary<string, List<string>> DeckAdds { get; set; }
-        [FucineDict] public Dictionary<string, List<Funcine<bool>>> DeckTakeOuts { get; set; }
-        [FucineDict] public Dictionary<string, List<Funcine<bool>>> DeckInserts { get; set; }
 
         [FucineDict] public Dictionary<Funcine<bool>, Funcine<int>> Effects { get; set; }
 
-        [FucineDict] public Dictionary<Funcine<bool>, Funcine<int>> Decays { get; set; }
+        [FucineDict] public List<TokenFilterSpec> Decays { get; set; }
 
-        [FucineDict] public Dictionary<FucinePath, GrandEffects> DistantEffects { get; set; }
 
         [FucineValue(DefaultValue = RetirementVFX.None)] public RetirementVFX DeckEffectsVFX { get; set; }
         [FucineValue(DefaultValue = RetirementVFX.None)] public RetirementVFX EffectsVFX { get; set; }
@@ -45,24 +44,83 @@ namespace Roost.World.Recipes.Entities
 
         public GrandEffects() { }
         public GrandEffects(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
-        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
-
-        public void Run(Situation situation, Sphere onSphere)
+        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
         {
-            TokenContextAccessors.SetLocalSituation(situation);
-
-            RunRefMutations(onSphere);
-            RunCoreXtriggers(onSphere, situation);
-            RunTargetXtriggers(onSphere, situation);
-            Legerdemain.RunExtendedDeckEffects(this, onSphere);
-            RunRefEffects(onSphere);
-            RunRefDecays(onSphere);
-            RunSphereEffects(situation);
+            //reducing amount of entities
+            foreach (CachedFucineProperty<GrandEffects> property in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
+            {
+                object value = property.GetViaFastInvoke(this);
+                if ((value as ICollection)?.Count == 0)
+                    property.SetViaFastInvoke(this, null);
+            }
         }
 
-        public void RunRefMutations(Sphere sphere)
+        public void Run(Situation situation, Sphere localSphere)
         {
-            if (Mutations == null || Mutations.Count == 0)
+            Roost.Twins.Crossroads.MarkLocalSphere(localSphere);
+
+            RunRootEffects();
+            RunMovements(localSphere);
+            RunDistantEffects(situation);
+            RunMutations(localSphere);
+            RunCoreXTriggers(localSphere, situation);
+            RunTargetedXTriggers(localSphere, situation);
+            RunDeckShuffles();
+            RunDeckEffects(localSphere);
+            RunEffects(localSphere);
+            RunDecays(localSphere);
+        }
+
+        public void RunRootEffects()
+        {
+            if (RootEffects == null)
+                return;
+
+            Dictionary<string, int> scheduledMutations = new Dictionary<string, int>();
+
+            foreach (string elementId in RootEffects.Keys)
+                scheduledMutations.Add(elementId, RootEffects[elementId].value);
+
+            foreach (string elementId in RootEffects.Keys)
+                FucineRoot.Get().SetMutation(elementId, scheduledMutations[elementId], true);
+        }
+
+        public void RunMovements(Sphere fromSphere)
+        {
+            if (Movements == null)
+                return;
+
+            List<Token> tokens = fromSphere.GetElementTokens();
+
+            foreach (FucinePath fucinePath in Movements.Keys)
+            {
+                List<Sphere> targetSpheres = Crossroads.GetSpheresByPath(fucinePath);
+                if (targetSpheres.Count == 0)
+                    continue;
+
+                foreach (Token token in Movements[fucinePath].FilterTokens(tokens))
+                    RecipeExecutionBuffer.ScheduleMovement(token, targetSpheres[Random.Range(0, targetSpheres.Count)], Movements[fucinePath].VFX);
+            }
+
+            RecipeExecutionBuffer.ApplyMovements();
+        }
+
+        public void RunDistantEffects(Situation situation)
+        {
+            if (DistantEffects == null)
+                return;
+
+            foreach (KeyValuePair<FucinePath, GrandEffects> sphereEffect in DistantEffects)
+            {
+                List<Sphere> targetSpheres = Crossroads.GetSpheresByPath(sphereEffect.Key);
+                foreach (Sphere sphere in targetSpheres)
+                    sphereEffect.Value.Run(situation, sphere);
+            }
+        }
+
+        public void RunMutations(Sphere sphere)
+        {
+            if (Mutations == null)
                 return;
 
             List<Token> tokens = sphere.GetElementTokens();
@@ -80,7 +138,7 @@ namespace Roost.World.Recipes.Entities
         }
 
         private static readonly AspectsDictionary allCatalystsInSphere = new AspectsDictionary();
-        public void RunCoreXtriggers(Sphere sphere, Situation situation)
+        public void RunCoreXTriggers(Sphere sphere, Situation situation)
         {
             allCatalystsInSphere.Clear();
             if (Aspects != null)
@@ -103,7 +161,7 @@ namespace Roost.World.Recipes.Entities
                 if (xtriggers != null)
                     foreach (KeyValuePair<string, int> catalyst in allCatalystsInSphere)
                         if (xtriggers.ContainsKey(catalyst.Key)) foreach (RefMorphDetails morphDetails in xtriggers[catalyst.Key])
-                                morphDetails.Execute(situation, token, token.PayloadEntityId, 1, catalyst.Value, true);
+                                morphDetails.Execute(situation, token, token.PayloadEntityId, token.Quantity, catalyst.Value, true);
 
                 AspectsDictionary tokenAspects = new AspectsDictionary(Machine.GetEntity<Element>(token.PayloadEntityId).Aspects);
                 tokenAspects.ApplyMutations(token.GetCurrentMutations());
@@ -118,32 +176,53 @@ namespace Roost.World.Recipes.Entities
                 }
             }
 
-            TokenContextAccessors.ResetLocalToken();
+            Crossroads.UnmarkLocalToken();
             RecipeExecutionBuffer.ApplyAll();
         }
 
-        public void RunTargetXtriggers(Sphere sphere, Situation situation)
+        public void RunTargetedXTriggers(Sphere sphere, Situation situation)
         {
-            if (Xtriggers == null || Xtriggers.Count == 0)
+            if (XTriggers == null)
                 return;
 
             List<Token> allTokens = sphere.GetElementTokens();
-            foreach (Funcine<bool> filter in Xtriggers.Keys)
+            foreach (Funcine<bool> filter in XTriggers.Keys)
             {
                 List<Token> filteredTokens = allTokens.FilterTokens(filter);
 
                 foreach (Token token in filteredTokens)
-                    foreach (RefMorphDetails morphDetails in Xtriggers[filter])
+                    foreach (RefMorphDetails morphDetails in XTriggers[filter])
                         morphDetails.Execute(situation, token, token.PayloadEntityId, 1, 1, true);
             }
 
-            TokenContextAccessors.ResetLocalToken();
+            Crossroads.UnmarkLocalToken();
             RecipeExecutionBuffer.ApplyAll();
         }
 
-        public void RunRefEffects(Sphere sphere)
+        public void RunDeckShuffles()
         {
-            if (Effects == null || Effects.Count == 0)
+            if (DeckShuffles == null)
+                return;
+
+            foreach (string deckId in DeckShuffles)
+                Legerdemain.RenewDeck(deckId);
+        }
+
+        private void RunDeckEffects(Sphere toSphere)
+        {
+            if (DeckEffects == null)
+                return;
+
+            foreach (string deckId in DeckEffects.Keys)
+                Legerdemain.Deal(deckId, toSphere, DeckEffects[deckId].value);
+
+            RecipeExecutionBuffer.ApplyMovements();
+            RecipeExecutionBuffer.ApplyRenews();
+        }
+
+        public void RunEffects(Sphere sphere)
+        {
+            if (Effects == null)
                 return;
 
             List<Token> allTokens = sphere.GetElementTokens();
@@ -167,36 +246,19 @@ namespace Roost.World.Recipes.Entities
             RecipeExecutionBuffer.ApplyCreations();
         }
 
-        public void RunRefDecays(Sphere sphere)
+        public void RunDecays(Sphere sphere)
         {
-            if (Decays == null || Decays.Count == 0)
+            if (Decays == null)
                 return;
 
             List<Token> tokens = sphere.GetElementTokens();
 
-            foreach (Funcine<bool> filter in Decays.Keys)
-            {
-                List<Token> targets = tokens.FilterTokens(filter);
-                if (targets.Count > 0)
-                    foreach (Token token in targets)
-                        RecipeExecutionBuffer.ScheduleDecay(token, DecaysVFX);
-            }
+            foreach (TokenFilterSpec tokenFilterSpec in Decays)
+                foreach (Token token in tokenFilterSpec.FilterTokens(tokens))
+                    RecipeExecutionBuffer.ScheduleDecay(token, DecaysVFX);
 
             RecipeExecutionBuffer.ApplyRetirements();
             RecipeExecutionBuffer.ApplyTransformations();
-        }
-
-        public void RunSphereEffects(Situation situation)
-        {
-            if (DistantEffects == null || DistantEffects.Count == 0)
-                return;
-
-            foreach (KeyValuePair<FucinePath, GrandEffects> sphereEffect in DistantEffects)
-            {
-                HashSet<Sphere> targetSpheres = TokenContextAccessors.GetSpheresByPath(sphereEffect.Key);
-                foreach (Sphere sphere in targetSpheres)
-                    sphereEffect.Value.Run(situation, sphere);
-            }
         }
     }
 
@@ -228,16 +290,14 @@ namespace Roost.World.Recipes.Entities
     public enum MorphEffectsExtended { Transform, Spawn, MutateSet, Mutate, DeckDraw, DeckShuffle, Destroy, Decay, Induce, Link }
     public class RefMorphDetails : AbstractEntity<RefMorphDetails>, IQuickSpecEntity, ICustomSpecEntity
     {
-        [FucineEverValue(DefaultValue = MorphEffectsExtended.Transform)]
-        public MorphEffectsExtended MorphEffect { get; set; }
-        [FucineEverValue(DefaultValue = 1)]
-        public Funcine<int> Level { get; set; }
-        [FucineEverValue(DefaultValue = 100)]
-        public Funcine<int> Chance { get; set; }
-        [FucineEverValue]
-        public Expulsion Expulsion { get; set; }
-        [FucineEverValue(DefaultValue = RetirementVFX.CardBurn)]
-        public RetirementVFX VFX { get; set; }
+        [FucineValue(DefaultValue = MorphEffectsExtended.Transform)] public MorphEffectsExtended MorphEffect { get; set; }
+        [FucineConstruct("1")] public Funcine<int> Level { get; set; }
+        [FucineConstruct("100")] public Funcine<int> Chance { get; set; }
+        [FucineValue(false)] public bool IgnoreAmount { get; set; }
+        [FucineValue(false)] public bool IgnoreCatalystAmount { get; set; }
+
+        [FucineSubEntity(typeof(Expulsion))] public Expulsion Expulsion { get; set; }
+        [FucineEverValue(DefaultValue = RetirementVFX.CardBurn)] public RetirementVFX VFX { get; set; }
 
         public void QuickSpec(string value)
         {
@@ -245,6 +305,10 @@ namespace Roost.World.Recipes.Entities
             this.Chance = new Funcine<int>("100");
             this.MorphEffect = MorphEffectsExtended.Transform;
             this.Level = new Funcine<int>("1");
+            this.IgnoreAmount = false;
+            this.IgnoreCatalystAmount = false;
+            Expulsion = null;
+            VFX = RetirementVFX.CardTransformWhite;
         }
 
         public void CustomSpec(Hashtable data)
@@ -286,14 +350,22 @@ namespace Roost.World.Recipes.Entities
                 default:
                     break;
             }
+
+            if (MorphEffect != MorphEffectsExtended.Induce)
+                Expulsion = null;
         }
 
         public void Execute(Situation situation, Token targetToken, string targetElementId, int targetElementAmount, int catalystAmount, bool onToken)
         {
-            TokenContextAccessors.SetLocalToken(targetToken);
+            Crossroads.MarkLocalToken(targetToken);
 
             if (Chance.value < Random.Range(1, 101))
                 return;
+
+            if (IgnoreAmount)
+                targetElementAmount = 1;
+            if (IgnoreCatalystAmount)
+                catalystAmount = 1;
 
             switch (MorphEffect)
             {
@@ -307,7 +379,7 @@ namespace Roost.World.Recipes.Entities
                     }
                     break;
                 case MorphEffectsExtended.Spawn:
-                    RecipeExecutionBuffer.ScheduleCreation(targetToken.Sphere, this.Id, targetToken.Quantity * Level.value * catalystAmount, VFX);
+                    RecipeExecutionBuffer.ScheduleCreation(targetToken.Sphere, this.Id, targetElementAmount * Level.value * catalystAmount, VFX);
                     break;
                 case MorphEffectsExtended.MutateSet:
                     RecipeExecutionBuffer.ScheduleMutation(targetToken, this.Id, Level.value * catalystAmount * targetElementAmount, false, VFX);
@@ -332,6 +404,55 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.Link: Machine.PushXtriggerLink(this.Id, Level.value); break;
                 default: Birdsong.Sing($"Unknown trigger '{MorphEffect}' for element stack '{targetToken.PayloadEntityId}'"); break;
             }
+        }
+    }
+
+    public class TokenFilterSpec : AbstractEntity<TokenFilterSpec>, IQuickSpecEntity
+    {
+        [FucineList] public List<Funcine<bool>> Filter { get; set; }
+        [FucineConstruct("1")] public Funcine<int> Limit { get; set; }
+        [FucineValue(DefaultValue = RetirementVFX.None)] public RetirementVFX VFX { get; set; }
+
+        public TokenFilterSpec() { }
+        public TokenFilterSpec(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
+        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
+
+        private static readonly HashSet<Token> eligibleTokens = new HashSet<Token>();
+        public List<Token> FilterTokens(List<Token> tokens)
+        {
+            foreach (Funcine<bool> filter in Filter)
+                foreach (Token token in tokens.FilterTokens(filter))
+                    eligibleTokens.Add(token);
+
+            if (eligibleTokens.Count == 0)
+                return new List<Token>();
+
+            List<Token> result = new List<Token>();
+            int tokensToMove = Limit.value;
+
+            foreach (Token token in eligibleTokens)
+            {
+                if (token.Quantity > tokensToMove)
+                    result.Add(token.CalveToken(token.Quantity - tokensToMove, RecipeExecutionBuffer.situationEffectContext));
+                else
+                    result.Add(token);
+
+                tokensToMove -= token.Quantity;
+                if (tokensToMove <= 0)
+                    break;
+            }
+
+            eligibleTokens.Clear();
+            return result;
+        }
+
+        public void QuickSpec(string data)
+        {
+            Funcine<bool> singleFilter = new Funcine<bool>(data);
+            Filter = new List<Funcine<bool>>();
+            Filter.Add(singleFilter);
+            Limit = new Funcine<int>("99999");
+            VFX = RetirementVFX.None;
         }
     }
 }

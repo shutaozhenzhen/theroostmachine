@@ -27,9 +27,11 @@ namespace Roost.World.Recipes
         {
             Machine.ClaimProperty<DeckSpec, bool>(DECK_AUTO_SHUFFLE);
             Machine.ClaimProperty<DeckSpec, bool>(DECK_IS_HIDDEN);
+            //DeckSpec.Draws is only used for recipe internal decks; to allow them to use expressions, this
+            Machine.ClaimProperty<DeckSpec, Funcine<int>>("draws", false, "1");
 
             AtTimeOfPower.NewGameStarted.Schedule(CatchNewGame, PatchType.Prefix);
-            AtTimeOfPower.TabletopLoaded.Schedule(OnGameStarted, PatchType.Postfix);
+            AtTimeOfPower.TabletopLoaded.Schedule(TabletopEnter, PatchType.Postfix);
         }
 
         private static bool itsANewGameAndWeShouldReshuffleAllTheDecks = false;
@@ -37,8 +39,9 @@ namespace Roost.World.Recipes
         {
             itsANewGameAndWeShouldReshuffleAllTheDecks = true;
         }
-        private static void OnGameStarted()
+        private static void TabletopEnter()
         {
+            Crossroads.defaultSphereContainer.Add(Watchman.Get<HornedAxe>().GetDefaultSphere(SecretHistories.Enums.OccupiesSpaceAs.Intangible));
             dealerstable = Watchman.Get<DealersTable>();
             dealer = new Dealer(dealerstable);
 
@@ -65,114 +68,6 @@ namespace Roost.World.Recipes
             }
         }
 
-        public static void RunExtendedDeckEffects(GrandEffects effectsGroup, Sphere onSphere)
-        {
-            DeckShuffles(effectsGroup.DeckShuffles);
-            DeckForbids(effectsGroup.DeckForbids);
-            DeckEffects(effectsGroup.DeckEffects, onSphere);
-            DeckTakeOuts(effectsGroup.DeckTakeOuts, onSphere);
-            DeckAllows(effectsGroup.DeckAllows);
-            DeckAdds(effectsGroup.DeckAdds);
-            DeckInserts(effectsGroup.DeckInserts, onSphere);
-
-            RecipeExecutionBuffer.ApplyMovements();
-            RecipeExecutionBuffer.ApplyRenews();
-        }
-
-        private static void DeckShuffles(List<string> deckShuffles)
-        {
-            if (deckShuffles == null || deckShuffles.Count == 0)
-                return;
-
-            foreach (string deckId in deckShuffles)
-                RenewDeck(deckId);
-        }
-
-        private static void DeckForbids(Dictionary<string, List<string>> deckForbids)
-        {
-            if (deckForbids == null || deckForbids.Count == 0)
-                return;
-
-            foreach (string deckId in deckForbids.Keys)
-            {
-                IHasElementTokens forbiddenPile = dealerstable.GetForbiddenPile(deckId);
-                List<string> forbids = deckForbids[deckId];
-
-                foreach (string elementId in forbids)
-                    if (forbiddenPile.GetElementToken(elementId) == null)
-                        forbiddenPile.ProvisionElementToken(elementId, 1);
-            }
-        }
-
-        private static void DeckEffects(Dictionary<string, Funcine<int>> deckEffects, Sphere toSphere)
-        {
-            if (deckEffects == null || deckEffects.Count == 0)
-                return;
-
-            foreach (string deckId in deckEffects.Keys)
-                Deal(deckId, toSphere, deckEffects[deckId].value);
-        }
-
-        private static void DeckTakeOuts(Dictionary<string, List<Funcine<bool>>> deckTakeOuts, Sphere toSphere)
-        {
-            if (deckTakeOuts == null || deckTakeOuts.Count == 0)
-                return;
-
-            foreach (string deckId in deckTakeOuts.Keys)
-            {
-                List<Token> tokens = dealerstable.GetDrawPile(deckId).GetElementTokens();
-
-                foreach (Funcine<bool> filter in deckTakeOuts[deckId])
-                    foreach (Token token in tokens.FilterTokens(filter))
-                        RecipeExecutionBuffer.ScheduleMovement(token, toSphere);
-            }
-        }
-
-        private static void DeckAllows(Dictionary<string, List<string>> deckAllows)
-        {
-            if (deckAllows == null || deckAllows.Count == 0)
-                return;
-
-            foreach (string deckId in deckAllows.Keys)
-            {
-                IHasElementTokens forbiddenPile = dealerstable.GetForbiddenPile(deckId);
-                List<string> allows = deckAllows[deckId];
-
-                foreach (string elementId in allows)
-                {
-                    Token token = forbiddenPile.GetElementToken(elementId);
-                    if (token != null)
-                        token.Retire(SecretHistories.Enums.RetirementVFX.None);
-                }
-            }
-        }
-
-        private static void DeckInserts(Dictionary<string, List<Funcine<bool>>> deckInserts, Sphere fromSphere)
-        {
-            if (deckInserts == null || deckInserts.Count == 0)
-                return;
-
-            List<Token> tokens = fromSphere.GetElementTokens();
-            foreach (string deckId in deckInserts.Keys)
-            {
-                Sphere drawPile = dealerstable.GetDrawPile(deckId) as Sphere;
-
-                foreach (Funcine<bool> filter in deckInserts[deckId])
-                    foreach (Token token in tokens.FilterTokens(filter))
-                        RecipeExecutionBuffer.ScheduleMovement(token, drawPile);
-            }
-        }
-
-        private static void DeckAdds(Dictionary<string, List<string>> deckAdds)
-        {
-            if (deckAdds == null || deckAdds.Count == 0)
-                return;
-
-            foreach (string deckId in deckAdds.Keys)
-                foreach (string elementId in deckAdds[deckId])
-                    dealerstable.GetDrawPile(deckId).ProvisionElementToken(elementId, 1);
-        }
-
         public static void Deal(string deckId, Sphere toSphere, int draws = 1)
         {
             DeckSpec deckSpec = Machine.GetEntity<DeckSpec>(deckId);
@@ -184,7 +79,7 @@ namespace Roost.World.Recipes
             for (int i = 0; i < draws; i++)
             {
                 Token token = drawPile.GetElementTokens()[drawPile.GetTotalStacksCount() - 1];
-                RecipeExecutionBuffer.ScheduleMovement(token, toSphere);
+                RecipeExecutionBuffer.ScheduleMovement(token, toSphere, SecretHistories.Enums.RetirementVFX.None);
                 token.SetSphere(limbo, RecipeExecutionBuffer.situationEffectContext);
                 //need to exclude the token from the deck sphere right now so the next calculations and operations are correct
 

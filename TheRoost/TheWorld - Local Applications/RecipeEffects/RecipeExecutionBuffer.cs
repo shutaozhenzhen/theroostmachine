@@ -13,7 +13,7 @@ namespace Roost.World.Recipes
         private static readonly Dictionary<ScheduledMutation, List<Token>> mutations = new Dictionary<ScheduledMutation, List<Token>>();
         private static readonly Dictionary<ElementStack, ScheduledTransformation> transformations = new Dictionary<ElementStack, ScheduledTransformation>();
         private static readonly Dictionary<Sphere, List<ScheduledCreation>> creations = new Dictionary<Sphere, List<ScheduledCreation>>();
-        private static readonly Dictionary<Token, Sphere> movements = new Dictionary<Token, Sphere>();
+        private static readonly Dictionary<Token, ScheduledMovement> movements = new Dictionary<Token, ScheduledMovement>();
         private static readonly List<string> deckRenews = new List<string>();
 
         //private static readonly HashSet<Sphere> dirtySpheres = new HashSet<Sphere>();
@@ -71,13 +71,11 @@ namespace Roost.World.Recipes
 
         public static void ApplyMovements()
         {
-            Context context = new Context(Context.ActionSource.SituationEffect);
-            foreach (KeyValuePair<Token, Sphere> movement in movements)
-                if (movement.Value.Defunct == false)
-                {
-                    movement.Value.AcceptToken(movement.Key, context);
-                    //dirtySpheres.Add(movement.Value);
-                }
+            foreach (Token tokenToMove in movements.Keys)
+            {
+                movements[tokenToMove].Apply(tokenToMove);
+                //dirtySpheres.Add(movement.Value);
+            }
 
             movements.Clear();
         }
@@ -139,9 +137,9 @@ namespace Roost.World.Recipes
             creations[sphere].Add(futureCreation);
         }
 
-        public static void ScheduleMovement(Token token, Sphere toSphere)
+        public static void ScheduleMovement(Token token, Sphere toSphere, RetirementVFX vfx)
         {
-            movements[token] = toSphere;
+            movements[token] = new ScheduledMovement(toSphere, vfx);
         }
 
         public static void ScheduleDeckRenew(string deckId)
@@ -183,6 +181,24 @@ namespace Roost.World.Recipes
             }
         }
 
+        private struct ScheduledMovement
+        {
+            Sphere toSphere; RetirementVFX vfx;
+            public ScheduledMovement(Sphere sphere, RetirementVFX vfx)
+            { this.toSphere = sphere; this.vfx = vfx; }
+
+            public void Apply(Token token)
+            {
+                if (toSphere.SupportsVFX())
+                {
+                    toSphere.GetItineraryFor(token).WithDuration(0.3f).Depart(token, situationEffectContext);
+                    token.Remanifest(vfx);
+                }
+                else
+                    toSphere.AcceptToken(token, situationEffectContext);
+            }
+        }
+
         private struct ScheduledCreation
         {
             string element; int amount; RetirementVFX vfx;
@@ -197,8 +213,8 @@ namespace Roost.World.Recipes
 
             public void ApplyWithVFX(Sphere onSphere)
             {
-                Token token = onSphere.ProvisionElementToken(element, amount);
-                token.Payload.GetEnRouteSphere().ProcessEvictedToken(token, situationEffectContext);
+                Token token = Watchman.Get<Limbo>().ProvisionElementToken(element, amount);
+                onSphere.GetItineraryFor(token).WithDuration(0.3f).Depart(token, RecipeExecutionBuffer.situationEffectContext);
                 token.Remanifest(vfx);
             }
 
@@ -206,13 +222,14 @@ namespace Roost.World.Recipes
             public ScheduledCreation IncreaseAmount(int add) { return new ScheduledCreation(this.element, this.amount + add, this.vfx); }
         }
 
+
         private static bool SupportsVFX(this Sphere sphere)
         {
-            return sphere.SphereCategory == SphereCategory.World;
+            return sphere.SphereCategory == SphereCategory.World || sphere.SphereCategory == SphereCategory.Threshold;
         }
 
         //sensibly speaking this method shouldn't be here, but it requires Context, which Buffer has....
-        public static void StackTokens(Sphere sphere)
+        public static void StackAllTokens(Sphere sphere)
         {
             List<Token> tokens = sphere.Tokens;
             for (int n = 0; n < tokens.Count; n++)
