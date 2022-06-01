@@ -16,8 +16,6 @@ using SecretHistories.Assets.Scripts.Application.Entities;
 using SecretHistories.Assets.Scripts.Application.Infrastructure.Events;
 using SecretHistories.Spheres;
 
-using Roost.World.Recipes;
-
 namespace Roost.World.Recipes
 {
     //here we fix (aka steal-pick-peck - geddit? geddit? it was previously a beachcomber's class) the bugs
@@ -28,17 +26,13 @@ namespace Roost.World.Recipes
             Machine.Patch(
                 original: typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.SetMutation)),
                 postfix: typeof(SituationWindowMaster).GetMethodInvariant(nameof(FixMutationsDisplay)));
-            sphereContentsChangedEventArgs = new SphereContentsChangedEventArgs(null, Roost.World.Recipes.RecipeExecutionBuffer.situationEffectContext);
+            sphereContentsChangedEventArgs = new SphereContentsChangedEventArgs(null, RecipeExecutionBuffer.situationEffectContext);
 
             PutSparklesOnSituationWindow();
 
             Machine.Patch(
                 original: typeof(CardManifestation).GetMethodInvariant("Initialise"),
                 postfix: typeof(SituationWindowMaster).GetMethodInvariant(nameof(CardWithAspectIconOnTheTable)));
-
-            Machine.Patch(
-                original: typeof(SecretHistories.States.CompleteState).GetMethodInvariant("Enter"),
-                prefix: typeof(SituationWindowMaster).GetMethodInvariant(nameof(StackTokensAtCompletion)));
         }
 
         private static SphereContentsChangedEventArgs sphereContentsChangedEventArgs;
@@ -141,7 +135,7 @@ namespace Roost.World.Recipes
         private static void StorageSphereDisplayChanges()
         {
             Machine.Patch(
-                original: typeof(SituationWindow).GetMethodInvariant(nameof(SituationWindow.SituationStateChanged)),
+                original: typeof(SituationWindow).GetMethodInvariant(nameof(SituationWindow.SituationSphereContentsUpdated)),
                 postfix: typeof(SituationWindowMaster).GetMethodInvariant(nameof(ResizeSituationWindowForStorageTokens)));
 
             //allow tokens in storage sphere to be stacked
@@ -226,18 +220,22 @@ namespace Roost.World.Recipes
         static float rowHeight = 51;
         static float baseRowsAmount = 1;
         static float tokensPerRow = 7;
-        public static void ResizeSituationWindowForStorageTokens(Situation situation, SituationWindow __instance)
+        static bool alreadyThere = false;
+        public static void ResizeSituationWindowForStorageTokens(Situation s, SituationWindow __instance)
         {
-            if (situation.StateIdentifier != SecretHistories.Enums.StateEnum.Ongoing || situation.Recipe?.Warmup == 0)
+            if (alreadyThere || s.StateIdentifier != SecretHistories.Enums.StateEnum.Ongoing || s.Recipe?.Warmup == 0)
                 return;
 
-            Sphere situationStorage = situation.GetSingleSphereByCategory(SecretHistories.Enums.SphereCategory.SituationStorage);
-            RecipeExecutionBuffer.StackTokens(situationStorage);
+            //another cleanest protection against an infinite loop !!!! (stacking tokens calls this method)
+            alreadyThere = true;
+
+            Sphere situationStorage = s.GetSingleSphereByCategory(SecretHistories.Enums.SphereCategory.SituationStorage);
+            RecipeExecutionBuffer.StackAllTokens(situationStorage);
 
             int visibleTokens = situationStorage.Tokens.Count;
 
             Compendium compendium = Watchman.Get<Compendium>();
-            foreach (string deckId in situation.Recipe.DeckEffects.Keys)
+            foreach (string deckId in s.Recipe.DeckEffects.Keys)
             {
                 DeckSpec deck = compendium.GetEntityById<DeckSpec>(deckId);
                 if (deck.RetrieveProperty<bool>(Legerdemain.DECK_IS_HIDDEN) == false)
@@ -251,6 +249,8 @@ namespace Roost.World.Recipes
             ContentsDisplayChangedArgs contentsDisplayChangedArgs = new ContentsDisplayChangedArgs();
             contentsDisplayChangedArgs.ExtraHeightRequested = Mathf.Max(requiredHeight - baseHeight, 0);
             __instance.ContentsDisplayChanged(contentsDisplayChangedArgs);
+
+            alreadyThere = false;
         }
 
         private static bool AllowStackMerge(ref bool __result)
@@ -313,11 +313,6 @@ namespace Roost.World.Recipes
                 ___deckEffectViews[i]?.gameObject.SetActive(false);
 
             return false;
-        }
-
-        static void StackTokensAtCompletion(Situation situation)
-        {
-            RecipeExecutionBuffer.StackTokens(situation.GetSingleSphereByCategory(SecretHistories.Enums.SphereCategory.SituationStorage));
         }
     }
 
