@@ -2,10 +2,17 @@
 using System.Reflection;
 using System.Collections.Generic;
 
-using SecretHistories.Core;
+using SecretHistories.Abstract;
+using SecretHistories.Spheres;
+using SecretHistories.Entities;
 using SecretHistories.UI;
-using NCalc;
+using SecretHistories.Enums;
 using SecretHistories.Fucine;
+
+using NCalc;
+
+using Roost.World.Recipes;
+using Roost.World.Recipes.Entities;
 
 namespace Roost.Twins.Entities
 {
@@ -17,15 +24,15 @@ namespace Roost.Twins.Entities
 
         public Funcine(string stringExpression)
         {
+            this.formula = stringExpression;
             try
             {
-                this.formula = stringExpression;
                 this.references = FuncineParser.LoadReferences(ref stringExpression).ToArray();
                 this.expression = new Expression(Expression.Compile(stringExpression, false));
             }
             catch (Exception ex)
             {
-                throw ex;
+                throw Birdsong.Cack($"Unable to parse expression {this.formula} - {ex.FormatException()}");
             }
         }
 
@@ -67,7 +74,7 @@ namespace Roost.Twins.Entities
         {
             get
             {
-                List<Token> tokens = TokenContextAccessors.GetTokensByPath(path).FilterTokens(filter);
+                List<Token> tokens = Crossroads.GetTokensByPath(path).FilterTokens(filter);
 
                 return target.GetValueFromTokens(tokens);
             }
@@ -87,22 +94,85 @@ namespace Roost.Twins.Entities
         }
     }
 
+    public class FucinePathPlus : FucinePath
+    {
+        public FucinePathPlus(string path, int maxSpheresToFind, List<SphereCategory> acceptable = null, List<SphereCategory> excluded = null) : base(path)
+        {
+            this.maxSpheresToFind = maxSpheresToFind;
+
+            acceptableCategories = acceptable ?? defaultAcceptableCategories;
+            excludedSphereCategories = excluded ?? defaultExcludedCategories;
+
+            if (this.IsAbsolute())
+                GetRelevantSpherePath = getAbsolutePath;
+            else
+                GetRelevantSpherePath = getWildPath;
+        }
+
+        public readonly int maxSpheresToFind;
+
+        public List<SphereCategory> acceptableCategories;
+        public List<SphereCategory> excludedSphereCategories;
+
+        private static readonly List<SphereCategory> defaultAcceptableCategories = new List<SphereCategory>((SphereCategory[])Enum.GetValues(typeof(SphereCategory)));
+        private static readonly List<SphereCategory> defaultExcludedCategories = new List<SphereCategory> { SphereCategory.Notes };
+
+        private static readonly Func<Sphere, string> getAbsolutePath = sphere => sphere.GetAbsolutePath().ToString();
+        private static readonly Func<Sphere, string> getWildPath = sphere => sphere.GetWildPath().ToString();
+        private Func<Sphere, string> GetRelevantSpherePath;
+
+        public List<Sphere> GetSpheresSpecial()
+        {
+            List<Sphere> result = new List<Sphere>();
+            string pathMask = this.ToString().ToLower();
+            int maxAmount = maxSpheresToFind;
+
+            foreach (Sphere sphere in Watchman.Get<HornedAxe>().GetSpheres())
+                if (!excludedSphereCategories.Contains(sphere.SphereCategory) && acceptableCategories.Contains(sphere.SphereCategory) && !result.Contains(sphere)
+                    && GetRelevantSpherePath(sphere).ToLower().Contains(pathMask))
+                {
+                    result.Add(sphere);
+
+                    maxAmount--;
+                    if (maxAmount == 0)
+                        break;
+                }
+
+            return result;
+        }
+    }
+
     public struct TokenValueRef
     {
         public readonly ValueArea area;
         public readonly ValueOperation operation;
         public readonly string target;
-        public enum ValueArea { Aspect, Aspects, Token, Payload, Entity, Special };
-        public enum ValueOperation { Count, Sum, Max, Min, Rand };
+        public enum ValueArea
+        {
+            Aspect, Aspects, //returns aspect amount from the tokens
+            Verb, Recipe, //retuns verb/recipe amount among the tokens
+            Token, //returns token property
+            Payload, //return token payload property
+            Entity, //should return token payload entity property, but it's a hassle so not implemented
+            Special //currently only $count
+        };
+        public enum ValueOperation
+        {
+            Sum,
+            Max, Min,
+            Rand, //value from random token
+            Count, //returns amount of tokens
+            Root //returns FucineRoot mutation amount of the specified target (on the first glance, it may look like a value area, but it isn't!
+        };
 
-        Func<List<Token>, float> resultGet;
+        Func<List<Token>, float> GetResult;
 
         public float GetValueFromTokens(List<Token> tokens)
         {
             if (tokens == null || tokens.Count == 0)
                 return 0;
 
-            return resultGet(tokens);
+            return GetResult(tokens);
         }
 
         public bool Equals(TokenValueRef otherValueRef)
@@ -118,88 +188,117 @@ namespace Roost.Twins.Entities
             this.area = area;
             this.operation = operation;
 
-            Func<Token, float> tokenValue;
+            Func<Token, float> GetTokenValue = GetTokenValueGetter(area, target);
+            GetResult = GetResultGetter(operation, GetTokenValue, target);
+
+            if (this.area == ValueArea.Aspect || this.area == ValueArea.Aspects || this.operation == ValueOperation.Root)
+                Watchman.Get<Compendium>().SupplyElementIdsForValidation(this.target);
+        }
+
+        private static Func<Token, float> GetTokenValueGetter(ValueArea area, string target)
+        {
             switch (area)
             {
                 default:
                 case ValueArea.Aspect:
                 case ValueArea.Aspects:
-                    tokenValue = token => token.GetAspects().AspectValue(target) / token.Quantity;
-                    break;
+                    return token => token.IsValidElementStack() ? token.GetAspects().AspectValue(target) : 0;
+                case ValueArea.Verb:
+                    return token => IsSituation(token.Payload) && token.PayloadEntityId == target ? token.Quantity : 0;
+                case ValueArea.Recipe:
+                    return token =>
+                    {
+                        if (IsSituation(token.Payload))
+                        {
+                            Situation situation = token.Payload as Situation;
+                            //if recipe id matches, or any of its aspects match
+                            if (situation.RecipeId == target || situation.Recipe.Aspects.ContainsKey(target) == true)
+                                return 1;
+                        }
+
+                        return 0;
+                    };
                 case ValueArea.Token:
                     PropertyInfo targetPropertyInfo = typeof(Token).GetProperty(target, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
                     MethodInfo propertyReturnCreator = typeof(TokenValueRef).GetMethod(nameof(CreatePropertyReturner), BindingFlags.Static | BindingFlags.NonPublic).MakeGenericMethod(typeof(Token), targetPropertyInfo.PropertyType);
 
-                    tokenValue = propertyReturnCreator.Invoke(null, new object[] { targetPropertyInfo.GetGetMethod() }) as Func<Token, float>;
-                    break;
+                    return propertyReturnCreator.Invoke(null, new object[] { targetPropertyInfo.GetGetMethod() }) as Func<Token, float>;
                 case ValueArea.Payload:
-                    tokenValue = token => (float)token.Payload.GetType().GetProperty(target).GetValue(token.Payload);
-                    break;
+                    return token => (float)token.Payload.GetType().GetProperty(target).GetValue(token.Payload);
+                case ValueArea.Entity:
+                    throw new NotImplementedException();
             }
+        }
 
+        private static Func<List<Token>, float> GetResultGetter(ValueOperation operation, Func<Token, float> GetTokenValue, string target)
+        {
             switch (operation)
             {
                 default:
                 case ValueOperation.Sum:
                     //sum of values of all tokens
-                    resultGet = tokens =>
+                    return tokens =>
                     {
                         float result = 0;
                         foreach (Token token in tokens)
-                            result += tokenValue(token);
+                            result += GetTokenValue(token);
                         return result;
                     };
-                    break;
                 case ValueOperation.Max:
                     //max value among all tokens
-                    resultGet = tokens =>
+                    return tokens =>
                     {
                         float maxValue = 0; float currentTokenValue;
                         foreach (Token token in tokens)
                         {
-                            currentTokenValue = tokenValue(token);
+                            currentTokenValue = GetTokenValue(token) / token.Quantity;
                             if (currentTokenValue != 0 && (currentTokenValue > maxValue || (currentTokenValue == maxValue && UnityEngine.Random.Range(0, 99) > 50)))
                                 maxValue = currentTokenValue;
                         }
                         return maxValue;
                     };
-                    break;
                 case ValueOperation.Min:
                     //min value among all tokens
-                    resultGet = tokens =>
+                    return tokens =>
                     {
                         float minValue = float.MaxValue; float currentTokenValue;
                         foreach (Token token in tokens)
-                        {
-                            currentTokenValue = tokenValue(token);
-                            if (currentTokenValue != 0 && (currentTokenValue < minValue || (currentTokenValue == minValue && UnityEngine.Random.Range(0, 100) > 50)))
-                                minValue = currentTokenValue;
-                        }
+                            if (token.IsValidElementStack())
+                            {
+                                currentTokenValue = GetTokenValue(token) / token.Quantity;
+                                if (currentTokenValue != 0 && (currentTokenValue < minValue || (currentTokenValue == minValue && UnityEngine.Random.Range(0, 100) > 50)))
+                                    minValue = currentTokenValue;
+                            }
                         return minValue == float.MaxValue ? 0 : minValue;
                     };
-                    break;
                 case ValueOperation.Rand:
                     //value of a random token
-                    resultGet = tokens =>
+                    return tokens =>
                     {
                         int i = UnityEngine.Random.Range(0, tokens.Count - 1);
-                        return tokenValue(tokens[i]);
+                        return GetTokenValue(tokens[i]);
                     };
-                    break;
                 case ValueOperation.Count:
                     //number of tokens
-                    resultGet = tokens =>
+                    return tokens =>
                     {
                         int result = 0;
                         foreach (Token token in tokens)
                             result += token.Quantity;
                         return result;
                     };
-                    break;
+                case ValueOperation.Root:
+                    //number of tokens
+                    return tokens =>
+                    {
+                        return SecretHistories.Assets.Scripts.Application.Entities.NullEntities.FucineRoot.Get().Mutations.TryGetValue(target, out int result) ? result : 0;
+                    };
             }
+        }
 
-            if (this.area == ValueArea.Aspect || this.area == ValueArea.Aspects)
-                Watchman.Get<Compendium>().SupplyElementIdsForValidation(this.target);
+        private static bool IsSituation(ITokenPayload payload)
+        {
+            return typeof(Situation).IsAssignableFrom(payload.GetType());
         }
 
         static Func<TClass, float> CreatePropertyReturner<TClass, TProperty>(MethodInfo getMethod)

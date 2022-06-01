@@ -23,6 +23,13 @@ namespace Roost.Beachcomber
             if (typeof(IEntityWithId).IsAssignableFrom(type)) //is a Fucine entity
                 return ImportFucineEntity;
 
+            //need something more flexible - putting every possible importer here is obviously not an option;
+            //but writing a new importer for each new case is partly a reason why the original importers turned out so ugly
+            //(a lot of individual cases mean they can't be edited/fixed in bulk, and amount of ugliness/errors accumulate over time)
+            //a good solution'd be an universal Fucine attribute for collections, that allows to set specific importers for the collection's generic types
+            if (typeof(FucinePath).IsAssignableFrom(type)) //is a path
+                return ImportFucinePath;
+
             if (type != typeof(string) && (type.IsClass || (type.IsValueType && !type.IsEnum && type.Namespace != "System"))) //either non-AbstractEntity class or a struct
                 return ConstuctFromParameters;
 
@@ -240,6 +247,25 @@ namespace Roost.Beachcomber
             }
         }
 
+        public static object ImportFucinePath(object pathdata, Type destinationType, ContentImportLog log)
+        {
+            string pathValueAsString = pathdata.ToString();
+
+            try
+            {
+                FucinePath pathValue = Roost.Twins.FuncineParser.ParseSpherePath(pathValueAsString);
+
+                if (pathValue.IsValid())
+                    return pathValue;
+                else
+                    throw Birdsong.Cack(pathValue.GetDisplayStatus());
+            }
+            catch (Exception ex)
+            {
+                throw Birdsong.Cack($"Problem importing FucinePath {pathValueAsString}: {ex.FormatException()}");
+            }
+        }
+
         public static object ConvertValue(object data, Type destinationType)
         {
             Type sourceType = data.GetType();
@@ -313,6 +339,7 @@ namespace Roost.Beachcomber
                 return FactoryInstantiator.CreateObjectWithDefaultConstructor(propertyType);
         }
     }
+
     class ListPanImporter : PanimporterShard
     {
         public static bool CreateImporterInstance(ref AbstractImporter __result) { __result = new ListPanImporter(); return false; }
@@ -362,6 +389,13 @@ namespace Roost.Beachcomber
                 return FactoryInstantiator.CreateObjectWithDefaultConstructor(cachedFucineProperty.ThisPropInfo.PropertyType);
         }
     }
+    class FucinePathPanImporter : PanimporterShard
+    {
+        public static bool CreateImporterInstance(ref AbstractImporter __result) { __result = new FucinePathPanImporter(); return false; }
+        protected override object Import(object pathData, Type type, ContentImportLog log) { return Panimporter.ImportFucinePath(pathData, type, log); }
+        protected override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty, ContentImportLog log)
+        { return cachedFucineProperty.FucineAttribute.DefaultValue ?? FucinePath.Current(); }
+    }
 }
 
 
@@ -379,6 +413,7 @@ namespace SecretHistories.Fucine
         public override AbstractImporter CreateImporterInstance() { return new Roost.Beachcomber.PanimporterShard(); }
     }
 
+    [AttributeUsage(AttributeTargets.Property)]
     public class FucineConstruct : Fucine
     {
         public FucineConstruct() { DefaultValue = new ArrayList(); }

@@ -16,7 +16,6 @@ namespace Roost.Twins
     {
         static readonly char[] segmentOpening = new char[] { '[', '{', };
         static readonly char[] segmentClosing = new char[] { ']', '}', };
-        static readonly char[] operationSigns = new char[] { '(', ')', '|', '&', '!', '~', '=', '<', '>', '^', '+', '-', '*', /*'/',*/ '%' };
 
         public static List<FuncineRef> LoadReferences(ref string expression)
         {
@@ -27,7 +26,7 @@ namespace Roost.Twins
 
                 List<FuncineRef> references = new List<FuncineRef>();
 
-                expression.Trim().ToLower();
+                expression = expression.Trim();
                 if (isSingleReferenceExpression(expression))
                     expression = string.Concat(segmentOpening[0], expression, segmentClosing[0]);
 
@@ -64,71 +63,52 @@ namespace Roost.Twins
 
         static bool isSingleReferenceExpression(string expression)
         {
-            return expression.IndexOfAny(segmentOpening) == -1 && expression.IndexOfAny(operationSigns) == -1
-                && char.IsDigit(expression[0]) == false && expression.Any(char.IsLetter) == true
+            return expression.IndexOfAny(segmentOpening) == -1 && char.IsDigit(expression[0]) == false && expression.Any(char.IsLetter) == true
                 && expression.Equals("true", StringComparison.InvariantCultureIgnoreCase) == false
                 && expression.Equals("false", StringComparison.InvariantCultureIgnoreCase) == false;
         }
 
-        public static FuncineRef ParseFuncineRef(string path, string referenceId)
+        public static FuncineRef ParseFuncineRef(string data, string referenceId)
         {
             const char partsSeparator = ':';
 
-            string[] pathParts = path.Split(partsSeparator);
+            string[] pathParts = data.Split(partsSeparator);
 
-            if (pathParts.Length == 0)
-                throw Birdsong.Cack($"Malformed reference '{path}' - appears to be empty");
-            else if (pathParts.Length == 1)
-                return new FuncineRef(referenceId, TokenContextAccessors.currentLocal, default(Funcine<bool>), ParseTokenValueRef(pathParts[0]));
-            else if (pathParts.Length == 2)
-                return new FuncineRef(referenceId, ParseFuncineSpherePath(pathParts[0]), default(Funcine<bool>), ParseTokenValueRef(pathParts[1]));
-            else if (pathParts.Length == 3)
-                return new FuncineRef(referenceId, ParseFuncineSpherePath(pathParts[0]), new Funcine<bool>(pathParts[1]), ParseTokenValueRef(pathParts[2]));
-            else
-                throw Birdsong.Cack($"Malformed reference '{path}' - too many parts (possibly a separation symbol in an entity id?)");
+            FucinePath targetPath; Funcine<bool> filter; TokenValueRef target;
+            switch (pathParts.Length)
+            {
+                case 1:
+                    targetPath = new FucinePath(Crossroads.currentScope);
+                    filter = default(Funcine<bool>);
+                    target = ParseTokenValueRef(pathParts[0]);
+                    break;
+                case 2:
+                    targetPath = ParseSpherePath(pathParts[0]);
+                    filter = default(Funcine<bool>);
+                    target = ParseTokenValueRef(pathParts[1]);
+                    break;
+                case 3:
+                    targetPath = ParseSpherePath(pathParts[0]);
+                    filter = new Funcine<bool>(pathParts[1]);
+                    target = ParseTokenValueRef(pathParts[2]);
+                    break;
+                case 0:
+                    throw Birdsong.Cack($"Malformed reference '{data}' - appears to be empty");
+                default:
+                    throw Birdsong.Cack($"Malformed reference '{data}' - too many parts (possibly a separation symbol in an entity id?)");
+            }
+
+            return new FuncineRef(referenceId, targetPath, filter, target);
         }
 
-        public static FucinePath ParseFuncineSpherePath(string path)
+        public static FucinePath ParseSpherePath(string path)
         {
             const char multiPathSign = '+';
-            const char excludeCategorySign = '-';
-            const char categorySeparator = ',';
 
-            if (PathisMultiPath())
+            bool pathIsMultiPath = path.Contains('+') || segmentClosing.Contains(path[path.Length - 1]);
+            if (pathIsMultiPath)
             {
-
-                List<SphereCategory> acceptedCategories = null;
-                List<SphereCategory> excludedCategories = null;
-                int categoriesStart = path.LastIndexOfAny(segmentOpening);
-                if (categoriesStart != -1)
-                {
-                    int categoriesEnd = path.LastIndexOfAny(segmentClosing);
-                    if (categoriesEnd == -1)
-                        throw Birdsong.Cack($"Unclosed category definition in path {path}");
-                    string[] categoryData = path.Substring(categoriesStart + 1, categoriesEnd - categoriesStart - 1).Split(categorySeparator);
-
-                    path = path.Remove(categoriesStart);
-
-                    acceptedCategories = new List<SphereCategory>();
-                    excludedCategories = new List<SphereCategory>();
-                    foreach (string category in categoryData)
-                    {
-                        SphereCategory parsedCategory;
-                        if (category[0] == excludeCategorySign)
-                        {
-                            if (Enum.TryParse(category.Substring(1), true, out parsedCategory) == false)
-                                throw Birdsong.Cack($"Unknown sphere category '{category.Substring(1)}'");
-
-                            excludedCategories.Add(parsedCategory);
-                            continue;
-                        }
-
-                        if (Enum.TryParse(category, true, out parsedCategory) == false)
-                            throw Birdsong.Cack($"Unknown sphere category '{category.Substring(1)}'");
-
-                        acceptedCategories.Add(parsedCategory);
-                    }
-                }
+                ParsePathTargetCategories(ref path, out List<SphereCategory> acceptedCategories, out List<SphereCategory> excludedCategories);
 
                 int amount = 0;
                 int lastPlusPosition = path.LastIndexOf(multiPathSign);
@@ -136,7 +116,7 @@ namespace Roost.Twins
                 {
                     string endPathPart = path.Substring(lastPlusPosition, path.Length - lastPlusPosition);
                     if (endPathPart.Length == 1)
-                        return new FucineMultiPath(path.Substring(0, path.Length - 1), 0);
+                        return new FucinePathPlus(path.Substring(0, path.Length - 1), 0);
 
                     endPathPart = endPathPart.Substring(1);
 
@@ -146,15 +126,48 @@ namespace Roost.Twins
                     path = path.Remove(lastPlusPosition);
                 }
 
-                return new FucineMultiPath(path, amount, acceptedCategories, excludedCategories);
+                return new FucinePathPlus(path, amount, acceptedCategories, excludedCategories);
             }
 
             return new FucinePath(path);
+        }
 
-            bool PathisMultiPath()
+        private static void ParsePathTargetCategories(ref string path, out List<SphereCategory> acceptedCategories, out List<SphereCategory> excludedCategories)
+        {
+            const char excludeCategorySign = '-';
+            const char categorySeparator = ',';
+
+            acceptedCategories = null;
+            excludedCategories = null;
+            int categoriesStart = path.LastIndexOfAny(segmentOpening);
+            if (categoriesStart != -1)
             {
-                return segmentClosing.Contains(path[path.Length - 1]) || path.Contains(multiPathSign);
+                int categoriesEnd = path.LastIndexOfAny(segmentClosing);
+                if (categoriesEnd == -1)
+                    throw Birdsong.Cack($"Unclosed category definition in path {path}");
+                string[] categoryData = path.Substring(categoriesStart + 1, categoriesEnd - categoriesStart - 1).Split(categorySeparator);
 
+                path = path.Remove(categoriesStart);
+
+                acceptedCategories = new List<SphereCategory>();
+                excludedCategories = new List<SphereCategory>();
+                foreach (string category in categoryData)
+                {
+                    SphereCategory parsedCategory;
+                    if (category[0] == excludeCategorySign)
+                    {
+                        if (Enum.TryParse(category.Substring(1), true, out parsedCategory) == false)
+                            throw Birdsong.Cack($"Unknown sphere category '{category.Substring(1)}'");
+
+                        excludedCategories.Add(parsedCategory);
+                        continue;
+                    }
+
+                    if (Enum.TryParse(category, true, out parsedCategory) == false)
+                        throw Birdsong.Cack($"Unknown sphere category '{category.Substring(1)}'");
+
+                    acceptedCategories.Add(parsedCategory);
+                }
             }
         }
 
@@ -164,47 +177,53 @@ namespace Roost.Twins
             const char partsSeparator = '/';
             string[] parts = data.Trim().Split(partsSeparator);
 
-            if (parts.Length == 0)
-                throw Birdsong.Cack($"Malformed token value reference '{data}' - appears to be empty");
-            else if (parts.Length == 1)
+            switch (parts.Length)
             {
-                //special operation, doesn't require area and target
-                if (parts[0][0] == specialOpSymbol)
-                {
-                    string specialOpName = parts[0].Substring(1);
-                    TokenValueRef.ValueOperation specialOp;
-                    if (Enum.TryParse(specialOpName, true, out specialOp))
-                        return new TokenValueRef(null, TokenValueRef.ValueArea.Special, specialOp);
-                    else
-                        throw Birdsong.Cack($"Unknown special token value reference '{parts[0]}'");
-                }
-
-                //only target is defined, area and operation are default
-                return new TokenValueRef(parts[0], TokenValueRef.ValueArea.Aspect, TokenValueRef.ValueOperation.Sum);
-            }
-            else if (parts.Length == 2)
-            {
-                TokenValueRef.ValueArea area; TokenValueRef.ValueOperation operation;
-
-                //everything is defined, trying to parse area and operation
-                string target = parts[1];
-                string opData = parts[0];
-                foreach (string areaName in Enum.GetNames(typeof(TokenValueRef.ValueArea)))
-                    if (opData.StartsWith(areaName, StringComparison.InvariantCultureIgnoreCase))
+                case 0:
+                    throw Birdsong.Cack($"Malformed token value reference '{data}' - appears to be empty");
+                case 1:
+                    //special operation, doesn't require area and target
+                    if (parts[0][0] == specialOpSymbol)
                     {
-                        Enum.TryParse(areaName, true, out area);
-
-                        opData = opData.Substring(areaName.Length);
-                        if (Enum.TryParse(opData, true, out operation))
-                            return new TokenValueRef(target, area, operation);
-
-                        throw Birdsong.Cack($"Unknown token value reference operation '{opData}'");
+                        string specialOpName = parts[0].Substring(1);
+                        TokenValueRef.ValueOperation specialOp;
+                        if (Enum.TryParse(specialOpName, true, out specialOp))
+                            return new TokenValueRef(null, TokenValueRef.ValueArea.Special, specialOp);
+                        else
+                            throw Birdsong.Cack($"Unknown special token value reference '{parts[0]}'");
                     }
 
-                throw Birdsong.Cack($"Unknown token value reference area in '{opData}'");
+                    //only target is defined, area and operation are default
+                    return new TokenValueRef(parts[0], TokenValueRef.ValueArea.Aspect, TokenValueRef.ValueOperation.Sum);
+                case 2:
+                    string target = parts[1];
+
+                    //everything is defined, trying to parse area and operation
+                    TokenValueRef.ValueArea area; TokenValueRef.ValueOperation operation;
+                    string opData = parts[0];
+
+                    foreach (string areaName in Enum.GetNames(typeof(TokenValueRef.ValueArea)))
+                        if (opData.StartsWith(areaName, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            Enum.TryParse(areaName, true, out area);
+
+                            opData = opData.Substring(areaName.Length);
+                            if (opData.Length == 0)
+                                return new TokenValueRef(target, area, TokenValueRef.ValueOperation.Sum);
+                            if (Enum.TryParse(opData, true, out operation))
+                                return new TokenValueRef(target, area, operation);
+
+                            throw Birdsong.Cack($"Unknown token value reference operation '{opData}' in '{data}'");
+                        }
+
+                    area = TokenValueRef.ValueArea.Aspect;
+                    if (Enum.TryParse(opData, true, out operation))
+                        return new TokenValueRef(target, area, operation);
+
+                    throw Birdsong.Cack($"Unknown token value reference area/operation '{opData}' in '{data}'");
+                default:
+                    throw Birdsong.Cack($"Malformed token value reference '{data}' - too many parts (possible separation symbol in the target id?)");
             }
-            else
-                throw Birdsong.Cack($"Malformed token value reference '{data}' - too many parts (possible separation symbol in the target id?)");
         }
 
         private static string GetBordersOfSeparatedArea(string expression, out int openingPosition, out int closingPosition)
