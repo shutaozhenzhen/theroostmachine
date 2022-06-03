@@ -31,7 +31,7 @@ namespace Roost.Vagabond
         {
             if (commandMethods.ContainsKey(reference))
             {
-                Birdsong.Sing("Trying to register command '{0}', but it's already registered", reference);
+                Birdsong.Tweet("Trying to register command '{0}', but it's already registered", reference);
                 return;
             }
             commandMethods.Add(reference, method);
@@ -138,7 +138,7 @@ namespace Roost.Vagabond
 
         public static void Log(object data, params object[] furtherData)
         {
-            Birdsong.Sing(data, furtherData);
+            Birdsong.Tweet(data, furtherData);
         }
     }
 
@@ -151,7 +151,7 @@ namespace Roost.Vagabond
             CompendiumLoader loader = new CompendiumLoader(Watchman.Get<Config>().GetConfigValue("contentdir"));
             DateTime now = DateTime.Now;
             foreach (SecretHistories.Fucine.ILogMessage logMessage in loader.PopulateCompendium(compendium, Watchman.Get<Config>().GetConfigValue("Culture")).GetMessages())
-                Birdsong.Sing(logMessage.VerbosityNeeded, logMessage.MessageLevel, logMessage.Description);
+                Birdsong.Tweet(logMessage.VerbosityNeeded, logMessage.MessageLevel, logMessage.Description);
             CommandLine.Log("Total time to import: {0}", (DateTime.Now - now));
         }
 

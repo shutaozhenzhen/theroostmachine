@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using SecretHistories.UI;
 using SecretHistories.Fucine;
 using SecretHistories.Entities;
+using SecretHistories.Services;
 
 using UnityEngine;
 
@@ -20,6 +21,15 @@ namespace Roost.Vagabond
         internal static void Enact()
         {
             AtTimeOfPower.MainMenuLoaded.Schedule(ApplyConfigs, PatchType.Postfix);
+
+            Machine.Patch(typeof(SecretHistory).GetPropertyInvariant(nameof(SecretHistory.Sensitivity)).GetGetMethod(),
+                prefix: typeof(ConfigMask).GetMethodInvariant(nameof(ConsoleSensitivity)));
+        }
+
+        private static bool ConsoleSensitivity(ref VerbosityLevel __result)
+        {
+            __result = Birdsong.sensivity;
+            return false;
         }
 
         private static void ApplyConfigs()

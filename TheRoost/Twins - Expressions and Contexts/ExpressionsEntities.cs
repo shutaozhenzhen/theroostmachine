@@ -316,7 +316,7 @@ namespace Roost.Twins.Entities
             }
             catch (Exception ex)
             {
-                Birdsong.Sing(ex.FormatException());
+                Birdsong.Tweet(ex.FormatException());
             }
 
             return null;

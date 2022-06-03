@@ -170,18 +170,18 @@ namespace Roost.Twins
             try
             {
                 FuncineRef reference = FuncineParser.ParseFuncineRef(path, "A");
-                Birdsong.Sing($"Reference value '{reference.value}'");
+                Birdsong.Tweet($"Reference value '{reference.value}'");
             }
             catch (Exception ex)
             {
-                Birdsong.Sing(ex.FormatException());
+                Birdsong.Tweet(ex.FormatException());
             }
         }
 
         public static void TestExpression(params string[] command)
         {
             string formula = string.Concat(command);
-            Birdsong.Sing(new Funcine<float>(formula));
+            Birdsong.Tweet(new Funcine<float>(formula));
         }
 
         public static void SphereFind(params string[] command)
@@ -206,7 +206,7 @@ namespace Roost.Twins
                 foreach (Sphere sphere in foundSpheres)
                     result += $"{sphere.SphereCategory.ToString().ToUpper()} SPHERE ID '{sphere.Id}'\nPath: '{sphere.GetAbsolutePath()}'\nWild: '{sphere.GetWildPath()}'\n";
 
-            Birdsong.Sing(result);
+            Birdsong.Tweet(result);
         }
 
         public static void SphereContent(params string[] command)
@@ -215,7 +215,7 @@ namespace Roost.Twins
 
             if (command.Length == 0)
             {
-                Birdsong.Sing("Empty sphere reference");
+                Birdsong.Tweet("Empty sphere reference");
                 return;
             }
 
@@ -234,7 +234,7 @@ namespace Roost.Twins
             else
                 result = $"No spheres found for path '{path}'\n";
 
-            Birdsong.Sing(result);
+            Birdsong.Tweet(result);
         }
     }
 }

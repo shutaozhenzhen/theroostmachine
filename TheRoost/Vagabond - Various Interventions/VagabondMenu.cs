@@ -75,7 +75,7 @@ namespace Roost
         {
             if (menuScreenController == null)
             {
-                Birdsong.Sing("Trying to ShowOverlay, but we're not in the main menu");
+                Birdsong.Tweet("Trying to ShowOverlay, but we're not in the main menu");
                 return;
             }
 
@@ -86,7 +86,7 @@ namespace Roost
         {
             if (menuScreenController == null)
             {
-                Birdsong.Sing("Trying to ShowOverlay, but we're not in the main menu");
+                Birdsong.Tweet("Trying to ShowOverlay, but we're not in the main menu");
                 return;
             }
 

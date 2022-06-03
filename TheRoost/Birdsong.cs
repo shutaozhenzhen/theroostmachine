@@ -7,19 +7,42 @@ namespace Roost
 {
     public static class Birdsong
     {
-        public static VerbosityLevel currentVerbosity;
-        public static void Sing(VerbosityLevel verbosity, int messageLevel, object data, params object[] furtherData)
+        public static VerbosityLevel sensivity;
+        public static void ConfigVerbosity()
         {
-            if (currentVerbosity < verbosity)
+            int value = Vagabond.ConfigMask.GetConfigValueSafe<int>("verbosity", 1);
+            switch (value)
+            {
+                default:
+                case 0:
+                    sensivity = VerbosityLevel.Essential; return;
+                case 1:
+                    sensivity = VerbosityLevel.Significants; return;
+                case 2:
+                    sensivity = VerbosityLevel.SystemChatter; return;
+                case 3:
+                    sensivity = VerbosityLevel.Trivia; return;
+            }
+        }
+
+        public static void Tweet(object data, params object[] furtherData)
+        {
+            Birdsong.Tweet(0, 1, data, furtherData);
+        }
+
+        public static void Tweet(VerbosityLevel verbosity, int messageLevel, object data, params object[] furtherData)
+        {
+            if (sensivity < verbosity)
                 return;
 
             string message = FormatMessage(data, furtherData);
             NoonUtility.Log(message, messageLevel, verbosity);
         }
 
+        //this one reserved for operative debug logs; separated in its own method so I can easily find all the calls and won't accidentally left one in the release version
         public static void Sing(object data, params object[] furtherData)
         {
-            Birdsong.Sing(0, 1, data, furtherData);
+            Birdsong.Tweet(0, 1, data, furtherData);
         }
 
         //finally, an optimal name for error throwing

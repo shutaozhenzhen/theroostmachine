@@ -58,7 +58,7 @@ namespace Roost.World.Recipes
                             if (deck.DefaultCard != "")
                                 drawPile.ProvisionElementToken(deck.DefaultCard, 1);
                             else
-                                Birdsong.Sing($"For whatever reason, deck {deck.Id} is completely empty, can't be reshuffled and has no default card");
+                                Birdsong.Tweet($"For whatever reason, deck {deck.Id} is completely empty, can't be reshuffled and has no default card");
                         }
                     }
 

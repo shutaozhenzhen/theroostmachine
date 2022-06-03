@@ -71,12 +71,12 @@ namespace Roost.Elegiast
             CustomAchievement achievement = Machine.GetEntity<CustomAchievement>(id);
             if (achievement == null)
             {
-                Birdsong.Sing(VerbosityLevel.Significants, 0, "Attempt to unlock achievement '{0}' - no such achievement exists", id);
+                Birdsong.Tweet(VerbosityLevel.Significants, 0, "Attempt to unlock achievement '{0}' - no such achievement exists", id);
                 return false;
             }
             else if (isUnlocked(achievement))
             {
-                Birdsong.Sing(VerbosityLevel.Significants, 0, "Attempt to unlock achievement '{0}' - but it is already unlocked", id);
+                Birdsong.Tweet(VerbosityLevel.Significants, 0, "Attempt to unlock achievement '{0}' - but it is already unlocked", id);
                 return false;
             }
 
@@ -152,7 +152,7 @@ namespace Roost.Elegiast
                 }
                 catch
                 {
-                    Birdsong.Sing("Malformed achievement in {0}, deleting", ACHIEVEMENTS_FILE);
+                    Birdsong.Tweet("Malformed achievement in {0}, deleting", ACHIEVEMENTS_FILE);
                 }
 
             return dictionary;
@@ -177,7 +177,7 @@ namespace Roost.Elegiast
                     SteamRemoteStorage.FileDelete(ACHIEVEMENTS_FILE);
                 else
                     SteamRemoteStorage.FileWrite(ACHIEVEMENTS_FILE, bytes, bytes.Length);
-                Birdsong.Sing(VerbosityLevel.SystemChatter, 1, "Succesfully pushed achievement info on the cloud storage");
+                Birdsong.Tweet(VerbosityLevel.SystemChatter, 0, "Succesfully pushed achievement info on the cloud storage");
 
             }
             else if (storefront.IsAvailable(StoreClient.Gog))
@@ -224,7 +224,7 @@ namespace Roost.Elegiast
             }
             catch
             {
-                Birdsong.Sing("Malformed entry in {0}, deleting", ACHIEVEMENTS_FILE);
+                Birdsong.Tweet("Malformed entry in {0}, deleting", ACHIEVEMENTS_FILE);
                 return string.Empty;
             }
         }
@@ -282,13 +282,13 @@ namespace Roost.Elegiast
                 }
 
                 if (command.Length == 1)
-                    Birdsong.Sing(data);
+                    Birdsong.Tweet(data);
                 else
-                    Birdsong.Sing("Checking achievement '{0}' presence: {1}", command[1], data.Contains("\"" + command[1] + "\"") ? "unlocked" : "locked");
+                    Birdsong.Tweet("Checking achievement '{0}' presence: {1}", command[1], data.Contains("\"" + command[1] + "\"") ? "unlocked" : "locked");
             }
             catch (Exception ex)
             {
-                Birdsong.Sing(ex);
+                Birdsong.Tweet(ex);
             }
         }
 
@@ -297,19 +297,19 @@ namespace Roost.Elegiast
             if (achievement == "all")
             {
                 unlocks.Clear();
-                Birdsong.Sing("a l l  c u s t o m  a c h i e v e m e n t s  w e r e  r e s e t", achievement);
+                Birdsong.Tweet("a l l  c u s t o m  a c h i e v e m e n t s  w e r e  r e s e t", achievement);
                 TrySyncAchievementStorages();
                 return;
             }
 
             if (unlocks.ContainsKey(achievement) == false)
             {
-                Birdsong.Sing("Trying to reset achievement '{0}', but it's not unlocked, try checking 'achievements.cloud' and 'achievements.local' commands", achievement);
+                Birdsong.Tweet("Trying to reset achievement '{0}', but it's not unlocked, try checking 'achievements.cloud' and 'achievements.local' commands", achievement);
                 return;
             }
 
             unlocks.Remove(achievement);
-            Birdsong.Sing("Deleted achievement '{0}' from the local storage", achievement);
+            Birdsong.Tweet("Deleted achievement '{0}' from the local storage", achievement);
             TrySyncAchievementStorages();
         }
 

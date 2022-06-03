@@ -340,12 +340,12 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.Link:
                 case MorphEffectsExtended.Induce:
                     if (Machine.GetEntity<Recipe>(this.Id) == null)
-                        Birdsong.Sing($"Unknown recipe id '{this.Id}' in Morph Effects");
+                        Birdsong.Tweet($"Unknown recipe id '{this.Id}' in Morph Effects");
                     break;
                 case MorphEffectsExtended.DeckDraw:
                 case MorphEffectsExtended.DeckShuffle:
                     if (Machine.GetEntity<Recipe>(this.Id) == null)
-                        Birdsong.Sing($"Unknown deck id '{this.Id}' in Morph Effects");
+                        Birdsong.Tweet($"Unknown deck id '{this.Id}' in Morph Effects");
                     break;
                 default:
                     break;
@@ -402,7 +402,7 @@ namespace Roost.World.Recipes.Entities
                         Roost.World.Recipes.RecipeLinkMaster.SpawnNewSituation(situation, recipeToInduce, Expulsion, FucinePath.Current());
                     break;
                 case MorphEffectsExtended.Link: Machine.PushXtriggerLink(this.Id, Level.value); break;
-                default: Birdsong.Sing($"Unknown trigger '{MorphEffect}' for element stack '{targetToken.PayloadEntityId}'"); break;
+                default: Birdsong.Tweet($"Unknown trigger '{MorphEffect}' for element stack '{targetToken.PayloadEntityId}'"); break;
             }
         }
     }

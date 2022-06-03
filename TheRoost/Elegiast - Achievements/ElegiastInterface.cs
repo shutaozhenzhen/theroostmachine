@@ -299,7 +299,7 @@ namespace Roost.Elegiast
         {
             if (sortedAchievements.ContainsKey(achievement.category) == false)
             {
-                Birdsong.Sing("Non-existing category '{0}' for achievement '{1}'", achievement.category, achievement.label);
+                Birdsong.Tweet("Non-existing category '{0}' for achievement '{1}'", achievement.category, achievement.label);
                 return;
             }
 
@@ -389,7 +389,7 @@ namespace Roost
         {
             if (babelfish == null)
             {
-                Birdsong.Sing("No Babelfish component on the GameObject '{0}'", babelfish.gameObject.name);
+                Birdsong.Tweet("No Babelfish component on the GameObject '{0}'", babelfish.gameObject.name);
                 return;
             }
 
