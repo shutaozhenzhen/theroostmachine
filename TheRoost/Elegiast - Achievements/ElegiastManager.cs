@@ -66,7 +66,7 @@ namespace Roost.Elegiast
                 TrySyncAchievementStorages();
         }
 
-        private static bool UnlockAchievement(string id, int messageOrder = -1) //-1 for no message (if not inside the game scene currently, for example)
+        private static bool UnlockAchievement(string id, int messageOrder = -999) //-1 for no message (if not inside the game scene currently, for example)
         {
             CustomAchievement achievement = Machine.GetEntity<CustomAchievement>(id);
             if (achievement == null)
@@ -85,7 +85,7 @@ namespace Roost.Elegiast
             if (messageOrder >= 0)
             {
                 string message = achievement.unlockMessage == string.Empty ? achievement.unlockdesc : achievement.unlockMessage;
-                Watchman.Get<Notifier>().ShowNotificationWindow(achievement.label, message, achievement.sprite, (messageOrder + 1) * 2, false);
+                Watchman.Get<Notifier>().ShowNotificationWindow(achievement.label, message, achievement.sprite, (messageOrder + 2) * 2, false);
             }
 
             return true;
