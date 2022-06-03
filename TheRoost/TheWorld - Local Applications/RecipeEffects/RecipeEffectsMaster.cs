@@ -152,6 +152,8 @@ namespace Roost.World.Recipes
                 recipeEffects.Run(situation, situation.GetSingleSphereByCategory(SphereCategory.SituationStorage));
                 Twins.Crossroads.ResetCache();
             }
+            else
+                GrandEffects.RunCoreXTriggers(situation.GetSingleSphereByCategory(SphereCategory.SituationStorage), situation, null);
         }
 
         private static bool RefReqs(Recipe __instance, AspectsInContext aspectsinContext)

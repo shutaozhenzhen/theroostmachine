@@ -10,8 +10,6 @@ using SecretHistories.Spheres;
 
 using Roost.Twins;
 using Roost.Twins.Entities;
-using Roost.World.Recipes.Entities;
-
 
 namespace Roost.World.Recipes
 {
@@ -78,14 +76,18 @@ namespace Roost.World.Recipes
             Limbo limbo = Watchman.Get<Limbo>();
             for (int i = 0; i < draws; i++)
             {
+                if (drawPile.GetTotalStacksCount() - 1 < 0)//catching a mysterious bug
+                    throw Birdsong.Cack($"DECK '{deckId}' IS EMPTY, WON'T SHUFFLE AND HAS NO DEFAULT CARD (AND SOMEHOW PASSED THE PREVIOUS CHECK)");
+
                 Token token = drawPile.GetElementTokens()[drawPile.GetTotalStacksCount() - 1];
+
                 RecipeExecutionBuffer.ScheduleMovement(token, toSphere, SecretHistories.Enums.RetirementVFX.None);
                 token.SetSphere(limbo, RecipeExecutionBuffer.situationEffectContext);
                 //need to exclude the token from the deck sphere right now so the next calculations and operations are correct
 
                 if (drawPile.GetTotalStacksCount() == 0 && deckSpec.ResetOnExhaustion)
                     dealer.Shuffle(deckSpec);
-                //if we've shuffled the deck, but it's still empty, add default card; (if it's not defined it'll be a blank card, so better don't draw it!)
+                //we've shuffled the deck, but it's still empty, add default card; (if it's not defined it'll be a blank card, so better don't draw it!)
                 if (drawPile.GetTotalStacksCount() == 0)
                 {
                     if (String.IsNullOrEmpty(deckSpec.DefaultCard))
