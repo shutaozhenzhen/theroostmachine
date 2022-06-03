@@ -6,7 +6,6 @@ using System.Reflection.Emit;
 using SecretHistories.Entities;
 using SecretHistories.UI;
 using SecretHistories.Enums;
-using SecretHistories.Manifestations;
 using Assets.Scripts.Application.Infrastructure.Events;
 
 using HarmonyLib;
@@ -25,17 +24,17 @@ namespace Roost.World.Elements
 
             //vfx for decay
             Machine.Patch(
-                original: typeof(ElementStack).GetMethodInvariant("ExecuteHeartbeat"),
-                transpiler: typeof(CardVFXMaster).GetMethodInvariant("ElementDecayTranspiler"));
+                original: typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.ExecuteHeartbeat)),
+                transpiler: typeof(CardVFXMaster).GetMethodInvariant(nameof(ElementDecayTranspiler)));
 
             //vfx for transformations
             Machine.Patch(
-                original: typeof(ElementStack).GetMethodInvariant("ChangeTo"),
-                prefix: typeof(CardVFXMaster).GetMethodInvariant("StoreOldElementVFX"));
+                original: typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.ChangeTo)),
+                prefix: typeof(CardVFXMaster).GetMethodInvariant(nameof(StoreOldElementVFX)));
 
             Machine.Patch(
                 original: typeof(Token).GetMethodInvariant("OnPayloadChanged"),
-                transpiler: typeof(CardVFXMaster).GetMethodInvariant("RemanifestWithVFXTranspiler"));
+                transpiler: typeof(CardVFXMaster).GetMethodInvariant(nameof(RemanifestWithVFXTranspiler)));
         }
 
         private static IEnumerable<CodeInstruction> ElementDecayTranspiler(IEnumerable<CodeInstruction> instructions)
@@ -44,11 +43,11 @@ namespace Roost.World.Elements
             {
               new CodeInstruction(OpCodes.Ldarg_0),
               new CodeInstruction(OpCodes.Ldarg_0),
-              new CodeInstruction(OpCodes.Call, typeof(ElementStack).GetMethodInvariant(("get_Element"))),
-              new CodeInstruction(OpCodes.Call, typeof(CardVFXMaster).GetMethodInvariant("RetireWithVFX")),
+              new CodeInstruction(OpCodes.Call, typeof(ElementStack).GetMethodInvariant("get_Element")),
+              new CodeInstruction(OpCodes.Call, typeof(CardVFXMaster).GetMethodInvariant(nameof(RetireWithVFX))),
             };
 
-            MethodInfo methodCallToReplace = typeof(ElementStack).GetMethodInvariant("Retire", typeof(SecretHistories.Enums.RetirementVFX));
+            MethodInfo methodCallToReplace = typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.Retire), typeof(SecretHistories.Enums.RetirementVFX));
             return instructions.ReplaceMethodCall(methodCallToReplace, myCode);
         }
 
@@ -66,10 +65,10 @@ namespace Roost.World.Elements
             {
               new CodeInstruction(OpCodes.Ldarg_0),
               new CodeInstruction(OpCodes.Ldarg_1),
-              new CodeInstruction(OpCodes.Call, typeof(CardVFXMaster).GetMethodInvariant("RemanifestWithVFX")),
+              new CodeInstruction(OpCodes.Call, typeof(CardVFXMaster).GetMethodInvariant(nameof(RemanifestWithVFX))),
             };
 
-            MethodInfo methodCallToReplace = typeof(Token).GetMethodInvariant("Remanifest");
+            MethodInfo methodCallToReplace = typeof(Token).GetMethodInvariant(nameof(Token.Remanifest));
             return instructions.ReplaceMethodCall(methodCallToReplace, myCode);
         }
 
@@ -78,7 +77,7 @@ namespace Roost.World.Elements
         private static RetirementVFX VFXforCurrentTransformation = RetirementVFX.CardBurn;
         private static void StoreOldElementVFX(ElementStack __instance)
         {
-            Element transformedElement = Watchman.Get<Compendium>().GetEntityById<Element>(__instance.EntityId);
+            Element transformedElement = Machine.GetEntity<Element>(__instance.EntityId);
             if (transformedElement.HasCustomProperty(ELEMENT_DECAY_VFX))
                 VFXforCurrentTransformation = transformedElement.RetrieveProperty<RetirementVFX>(ELEMENT_DECAY_VFX);
             else
@@ -89,11 +88,6 @@ namespace Roost.World.Elements
         {
             token.Remanifest(VFXforCurrentTransformation);
         }
-
-        //private static void PlaceVFXOnTop(IManifestation oldManifestation)
-        //{
-            //oldManifestation.Transform.SetAsLastSibling();
-        //}
     }
 
 }
