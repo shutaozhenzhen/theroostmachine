@@ -11,9 +11,6 @@ using SecretHistories.Fucine;
 
 using NCalc;
 
-using Roost.World.Recipes;
-using Roost.World.Recipes.Entities;
-
 namespace Roost.Twins.Entities
 {
     public struct Funcine<T>
@@ -22,13 +19,22 @@ namespace Roost.Twins.Entities
         readonly FuncineRef[] references;
         public readonly string formula;
 
-        public Funcine(string stringExpression)
+        public const string undefined = "undefined";
+        public Funcine(string data)
         {
-            this.formula = stringExpression;
+            if (data == undefined)
+            {
+                expression = null;
+                references = null;
+                formula = string.Empty;
+                return;
+            }
+
+            this.formula = data;
             try
             {
-                this.references = FuncineParser.LoadReferences(ref stringExpression).ToArray();
-                this.expression = new Expression(Expression.Compile(stringExpression, false));
+                this.references = FuncineParser.LoadReferences(ref data).ToArray();
+                this.expression = new Expression(Expression.Compile(data, false));
             }
             catch (Exception ex)
             {
@@ -55,7 +61,7 @@ namespace Roost.Twins.Entities
         public override string ToString()
         {
             if (isUndefined)
-                return "undefined expression";
+                return undefined;
             return "'" + this.formula + "' = " + this.value;
         }
     }
