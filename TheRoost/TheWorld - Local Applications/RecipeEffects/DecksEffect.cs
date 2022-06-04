@@ -28,27 +28,19 @@ namespace Roost.World.Recipes
             //DeckSpec.Draws is only used for recipe internal decks; to allow them to use expressions, this
             Machine.ClaimProperty<DeckSpec, Funcine<int>>("draws", false, "1");
 
-            AtTimeOfPower.NewGameStarted.Schedule(CatchNewGame, PatchType.Prefix);
-            AtTimeOfPower.TabletopLoaded.Schedule(TabletopEnter, PatchType.Postfix);
-        }
 
-        private static bool itsANewGameAndWeShouldReshuffleAllTheDecks = false;
-        private static void CatchNewGame()
-        {
-            itsANewGameAndWeShouldReshuffleAllTheDecks = true;
         }
-        private static void TabletopEnter()
+        public static void TabletopEnter()
         {
-            Crossroads.defaultSphereContainer.Add(Watchman.Get<HornedAxe>().GetDefaultSphere(SecretHistories.Enums.OccupiesSpaceAs.Intangible));
             dealerstable = Watchman.Get<DealersTable>();
             dealer = new Dealer(dealerstable);
 
-            if (itsANewGameAndWeShouldReshuffleAllTheDecks)
+            if (RecipeEffectsMaster.newGameStarted)
             {
-                string currentLegacyFamily = Watchman.Get<Stable>().Protag().ActiveLegacy.Family;
+                Legacy currentLegacy = Watchman.Get<Stable>().Protag().ActiveLegacy;
 
                 foreach (DeckSpec deck in Watchman.Get<Compendium>().GetEntitiesAsList<DeckSpec>())
-                    if (String.IsNullOrEmpty(deck.ForLegacyFamily) || currentLegacyFamily == deck.ForLegacyFamily)
+                    if (DeckIsActiveForLegacy(deck, currentLegacy))
                     {
                         dealer.Shuffle(deck);
                         IHasElementTokens drawPile = dealerstable.GetDrawPile(deck.Id);
@@ -61,8 +53,6 @@ namespace Roost.World.Recipes
                                 Birdsong.Tweet($"For whatever reason, deck {deck.Id} is completely empty, can't be reshuffled and has no default card");
                         }
                     }
-
-                itsANewGameAndWeShouldReshuffleAllTheDecks = false;
             }
         }
 
@@ -118,6 +108,19 @@ namespace Roost.World.Recipes
         public static Token GetElementToken(this IHasElementTokens pile, string elementId)
         {
             return pile.GetElementTokens().Find(token => token.PayloadEntityId == elementId);
+        }
+
+        private static readonly List<string> defaultDeckGroups = new List<string>() { "" };
+        public static bool DeckIsActiveForLegacy(DeckSpec deck, Legacy legacy)
+        {
+            List<string> usedDecks = legacy.RetrieveProperty<List<string>>(nameof(Legacy.Family)) ?? defaultDeckGroups;
+            List<string> deckGroups = deck.RetrieveProperty<List<string>>(nameof(DeckSpec.ForLegacyFamily)) ?? defaultDeckGroups;
+
+            foreach (string group in deckGroups)
+                if (usedDecks.Contains(group))
+                    return true;
+
+            return false;
         }
     }
 }

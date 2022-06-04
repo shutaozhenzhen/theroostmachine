@@ -47,6 +47,21 @@ namespace Roost.World.Recipes
                  prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(ConvertLegacyMutationDefinitions)));
 
             Machine.ClaimProperty<Element, Dictionary<string, List<RefMorphDetails>>>("xtriggers");
+
+            AtTimeOfPower.NewGameStarted.Schedule(CatchNewGame, PatchType.Prefix);
+            AtTimeOfPower.TabletopLoaded.Schedule(TabletopEnter, PatchType.Postfix);
+        }
+
+        public static bool newGameStarted = false;
+        private static void CatchNewGame()
+        {
+            newGameStarted = true;
+        }
+        private static void TabletopEnter()
+        {
+            Crossroads.defaultSphereContainer.Add(Watchman.Get<HornedAxe>().GetDefaultSphere(SecretHistories.Enums.OccupiesSpaceAs.Intangible));
+            Legerdemain.TabletopEnter();
+            newGameStarted = false;
         }
 
         //Recipe.OnPostImportForSpecificEntity()

@@ -288,6 +288,30 @@ namespace Roost.Vagabond
             return codes.AsEnumerable();
         }
 
+        internal static IEnumerable<CodeInstruction> TranspilerReplaceSegment(IEnumerable<CodeInstruction> instructions, CodeInstructionMask startSegmentMask, CodeInstructionMask endSegmentMask, List<CodeInstruction> myCode)
+        {
+            if (myCode == null || myCode.Count == 0)
+            {
+                Birdsong.Tweet("Trying to transpile with an empty myCode!");
+                return instructions;
+            }
+
+            List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+            for (int i = 0; i < codes.Count; i++)
+            {
+                if (startSegmentMask(codes[i]))
+                {
+                    while (endSegmentMask(codes[i]) == false)
+                        codes.RemoveAt(i);
+
+                    codes.InsertRange(i, myCode);
+                    break;
+                }
+            }
+
+            return codes.AsEnumerable();
+        }
+
         internal static void LogILCodes(IEnumerable<CodeInstruction> instructions)
         {
             Birdsong.Tweet("IL CODE:");
@@ -357,9 +381,14 @@ namespace Roost
             return Vagabond.HarmonyMask.TranspilerReplaceAllBeforeMask(original, codePointMask, myCode, inclusive, occurencesNumber);
         }
 
-        internal static IEnumerable<CodeInstruction> InsertAtMask(this IEnumerable<CodeInstruction> instructions, Vagabond.CodeInstructionMask checkMask, List<CodeInstruction> myCode, bool insertBefore = true, int occurence = 0)
+        public static IEnumerable<CodeInstruction> InsertAtMask(this IEnumerable<CodeInstruction> instructions, Vagabond.CodeInstructionMask checkMask, List<CodeInstruction> myCode, bool insertBefore = true, int occurence = 0)
         {
             return Vagabond.HarmonyMask.TranspilerInsertAtMask(instructions, checkMask, myCode, occurence, insertBefore);
+        }
+
+        public static IEnumerable<CodeInstruction> ReplaceSegment(this IEnumerable<CodeInstruction> instructions, Vagabond.CodeInstructionMask startSegmentMask, Vagabond.CodeInstructionMask endSegmentMask, List<CodeInstruction> myCode)
+        {
+            return Vagabond.HarmonyMask.TranspilerReplaceSegment(instructions, startSegmentMask, endSegmentMask, myCode);
         }
 
         public static void LogILCodes(this IEnumerable<CodeInstruction> codes)
