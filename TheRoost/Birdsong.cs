@@ -8,9 +8,8 @@ namespace Roost
     public static class Birdsong
     {
         public static VerbosityLevel sensivity;
-        public static void ConfigVerbosity()
+        public static void SetVerbosityFromConfig(int value)
         {
-            int value = Vagabond.ConfigMask.GetConfigValueSafe<int>("verbosity", 1);
             switch (value)
             {
                 default:

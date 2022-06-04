@@ -37,7 +37,7 @@ namespace Roost.Vagabond
             new MinimizePromo(minimizePromo);
             new EnableAchievements(Enactors.Elegiast.enabledSettingId, Enactors.Elegiast.patchId, Roost.Elegiast.CustomAchievementsManager.Enact);
             new StorageSphereDisplay(storageSpherePlacement);
-
+            new ConsoleVerbosity();
         }
 
         internal static T GetConfigValueSafe<T>(string configId, T valueIfNotDefined)
@@ -135,6 +135,19 @@ namespace Roost.Vagabond.SettingSubscribers
             }
 
         }
+    }
+
+    internal class ConsoleVerbosity : ISettingSubscriber
+    {
+        public ConsoleVerbosity()
+        {
+            Watchman.Get<Compendium>().GetEntityById<Setting>("verbosity").AddSubscriber(this);
+        }
+        public void WhenSettingUpdated(object newValue)
+        {
+            Birdsong.SetVerbosityFromConfig((int)newValue);
+        }
+        public void BeforeSettingUpdated(object oldValue) { }
     }
 
     internal class PatchSwitcher : ModSettingSubscriber<int>

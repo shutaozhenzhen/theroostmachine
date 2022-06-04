@@ -17,7 +17,7 @@ public static class TheRoostMachine
         else
             try
             {
-                Birdsong.ConfigVerbosity();
+                Birdsong.SetVerbosityFromConfig(Roost.Vagabond.ConfigMask.GetConfigValueSafe("verbosity", 1));
 
                 //in case something breaks during the setup
                 SecretHistories.UI.Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
@@ -84,6 +84,8 @@ namespace Roost.Enactors
     {
         internal static void Enact()
         {
+            Roost.World.Optimizations.Enact();
+
             Roost.World.Recipes.SituationWindowMaster.Enact();
 
             Roost.World.Recipes.RecipeEffectsMaster.Enact();
