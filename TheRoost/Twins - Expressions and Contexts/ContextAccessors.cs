@@ -57,7 +57,7 @@ namespace Roost.Twins
             { currentSituation, null },
             { currentSphere, defaultSphereContainer },
             { currentToken, localTokenContainer },
-            { currentScope, null }
+            { currentScope, defaultSphereContainer }
         };
 
         public static List<Sphere> GetSpheresByPath(FucinePath path)
@@ -133,7 +133,7 @@ namespace Roost.Twins
             cachedSpheres.Clear();
             cachedSpheres[currentToken] = localTokenContainer;
             cachedSpheres[currentSphere] = defaultSphereContainer;
-            cachedSpheres[currentScope] = cachedSpheres[currentSphere];
+            cachedSpheres[currentScope] = defaultSphereContainer;
         }
 
         public static List<Token> FilterTokens(this List<Token> tokens, Funcine<bool> filter)

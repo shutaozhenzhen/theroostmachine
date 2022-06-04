@@ -168,7 +168,8 @@ namespace Roost.Twins.Entities
             Max, Min,
             Rand, //value from random token
             Count, //returns amount of tokens
-            Root //returns FucineRoot mutation amount of the specified target (on the first glance, it may look like a value area, but it isn't!
+            Root, //returns FucineRoot mutation amount of the specified target (on the first glance, it may look like a value area, but it isn't!
+            Executions,
         };
 
         Func<List<Token>, float> GetResult;
@@ -298,6 +299,11 @@ namespace Roost.Twins.Entities
                     return tokens =>
                     {
                         return SecretHistories.Assets.Scripts.Application.Entities.NullEntities.FucineRoot.Get().Mutations.TryGetValue(target, out int result) ? result : 0;
+                    };
+                case ValueOperation.Executions:
+                    return tokens =>
+                    {
+                        return Watchman.Get<Stable>().Protag().GetExecutionsCount(target);
                     };
             }
         }
