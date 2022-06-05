@@ -389,12 +389,11 @@ namespace Roost
         {
             if (babelfish == null)
             {
-                Birdsong.Tweet("No Babelfish component on the GameObject '{0}'", babelfish.gameObject.name);
+                Birdsong.Tweet($"No Babelfish component on the GameObject '{0}'", babelfish.gameObject.name);
                 return;
             }
 
-            typeof(Babelfish).GetFieldInvariant("locLabel").SetValue(babelfish, locLabel);
-            babelfish.SetValuesForCurrentCulture();
+            babelfish.UpdateLocLabel(locLabel);
         }
     }
 }
