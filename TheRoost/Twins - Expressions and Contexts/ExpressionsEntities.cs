@@ -108,11 +108,11 @@ namespace Roost.Twins.Entities
 
             acceptableCategories = acceptable ?? defaultAcceptableCategories;
             excludedSphereCategories = excluded ?? defaultExcludedCategories;
+        }
 
-            if (this.IsAbsolute())
-                GetRelevantSpherePath = getAbsolutePath;
-            else
-                GetRelevantSpherePath = getWildPath;
+        public bool AcceptsCategory(SphereCategory sphereCategory)
+        {
+            return !excludedSphereCategories.Contains(sphereCategory) && acceptableCategories.Contains(sphereCategory);
         }
 
         public readonly int maxSpheresToFind;
@@ -122,30 +122,6 @@ namespace Roost.Twins.Entities
 
         private static readonly List<SphereCategory> defaultAcceptableCategories = new List<SphereCategory>((SphereCategory[])Enum.GetValues(typeof(SphereCategory)));
         private static readonly List<SphereCategory> defaultExcludedCategories = new List<SphereCategory> { SphereCategory.Notes };
-
-        private static readonly Func<Sphere, string> getAbsolutePath = sphere => sphere.GetAbsolutePath().ToString();
-        private static readonly Func<Sphere, string> getWildPath = sphere => sphere.GetWildPath().ToString();
-        private Func<Sphere, string> GetRelevantSpherePath;
-
-        public List<Sphere> GetSpheresSpecial()
-        {
-            List<Sphere> result = new List<Sphere>();
-            string pathMask = this.ToString().ToLower();
-            int maxAmount = maxSpheresToFind;
-
-            foreach (Sphere sphere in Watchman.Get<HornedAxe>().GetSpheres())
-                if (!excludedSphereCategories.Contains(sphere.SphereCategory) && acceptableCategories.Contains(sphere.SphereCategory) && !result.Contains(sphere)
-                    && GetRelevantSpherePath(sphere).ToLower().Contains(pathMask))
-                {
-                    result.Add(sphere);
-
-                    maxAmount--;
-                    if (maxAmount == 0)
-                        break;
-                }
-
-            return result;
-        }
     }
 
     public struct TokenValueRef
@@ -164,6 +140,7 @@ namespace Roost.Twins.Entities
         };
         public enum ValueOperation
         {
+            Num, 
             Sum,
             Max, Min,
             Rand, //value from random token
@@ -220,7 +197,7 @@ namespace Roost.Twins.Entities
                             Situation situation = token.Payload as Situation;
                             //if recipe id matches, or any of its aspects match
                             if (situation.RecipeId == target || situation.Recipe.Aspects.ContainsKey(target) == true)
-                                return 1;
+                                return token.Quantity;
                         }
 
                         return 0;
@@ -242,6 +219,15 @@ namespace Roost.Twins.Entities
             switch (operation)
             {
                 default:
+                case ValueOperation.Num:
+                    //sum of values of all tokens
+                    return tokens =>
+                    {
+                        float result = 0;
+                        foreach (Token token in tokens)
+                            result += GetTokenValue(token) / token.Quantity;
+                        return result;
+                    };
                 case ValueOperation.Sum:
                     //sum of values of all tokens
                     return tokens =>

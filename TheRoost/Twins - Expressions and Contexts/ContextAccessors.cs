@@ -62,16 +62,35 @@ namespace Roost.Twins
 
         public static List<Sphere> GetSpheresByPath(FucinePath path)
         {
-            string pathString = path.ToString();
+            string pathString = path.ToString().ToLowerInvariant();
             if (cachedSpheres.ContainsKey(pathString))
                 return cachedSpheres[pathString];
 
-            List<Sphere> result;
+            List<Sphere> result = new List<Sphere>();
             if (path is FucinePathPlus)
-                result = (path as FucinePathPlus).GetSpheresSpecial();
+            {
+                FucinePathPlus pathPlus = path as FucinePathPlus;
+                string pathMask;
+                if (path.IsWild())
+                    pathMask = pathString.Substring(1); //removing asterisk so IndexOf() checks is correct
+                else
+                    pathMask = pathString;
+
+                int maxAmount = pathPlus.maxSpheresToFind;
+
+                foreach (Sphere sphere in Watchman.Get<HornedAxe>().GetSpheres())
+                    if (pathPlus.AcceptsCategory(sphere.SphereCategory) && !result.Contains(sphere)
+                        && sphere.GetAbsolutePath().ToString().IndexOf(pathMask, StringComparison.InvariantCultureIgnoreCase) != -1) //nb delete case insentiveness when update drps
+                    {
+                        result.Add(sphere);
+
+                        maxAmount--;
+                        if (maxAmount == 0)
+                            break;
+                    }
+            }
             else
             {
-                result = new List<Sphere>();
                 Sphere sphere = Watchman.Get<HornedAxe>().GetSphereByAbsolutePath(path);
                 //the game (unhelpfully) returns the default (tabletop) sphere when no sphere is found; gotta recheck that the sphere is correct
                 //also I find this ironic that the Twins here require an assistance from the Horned Axe
@@ -79,7 +98,7 @@ namespace Roost.Twins
                     result.Add(sphere);
             }
 
-            cachedSpheres.Add(pathString, result);
+            cachedSpheres[pathString] = result;
             return result;
         }
 
