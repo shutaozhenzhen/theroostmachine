@@ -62,7 +62,10 @@ namespace Roost.Vagabond
 
         internal static MethodInfo GetMethodInvariant(Type definingClass, string name, params Type[] args)
         {
-            return definingClass.GetMethod(name, args);
+            MethodInfo method = definingClass.GetMethod(name, args);
+            if (method == null)
+                Birdsong.Tweet($"Method {name} with parameters {args.UnpackAsString()} is not found in class {definingClass.Name}");
+            return method;
         }
 
         internal static FieldInfo GetFieldInvariant(this Type definingClass, string name)

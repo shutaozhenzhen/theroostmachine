@@ -33,6 +33,10 @@ namespace Roost.Beachcomber
             Machine.Patch(
                 original: typeof(CompendiumLoader).GetMethodInvariant(nameof(CompendiumLoader.PopulateCompendium)),
                 transpiler: typeof(Cuckoo).GetMethodInvariant(nameof(CuckooTranspiler)));
+
+            Machine.Patch(
+                original: typeof(AbstractEntity<SecretHistories.Entities.Element>).GetMethodInvariant("PopUnknownKeysToLog"),
+                transpiler: typeof(Cuckoo).GetMethodInvariant(nameof(PopUnknownKeysToLog)));
         }
 
         //EntityTypeDataLoader.GetLocalisableKeysForEntityType() postfix
@@ -87,6 +91,43 @@ namespace Roost.Beachcomber
 
             string assemblyLocation = assembly.Location.Replace('/', '\\');
             return (assemblyLocation.Contains(modLocationLocal) || assemblyLocation.Contains(modLocationWorkshop));
+        }
+
+        private static IEnumerable<CodeInstruction> PopUnknownKeysToLog(IEnumerable<CodeInstruction> instructions)
+        {
+            //one last simple transpiler, they said 
+            List<CodeInstruction> myCode = new List<CodeInstruction>()
+            {
+                new CodeInstruction(OpCodes.Ldstr, "Unknown property '{1}' for {2} id '{0}'"),
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Callvirt, typeof(AbstractEntity<SecretHistories.Entities.Element>).GetPropertyInvariant("Id").GetGetMethod())
+            };
+
+            List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
+            int n = 0;
+            for (; n < codes.Count; n++)
+                if (codes[n].opcode == OpCodes.Ldstr)
+                {
+                    codes.RemoveAt(n);
+                    codes.InsertRange(n, myCode);
+                    break;
+                }
+
+            for (; n < codes.Count; n++)
+                if (codes[n].Calls(typeof(string).GetMethodInvariant("Format", typeof(string), typeof(object), typeof(object))))
+                {
+                    codes[n].operand = typeof(string).GetMethodInvariant("Format", typeof(string), typeof(object), typeof(object), typeof(object));
+                    break;
+                }
+
+            for (; n < codes.Count; n++)
+                if (codes[n].Calls(typeof(ContentImportLog).GetMethodInvariant(nameof(ContentImportLog.LogInfo))))
+                {
+                    codes[n].operand = typeof(ContentImportLog).GetMethodInvariant(nameof(ContentImportLog.LogWarning));
+                    break;
+                }
+
+            return codes.AsEnumerable();
         }
     }
 
