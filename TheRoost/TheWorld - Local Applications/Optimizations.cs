@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using HarmonyLib;
-using System.Linq;
 
 using SecretHistories.UI;
 using SecretHistories.Spheres;

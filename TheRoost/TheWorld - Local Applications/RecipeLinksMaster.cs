@@ -33,7 +33,7 @@ namespace Roost.World.Recipes
                 prefix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(CheckXTriggerLinks)));
 
             //chance is an expression
-            Machine.ClaimProperty<LinkedRecipeDetails, Funcine<int>>(CHANCE, false, "100");
+            Machine.ClaimProperty<LinkedRecipeDetails, FucineExp<int>>(CHANCE, false, "100");
             Machine.Patch(
                 original: typeof(LinkedRecipeDetails).GetPropertyInvariant(nameof(LinkedRecipeDetails.Chance)).GetGetMethod(),
                 prefix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(GetRefRecipeChance)));
@@ -50,14 +50,14 @@ namespace Roost.World.Recipes
 
         private static bool GetRefRecipeChance(LinkedRecipeDetails __instance, ref int __result)
         {
-            __result = __instance.RetrieveProperty<Funcine<int>>(CHANCE).value;
+            __result = __instance.RetrieveProperty<FucineExp<int>>(CHANCE).value;
             return false;
         }
 
         private static bool ShouldAlwaysSucceed(LinkedRecipeDetails __instance, ref bool __result)
         {
             if (__instance.Challenges.Count == 0)
-                if (int.TryParse(__instance.RetrieveProperty<Funcine<int>>(CHANCE).formula, out int chance))
+                if (int.TryParse(__instance.RetrieveProperty<FucineExp<int>>(CHANCE).formula, out int chance))
                     __result = chance >= 100;
 
             return false;

@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -21,18 +20,18 @@ namespace Roost.World.Recipes.Entities
 {
     public class GrandEffects : AbstractEntity<GrandEffects>
     {
-        [FucineDict] public Dictionary<string, Funcine<int>> RootEffects { get; set; }
+        [FucineDict] public Dictionary<string, FucineExp<int>> RootEffects { get; set; }
         [FucineDict] public Dictionary<FucinePath, TokenFilterSpec> Movements { get; set; }
         [FucineDict] public Dictionary<FucinePath, GrandEffects> DistantEffects { get; set; }
-        [FucineDict] public Dictionary<Funcine<bool>, List<RefMutationEffect>> Mutations { get; set; }
-        [FucineDict] public Dictionary<string, Funcine<int>> Aspects { get; set; }
+        [FucineDict] public Dictionary<FucineExp<bool>, List<RefMutationEffect>> Mutations { get; set; }
+        [FucineDict] public Dictionary<string, FucineExp<int>> Aspects { get; set; }
 
-        [FucineDict] public Dictionary<Funcine<bool>, List<RefMorphDetails>> XTriggers { get; set; }
+        [FucineDict] public Dictionary<FucineExp<bool>, List<RefMorphDetails>> XTriggers { get; set; }
 
         [FucineList] public List<string> DeckShuffles { get; set; }
-        [FucineDict] public Dictionary<string, Funcine<int>> DeckEffects { get; set; }
+        [FucineDict] public Dictionary<string, FucineExp<int>> DeckEffects { get; set; }
 
-        [FucineDict] public Dictionary<Funcine<bool>, Funcine<int>> Effects { get; set; }
+        [FucineDict] public Dictionary<FucineExp<bool>, FucineExp<int>> Effects { get; set; }
 
         [FucineList] public List<TokenFilterSpec> Decays { get; set; }
 
@@ -125,7 +124,7 @@ namespace Roost.World.Recipes.Entities
 
             List<Token> tokens = sphere.GetElementTokens();
 
-            foreach (Funcine<bool> filter in Mutations.Keys)
+            foreach (FucineExp<bool> filter in Mutations.Keys)
             {
                 List<Token> targets = tokens.FilterTokens(filter);
 
@@ -138,12 +137,12 @@ namespace Roost.World.Recipes.Entities
         }
 
         private static readonly AspectsDictionary allCatalystsInSphere = new AspectsDictionary();
-        public static void RunCoreXTriggers(Sphere sphere, Situation situation, Dictionary<string, Funcine<int>> Aspects)
+        public static void RunCoreXTriggers(Sphere sphere, Situation situation, Dictionary<string, FucineExp<int>> Aspects)
         {
             allCatalystsInSphere.Clear();
 
             if (Aspects != null)
-                foreach (KeyValuePair<string, Funcine<int>> catalyst in Aspects)
+                foreach (KeyValuePair<string, FucineExp<int>> catalyst in Aspects)
                     allCatalystsInSphere[catalyst.Key] = catalyst.Value.value;
             allCatalystsInSphere.ApplyMutations(sphere.GetTotalAspects());
 
@@ -186,7 +185,7 @@ namespace Roost.World.Recipes.Entities
                 return;
 
             List<Token> allTokens = sphere.GetElementTokens();
-            foreach (Funcine<bool> filter in XTriggers.Keys)
+            foreach (FucineExp<bool> filter in XTriggers.Keys)
             {
                 List<Token> filteredTokens = allTokens.FilterTokens(filter);
 
@@ -226,7 +225,7 @@ namespace Roost.World.Recipes.Entities
                 return;
 
             List<Token> allTokens = sphere.GetElementTokens();
-            foreach (Funcine<bool> filter in Effects.Keys)
+            foreach (FucineExp<bool> filter in Effects.Keys)
             {
                 int level = Effects[filter].value;
                 if (level < 0)
@@ -265,7 +264,7 @@ namespace Roost.World.Recipes.Entities
     public class RefMutationEffect : AbstractEntity<RefMutationEffect>, ICustomSpecEntity
     {
         [FucineEverValue(ValidateAsElementId = true, DefaultValue = null)] public string Mutate { get; set; }
-        [FucineEverValue("1")] public Funcine<int> Level { get; set; }
+        [FucineEverValue("1")] public FucineExp<int> Level { get; set; }
         [FucineEverValue(false)] public bool Additive { get; set; }
         [FucineEverValue(DefaultValue = RetirementVFX.CardLight)] public RetirementVFX VFX { get; set; }
 
@@ -279,7 +278,7 @@ namespace Roost.World.Recipes.Entities
                 foreach (object key in UnknownProperties.Keys)
                 {
                     this.Mutate = key.ToString();
-                    this.Level = new Funcine<int>(UnknownProperties[key].ToString());
+                    this.Level = new FucineExp<int>(UnknownProperties[key].ToString());
                     break;
                 }
                 UnknownProperties.Remove(Mutate);
@@ -291,8 +290,8 @@ namespace Roost.World.Recipes.Entities
     public class RefMorphDetails : AbstractEntity<RefMorphDetails>, IQuickSpecEntity, ICustomSpecEntity
     {
         [FucineValue(DefaultValue = MorphEffectsExtended.Transform)] public MorphEffectsExtended MorphEffect { get; set; }
-        [FucineConstruct("1")] public Funcine<int> Level { get; set; }
-        [FucineConstruct("100")] public Funcine<int> Chance { get; set; }
+        [FucineConstruct("1")] public FucineExp<int> Level { get; set; }
+        [FucineConstruct("100")] public FucineExp<int> Chance { get; set; }
         [FucineValue(false)] public bool IgnoreAmount { get; set; }
         [FucineValue(false)] public bool IgnoreCatalystAmount { get; set; }
 
@@ -302,9 +301,9 @@ namespace Roost.World.Recipes.Entities
         public void QuickSpec(string value)
         {
             this.SetId(value);
-            this.Chance = new Funcine<int>("100");
+            this.Chance = new FucineExp<int>("100");
             this.MorphEffect = MorphEffectsExtended.Transform;
-            this.Level = new Funcine<int>("1");
+            this.Level = new FucineExp<int>("1");
             this.IgnoreAmount = false;
             this.IgnoreCatalystAmount = false;
             Expulsion = null;
@@ -318,7 +317,7 @@ namespace Roost.World.Recipes.Entities
                 foreach (object key in UnknownProperties.Keys)
                 {
                     this.SetId(key.ToString());
-                    this.Level = new Funcine<int>(UnknownProperties[key].ToString());
+                    this.Level = new FucineExp<int>(UnknownProperties[key].ToString());
                     break;
                 }
                 UnknownProperties.Remove(this.Id);
@@ -409,8 +408,8 @@ namespace Roost.World.Recipes.Entities
 
     public class TokenFilterSpec : AbstractEntity<TokenFilterSpec>, IQuickSpecEntity
     {
-        [FucineList] public Funcine<bool> Filter { get; set; }
-        [FucineConstruct(Funcine<int>.undefined)] public Funcine<int> Limit { get; set; } //unlimited by default
+        [FucineList] public FucineExp<bool> Filter { get; set; }
+        [FucineConstruct(FucineExp<int>.undefined)] public FucineExp<int> Limit { get; set; } //unlimited by default
 
         public TokenFilterSpec() { }
         public TokenFilterSpec(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
@@ -447,7 +446,7 @@ namespace Roost.World.Recipes.Entities
         {
             try
             {
-                Filter = new Funcine<bool>(data);
+                Filter = new FucineExp<bool>(data);
             }
             catch (Exception ex)
             {

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 
 using System.Reflection.Emit;
 
@@ -27,7 +26,7 @@ namespace Roost.World.Recipes
 
         internal static void Enact()
         {
-            Machine.ClaimProperty<Recipe, Dictionary<Funcine<int>, Funcine<int>>>(GRAND_REQS);
+            Machine.ClaimProperty<Recipe, Dictionary<FucineExp<int>, FucineExp<int>>>(GRAND_REQS);
             AtTimeOfPower.RecipeRequirementsCheck.Schedule<Recipe, AspectsInContext>(RefReqs);
 
             Machine.ClaimProperty<Recipe, GrandEffects>(GRAND_EFFECTS);
@@ -59,8 +58,8 @@ namespace Roost.World.Recipes
         }
         private static void TabletopEnter()
         {
-            Crossroads.defaultSphereContainer.Add(Watchman.Get<HornedAxe>().GetDefaultSphere(SecretHistories.Enums.OccupiesSpaceAs.Intangible));
-            Legerdemain.TabletopEnter();
+            Crossroads.defaultSphereContainer.Add(Watchman.Get<HornedAxe>().GetDefaultSphere(OccupiesSpaceAs.Intangible));
+            Legerdemain.InitializeOnNewGame();
             newGameStarted = false;
         }
 
@@ -75,10 +74,10 @@ namespace Roost.World.Recipes
 
                 populatedCompendium.TryAddEntity(recipe.InternalDeck);
 
-                Funcine<int> draws = recipe.InternalDeck.RetrieveProperty<Funcine<int>>("draws");
+                FucineExp<int> draws = recipe.InternalDeck.RetrieveProperty<FucineExp<int>>("draws");
                 if (recipe.HasCustomProperty("deckeffects") == false)
-                    recipe.SetProperty("deckeffects", new Dictionary<string, Funcine<int>>());
-                recipe.RetrieveProperty<Dictionary<string, Funcine<int>>>("deckeffects").Add(recipe.InternalDeck.Id, draws);
+                    recipe.SetProperty("deckeffects", new Dictionary<string, FucineExp<int>>());
+                recipe.RetrieveProperty<Dictionary<string, FucineExp<int>>>("deckeffects").Add(recipe.InternalDeck.Id, draws);
 
                 recipe.InternalDeck = new DeckSpec();
             }
@@ -173,7 +172,7 @@ namespace Roost.World.Recipes
 
         private static bool RefReqs(Recipe __instance, AspectsInContext aspectsinContext)
         {
-            Dictionary<Funcine<int>, Funcine<int>> grandreqs = __instance.RetrieveProperty(GRAND_REQS) as Dictionary<Funcine<int>, Funcine<int>>;
+            Dictionary<FucineExp<int>, FucineExp<int>> grandreqs = __instance.RetrieveProperty(GRAND_REQS) as Dictionary<FucineExp<int>, FucineExp<int>>;
             if (grandreqs == null || grandreqs.Count == 0)
                 return true;
 
@@ -185,7 +184,7 @@ namespace Roost.World.Recipes
                     Crossroads.MarkLocalSituation(situation);
 
                     // Birdsong.Sing($"Checking GrandReqs for {__instance.Id} in {situation.VerbId} verb");
-                    foreach (KeyValuePair<Funcine<int>, Funcine<int>> req in grandreqs)
+                    foreach (KeyValuePair<FucineExp<int>, FucineExp<int>> req in grandreqs)
                     {
                         int presentValue = req.Key.value;
                         int requiredValue = req.Value.value;

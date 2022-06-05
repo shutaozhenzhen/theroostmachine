@@ -253,7 +253,7 @@ namespace Roost.Beachcomber
 
             try
             {
-                FucinePath pathValue = Roost.Twins.FuncineParser.ParseSpherePath(pathValueAsString);
+                FucinePath pathValue = Roost.Twins.ExpressionsParser.ParseSpherePath(pathValueAsString);
 
                 if (pathValue.IsValid())
                     return pathValue;
@@ -274,19 +274,18 @@ namespace Roost.Beachcomber
 
             try
             {
-                if ((sourceType.IsValueType == false && sourceType != typeof(string))
-                    || (destinationType.IsValueType == false && destinationType != typeof(string)))
-                    throw Birdsong.Cack($"Trying to convert data '{data}' to {destinationType.Name}, but at least one of these two is not a value type");
-
-                if (data is string)
-                    return TypeDescriptor.GetConverter(destinationType).ConvertFromInvariantString(data.ToString());
+                if (sourceType == typeof(string))
+                    return TypeDescriptor.GetConverter(destinationType).ConvertFromInvariantString((string)data);
                 else if (destinationType == typeof(string))
                     return TypeDescriptor.GetConverter(sourceType).ConvertToInvariantString(data);
 
-                if (data is bool && destinationType != typeof(string))
-                    data = ((bool)data == true) ? 1 : -1;
+                if (data is bool)
+                {
+                    data = (bool)data ? 1 : 0;
+                    sourceType = typeof(int);
+                }
 
-                return TypeDescriptor.GetConverter(sourceType).ConvertTo(data, destinationType);// System.Convert.ChangeType(data, destinationType);
+                return TypeDescriptor.GetConverter(sourceType).ConvertTo(data, destinationType);
             }
             catch (Exception ex)
             {

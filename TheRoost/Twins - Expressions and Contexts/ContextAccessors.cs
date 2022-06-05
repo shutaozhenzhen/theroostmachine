@@ -136,7 +136,7 @@ namespace Roost.Twins
             cachedSpheres[currentScope] = defaultSphereContainer;
         }
 
-        public static List<Token> FilterTokens(this List<Token> tokens, Funcine<bool> filter)
+        public static List<Token> FilterTokens(this List<Token> tokens, FucineExp<bool> filter)
         {
             if (filter.isUndefined)
                 return tokens;
@@ -169,7 +169,7 @@ namespace Roost.Twins
             string path = string.Concat(command);
             try
             {
-                FuncineRef reference = FuncineParser.ParseFuncineRef(path, "A");
+                FucineRef reference = ExpressionsParser.ParseFucineRef(path, "A");
                 Birdsong.Tweet($"Reference value '{reference.value}'");
             }
             catch (Exception ex)
@@ -181,7 +181,7 @@ namespace Roost.Twins
         public static void TestExpression(params string[] command)
         {
             string formula = string.Concat(command);
-            Birdsong.Tweet(new Funcine<float>(formula));
+            Birdsong.Tweet(new FucineExp<float>(formula));
         }
 
         public static void SphereFind(params string[] command)
@@ -193,7 +193,7 @@ namespace Roost.Twins
                 foundSpheres = new List<Sphere>(Watchman.Get<HornedAxe>().GetSpheres());
             else
             {
-                FucinePath targetPath = FuncineParser.ParseSpherePath(command[0]);
+                FucinePath targetPath = ExpressionsParser.ParseSpherePath(command[0]);
 
                 DateTime startTime = DateTime.Now;
                 foundSpheres = Crossroads.GetSpheresByPath(targetPath);
@@ -219,7 +219,7 @@ namespace Roost.Twins
                 return;
             }
 
-            FucinePath path = FuncineParser.ParseSpherePath(command[0]);
+            FucinePath path = ExpressionsParser.ParseSpherePath(command[0]);
 
             List<Sphere> foundSpheres = Crossroads.GetSpheresByPath(path);
 

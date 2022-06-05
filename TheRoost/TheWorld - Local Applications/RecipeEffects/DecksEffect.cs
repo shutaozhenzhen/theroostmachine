@@ -8,7 +8,6 @@ using Assets.Logic;
 using SecretHistories.Abstract;
 using SecretHistories.Spheres;
 
-using Roost.Twins;
 using Roost.Twins.Entities;
 
 namespace Roost.World.Recipes
@@ -26,11 +25,11 @@ namespace Roost.World.Recipes
             Machine.ClaimProperty<DeckSpec, bool>(DECK_AUTO_SHUFFLE);
             Machine.ClaimProperty<DeckSpec, bool>(DECK_IS_HIDDEN);
             //DeckSpec.Draws is only used for recipe internal decks; to allow them to use expressions, this
-            Machine.ClaimProperty<DeckSpec, Funcine<int>>("draws", false, "1");
+            Machine.ClaimProperty<DeckSpec, FucineExp<int>>("draws", false, "1");
 
 
         }
-        public static void TabletopEnter()
+        public static void InitializeOnNewGame()
         {
             dealerstable = Watchman.Get<DealersTable>();
             dealer = new Dealer(dealerstable);

@@ -13,14 +13,14 @@ using NCalc;
 
 namespace Roost.Twins.Entities
 {
-    public struct Funcine<T>
+    public struct FucineExp<T>
     {
         readonly Expression expression;
-        readonly FuncineRef[] references;
+        readonly FucineRef[] references;
         public readonly string formula;
 
         public const string undefined = "undefined";
-        public Funcine(string data)
+        public FucineExp(string data)
         {
             if (data == undefined)
             {
@@ -33,7 +33,7 @@ namespace Roost.Twins.Entities
             this.formula = data;
             try
             {
-                this.references = FuncineParser.LoadReferences(ref data).ToArray();
+                this.references = ExpressionsParser.LoadReferencesForExpressin(ref data).ToArray();
                 this.expression = new Expression(Expression.Compile(data, false));
             }
             catch (Exception ex)
@@ -46,7 +46,7 @@ namespace Roost.Twins.Entities
         {
             get
             {
-                foreach (FuncineRef reference in references)
+                foreach (FucineRef reference in references)
                     expression.Parameters[reference.idInExpression] = reference.value;
                 object result = expression.Evaluate();
 
@@ -54,7 +54,7 @@ namespace Roost.Twins.Entities
             }
         }
 
-        public static implicit operator Funcine<T>(string formula) { return new Funcine<T>(formula); }
+        public static implicit operator FucineExp<T>(string formula) { return new FucineExp<T>(formula); }
 
         public bool isUndefined { get { return this.expression == null; } }
 
@@ -66,14 +66,14 @@ namespace Roost.Twins.Entities
         }
     }
 
-    public struct FuncineRef
+    public struct FucineRef
     {
         public delegate List<Token> SphereTokensRef();
 
         public readonly string idInExpression;
 
         public readonly FucinePath path;
-        public readonly Funcine<bool> filter;
+        public readonly FucineExp<bool> filter;
         public readonly TokenValueRef target;
 
         public float value
@@ -86,7 +86,7 @@ namespace Roost.Twins.Entities
             }
         }
 
-        public FuncineRef(string referenceId, FucinePath path, Funcine<bool> filter, TokenValueRef target)
+        public FucineRef(string referenceId, FucinePath path, FucineExp<bool> filter, TokenValueRef target)
         {
             this.idInExpression = referenceId;
             this.path = path;
@@ -94,7 +94,7 @@ namespace Roost.Twins.Entities
             this.target = target;
         }
 
-        public bool Equals(FuncineRef otherReference)
+        public bool Equals(FucineRef otherReference)
         {
             return otherReference.path == this.path && otherReference.filter.formula == this.filter.formula && otherReference.target.Equals(this.target);
         }
@@ -160,16 +160,16 @@ namespace Roost.Twins.Entities
             Token, //returns token property
             Payload, //return token payload property
             Entity, //should return token payload entity property, but it's a hassle so not implemented
-            Special //currently only $count
+            Targetless //currently only $count
         };
         public enum ValueOperation
         {
             Sum,
             Max, Min,
             Rand, //value from random token
-            Count, //returns amount of tokens
             Root, //returns FucineRoot mutation amount of the specified target (on the first glance, it may look like a value area, but it isn't!
-            Executions,
+            Executions, //
+            Count, //targetless, returns amount of tokens
         };
 
         Func<List<Token>, float> GetResult;

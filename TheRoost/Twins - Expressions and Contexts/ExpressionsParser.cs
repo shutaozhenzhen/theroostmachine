@@ -2,29 +2,26 @@
 using System.Collections.Generic;
 using System.Linq;
 
-using SecretHistories.Entities;
-using SecretHistories.Spheres;
 using SecretHistories.Fucine;
 using SecretHistories.Enums;
-using SecretHistories.UI;
 
 using Roost.Twins.Entities;
 
 namespace Roost.Twins
 {
-    public static class FuncineParser
+    public static class ExpressionsParser
     {
         static readonly char[] segmentOpening = new char[] { '[', '{', };
         static readonly char[] segmentClosing = new char[] { ']', '}', };
 
-        public static List<FuncineRef> LoadReferences(ref string expression)
+        public static List<FucineRef> LoadReferencesForExpressin(ref string expression)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(expression))
                     throw Birdsong.Cack("Expression is empty");
 
-                List<FuncineRef> references = new List<FuncineRef>();
+                List<FucineRef> references = new List<FucineRef>();
 
                 expression = expression.Trim();
                 if (isSingleReferenceExpression(expression))
@@ -35,10 +32,10 @@ namespace Roost.Twins
                 while (openingPosition > -1)
                 {
                     string referenceId = GenerateUniqueReferenceId(references.Count);
-                    FuncineRef reference = ParseFuncineRef(referenceData, referenceId);
+                    FucineRef reference = ParseFucineRef(referenceData, referenceId);
 
                     bool referenceIsUnique = true;
-                    foreach (FuncineRef olderReference in references)
+                    foreach (FucineRef olderReference in references)
                         if (reference.Equals(olderReference))
                         {
                             referenceIsUnique = false;
@@ -68,28 +65,28 @@ namespace Roost.Twins
                 && expression.Equals("false", StringComparison.InvariantCultureIgnoreCase) == false;
         }
 
-        public static FuncineRef ParseFuncineRef(string data, string referenceId)
+        public static FucineRef ParseFucineRef(string data, string referenceId)
         {
             const char partsSeparator = ':';
 
             string[] pathParts = data.Split(partsSeparator);
 
-            FucinePath targetPath; Funcine<bool> filter; TokenValueRef target;
+            FucinePath targetPath; FucineExp<bool> filter; TokenValueRef target;
             switch (pathParts.Length)
             {
                 case 1:
                     targetPath = new FucinePath(Crossroads.currentScope);
-                    filter = default(Funcine<bool>);
+                    filter = default(FucineExp<bool>);
                     target = ParseTokenValueRef(pathParts[0]);
                     break;
                 case 2:
                     targetPath = ParseSpherePath(pathParts[0]);
-                    filter = default(Funcine<bool>);
+                    filter = default(FucineExp<bool>);
                     target = ParseTokenValueRef(pathParts[1]);
                     break;
                 case 3:
                     targetPath = ParseSpherePath(pathParts[0]);
-                    filter = new Funcine<bool>(pathParts[1]);
+                    filter = new FucineExp<bool>(pathParts[1]);
                     target = ParseTokenValueRef(pathParts[2]);
                     break;
                 case 0:
@@ -98,7 +95,7 @@ namespace Roost.Twins
                     throw Birdsong.Cack($"Malformed reference '{data}' - too many parts (possibly a separation symbol in an entity id?)");
             }
 
-            return new FuncineRef(referenceId, targetPath, filter, target);
+            return new FucineRef(referenceId, targetPath, filter, target);
         }
 
         public static FucinePath ParseSpherePath(string path)
@@ -110,7 +107,7 @@ namespace Roost.Twins
             {
                 ParsePathTargetCategories(ref path, out List<SphereCategory> acceptedCategories, out List<SphereCategory> excludedCategories);
 
-                int amount = 0;
+                int amount = 1;
                 int lastPlusPosition = path.LastIndexOf(multiPathSign);
                 if (lastPlusPosition > -1)
                 {
@@ -121,7 +118,7 @@ namespace Roost.Twins
                     endPathPart = endPathPart.Substring(1);
 
                     if (int.TryParse(endPathPart, out amount) == false)
-                        throw Birdsong.Cack($"Can't parse FicineMultiPath sphere limit {endPathPart}");
+                        throw Birdsong.Cack($"Can't parse FucineMultiPath sphere limit {endPathPart}");
 
                     path = path.Remove(lastPlusPosition);
                 }
@@ -188,7 +185,7 @@ namespace Roost.Twins
                         string specialOpName = parts[0].Substring(1);
                         TokenValueRef.ValueOperation specialOp;
                         if (Enum.TryParse(specialOpName, true, out specialOp))
-                            return new TokenValueRef(null, TokenValueRef.ValueArea.Special, specialOp);
+                            return new TokenValueRef(null, TokenValueRef.ValueArea.Targetless, specialOp);
                         else
                             throw Birdsong.Cack($"Unknown special token value reference '{parts[0]}'");
                     }
