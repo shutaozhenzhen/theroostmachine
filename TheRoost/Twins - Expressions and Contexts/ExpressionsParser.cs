@@ -100,33 +100,38 @@ namespace Roost.Twins
 
         public static FucinePath ParseSpherePath(string path)
         {
-            const char multiPathSign = '+';
-
             bool pathIsMultiPath = path.Contains('+') || segmentClosing.Contains(path[path.Length - 1]);
             if (pathIsMultiPath)
             {
+                ParsePathPlusLimit(ref path, out int amount);
                 ParsePathTargetCategories(ref path, out List<SphereCategory> acceptedCategories, out List<SphereCategory> excludedCategories);
-
-                int amount = 1;
-                int lastPlusPosition = path.LastIndexOf(multiPathSign);
-                if (lastPlusPosition > -1)
-                {
-                    string endPathPart = path.Substring(lastPlusPosition, path.Length - lastPlusPosition);
-                    if (endPathPart.Length == 1)
-                        return new FucinePathPlus(path.Substring(0, path.Length - 1), 0);
-
-                    endPathPart = endPathPart.Substring(1);
-
-                    if (int.TryParse(endPathPart, out amount) == false)
-                        throw Birdsong.Cack($"Can't parse FucineMultiPath sphere limit {endPathPart}");
-
-                    path = path.Remove(lastPlusPosition);
-                }
 
                 return new FucinePathPlus(path, amount, acceptedCategories, excludedCategories);
             }
 
             return new FucinePath(path);
+        }
+
+        private static void ParsePathPlusLimit(ref string path, out int amount)
+        {
+            const char multiPathSign = '+';
+
+            amount = 1; //if no limit is specified at all (only categories), default limit is 1
+            int lastPlusPosition = path.LastIndexOf(multiPathSign);
+            if (lastPlusPosition > -1)
+            {
+                string endPathPart = path.Substring(lastPlusPosition, path.Length - lastPlusPosition).Substring(1);
+                path = path.Remove(lastPlusPosition);
+
+                if (endPathPart.Length == 0) //limit amount isn't specified, default to 0 (unlimited)
+                {
+                    amount = 0;
+                    return;
+                }
+
+                if (int.TryParse(endPathPart, out amount) == false)
+                    throw Birdsong.Cack($"Can't parse FucinePathPlus sphere limit {endPathPart}");
+            }
         }
 
         private static void ParsePathTargetCategories(ref string path, out List<SphereCategory> acceptedCategories, out List<SphereCategory> excludedCategories)
@@ -161,7 +166,7 @@ namespace Roost.Twins
                     }
 
                     if (Enum.TryParse(category, true, out parsedCategory) == false)
-                        throw Birdsong.Cack($"Unknown sphere category '{category.Substring(1)}'");
+                        throw Birdsong.Cack($"Unknown sphere category '{category}'");
 
                     acceptedCategories.Add(parsedCategory);
                 }

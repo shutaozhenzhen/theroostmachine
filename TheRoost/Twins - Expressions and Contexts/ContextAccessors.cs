@@ -60,27 +60,23 @@ namespace Roost.Twins
             { currentScope, defaultSphereContainer }
         };
 
-        public static List<Sphere> GetSpheresByPath(FucinePath path)
+        public static List<Sphere> GetSpheresByPath(FucinePath fucinePath)
         {
-            string pathString = path.ToString().ToLowerInvariant();
-            if (cachedSpheres.ContainsKey(pathString))
-                return cachedSpheres[pathString];
+            string fullPath = fucinePath.ToString();
+            if (cachedSpheres.ContainsKey(fullPath))
+                return cachedSpheres[fullPath];
 
             List<Sphere> result = new List<Sphere>();
-            if (path is FucinePathPlus)
+            if (fucinePath is FucinePathPlus)
             {
-                FucinePathPlus pathPlus = path as FucinePathPlus;
-                string pathMask;
-                if (path.IsWild())
-                    pathMask = pathString.Substring(1); //removing asterisk so IndexOf() checks is correct
-                else
-                    pathMask = pathString;
+                FucinePathPlus pathPlus = fucinePath as FucinePathPlus;
 
+                string sphereMask = pathPlus.sphereMask;
                 int maxAmount = pathPlus.maxSpheresToFind;
 
                 foreach (Sphere sphere in Watchman.Get<HornedAxe>().GetSpheres())
                     if (pathPlus.AcceptsCategory(sphere.SphereCategory) && !result.Contains(sphere)
-                        && sphere.GetAbsolutePath().ToString().IndexOf(pathMask, StringComparison.InvariantCultureIgnoreCase) != -1) //nb delete case insentiveness when update drps
+                        && sphere.GetAbsolutePath().Path.IndexOf(sphereMask, StringComparison.InvariantCultureIgnoreCase) != -1) //nb delete case insentiveness when update drps
                     {
                         result.Add(sphere);
 
@@ -91,14 +87,14 @@ namespace Roost.Twins
             }
             else
             {
-                Sphere sphere = Watchman.Get<HornedAxe>().GetSphereByAbsolutePath(path);
+                Sphere sphere = Watchman.Get<HornedAxe>().GetSphereByAbsolutePath(fucinePath);
                 //the game (unhelpfully) returns the default (tabletop) sphere when no sphere is found; gotta recheck that the sphere is correct
                 //also I find this ironic that the Twins here require an assistance from the Horned Axe
-                if (sphere.GetAbsolutePath() == path || sphere.GetWildPath() == path)
+                if (sphere.GetAbsolutePath() == fucinePath || sphere.GetWildPath() == fucinePath)
                     result.Add(sphere);
             }
 
-            cachedSpheres[pathString] = result;
+            cachedSpheres[fullPath] = result;
             return result;
         }
 
@@ -212,18 +208,19 @@ namespace Roost.Twins
                 foundSpheres = new List<Sphere>(Watchman.Get<HornedAxe>().GetSpheres());
             else
             {
-                FucinePath targetPath = ExpressionsParser.ParseSpherePath(command[0]);
+                FucinePath path = ExpressionsParser.ParseSpherePath(command[0]);
 
                 DateTime startTime = DateTime.Now;
-                foundSpheres = Crossroads.GetSpheresByPath(targetPath);
+                foundSpheres = Crossroads.GetSpheresByPath(path);
                 TimeSpan searchTime = DateTime.Now - startTime;
 
                 result += $"Search time {searchTime.TotalSeconds} sec\n";
+                if (foundSpheres.Count == 0)
+                    result = $"No spheres found for path '{path.ToString()}'\n";
             }
 
-            if (foundSpheres.Count > 0)
-                foreach (Sphere sphere in foundSpheres)
-                    result += $"{sphere.SphereCategory.ToString().ToUpper()} SPHERE ID '{sphere.Id}'\nPath: '{sphere.GetAbsolutePath()}'\nWild: '{sphere.GetWildPath()}'\n";
+            foreach (Sphere sphere in foundSpheres)
+                result += $"{sphere.SphereCategory.ToString().ToUpper()} SPHERE ID '{sphere.Id}'\nPath: '{sphere.GetAbsolutePath()}'\nWild: '{sphere.GetWildPath()}'\n";
 
             Birdsong.Tweet(result);
         }
@@ -251,7 +248,7 @@ namespace Roost.Twins
                     result += "--------------\n";
                 }
             else
-                result = $"No spheres found for path '{path}'\n";
+                result = $"No spheres found for path '{path.ToString()}'\n";
 
             Birdsong.Tweet(result);
         }

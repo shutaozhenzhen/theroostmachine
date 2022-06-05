@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Reflection;
 using System.Collections.Generic;
+using System.Linq;
 
 using SecretHistories.Abstract;
-using SecretHistories.Spheres;
 using SecretHistories.Entities;
 using SecretHistories.UI;
 using SecretHistories.Enums;
@@ -102,26 +102,46 @@ namespace Roost.Twins.Entities
 
     public class FucinePathPlus : FucinePath
     {
+        private readonly string fullPath;
+        public readonly string sphereMask;
         public FucinePathPlus(string path, int maxSpheresToFind, List<SphereCategory> acceptable = null, List<SphereCategory> excluded = null) : base(path)
         {
             this.maxSpheresToFind = maxSpheresToFind;
 
-            acceptableCategories = acceptable ?? defaultAcceptableCategories;
-            excludedSphereCategories = excluded ?? defaultExcludedCategories;
+            if (excluded == null && acceptable == null)
+                acceptableCategories = defaultAcceptableCategories;
+            else
+            {
+                acceptable = acceptable ?? allCategories;
+                excluded = excluded ?? defaultExcludedCategories;
+                acceptableCategories = acceptable.Except(excluded).ToList();
+
+                if (acceptableCategories.SequenceEqual(defaultAcceptableCategories))
+                    acceptableCategories = defaultAcceptableCategories;
+            }
+
+            //guaranteeing that equivalent paths will have the same id for caching
+            fullPath = $"{path}[{string.Join(",", this.acceptableCategories)}]+{maxSpheresToFind}";
+            if (this.IsWild()) //removing asterisk so IndexOf() checks are correct
+                sphereMask = path.Substring(1);
+            else
+                sphereMask = path;
         }
 
         public bool AcceptsCategory(SphereCategory sphereCategory)
         {
-            return !excludedSphereCategories.Contains(sphereCategory) && acceptableCategories.Contains(sphereCategory);
+            return acceptableCategories.Contains(sphereCategory);
         }
 
         public readonly int maxSpheresToFind;
 
         public List<SphereCategory> acceptableCategories;
-        public List<SphereCategory> excludedSphereCategories;
 
-        private static readonly List<SphereCategory> defaultAcceptableCategories = new List<SphereCategory>((SphereCategory[])Enum.GetValues(typeof(SphereCategory)));
-        private static readonly List<SphereCategory> defaultExcludedCategories = new List<SphereCategory> { SphereCategory.Notes };
+        private static readonly List<SphereCategory> allCategories = new List<SphereCategory>((SphereCategory[])Enum.GetValues(typeof(SphereCategory)));
+        private static readonly List<SphereCategory> defaultExcludedCategories = new List<SphereCategory> { SphereCategory.Notes, SphereCategory.Null, SphereCategory.Meta };
+        private static readonly List<SphereCategory> defaultAcceptableCategories = allCategories.Except(defaultExcludedCategories).ToList();
+
+        public override string ToString() { return fullPath; }
     }
 
     public struct TokenValueRef
@@ -140,8 +160,8 @@ namespace Roost.Twins.Entities
         };
         public enum ValueOperation
         {
-            Num, 
-            Sum,
+            Sum, //sum of all returned values
+            Num, //sum of all returned values, each divided by token quantity
             Max, Min,
             Rand, //value from random token
             Root, //returns FucineRoot mutation amount of the specified target (on the first glance, it may look like a value area, but it isn't!
