@@ -398,7 +398,7 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.Induce:
                     Recipe recipeToInduce = Watchman.Get<Compendium>().GetEntityById<Recipe>(this.Id);
                     for (int i = Level.value; i > 0; i--)
-                        Roost.World.Recipes.RecipeLinkMaster.SpawnNewSituation(situation, recipeToInduce, Expulsion, FucinePath.Current());
+                        RecipeExecutionBuffer.ScheduleInduction(situation, recipeToInduce, this.Expulsion);
                     break;
                 case MorphEffectsExtended.Link: Machine.PushXtriggerLink(this.Id, Level.value); break;
                 default: Birdsong.Tweet($"Unknown trigger '{MorphEffect}' for element stack '{targetToken.PayloadEntityId}'"); break;

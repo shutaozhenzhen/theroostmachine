@@ -14,6 +14,7 @@ namespace Roost.World.Recipes
         private static readonly Dictionary<ElementStack, ScheduledTransformation> transformations = new Dictionary<ElementStack, ScheduledTransformation>();
         private static readonly Dictionary<Sphere, List<ScheduledCreation>> creations = new Dictionary<Sphere, List<ScheduledCreation>>();
         private static readonly Dictionary<Token, ScheduledMovement> movements = new Dictionary<Token, ScheduledMovement>();
+        private static readonly List<ScheduledInduction> inductions = new List<ScheduledInduction>();
         private static readonly List<string> deckRenews = new List<string>();
 
         //private static readonly HashSet<Sphere> dirtySpheres = new HashSet<Sphere>();
@@ -27,6 +28,7 @@ namespace Roost.World.Recipes
             ApplyTransformations();
             ApplyCreations();
             ApplyMovements();
+            ApplyInductions();
         }
 
         public static void ApplyRetirements()
@@ -76,7 +78,6 @@ namespace Roost.World.Recipes
                 movements[tokenToMove].Apply(tokenToMove);
                 //dirtySpheres.Add(movement.Value);
             }
-
             movements.Clear();
         }
 
@@ -85,6 +86,13 @@ namespace Roost.World.Recipes
             foreach (string deckId in deckRenews)
                 Legerdemain.RenewDeck(deckId);
             deckRenews.Clear();
+        }
+
+        public static void ApplyInductions()
+        {
+            foreach (ScheduledInduction induction in inductions)
+                induction.Apply();
+            inductions.Clear();
         }
 
         public static void ScheduleMutation(Token token, string mutate, int level, bool additive, RetirementVFX vfx)
@@ -150,6 +158,11 @@ namespace Roost.World.Recipes
         public static void ScheduleRetirement(Token token, RetirementVFX vfx)
         {
             retirements[token] = vfx;
+        }
+
+        public static void ScheduleInduction(Situation situation, Recipe recipe, Expulsion withExpulsion)
+        {
+            inductions.Add(new ScheduledInduction(situation, recipe, withExpulsion));
         }
 
         private struct ScheduledMutation
@@ -222,6 +235,16 @@ namespace Roost.World.Recipes
             public ScheduledCreation IncreaseAmount(int add) { return new ScheduledCreation(this.element, this.amount + add, this.vfx); }
         }
 
+        private struct ScheduledInduction
+        {
+            Situation situation; Recipe recipe; Expulsion withExpulsion; 
+            public ScheduledInduction(Situation situation, Recipe recipe, Expulsion withExpulsion)
+            { this.recipe = recipe; this.withExpulsion = withExpulsion; this.situation = situation; }
+            public void Apply()
+            {
+                RecipeLinkMaster.SpawnNewSituation(situation, recipe, withExpulsion, SecretHistories.Fucine.FucinePath.Current());
+            }
+        }
 
         private static bool SupportsVFX(this Sphere sphere)
         {
