@@ -216,7 +216,6 @@ namespace Roost.World.Recipes
             }
         }
 
-
         static float rowHeight = 51;
         static float baseRowsAmount = 1;
         static float tokensPerRow = 7;

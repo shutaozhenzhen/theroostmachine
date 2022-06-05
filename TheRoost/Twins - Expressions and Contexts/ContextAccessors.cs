@@ -242,7 +242,7 @@ namespace Roost.Twins
             if (foundSpheres.Count > 0)
                 foreach (Sphere sphere in foundSpheres)
                 {
-                    result += $"{sphere.Id}:'\n--------------";
+                    result += $"{sphere.SphereCategory.ToString().ToUpper()} SPHERE ID '{sphere.Id}:'\n--------------\n";
                     foreach (Token token in sphere.GetTokens())
                         result += $"{token.PayloadTypeName} {token.PayloadEntityId}\n";
                     result += "--------------\n";
