@@ -223,14 +223,16 @@ namespace Roost.World.Recipes
         static bool alreadyThere = false;
         public static void ResizeSituationWindowForStorageTokens(Situation s, SituationWindow __instance)
         {
-            if (alreadyThere || s.StateIdentifier != SecretHistories.Enums.StateEnum.Ongoing || s.Recipe?.Warmup == 0)
+            if (alreadyThere)
                 return;
-
             //another cleanest protection against an infinite loop !!!! (stacking tokens calls this method)
             alreadyThere = true;
 
             Sphere situationStorage = s.GetSingleSphereByCategory(SecretHistories.Enums.SphereCategory.SituationStorage);
             RecipeExecutionBuffer.StackAllTokens(situationStorage);
+
+            if (s.StateIdentifier != SecretHistories.Enums.StateEnum.Ongoing || s.Recipe?.Warmup == 0)
+                return;
 
             int visibleTokens = situationStorage.Tokens.Count;
 
