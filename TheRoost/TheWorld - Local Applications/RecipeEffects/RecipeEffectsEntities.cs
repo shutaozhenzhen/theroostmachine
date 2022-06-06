@@ -387,6 +387,9 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.DeckDraw:
                     Legerdemain.Deal(this.Id, targetToken.Sphere, Level.value * catalystAmount * targetElementAmount);
                     break;
+                case MorphEffectsExtended.DeckShuffle:
+                    RecipeExecutionBuffer.ScheduleDeckRenew(this.Id);
+                    break;
                 case MorphEffectsExtended.Destroy:
                     if (onToken)
                         RecipeExecutionBuffer.ScheduleRetirement(targetToken, VFX);
