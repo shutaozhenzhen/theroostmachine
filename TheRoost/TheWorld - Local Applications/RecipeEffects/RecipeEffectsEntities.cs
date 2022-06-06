@@ -21,7 +21,7 @@ namespace Roost.World.Recipes.Entities
         [FucineDict] public Dictionary<string, FucineExp<int>> RootEffects { get; set; }
         [FucineDict] public Dictionary<FucinePath, List<TokenFilterSpec>> Movements { get; set; }
         [FucineDict] public Dictionary<FucinePath, GrandEffects> DistantEffects { get; set; }
-        [FucineDict] public Dictionary<FucineExp<bool>, List<RefMutationEffect>> Mutations { get; set; }
+        [FucineDict] public Dictionary<TokenFilterSpec, List<RefMutationEffect>> Mutations { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> Aspects { get; set; }
 
         [FucineDict] public Dictionary<FucineExp<bool>, List<RefMorphDetails>> XTriggers { get; set; }
@@ -124,9 +124,9 @@ namespace Roost.World.Recipes.Entities
 
             List<Token> tokens = sphere.GetElementTokens();
 
-            foreach (FucineExp<bool> filter in Mutations.Keys)
+            foreach (TokenFilterSpec filter in Mutations.Keys)
             {
-                List<Token> targets = tokens.FilterTokens(filter);
+                List<Token> targets = filter.FilterTokens(tokens);
 
                 if (targets.Count > 0)
                     foreach (RefMutationEffect mutationEffect in Mutations[filter])
@@ -266,7 +266,7 @@ namespace Roost.World.Recipes.Entities
         [FucineEverValue(ValidateAsElementId = true, DefaultValue = null)] public string Mutate { get; set; }
         [FucineEverValue("1")] public FucineExp<int> Level { get; set; }
         [FucineEverValue(false)] public bool Additive { get; set; }
-        [FucineEverValue(DefaultValue = RetirementVFX.CardLight)] public RetirementVFX VFX { get; set; }
+        [FucineEverValue(DefaultValue = RetirementVFX.CardTransformWhite)] public RetirementVFX VFX { get; set; }
 
         public RefMutationEffect(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
@@ -286,17 +286,19 @@ namespace Roost.World.Recipes.Entities
         }
     }
 
-    public enum MorphEffectsExtended { Transform, Spawn, MutateSet, Mutate, DeckDraw, DeckShuffle, Destroy, Decay, Induce, Link }
+    public enum MorphEffectsExtended { Transform, Spawn, Mutate, SetMutation, DeckDraw, DeckShuffle, Destroy, Decay, Induce, Link }
     public class RefMorphDetails : AbstractEntity<RefMorphDetails>, IQuickSpecEntity, ICustomSpecEntity
     {
         [FucineValue(DefaultValue = MorphEffectsExtended.Transform)] public MorphEffectsExtended MorphEffect { get; set; }
         [FucineConstruct("1")] public FucineExp<int> Level { get; set; }
         [FucineConstruct("100")] public FucineExp<int> Chance { get; set; }
+
+
+        [FucineEverValue(DefaultValue = RetirementVFX.CardTransformWhite)] public RetirementVFX VFX { get; set; }
         [FucineValue(false)] public bool IgnoreAmount { get; set; }
         [FucineValue(false)] public bool IgnoreCatalystAmount { get; set; }
 
         [FucineSubEntity(typeof(Expulsion))] public Expulsion Expulsion { get; set; }
-        [FucineEverValue(DefaultValue = RetirementVFX.CardBurn)] public RetirementVFX VFX { get; set; }
 
         public void QuickSpec(string value)
         {
@@ -333,7 +335,7 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.Transform:
                 case MorphEffectsExtended.Spawn:
                 case MorphEffectsExtended.Mutate:
-                case MorphEffectsExtended.MutateSet:
+                case MorphEffectsExtended.SetMutation:
                     Watchman.Get<Compendium>().SupplyElementIdsForValidation(this.Id);
                     break;
                 case MorphEffectsExtended.Link:
@@ -380,7 +382,7 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.Spawn:
                     RecipeExecutionBuffer.ScheduleCreation(targetToken.Sphere, this.Id, targetElementAmount * Level.value * catalystAmount, VFX);
                     break;
-                case MorphEffectsExtended.MutateSet:
+                case MorphEffectsExtended.SetMutation:
                     RecipeExecutionBuffer.ScheduleMutation(targetToken, this.Id, Level.value * catalystAmount * targetElementAmount, false, VFX);
                     break;
                 case MorphEffectsExtended.Mutate:
@@ -411,7 +413,7 @@ namespace Roost.World.Recipes.Entities
 
     public class TokenFilterSpec : AbstractEntity<TokenFilterSpec>, IQuickSpecEntity
     {
-        [FucineList] public FucineExp<bool> Filter { get; set; }
+        [FucineConstruct] public FucineExp<bool> Filter { get; set; }
         [FucineConstruct(FucineExp<int>.UNDEFINED)] public FucineExp<int> Limit { get; set; } //unlimited by default
 
         public TokenFilterSpec() { }

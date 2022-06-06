@@ -119,14 +119,23 @@ namespace Roost.World.Recipes
                         ArrayList oldMutations = entityData.ValuesTable["mutations"] as ArrayList;
                         EntityData newMutations = new EntityData();
 
-                        foreach (EntityData data in oldMutations)
+                        foreach (EntityData mutation in oldMutations)
                         {
-                            string key = data.ValuesTable["filter"].ToString();
-                            if (newMutations.ValuesTable.ContainsKey(key) == false)
-                                newMutations.ValuesTable[key] = new ArrayList();
+                            object filter;
+                            if (mutation.ContainsKey("limit"))
+                            {
+                                filter = new EntityData();
+                                (filter as EntityData).ValuesTable.Add("filter", mutation.ValuesTable["filter"]);
+                                (filter as EntityData).ValuesTable.Add("limit", mutation.ValuesTable["limit"]);
+                            }
+                            else
+                                filter = mutation.ValuesTable["filter"].ToString();
 
-                            (newMutations.ValuesTable[key] as ArrayList).Add(data);
-                            data.ValuesTable.Remove("filter");
+                            if (newMutations.ContainsKey(filter) == false)
+                                newMutations.ValuesTable[filter] = new ArrayList();
+
+                            (newMutations.ValuesTable[filter] as ArrayList).Add(mutation);
+                            mutation.ValuesTable.Remove("filter");
                         }
 
                         entityData.ValuesTable["mutations"] = newMutations;
