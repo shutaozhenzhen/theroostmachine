@@ -110,6 +110,7 @@ namespace Roost.World.Recipes
 
         private static void DisplayQuantity(StoredManifestation __instance, IManifestable manifestable)
         {
+            //somehow the badge ends up below the situation window in the current version. this doesn't makes any sense, but it's true.
             GameObject quantityBadge = __instance.transform.GetQuantityBadge();
             if (manifestable.Quantity == 1)
                 quantityBadge.SetActive(false);
@@ -119,11 +120,11 @@ namespace Roost.World.Recipes
                 quantityBadge.GetComponentInChildren<TextMeshProUGUI>().text = manifestable.Quantity.ToString();
             }
         }
-        public static void StoredManifestationHighlightQuantity(StoredManifestation __instance)
+        private static void StoredManifestationHighlightQuantity(StoredManifestation __instance)
         {
             __instance.transform.GetQuantityBadge().GetComponent<CanvasRenderer>().SetColor(UIStyle.aspectHover);
         }
-        public static void StoredManifestationUnhighlightQuantity(StoredManifestation __instance)
+        private static void StoredManifestationUnhighlightQuantity(StoredManifestation __instance)
         {
             __instance.transform.GetQuantityBadge().GetComponent<CanvasRenderer>().SetColor(Color.white);
         }
@@ -134,10 +135,6 @@ namespace Roost.World.Recipes
 
         private static void StorageSphereDisplayChanges()
         {
-            Machine.Patch(
-                original: typeof(SituationWindow).GetMethodInvariant(nameof(SituationWindow.SituationSphereContentsUpdated)),
-                postfix: typeof(SituationWindowMaster).GetMethodInvariant(nameof(ResizeSituationWindowForStorageTokens)));
-
             //allow tokens in storage sphere to be stacked
             Machine.Patch(
                 original: typeof(SituationStorageSphere).GetPropertyInvariant("AllowStackMerge").GetGetMethod(),
@@ -150,7 +147,6 @@ namespace Roost.World.Recipes
         {
             GameObject storageDominion = situationWindow.gameObject.FindInChildren("StorageDominion", true);
             RectTransform storageDominionTransform = storageDominion.transform.GetComponent<RectTransform>();
-
 
             switch (storagePlacementType)
             {
@@ -219,24 +215,13 @@ namespace Roost.World.Recipes
         static float rowHeight = 51;
         static float baseRowsAmount = 1;
         static float tokensPerRow = 7;
-        static bool alreadyThere = false;
-        public static void ResizeSituationWindowForStorageTokens(Situation s, SituationWindow __instance)
+        public static void ResizeSituationWindowForStorageTokens(Sphere situationStorage)
         {
-            if (alreadyThere)
-                return;
-            //another cleanest protection against an infinite loop !!!! (stacking tokens calls this method)
-            alreadyThere = true;
-
-            Sphere situationStorage = s.GetSingleSphereByCategory(SecretHistories.Enums.SphereCategory.SituationStorage);
-            RecipeExecutionBuffer.StackAllTokens(situationStorage);
-
-            if (s.StateIdentifier != SecretHistories.Enums.StateEnum.Ongoing || s.Recipe?.Warmup == 0)
-                return;
-
             int visibleTokens = situationStorage.Tokens.Count;
 
             Compendium compendium = Watchman.Get<Compendium>();
-            foreach (string deckId in s.Recipe.DeckEffects.Keys)
+            Situation situation = situationStorage.GetContainer() as Situation;
+            foreach (string deckId in situation.Recipe.DeckEffects.Keys)
             {
                 DeckSpec deck = compendium.GetEntityById<DeckSpec>(deckId);
                 if (deck.RetrieveProperty<bool>(Legerdemain.DECK_IS_HIDDEN) == false)
@@ -249,14 +234,12 @@ namespace Roost.World.Recipes
 
             ContentsDisplayChangedArgs contentsDisplayChangedArgs = new ContentsDisplayChangedArgs();
             contentsDisplayChangedArgs.ExtraHeightRequested = Mathf.Max(requiredHeight - baseHeight, 0);
-            __instance.ContentsDisplayChanged(contentsDisplayChangedArgs);
-
-            alreadyThere = false;
+            situationStorage.transform.parent.parent.parent.GetComponent<SituationWindow>().ContentsDisplayChanged(contentsDisplayChangedArgs);
         }
 
         private static bool AllowStackMerge(ref bool __result)
         {
-            __result = true;
+            __result = false;
             return false;
         }
 

@@ -125,13 +125,12 @@ namespace Roost.Vagabond.SettingSubscribers
             GameObject storageSpherePrefab = Watchman.Get<SecretHistories.Services.PrefabFactory>().GetPrefabObjectFromResources<SituationStorageSphere>().gameObject;
             Roost.World.Recipes.SituationWindowMaster.SetSituationWindowSettings(situationWindowPrefab.gameObject, storageSpherePrefab, Machine.GetConfigValue<int>(Vagabond.ConfigMask.storageSpherePlacement, setting));
 
-            SituationWindow[] allWindows = GameObject.FindObjectsOfType<SituationWindow>();
+            SituationWindow[] allWindows = GameObject.FindObjectsOfType<SituationWindow>(); //zhestko
             foreach (SituationWindow window in allWindows)
             {
-                GameObject storageSphere = window.gameObject.GetComponentInChildren<SituationStorageSphere>().gameObject;
-                Situation situation = situationWindowPayload.GetValue(window) as Situation;
-                Roost.World.Recipes.SituationWindowMaster.SetSituationWindowSettings(window.gameObject, storageSphere, setting);
-                Roost.World.Recipes.SituationWindowMaster.ResizeSituationWindowForStorageTokens(situation, window);
+                SituationStorageSphere storageSphere = window.gameObject.GetComponentInChildren<SituationStorageSphere>();
+                Roost.World.Recipes.SituationWindowMaster.SetSituationWindowSettings(window.gameObject, storageSphere.gameObject, setting);
+                Roost.World.Recipes.SituationWindowMaster.ResizeSituationWindowForStorageTokens(storageSphere);
             }
 
         }

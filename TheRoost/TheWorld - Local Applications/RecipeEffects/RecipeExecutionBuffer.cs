@@ -17,7 +17,7 @@ namespace Roost.World.Recipes
         private static readonly List<ScheduledInduction> inductions = new List<ScheduledInduction>();
         private static readonly List<string> deckRenews = new List<string>();
 
-        //private static readonly HashSet<Sphere> dirtySpheres = new HashSet<Sphere>();
+        private static readonly HashSet<Sphere> dirtySpheres = new HashSet<Sphere>();
         public static readonly Context situationEffectContext = new Context(Context.ActionSource.SituationEffect);
 
         public static void ApplyAll()
@@ -38,11 +38,25 @@ namespace Roost.World.Recipes
             retirements.Clear();
         }
 
+        public static void ApplyRenews()
+        {
+            foreach (string deckId in deckRenews)
+            {
+                Sphere drawSphere = Legerdemain.RenewDeck(deckId);
+                drawSphere.MarkAsDirty();
+            }
+                
+            deckRenews.Clear();
+        }
+
         public static void ApplyMutations()
         {
             foreach (ScheduledMutation mutation in mutations.Keys)
-                foreach (Token onToken in mutations[mutation])
-                    mutation.Apply(onToken);
+                foreach (Token token in mutations[mutation])
+                {
+                    mutation.Apply(token);
+                    token.Sphere.MarkAsDirty();
+                }
             mutations.Clear();
         }
 
@@ -51,7 +65,7 @@ namespace Roost.World.Recipes
             foreach (ElementStack stack in transformations.Keys)
             {
                 transformations[stack].Apply(stack);
-                //dirtySpheres.Add(stack.Token.Sphere);
+                stack.Token.Sphere.MarkAsDirty();
             }
             transformations.Clear();
         }
@@ -66,7 +80,7 @@ namespace Roost.World.Recipes
                 else
                     foreach (ScheduledCreation creation in creations[sphere])
                         creation.ApplyWithoutVFX(sphere);
-                //dirtySpheres.Add(sphere);
+                sphere.MarkAsDirty();
             }
             creations.Clear();
         }
@@ -76,16 +90,9 @@ namespace Roost.World.Recipes
             foreach (Token tokenToMove in movements.Keys)
             {
                 movements[tokenToMove].Apply(tokenToMove);
-                //dirtySpheres.Add(movement.Value);
+                movements[tokenToMove].toSphere.MarkAsDirty();
             }
             movements.Clear();
-        }
-
-        public static void ApplyRenews()
-        {
-            foreach (string deckId in deckRenews)
-                Legerdemain.RenewDeck(deckId);
-            deckRenews.Clear();
         }
 
         public static void ApplyInductions()
@@ -165,6 +172,18 @@ namespace Roost.World.Recipes
             inductions.Add(new ScheduledInduction(situation, recipe, withExpulsion));
         }
 
+        public static void MarkAsDirty(this Sphere sphere)
+        {
+            dirtySpheres.Add(sphere);
+        }
+
+        public static HashSet<Sphere> FlushDirtySpheres()
+        {
+            HashSet<Sphere> result = new HashSet<Sphere>(dirtySpheres);
+            dirtySpheres.Clear();
+            return result;
+        }
+
         private struct ScheduledMutation
         {
             string mutate; int level; bool additive; RetirementVFX vfx;
@@ -196,7 +215,7 @@ namespace Roost.World.Recipes
 
         private struct ScheduledMovement
         {
-            Sphere toSphere; RetirementVFX vfx;
+            public Sphere toSphere; RetirementVFX vfx;
             public ScheduledMovement(Sphere sphere, RetirementVFX vfx)
             { this.toSphere = sphere; this.vfx = vfx; }
 
@@ -237,7 +256,7 @@ namespace Roost.World.Recipes
 
         private struct ScheduledInduction
         {
-            Situation situation; Recipe recipe; Expulsion withExpulsion; 
+            Situation situation; Recipe recipe; Expulsion withExpulsion;
             public ScheduledInduction(Situation situation, Recipe recipe, Expulsion withExpulsion)
             { this.recipe = recipe; this.withExpulsion = withExpulsion; this.situation = situation; }
             public void Apply()
@@ -249,24 +268,6 @@ namespace Roost.World.Recipes
         private static bool SupportsVFX(this Sphere sphere)
         {
             return sphere.SphereCategory == SphereCategory.World || sphere.SphereCategory == SphereCategory.Threshold;
-        }
-
-        //sensibly speaking this method shouldn't be here, but it requires Context, which Buffer has....
-        public static void StackAllTokens(Sphere sphere)
-        {
-            List<Token> tokens = sphere.Tokens;
-            for (int n = 0; n < tokens.Count; n++)
-                for (int m = n + 1; m < tokens.Count; m++)
-                {
-                    if (tokens[n].CanMergeWithToken(tokens[m]))
-                    {
-                        tokens[n].Payload.ModifyQuantity(tokens[m].Quantity, situationEffectContext);
-
-                        tokens[m].Retire();
-                        tokens.Remove(tokens[m]);
-                        m--;
-                    }
-                }
         }
     }
 }

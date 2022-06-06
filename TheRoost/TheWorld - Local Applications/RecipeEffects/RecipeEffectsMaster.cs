@@ -168,15 +168,9 @@ namespace Roost.World.Recipes
             //Birdsong.Sing(VerbosityLevel.SystemChatter, 0, $"EXECUTING: {command.Recipe.Id}");
 
             situation.Recipe = command.Recipe;
-            GrandEffects recipeEffects = situation.Recipe.RetrieveProperty<GrandEffects>(GRAND_EFFECTS);
-            if (recipeEffects != null)
-            {
-                Twins.Crossroads.MarkLocalSituation(situation);
-                recipeEffects.Run(situation, situation.GetSingleSphereByCategory(SphereCategory.SituationStorage));
-                Twins.Crossroads.ResetCache();
-            }
-            else
-                GrandEffects.RunCoreXTriggers(situation.GetSingleSphereByCategory(SphereCategory.SituationStorage), situation, null);
+            Twins.Crossroads.MarkLocalSituation(situation);
+            GrandEffects.RunGrandEffects(situation.Recipe.RetrieveProperty<GrandEffects>(GRAND_EFFECTS), situation, situation.GetSingleSphereByCategory(SphereCategory.SituationStorage));
+            Twins.Crossroads.ResetCache();
         }
 
         private static bool RefReqs(Recipe __instance, AspectsInContext aspectsinContext)

@@ -93,7 +93,7 @@ namespace Roost.World.Recipes
                 RecipeExecutionBuffer.ScheduleDeckRenew(deckSpec.Id);
         }
 
-        public static void RenewDeck(string deckId)
+        public static Sphere RenewDeck(string deckId)
         {
             IHasElementTokens drawPile = dealerstable.GetDrawPile(deckId);
             int tokenCount = drawPile.GetTotalStacksCount();
@@ -102,6 +102,8 @@ namespace Roost.World.Recipes
                 tokens[n].Retire();
 
             dealer.Shuffle(deckId);
+
+            return (Sphere)drawPile;
         }
 
         public static Token GetElementToken(this IHasElementTokens pile, string elementId)

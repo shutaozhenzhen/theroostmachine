@@ -53,10 +53,20 @@ namespace Roost.World.Recipes.Entities
             }
         }
 
-        public void Run(Situation situation, Sphere localSphere)
+        public static void RunGrandEffects(GrandEffects grandEffects, Situation situation, Sphere localSphere)
         {
             Roost.Twins.Crossroads.MarkLocalSphere(localSphere);
 
+            if (grandEffects == null)
+                RunCoreXTriggers(localSphere, situation, null);
+            else
+                grandEffects.Run(situation, localSphere);
+
+            ManageDirtySpheres();
+        }
+
+        public void Run(Situation situation, Sphere localSphere)
+        {
             RunRootEffects();
             RunMovements(localSphere);
             RunDistantEffects(situation);
@@ -258,6 +268,39 @@ namespace Roost.World.Recipes.Entities
 
             RecipeExecutionBuffer.ApplyRetirements();
             RecipeExecutionBuffer.ApplyTransformations();
+        }
+
+        public static void ManageDirtySpheres()
+        {
+            HashSet<Sphere> affectedSpheres = RecipeExecutionBuffer.FlushDirtySpheres();
+            foreach (Sphere sphere in affectedSpheres)
+                ManageDirtySphere(sphere);
+        }
+
+        public static void ManageDirtySphere(Sphere sphere)
+        {
+            if (sphere.SphereCategory == SphereCategory.SituationStorage)
+            {
+                StackAllTokens(sphere);
+                SituationWindowMaster.ResizeSituationWindowForStorageTokens(sphere);
+            }
+        }
+
+        public static void StackAllTokens(Sphere sphere)
+        {
+            List<Token> tokens = sphere.Tokens;
+            for (int n = 0; n < tokens.Count; n++)
+                for (int m = n + 1; m < tokens.Count; m++)
+                {
+                    if (tokens[n].CanMergeWithToken(tokens[m]))
+                    {
+                        tokens[n].Payload.ModifyQuantity(tokens[m].Quantity, RecipeExecutionBuffer.situationEffectContext);
+
+                        tokens[m].Retire();
+                        tokens.Remove(tokens[m]);
+                        m--;
+                    }
+                }
         }
     }
 
