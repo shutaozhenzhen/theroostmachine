@@ -407,7 +407,7 @@ namespace Roost.World.Recipes.Entities
     public class TokenFilterSpec : AbstractEntity<TokenFilterSpec>, IQuickSpecEntity
     {
         [FucineList] public FucineExp<bool> Filter { get; set; }
-        [FucineConstruct(FucineExp<int>.undefined)] public FucineExp<int> Limit { get; set; } //unlimited by default
+        [FucineConstruct(FucineExp<int>.UNDEFINED)] public FucineExp<int> Limit { get; set; } //unlimited by default
 
         public TokenFilterSpec() { }
         public TokenFilterSpec(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }

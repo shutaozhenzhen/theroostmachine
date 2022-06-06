@@ -78,6 +78,14 @@ namespace Roost
             return result;
         }
 
+        public static string UnpackAsString(this IEnumerable collection, Func<object, string> selector)
+        {
+            string result = string.Empty;
+            foreach (object obj in collection)
+                result += selector(obj);
+            return result;
+        }
+
         public static string FormatException(this Exception ex)
         {
             string errorMessage = ex.Message;

@@ -160,6 +160,7 @@ namespace Roost.Twins
             foreach (Token token in tokens)
             {
                 MarkLocalToken(token);
+
                 if (filter.value == true)
                     result.Add(token);
             }
@@ -195,8 +196,15 @@ namespace Roost.Twins
 
         public static void TestExpression(params string[] command)
         {
-            string formula = string.Concat(command);
-            Birdsong.Tweet(new FucineExp<float>(formula));
+            try
+            {
+                string formula = string.Concat(command);
+                Birdsong.Tweet(new FucineExp<float>(formula));
+            }
+            catch (Exception ex)
+            {
+                Birdsong.Tweet(ex.FormatException());
+            }
         }
 
         public static void SphereFind(params string[] command)

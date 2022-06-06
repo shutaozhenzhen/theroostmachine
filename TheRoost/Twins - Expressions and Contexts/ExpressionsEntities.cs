@@ -19,10 +19,10 @@ namespace Roost.Twins.Entities
         readonly FucineRef[] references;
         public readonly string formula;
 
-        public const string undefined = "undefined";
+        public const string UNDEFINED = "undefined";
         public FucineExp(string data)
         {
-            if (data == undefined)
+            if (data == UNDEFINED)
             {
                 expression = null;
                 references = null;
@@ -48,6 +48,7 @@ namespace Roost.Twins.Entities
             {
                 foreach (FucineRef reference in references)
                     expression.Parameters[reference.idInExpression] = reference.value;
+
                 object result = expression.Evaluate();
 
                 return (T)Roost.Beachcomber.Panimporter.ConvertValue(result, typeof(T));
@@ -61,7 +62,7 @@ namespace Roost.Twins.Entities
         public override string ToString()
         {
             if (isUndefined)
-                return undefined;
+                return UNDEFINED;
             return "'" + this.formula + "' = " + this.value;
         }
     }
