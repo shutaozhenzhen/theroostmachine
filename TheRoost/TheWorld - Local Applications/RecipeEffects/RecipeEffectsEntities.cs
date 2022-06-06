@@ -19,7 +19,7 @@ namespace Roost.World.Recipes.Entities
     public class GrandEffects : AbstractEntity<GrandEffects>
     {
         [FucineDict] public Dictionary<string, FucineExp<int>> RootEffects { get; set; }
-        [FucineDict] public Dictionary<FucinePath, TokenFilterSpec> Movements { get; set; }
+        [FucineDict] public Dictionary<FucinePath, List<TokenFilterSpec>> Movements { get; set; }
         [FucineDict] public Dictionary<FucinePath, GrandEffects> DistantEffects { get; set; }
         [FucineDict] public Dictionary<FucineExp<bool>, List<RefMutationEffect>> Mutations { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> Aspects { get; set; }
@@ -95,8 +95,9 @@ namespace Roost.World.Recipes.Entities
                 if (targetSpheres.Count == 0)
                     continue;
 
-                foreach (Token token in Movements[fucinePath].FilterTokens(tokens))
-                    RecipeExecutionBuffer.ScheduleMovement(token, targetSpheres[UnityEngine.Random.Range(0, targetSpheres.Count)], MovementsVFX);
+                foreach (TokenFilterSpec filter in Movements[fucinePath])
+                    foreach (Token token in filter.FilterTokens(tokens))
+                        RecipeExecutionBuffer.ScheduleMovement(token, targetSpheres[UnityEngine.Random.Range(0, targetSpheres.Count)], MovementsVFX);
             }
 
             RecipeExecutionBuffer.ApplyMovements();
