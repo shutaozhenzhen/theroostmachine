@@ -279,11 +279,10 @@ namespace Roost.Beachcomber
                 else if (destinationType == typeof(string))
                     return TypeDescriptor.GetConverter(sourceType).ConvertToInvariantString(data);
 
-                if (data is bool)
-                {
-                    data = (bool)data ? 1 : 0;
-                    sourceType = typeof(int);
-                }
+                if (sourceType == typeof(bool))
+                    return System.Convert.ChangeType((bool)data ? 1 : 0, destinationType);
+                if (destinationType == typeof(bool))
+                    return (float)data > 0 ? true : false;
 
                 return TypeDescriptor.GetConverter(sourceType).ConvertTo(data, destinationType);
             }
@@ -412,7 +411,6 @@ namespace SecretHistories.Fucine
         public override AbstractImporter CreateImporterInstance() { return new Roost.Beachcomber.PanimporterShard(); }
     }
 
-    [AttributeUsage(AttributeTargets.Property)]
     public class FucineConstruct : Fucine
     {
         public FucineConstruct() { DefaultValue = new ArrayList(); }
