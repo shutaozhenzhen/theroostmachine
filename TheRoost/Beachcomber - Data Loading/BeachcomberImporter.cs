@@ -140,18 +140,18 @@ namespace Roost.Beachcomber
                 else if (typeof(IQuickSpecEntity).IsAssignableFrom(entityType))
                 {
                     if (entityType.GetConstructor(Type.EmptyTypes) == null)
-                        throw Birdsong.Cack("QUICK SPEC ENTITY MUST HAVE AN EMPTY CONSTRUCTOR");
+                        throw Birdsong.Cack($"QUICK SPEC ENTITY {entityType.Name.ToUpper()} MUST HAVE AN EMPTY CONSTRUCTOR");
 
                     IQuickSpecEntity quickSpecEntity = FactoryInstantiator.CreateObjectWithDefaultConstructor(entityType) as IQuickSpecEntity;
                     quickSpecEntity.QuickSpec(entityData.ToString());
                     return quickSpecEntity as IEntityWithId;
                 }
 
-                throw Birdsong.Cack("ENTITY DATA IS NOT A DICTIONARY{}, AND THE ENTITY ISN'T A QUICK SPEC ENTITY, SO IT CAN NOT LOAD FROM A SINGLE STRING");
+                throw Birdsong.Cack($"ENTITY DATA IS NOT A DICTIONARY{{}}, AND THE ENTITY TYPE {entityType.Name.ToUpper()} ISN'T QUICKSPEC, SO IT CAN NOT LOAD FROM A SINGLE STRING");
             }
             catch (Exception ex)
             {
-                throw Birdsong.Cack($"ENTITY DATA{{}} IS MALFORMED:\n{ex.FormatException()}");
+                throw Birdsong.Cack($"ENTITY DATA IS MALFORMED:\n{ex.FormatException()}");
             }
         }
 
