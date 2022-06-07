@@ -54,8 +54,9 @@ namespace Roost.World.Recipes
         {
             StoredManifestationDisplayAspectIcons();
             StoredManifestationDisplayQuantities();
-            StorageSphereDisplayChanges();
             DeckEffectsPreviewInStorageSphere();
+            AtTimeOfPower.TabletopLoaded.Schedule(ResizeWindowsOnTabletopEnter, PatchType.Postfix);
+            //additionally, SituationStorage token placement is set from the VagabondConfig.StorageSphereDisplay
         }
 
         private static void StoredManifestationDisplayAspectIcons()
@@ -138,16 +139,7 @@ namespace Roost.World.Recipes
             return storedManifestation.GetChild(1).gameObject;
         }
 
-        private static void StorageSphereDisplayChanges()
-        {
-            //allow tokens in storage sphere to be stacked
-            Machine.Patch(
-                original: typeof(SituationStorageSphere).GetPropertyInvariant("AllowStackMerge").GetGetMethod(),
-                prefix: typeof(SituationWindowMaster).GetMethodInvariant(nameof(AllowStackMerge)));
-
-            //everything else is called from the corresponding setting in VagabondConfig.StorageSphereDisplay
-        }
-
+        //called from the VagabondConfig.StorageSphereDisplay
         public static void SetSituationWindowSettings(GameObject situationWindow, GameObject storageSphereObject, int storagePlacementType)
         {
             GameObject storageDominion = situationWindow.gameObject.FindInChildren("StorageDominion", true);
@@ -242,10 +234,10 @@ namespace Roost.World.Recipes
             situationStorage.transform.parent.parent.parent.GetComponent<SituationWindow>().ContentsDisplayChanged(contentsDisplayChangedArgs);
         }
 
-        private static bool AllowStackMerge(ref bool __result)
+        private static void ResizeWindowsOnTabletopEnter()
         {
-            __result = false;
-            return false;
+            foreach (SituationStorageSphere situationStorage in GameObject.FindObjectsOfType<SituationStorageSphere>()) //zhestko
+                ResizeSituationWindowForStorageTokens(situationStorage);
         }
 
         static void DeckEffectsPreviewInStorageSphere()

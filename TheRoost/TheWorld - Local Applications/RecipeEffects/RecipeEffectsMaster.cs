@@ -49,6 +49,10 @@ namespace Roost.World.Recipes
 
             AtTimeOfPower.NewGameStarted.Schedule(CatchNewGame, PatchType.Prefix);
             AtTimeOfPower.TabletopLoaded.Schedule(TabletopEnter, PatchType.Postfix);
+
+            Machine.Patch(
+                original: typeof(SituationStorageSphere).GetPropertyInvariant("AllowStackMerge").GetGetMethod(),
+                prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(AllowStackMerge)));
         }
 
         public static bool newGameStarted = false;
@@ -227,6 +231,12 @@ namespace Roost.World.Recipes
         public static GrandEffects GetGrandEffects(this Recipe recipe)
         {
             return recipe.RetrieveProperty<GrandEffects>(GRAND_EFFECTS);
+        }
+        //Allowing stack merge for SituationStorage
+        private static bool AllowStackMerge(ref bool __result)
+        {
+            __result = false;
+            return false;
         }
     }
 }

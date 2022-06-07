@@ -116,23 +116,21 @@ namespace Roost.Vagabond.SettingSubscribers
             WhenSettingUpdated(settingValue);
         }
 
-        System.Reflection.FieldInfo situationWindowPayload = typeof(SituationWindow).GetFieldInvariant("_payload");
         public override void WhenSettingUpdated(object newValue)
         {
             int setting = (int)newValue;
 
-            SituationWindow situationWindowPrefab = Watchman.Get<SecretHistories.Services.PrefabFactory>().GetPrefabObjectFromResources<SituationWindow>();
-            GameObject storageSpherePrefab = Watchman.Get<SecretHistories.Services.PrefabFactory>().GetPrefabObjectFromResources<SituationStorageSphere>().gameObject;
-            Roost.World.Recipes.SituationWindowMaster.SetSituationWindowSettings(situationWindowPrefab.gameObject, storageSpherePrefab, Machine.GetConfigValue<int>(Vagabond.ConfigMask.storageSpherePlacement, setting));
+            SituationWindow situationWindowPrefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<SituationWindow>();
+            GameObject storageSpherePrefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<SituationStorageSphere>().gameObject;
+            Roost.World.Recipes.SituationWindowMaster.SetSituationWindowSettings(situationWindowPrefab.gameObject, storageSpherePrefab, setting);
 
             SituationWindow[] allWindows = GameObject.FindObjectsOfType<SituationWindow>(); //zhestko
             foreach (SituationWindow window in allWindows)
             {
-                SituationStorageSphere storageSphere = window.gameObject.GetComponentInChildren<SituationStorageSphere>();
+                SituationStorageSphere storageSphere = window.gameObject.GetComponentInChildren<SituationStorageSphere>(); //zhestko
                 Roost.World.Recipes.SituationWindowMaster.SetSituationWindowSettings(window.gameObject, storageSphere.gameObject, setting);
                 Roost.World.Recipes.SituationWindowMaster.ResizeSituationWindowForStorageTokens(storageSphere);
             }
-
         }
     }
 
