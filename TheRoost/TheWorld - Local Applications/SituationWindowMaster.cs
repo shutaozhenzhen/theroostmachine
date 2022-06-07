@@ -213,12 +213,17 @@ namespace Roost.World.Recipes
         static float rowHeight = 51;
         static float baseRowsAmount = 1;
         static float tokensPerRow = 7;
-        public static void ResizeSituationWindowForStorageTokens(Sphere situationStorage)
+        public static void UpdateSituationWindowDisplay(Sphere situationStorage)
         {
+            Situation situation = situationStorage.GetContainer() as Situation;
+
+            if (situation.Recipe?.Warmup == 0 || !situation.State.IsActiveInThisState(situationStorage))
+                    return;
+
             int visibleTokens = situationStorage.Tokens.Count;
 
             Compendium compendium = Watchman.Get<Compendium>();
-            Situation situation = situationStorage.GetContainer() as Situation;
+
             foreach (string deckId in situation.Recipe.DeckEffects.Keys)
             {
                 DeckSpec deck = compendium.GetEntityById<DeckSpec>(deckId);
@@ -232,14 +237,16 @@ namespace Roost.World.Recipes
 
             ContentsDisplayChangedArgs contentsDisplayChangedArgs = new ContentsDisplayChangedArgs();
             contentsDisplayChangedArgs.ExtraHeightRequested = Mathf.Max(requiredHeight - baseHeight, 0);
-            situationStorage.transform.parent.parent.parent.GetComponent<SituationWindow>().ContentsDisplayChanged(contentsDisplayChangedArgs);
-            situationStorage.transform.parent.parent.parent.GetComponent<SituationWindow>().SituationSphereContentsUpdated(situation);
+            SituationWindow window = situationStorage.transform.parent.parent.parent.GetComponent<SituationWindow>();
+            window.SituationSphereContentsUpdated(situation);
+            //todo additional space for several rows in aspect display
+            window.ContentsDisplayChanged(contentsDisplayChangedArgs);
         }
 
         private static void ResizeWindowsOnTabletopEnter()
         {
             foreach (SituationStorageSphere situationStorage in GameObject.FindObjectsOfType<SituationStorageSphere>()) //zhestko
-                ResizeSituationWindowForStorageTokens(situationStorage);
+                UpdateSituationWindowDisplay(situationStorage);
         }
 
         static void DeckEffectsPreviewInStorageSphere()

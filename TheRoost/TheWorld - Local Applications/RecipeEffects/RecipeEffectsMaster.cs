@@ -248,7 +248,7 @@ namespace Roost.World.Recipes
             if (sphere.SphereCategory == SphereCategory.SituationStorage)
             {
                 StackAllTokens(sphere);
-                SituationWindowMaster.ResizeSituationWindowForStorageTokens(sphere);
+                SituationWindowMaster.UpdateSituationWindowDisplay(sphere);
             }
         }
 

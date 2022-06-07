@@ -129,7 +129,7 @@ namespace Roost.Vagabond.SettingSubscribers
             {
                 SituationStorageSphere storageSphere = window.gameObject.GetComponentInChildren<SituationStorageSphere>(); //zhestko
                 Roost.World.Recipes.SituationWindowMaster.SetSituationWindowSettings(window.gameObject, storageSphere.gameObject, setting);
-                Roost.World.Recipes.SituationWindowMaster.ResizeSituationWindowForStorageTokens(storageSphere);
+                Roost.World.Recipes.SituationWindowMaster.UpdateSituationWindowDisplay(storageSphere);
             }
         }
     }
