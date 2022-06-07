@@ -113,17 +113,11 @@ namespace Roost.Vagabond
  { AtTimeOfPower.NewGameStarted, typeof(MenuScreenController).GetMethodInvariant(nameof(MenuScreenController.BeginNewSaveWithSpecifiedLegacy)) },
  { AtTimeOfPower.TabletopLoaded, typeof(GameGateway).GetMethodInvariant("PopulateEnvironment") },
 
- { AtTimeOfPower.RecipeRequirementsCheck, typeof(Recipe).GetMethodInvariant("RequirementsSatisfiedBy") },
+ { AtTimeOfPower.RecipeRequirementsCheck, typeof(Recipe).GetMethodInvariant(nameof(Recipe.RequirementsSatisfiedBy)) },
 
  { AtTimeOfPower.RecipeExecution, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("Execute", typeof(Situation)) },
- { AtTimeOfPower.RecipeMutations, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("RunMutationEffects") },
- { AtTimeOfPower.RecipeXtriggers, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("RunXTriggers") },
- { AtTimeOfPower.RecipeDeckEffects, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("RunDeckEffect") },
- { AtTimeOfPower.RecipeEffects, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("RunRecipeEffects") },
- { AtTimeOfPower.RecipeVerbManipulations, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("RunVerbManipulations") },
- { AtTimeOfPower.RecipePurges, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("RunElementPurges") },
  { AtTimeOfPower.RecipePortals, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("OpenPortals") },
- { AtTimeOfPower.RecipeVfx, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("DoRecipeVfx") },
+ { AtTimeOfPower.RecipeVFX, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("DoRecipeVfx") },
 
  { AtTimeOfPower.OnPostImportCulture, typeof(Culture).GetMethodInvariant("OnPostImportForSpecificEntity") },
  { AtTimeOfPower.OnPostImportDeck, typeof(DeckSpec).GetMethodInvariant("OnPostImportForSpecificEntity") },
@@ -419,7 +413,7 @@ namespace Roost
     {
         MainMenuLoaded, NewGameStarted, TabletopLoaded,
         RecipeRequirementsCheck, RecipeExecution,
-        RecipeMutations, RecipeXtriggers, RecipeDeckEffects, RecipeEffects, RecipeVerbManipulations, RecipePurges, RecipePortals, RecipeVfx,
+        RecipePortals, RecipeVFX,
         OnPostImportCulture, OnPostImportDeck, OnPostImportElement, OnPostImportEnding, OnPostImportExpulsion, OnPostImportLegacy, OnPostImportLink,
         OnPostImportXTrigger, OnPostImportMutation, OnPostImportPortal, OnPostImportRecipe, OnPostImpostSetting, OnPostImportSlot, OnPostImportVerb
     }
