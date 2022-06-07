@@ -270,15 +270,16 @@ namespace Roost.World.Recipes.Entities
         }
     }
 
-    public class RefMutationEffect : AbstractEntity<RefMutationEffect>, ICustomSpecEntity
+    public class RefMutationEffect : AbstractEntity<RefMutationEffect>, IQuickSpecEntity, ICustomSpecEntity
     {
         [FucineEverValue(ValidateAsElementId = true, DefaultValue = null)] public string Mutate { get; set; }
         [FucineEverValue("1")] public FucineExp<int> Level { get; set; }
         [FucineEverValue(false)] public bool Additive { get; set; }
         [FucineEverValue(DefaultValue = RetirementVFX.CardTransformWhite)] public RetirementVFX VFX { get; set; }
 
+        public RefMutationEffect() { }
         public RefMutationEffect(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
-        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
+        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { this.SetId(Mutate); }
 
         public void CustomSpec(Hashtable data)
         {
@@ -292,6 +293,15 @@ namespace Roost.World.Recipes.Entities
                 }
                 UnknownProperties.Remove(Mutate);
             }
+        }
+
+        public void QuickSpec(string value)
+        {
+            this.SetId(value);
+            Mutate = value;
+            Level = new FucineExp<int>("1");
+            Additive = false;
+            VFX = RetirementVFX.CardTransformWhite;
         }
     }
 
@@ -335,7 +345,7 @@ namespace Roost.World.Recipes.Entities
             }
         }
 
-        public RefMorphDetails() { }
+        public RefMorphDetails() { } 
         public RefMorphDetails(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
         {
