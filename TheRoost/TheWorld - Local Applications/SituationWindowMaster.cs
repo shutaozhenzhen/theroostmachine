@@ -93,7 +93,8 @@ namespace Roost.World.Recipes
             GameObject.DestroyImmediate(quantityBadgeForStoredManifestation.GetComponent<GraphicRaycaster>());
             GameObject.DestroyImmediate(quantityBadgeForStoredManifestation.GetComponent<Canvas>());
 
-            quantityBadgeForStoredManifestation.transform.SetParent(storedManifestation.transform);
+            quantityBadgeForStoredManifestation.transform.SetParent(storedManifestation.transform.GetChild(0));
+            quantityBadgeForStoredManifestation.transform.SetAsLastSibling();
             quantityBadgeForStoredManifestation.SetActive(false);
             quantityBadgeForStoredManifestation.GetComponentInChildren<TextMeshProUGUI>().fontSizeMin = 4;
             RectTransform badgeTransform = quantityBadgeForStoredManifestation.GetComponent<RectTransform>();
@@ -136,7 +137,7 @@ namespace Roost.World.Recipes
         }
         private static GameObject GetQuantityBadge(this Transform storedManifestation)
         {
-            return storedManifestation.GetChild(1).gameObject;
+            return storedManifestation.GetChild(0).GetChild(1).gameObject;
         }
 
         //called from the VagabondConfig.StorageSphereDisplay
@@ -232,6 +233,7 @@ namespace Roost.World.Recipes
             ContentsDisplayChangedArgs contentsDisplayChangedArgs = new ContentsDisplayChangedArgs();
             contentsDisplayChangedArgs.ExtraHeightRequested = Mathf.Max(requiredHeight - baseHeight, 0);
             situationStorage.transform.parent.parent.parent.GetComponent<SituationWindow>().ContentsDisplayChanged(contentsDisplayChangedArgs);
+            situationStorage.transform.parent.parent.parent.GetComponent<SituationWindow>().SituationSphereContentsUpdated(situation);
         }
 
         private static void ResizeWindowsOnTabletopEnter()
