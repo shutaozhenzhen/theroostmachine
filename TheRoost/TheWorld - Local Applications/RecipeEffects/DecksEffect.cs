@@ -26,10 +26,9 @@ namespace Roost.World.Recipes
             Machine.ClaimProperty<DeckSpec, bool>(DECK_IS_HIDDEN);
             //DeckSpec.Draws is only used for recipe internal decks; to allow them to use expressions, this
             Machine.ClaimProperty<DeckSpec, FucineExp<int>>("draws", false, "1");
-
-
         }
-        public static void InitializeOnNewGame()
+
+        public static void InitNewGame()
         {
             dealerstable = Watchman.Get<DealersTable>();
             dealer = new Dealer(dealerstable);

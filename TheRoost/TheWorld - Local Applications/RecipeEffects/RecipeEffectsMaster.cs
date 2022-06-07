@@ -10,6 +10,7 @@ using SecretHistories.UI;
 using SecretHistories.Enums;
 using SecretHistories.Fucine;
 using SecretHistories.Fucine.DataImport;
+using SecretHistories.Spheres;
 
 using Roost.Twins;
 using Roost.Twins.Entities;
@@ -63,7 +64,7 @@ namespace Roost.World.Recipes
         private static void TabletopEnter()
         {
             Crossroads.defaultSphereContainer.Add(Watchman.Get<HornedAxe>().GetDefaultSphere(OccupiesSpaceAs.Intangible));
-            Legerdemain.InitializeOnNewGame();
+            Legerdemain.InitNewGame();
             newGameStarted = false;
         }
 
@@ -174,6 +175,7 @@ namespace Roost.World.Recipes
             situation.Recipe = command.Recipe;
             Twins.Crossroads.MarkLocalSituation(situation);
             GrandEffects.RunGrandEffects(situation.Recipe.RetrieveProperty<GrandEffects>(GRAND_EFFECTS), situation, situation.GetSingleSphereByCategory(SphereCategory.SituationStorage));
+            ManageDirtySpheres();
             Twins.Crossroads.ResetCache();
         }
 
@@ -232,6 +234,37 @@ namespace Roost.World.Recipes
         {
             return recipe.RetrieveProperty<GrandEffects>(GRAND_EFFECTS);
         }
+
+        private static void ManageDirtySpheres()
+        {
+            HashSet<Sphere> affectedSpheres = RecipeExecutionBuffer.FlushDirtySpheres();
+            foreach (Sphere sphere in affectedSpheres)
+                ManageDirtySphere(sphere);
+        }
+
+        //separating into its own method for possible future patching
+        private static void ManageDirtySphere(Sphere sphere)
+        {
+            if (sphere.SphereCategory == SphereCategory.SituationStorage)
+            {
+                StackAllTokens(sphere);
+                SituationWindowMaster.ResizeSituationWindowForStorageTokens(sphere);
+            }
+        }
+
+        private static void StackAllTokens(Sphere sphere)
+        {
+            List<Token> tokens = sphere.Tokens;
+
+            for (int n = tokens.Count - 1; n >= 0; n--)
+                for (int m = n - 1; m >= 0; m--)
+                    if (tokens[n].CanMergeWithToken(tokens[m]))
+                    {
+                        tokens[n].Payload.SetQuantity(tokens[n].Quantity + tokens[m].Quantity, RecipeExecutionBuffer.situationEffectContext);
+                        tokens[m].Retire();
+                    }
+        }
+
         //Allowing stack merge for SituationStorage
         private static bool AllowStackMerge(ref bool __result)
         {
