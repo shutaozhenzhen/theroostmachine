@@ -75,7 +75,7 @@ namespace Roost.Twins.Entities
 
         public readonly FucinePath path;
         public readonly FucineExp<bool> filter;
-        public readonly TokenValueRef target;
+        public readonly FucineValueGetter valueGetter;
 
         public float value
         {
@@ -83,21 +83,21 @@ namespace Roost.Twins.Entities
             {
                 List<Token> tokens = Crossroads.GetTokensByPath(path).FilterTokens(filter);
 
-                return target.GetValueFromTokens(tokens);
+                return valueGetter.GetValueFromTokens(tokens);
             }
         }
 
-        public FucineRef(string referenceId, FucinePath path, FucineExp<bool> filter, TokenValueRef target)
+        public FucineRef(string referenceId, FucinePath path, FucineExp<bool> filter, FucineValueGetter valueGetter)
         {
             this.idInExpression = referenceId;
             this.path = path;
             this.filter = filter;
-            this.target = target;
+            this.valueGetter = valueGetter;
         }
 
         public bool Equals(FucineRef otherReference)
         {
-            return otherReference.path == this.path && otherReference.filter.formula == this.filter.formula && otherReference.target.Equals(this.target);
+            return otherReference.path == this.path && otherReference.filter.formula == this.filter.formula && otherReference.valueGetter.Equals(this.valueGetter);
         }
     }
 
@@ -145,7 +145,7 @@ namespace Roost.Twins.Entities
         public override string ToString() { return fullPath; }
     }
 
-    public struct TokenValueRef
+    public struct FucineValueGetter
     {
         public readonly ValueArea area;
         public readonly ValueOperation operation;
@@ -181,14 +181,14 @@ namespace Roost.Twins.Entities
             return GetResult(tokens);
         }
 
-        public bool Equals(TokenValueRef otherValueRef)
+        public bool Equals(FucineValueGetter otherValueRef)
         {
             return this.area == otherValueRef.area && this.operation == otherValueRef.operation && this.target == otherValueRef.target;
         }
 
-        public TokenValueRef(string target) : this(target, ValueArea.Aspect, ValueOperation.Sum) { }
+        public FucineValueGetter(string target) : this(target, ValueArea.Aspect, ValueOperation.Sum) { }
 
-        public TokenValueRef(string target, ValueArea area, ValueOperation operation)
+        public FucineValueGetter(string target, ValueArea area, ValueOperation operation)
         {
             this.target = target;
             this.area = area;
@@ -229,7 +229,7 @@ namespace Roost.Twins.Entities
                     };
                 case ValueArea.Token:
                     PropertyInfo targetPropertyInfo = typeof(Token).GetProperty(target, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
-                    MethodInfo propertyReturnCreator = typeof(TokenValueRef).GetMethod(nameof(CreatePropertyReturner), BindingFlags.Static | BindingFlags.NonPublic).MakeGenericMethod(typeof(Token), targetPropertyInfo.PropertyType);
+                    MethodInfo propertyReturnCreator = typeof(FucineValueGetter).GetMethod(nameof(CreatePropertyReturner), BindingFlags.Static | BindingFlags.NonPublic).MakeGenericMethod(typeof(Token), targetPropertyInfo.PropertyType);
 
                     return propertyReturnCreator.Invoke(null, new object[] { targetPropertyInfo.GetGetMethod() }) as Func<Token, float>;
                 case ValueArea.Payload:

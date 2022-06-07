@@ -70,7 +70,7 @@ namespace Roost.Twins
         public static FucineRef ParseFucineRef(string data, string referenceId)
         {
             const char partsSeparator = ':';
-            FucinePath targetPath; FucineExp<bool> filter; TokenValueRef target;
+            FucinePath targetPath; FucineExp<bool> filter; FucineValueGetter target;
 
             GetBordersOfSeparatedArea(data, out int openingPosition, out int closingPosition, filterOpening, filterClosing);
             FucineExp<bool> separatedFilter = default(FucineExp<bool>);
@@ -186,7 +186,7 @@ namespace Roost.Twins
             }
         }
 
-        public static TokenValueRef ParseTokenValueRef(string data)
+        public static FucineValueGetter ParseTokenValueRef(string data)
         {
             const char specialOpSymbol = '$';
             const char partsSeparator = '/';
@@ -201,39 +201,39 @@ namespace Roost.Twins
                     if (parts[0][0] == specialOpSymbol)
                     {
                         string specialOpName = parts[0].Substring(1);
-                        TokenValueRef.ValueOperation specialOp;
+                        FucineValueGetter.ValueOperation specialOp;
                         if (Enum.TryParse(specialOpName, true, out specialOp))
-                            return new TokenValueRef(null, TokenValueRef.ValueArea.Targetless, specialOp);
+                            return new FucineValueGetter(null, FucineValueGetter.ValueArea.Targetless, specialOp);
                         else
                             throw Birdsong.Cack($"Unknown special token value reference '{parts[0]}'");
                     }
 
                     //only target is defined, area and operation are default
-                    return new TokenValueRef(parts[0], TokenValueRef.ValueArea.Aspect, TokenValueRef.ValueOperation.Sum);
+                    return new FucineValueGetter(parts[0], FucineValueGetter.ValueArea.Aspect, FucineValueGetter.ValueOperation.Sum);
                 case 2:
                     string target = parts[1];
 
                     //everything is defined, trying to parse area and operation
-                    TokenValueRef.ValueArea area; TokenValueRef.ValueOperation operation;
+                    FucineValueGetter.ValueArea area; FucineValueGetter.ValueOperation operation;
                     string opData = parts[0];
 
-                    foreach (string areaName in Enum.GetNames(typeof(TokenValueRef.ValueArea)))
+                    foreach (string areaName in Enum.GetNames(typeof(FucineValueGetter.ValueArea)))
                         if (opData.StartsWith(areaName, StringComparison.InvariantCultureIgnoreCase))
                         {
                             Enum.TryParse(areaName, true, out area);
 
                             opData = opData.Substring(areaName.Length);
                             if (opData.Length == 0)
-                                return new TokenValueRef(target, area, TokenValueRef.ValueOperation.Sum);
+                                return new FucineValueGetter(target, area, FucineValueGetter.ValueOperation.Sum);
                             if (Enum.TryParse(opData, true, out operation))
-                                return new TokenValueRef(target, area, operation);
+                                return new FucineValueGetter(target, area, operation);
 
                             throw Birdsong.Cack($"Unknown token value reference operation '{opData}' in '{data}'");
                         }
 
-                    area = TokenValueRef.ValueArea.Aspect;
+                    area = FucineValueGetter.ValueArea.Aspect;
                     if (Enum.TryParse(opData, true, out operation))
-                        return new TokenValueRef(target, area, operation);
+                        return new FucineValueGetter(target, area, operation);
 
                     throw Birdsong.Cack($"Unknown token value reference area/operation '{opData}' in '{data}'");
                 default:
