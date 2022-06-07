@@ -76,7 +76,7 @@ namespace Roost.Twins
 
                 foreach (Sphere sphere in Watchman.Get<HornedAxe>().GetSpheres())
                     if (pathPlus.AcceptsCategory(sphere.SphereCategory) && !result.Contains(sphere)
-                        && sphere.GetAbsolutePath().Path.IndexOf(sphereMask, StringComparison.InvariantCultureIgnoreCase) != -1) //nb delete case insentiveness when update drps
+                        && sphere.GetAbsolutePath().Path.IndexOf(sphereMask) != -1)
                     {
                         result.Add(sphere);
 
