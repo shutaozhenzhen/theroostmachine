@@ -153,6 +153,7 @@ namespace Roost.Twins.Entities
         public enum ValueArea
         {
             Aspect, Aspects, //returns aspect amount from the tokens
+            Mutation, Mutations, //return mutation amount of the target aspect
             Verb, Recipe, //retuns verb/recipe amount among the tokens
             Token, //returns token property
             Payload, //return token payload property
@@ -208,6 +209,9 @@ namespace Roost.Twins.Entities
                 case ValueArea.Aspect:
                 case ValueArea.Aspects:
                     return token => token.IsValidElementStack() ? token.GetAspects().AspectValue(target) : 0;
+                case ValueArea.Mutation:
+                case ValueArea.Mutations:
+                    return token => token.IsValidElementStack() ? token.GetCurrentMutations().TryGetValue(target, out int value) ? value : 0 : 0;
                 case ValueArea.Verb:
                     return token => IsSituation(token.Payload) && token.PayloadEntityId == target ? token.Quantity : 0;
                 case ValueArea.Recipe:
