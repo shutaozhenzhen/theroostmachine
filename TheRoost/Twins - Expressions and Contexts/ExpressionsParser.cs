@@ -25,7 +25,7 @@ namespace Roost.Twins
 
                 List<FucineRef> references = new List<FucineRef>();
 
-                expression = expression.Trim();
+                expression = expression.Trim().ToLower();
                 if (isSingleReferenceExpression(expression))
                     expression = string.Concat(referenceOpening, expression, referenceClosing);
 
