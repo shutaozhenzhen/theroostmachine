@@ -7,7 +7,7 @@ namespace Roost
 {
     public static class Birdsong
     {
-        public static VerbosityLevel sensivity;
+        public static VerbosityLevel sensivity = VerbosityLevel.Essential;
         public static void SetVerbosityFromConfig(int value)
         {
             switch (value)

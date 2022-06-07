@@ -20,9 +20,9 @@ namespace Roost.Vagabond
         public static void Patch(MethodBase original, MethodInfo prefix, MethodInfo postfix, MethodInfo transpiler, MethodInfo finalizer, string patchId)
         {
             if (original == null)
-                throw Birdsong.Cack("Trying to patch null method!");
+                throw Birdsong.Cack($"Trying to patch null method with {prefix}, {postfix}, {transpiler}, {finalizer}");
             if (prefix == null && postfix == null && transpiler == null && finalizer == null)
-                throw Birdsong.Cack("All patches for {0}() are null!", original.Name);
+                throw Birdsong.Cack($"All patches for {original.Name}() are null!");
 
             if (patchers.ContainsKey(patchId) == false)
                 patchers[patchId] = new Harmony(patchId);
@@ -37,7 +37,7 @@ namespace Roost.Vagabond
         public static void Unpatch(string patchId)
         {
             if (patchers.ContainsKey(patchId) == false)
-                Birdsong.Tweet("Harmony patch '{0}' isn't present in the Roost Machine");
+                Birdsong.Tweet($"Harmony patch '{patchId}' isn't present in the Roost Machine");
             else if (Harmony.HasAnyPatches(patchId))
                 patchers[patchId].UnpatchAll(patchId);
         }
@@ -52,20 +52,34 @@ namespace Roost.Vagabond
             if (string.IsNullOrWhiteSpace(name))
                 Birdsong.Tweet($"Trying to find whitespace method for class {definingClass.Name} (don't!)");
 
-            MethodInfo method = definingClass.GetMethod(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic);
+            try
+            {
+                MethodInfo method = definingClass.GetMethod(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic);
 
-            if (method == null)
-                Birdsong.Tweet($"Method {name} is not found in class {definingClass.Name}");
+                if (method == null)
+                    Birdsong.Tweet($"Method not found");
 
-            return method;
+                return method;
+            }
+            catch (Exception ex)
+            {
+                throw Birdsong.Cack($"Failed to find method '{name}'  in '{definingClass.Name}', reason: {ex.FormatException()}");
+            }
         }
 
         internal static MethodInfo GetMethodInvariant(Type definingClass, string name, params Type[] args)
         {
-            MethodInfo method = definingClass.GetMethod(name, args);
-            if (method == null)
-                Birdsong.Tweet($"Method {name} with parameters {args.UnpackAsString()} is not found in class {definingClass.Name}");
-            return method;
+            try
+            {
+                MethodInfo method = definingClass.GetMethod(name, args);
+                if (method == null)
+                    throw Birdsong.Cack("Method not found");
+                return method;
+            }
+            catch (Exception ex)
+            {
+                throw Birdsong.Cack($"Failed to find method '{name}' with parameters '{args.UnpackAsString()}' in '{definingClass.Name}', reason: {ex.FormatException()}");
+            }
         }
 
         internal static FieldInfo GetFieldInvariant(this Type definingClass, string name)
@@ -101,7 +115,7 @@ namespace Roost.Vagabond
 
  { AtTimeOfPower.RecipeRequirementsCheck, typeof(Recipe).GetMethodInvariant("RequirementsSatisfiedBy") },
 
- { AtTimeOfPower.RecipeExecution, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("Execute") },
+ { AtTimeOfPower.RecipeExecution, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("Execute", typeof(Situation)) },
  { AtTimeOfPower.RecipeMutations, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("RunMutationEffects") },
  { AtTimeOfPower.RecipeXtriggers, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("RunXTriggers") },
  { AtTimeOfPower.RecipeDeckEffects, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("RunDeckEffect") },

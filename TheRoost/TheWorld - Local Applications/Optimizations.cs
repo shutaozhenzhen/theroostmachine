@@ -17,11 +17,7 @@ namespace Roost.World
         public static void Enact()
         {
             Machine.Patch(
-                original: typeof(Sphere).GetMethodInvariant(nameof(Sphere.Update)),
-                prefix: typeof(Optimizations).GetMethodInvariant(nameof(NoUselessUpdate)));
-
-            Machine.Patch(
-                original: typeof(Sphere).GetMethodInvariant(nameof(Token.Update)),
+                original: typeof(Token).GetMethodInvariant(nameof(Token.Update)),
                 prefix: typeof(Optimizations).GetMethodInvariant(nameof(NoUselessUpdate)));
 
             Machine.Patch(
