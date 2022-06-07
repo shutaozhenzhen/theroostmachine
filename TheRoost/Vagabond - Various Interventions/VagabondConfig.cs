@@ -20,7 +20,7 @@ namespace Roost.Vagabond
         public const string storageSpherePlacement = "StorageSpherePlacement";
         internal static void Enact()
         {
-            AtTimeOfPower.MainMenuLoaded.Schedule(ApplyConfigs, PatchType.Postfix);
+            AtTimeOfPower.MenuSceneInit.Schedule(ApplyConfigs, PatchType.Postfix);
 
             Machine.Patch(typeof(SecretHistory).GetPropertyInvariant(nameof(SecretHistory.Sensitivity)).GetGetMethod(),
                 prefix: typeof(ConfigMask).GetMethodInvariant(nameof(ConsoleSensitivity)));

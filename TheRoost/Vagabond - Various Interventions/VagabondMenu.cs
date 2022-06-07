@@ -9,7 +9,7 @@ namespace Roost.Vagabond
     {
         internal static void Enact()
         {
-            AtTimeOfPower.MainMenuLoaded.Schedule(TapIntoMainMenu, PatchType.Prefix);
+            AtTimeOfPower.MenuSceneInit.Schedule(TapIntoMainMenu, PatchType.Prefix);
 
             Machine.Patch(
                 original: typeof(NotificationWindow).GetMethodInvariant("SetDetails"),

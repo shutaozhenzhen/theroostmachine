@@ -19,7 +19,7 @@ namespace Roost.Vagabond
     {
         internal static void Enact()
         {
-            AtTimeOfPower.MainMenuLoaded.Schedule(CreateCommandLine, PatchType.Postfix);
+            AtTimeOfPower.MenuSceneInit.Schedule(CreateCommandLine, PatchType.Postfix);
 
             AddCommand("reimport", CommandsCollection.Reimport);
             AddCommand("compendium", CommandsCollection.CompendiumInfo);

@@ -31,7 +31,7 @@ namespace Roost.Elegiast
 
         internal static void Enact()
         {
-            AtTimeOfPower.MainMenuLoaded.Schedule(CustomAchievementInterface.CreateInterface, PatchType.Prefix, Enactors.Elegiast.patchId);
+            AtTimeOfPower.MenuSceneInit.Schedule(CustomAchievementInterface.CreateInterface, PatchType.Prefix, Enactors.Elegiast.patchId);
             AtTimeOfPower.RecipeExecution.Schedule<RecipeCompletionEffectCommand>(UnlockAchievements, PatchType.Prefix, Enactors.Elegiast.patchId);
 
             LoadAllUnlocks();

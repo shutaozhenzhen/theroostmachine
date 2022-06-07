@@ -48,8 +48,8 @@ namespace Roost.World.Recipes
 
             Machine.ClaimProperty<Element, Dictionary<string, List<RefMorphDetails>>>("xtriggers");
 
-            AtTimeOfPower.NewGameStarted.Schedule(CatchNewGame, PatchType.Prefix);
-            AtTimeOfPower.TabletopLoaded.Schedule(TabletopEnter, PatchType.Postfix);
+            AtTimeOfPower.NewGame.Schedule(CatchNewGame, PatchType.Prefix);
+            AtTimeOfPower.TabletopSceneInit.Schedule(TabletopEnter, PatchType.Postfix);
 
             Machine.Patch(
                 original: typeof(SituationStorageSphere).GetPropertyInvariant("AllowStackMerge").GetGetMethod(),

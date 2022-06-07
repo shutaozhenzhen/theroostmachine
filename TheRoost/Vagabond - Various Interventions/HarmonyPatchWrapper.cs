@@ -109,9 +109,11 @@ namespace Roost.Vagabond
 
         private static readonly Dictionary<AtTimeOfPower, MethodBase> methodsToPatch = new Dictionary<AtTimeOfPower, MethodBase>()
         {
- { AtTimeOfPower.MainMenuLoaded, typeof(MenuScreenController).GetMethodInvariant("InitialiseServices") },
- { AtTimeOfPower.NewGameStarted, typeof(MenuScreenController).GetMethodInvariant(nameof(MenuScreenController.BeginNewSaveWithSpecifiedLegacy)) },
- { AtTimeOfPower.TabletopLoaded, typeof(GameGateway).GetMethodInvariant("PopulateEnvironment") },
+ { AtTimeOfPower.QuoteSceneInit, typeof(SplashScreen).GetMethodInvariant("Start") },
+ { AtTimeOfPower.MenuSceneInit, typeof(MenuScreenController).GetMethodInvariant("InitialiseServices") },
+ { AtTimeOfPower.TabletopSceneInit, typeof(GameGateway).GetMethodInvariant("PopulateEnvironment") },
+
+ { AtTimeOfPower.NewGame, typeof(MenuScreenController).GetMethodInvariant(nameof(MenuScreenController.BeginNewSaveWithSpecifiedLegacy)) },
 
  { AtTimeOfPower.RecipeRequirementsCheck, typeof(Recipe).GetMethodInvariant(nameof(Recipe.RequirementsSatisfiedBy)) },
 
@@ -411,7 +413,8 @@ namespace Roost
     public enum PatchType { Postfix, Prefix }
     public enum AtTimeOfPower
     {
-        MainMenuLoaded, NewGameStarted, TabletopLoaded,
+
+        QuoteSceneInit, MenuSceneInit, NewGame, TabletopSceneInit,
         RecipeRequirementsCheck, RecipeExecution,
         RecipePortals, RecipeVFX,
         OnPostImportCulture, OnPostImportDeck, OnPostImportElement, OnPostImportEnding, OnPostImportExpulsion, OnPostImportLegacy, OnPostImportLink,

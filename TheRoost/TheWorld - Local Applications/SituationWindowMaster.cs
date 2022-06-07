@@ -55,7 +55,7 @@ namespace Roost.World.Recipes
             StoredManifestationDisplayAspectIcons();
             StoredManifestationDisplayQuantities();
             DeckEffectsPreviewInStorageSphere();
-            AtTimeOfPower.TabletopLoaded.Schedule(ResizeWindowsOnTabletopEnter, PatchType.Postfix);
+            AtTimeOfPower.TabletopSceneInit.Schedule(ResizeWindowsOnTabletopEnter, PatchType.Postfix);
             //additionally, SituationStorage token placement is set from the VagabondConfig.StorageSphereDisplay
         }
 
