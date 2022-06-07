@@ -268,7 +268,7 @@ namespace Roost.World.Recipes
         //Allowing stack merge for SituationStorage
         private static bool AllowStackMerge(ref bool __result)
         {
-            __result = false;
+            __result = true;
             return false;
         }
     }
