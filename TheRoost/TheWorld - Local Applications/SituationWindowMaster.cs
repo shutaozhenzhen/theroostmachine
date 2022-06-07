@@ -86,6 +86,12 @@ namespace Roost.World.Recipes
 
             GameObject quantityBadgeForStoredManifestation = GameObject.Instantiate(quantityBadgePrefab);
             GameObject.DestroyImmediate(quantityBadgeForStoredManifestation.GetComponent<ElementStackBadge>());
+
+            //somehow just disabling Canvas.overrideSorting doesn't work - it just ignores me setting it to false
+            //well then, guess you'll die
+            GameObject.DestroyImmediate(quantityBadgeForStoredManifestation.GetComponent<GraphicRaycaster>());
+            GameObject.DestroyImmediate(quantityBadgeForStoredManifestation.GetComponent<Canvas>());
+
             quantityBadgeForStoredManifestation.transform.SetParent(storedManifestation.transform);
             quantityBadgeForStoredManifestation.SetActive(false);
             quantityBadgeForStoredManifestation.GetComponentInChildren<TextMeshProUGUI>().fontSizeMin = 4;
@@ -105,7 +111,6 @@ namespace Roost.World.Recipes
             Machine.Patch(
                 original: typeof(StoredManifestation).GetMethodInvariant(nameof(StoredManifestation.Unhighlight)),
                 prefix: typeof(SituationWindowMaster).GetMethodInvariant(nameof(StoredManifestationUnhighlightQuantity)));
-
         }
 
         private static void DisplayQuantity(StoredManifestation __instance, IManifestable manifestable)
