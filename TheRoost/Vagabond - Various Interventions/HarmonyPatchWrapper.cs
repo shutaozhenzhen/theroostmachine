@@ -358,12 +358,27 @@ namespace Roost
         {
             return Vagabond.HarmonyMask.GetPropertyInvariant(definingClass, propertyName);
         }
+
+        public static MethodInfo GetMethod<T>(string methodName, params Type[] arguments)
+        {
+            if (arguments == null)
+                return typeof(T).GetMethodInvariant(methodName);
+            else
+                return typeof(T).GetMethodInvariant(methodName, arguments);
+        }
     }
 
     //patching methods
     public static partial class Machine
     {
         private const string DEFAULT_PATCH_ID = "theroostmachine";
+
+        public static void Patch<T>(string methodName, MethodInfo prefix = null, MethodInfo postfix = null, MethodInfo transpiler = null, MethodInfo finalizer = null, string patchId = DEFAULT_PATCH_ID)
+        {
+            MethodInfo original = typeof(T).GetMethodInvariant(methodName);
+            Vagabond.HarmonyMask.Patch(original, prefix, postfix, transpiler, finalizer, patchId);
+        }
+
         public static void Patch(MethodBase original, MethodInfo prefix = null, MethodInfo postfix = null, MethodInfo transpiler = null, MethodInfo finalizer = null, string patchId = DEFAULT_PATCH_ID)
         {
             Vagabond.HarmonyMask.Patch(original, prefix, postfix, transpiler, finalizer, patchId);

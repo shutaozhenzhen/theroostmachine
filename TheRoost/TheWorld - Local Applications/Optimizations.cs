@@ -10,11 +10,11 @@ using SecretHistories.Commands;
 
 namespace Roost.World
 {
-    static class Optimizations
+    internal static class Optimizations
     {
         const string LEGACY_FAMILY = nameof(Legacy.Family);
         const string DECK_LEGACY_FAMILY = nameof(DeckSpec.ForLegacyFamily);
-        public static void Enact()
+        internal static void Enact()
         {
             Machine.Patch(
                 original: typeof(Token).GetMethodInvariant(nameof(Token.Update)),
@@ -38,11 +38,11 @@ namespace Roost.World
             //the changes are nigh identical, only arguments we need to access are different
             Machine.Patch(
                 original: typeof(RootPopulationCommand).GetMethodInvariant("DealersTableForLegacy"),
-                transpiler: typeof(Optimizations).GetMethodInvariant(nameof(CheckActiveDeckForNewGame)));
+                transpiler: typeof(Optimizations).GetMethodInvariant(nameof(CheckActiveDecksOnNewGame)));
 
             Machine.Patch(
                 original: typeof(PetromnemeImporter).GetMethodInvariant("AddDecksToRootCommand"),
-                transpiler: typeof(Optimizations).GetMethodInvariant(nameof(CheckActiveDeckForSaveConversion)));
+                transpiler: typeof(Optimizations).GetMethodInvariant(nameof(CheckActiveDecksForSaveConversion)));
         }
 
         private static bool NoUselessUpdate()
@@ -70,7 +70,7 @@ namespace Roost.World
             return false;
         }
 
-        private static IEnumerable<CodeInstruction> CheckActiveDeckForNewGame(IEnumerable<CodeInstruction> instructions)
+        private static IEnumerable<CodeInstruction> CheckActiveDecksOnNewGame(IEnumerable<CodeInstruction> instructions)
         {
             List<CodeInstruction> myCode = new List<CodeInstruction>()
             {
@@ -84,7 +84,7 @@ namespace Roost.World
             return instructions.ReplaceSegment(startMask, endMask, myCode);
         }
 
-        private static IEnumerable<CodeInstruction> CheckActiveDeckForSaveConversion(IEnumerable<CodeInstruction> instructions)
+        private static IEnumerable<CodeInstruction> CheckActiveDecksForSaveConversion(IEnumerable<CodeInstruction> instructions)
         {
             List<CodeInstruction> myCode = new List<CodeInstruction>()
             {
