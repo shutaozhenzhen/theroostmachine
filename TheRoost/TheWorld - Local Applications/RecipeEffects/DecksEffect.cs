@@ -33,25 +33,23 @@ namespace Roost.World.Recipes
             dealerstable = Watchman.Get<DealersTable>();
             dealer = new Dealer(dealerstable);
 
+            return;
+            Compendium compendium = Watchman.Get<Compendium>();
             if (RecipeEffectsMaster.newGameStarted)
-            {
-                Legacy currentLegacy = Watchman.Get<Stable>().Protag().ActiveLegacy;
+                foreach (IHasElementTokens deckDrawPile in dealerstable.GetDrawPiles())
+                {
+                    string deckId = deckDrawPile.GetDeckSpecId();
+                    dealer.Shuffle(deckId);
+                    DeckSpec deckSpec = compendium.GetEntityById<DeckSpec>(deckId);
 
-                foreach (DeckSpec deck in Watchman.Get<Compendium>().GetEntitiesAsList<DeckSpec>())
-                    if (DeckIsActiveForLegacy(deck, currentLegacy))
+                    if (deckDrawPile.GetTotalStacksCount() == 0)
                     {
-                        dealer.Shuffle(deck);
-                        IHasElementTokens drawPile = dealerstable.GetDrawPile(deck.Id);
-
-                        if (drawPile.GetTotalStacksCount() == 0)
-                        {
-                            if (deck.DefaultCard != "")
-                                drawPile.ProvisionElementToken(deck.DefaultCard, 1);
-                            else
-                                Birdsong.Tweet($"For whatever reason, deck {deck.Id} is completely empty, can't be reshuffled and has no default card");
-                        }
+                        if (deckSpec.DefaultCard != "")
+                            deckDrawPile.ProvisionElementToken(deckSpec.DefaultCard, 1);
+                        else
+                            Birdsong.Tweet($"For whatever reason, deck {deckId} is completely empty, can't be reshuffled and has no default card");
                     }
-            }
+                }
         }
 
         public static void Deal(string deckId, Sphere toSphere, int draws = 1)
@@ -61,10 +59,14 @@ namespace Roost.World.Recipes
                 throw Birdsong.Cack($"TRYING TO DRAW FROM NON-EXISTENT DECK '{deckId}'");
 
             IHasElementTokens drawPile = dealerstable.GetDrawPile(deckId);
+
+            if (drawPile.GetTotalStacksCount() == 0) //catching not-so-mysterious bug
+                dealer.Shuffle(deckSpec);
+
             Limbo limbo = Watchman.Get<Limbo>();
             for (int i = 0; i < draws; i++)
             {
-                if (drawPile.GetTotalStacksCount() - 1 < 0)//catching a mysterious bug
+                if (drawPile.GetTotalStacksCount() == 0)//catching a mysterious bug
                     throw Birdsong.Cack($"DECK '{deckId}' IS EMPTY, WON'T SHUFFLE AND HAS NO DEFAULT CARD (AND SOMEHOW PASSED THE PREVIOUS CHECK)");
 
                 Token token = drawPile.GetElementTokens()[drawPile.GetTotalStacksCount() - 1];
