@@ -39,6 +39,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Beachcomber - Data Loading\BeachcomberIgnore.cs" />
+    <Compile Include="Elegiast - Achievements\ElegiastArchive.cs" />
     <Compile Include="TheWorld - Local Applications\Optimizations.cs" />
     <Compile Include="TheWorld - Local Applications\SituationWindowMaster.cs" />
     <Compile Include="TheWorld - Local Applications\CardVFXMaster.cs" />
