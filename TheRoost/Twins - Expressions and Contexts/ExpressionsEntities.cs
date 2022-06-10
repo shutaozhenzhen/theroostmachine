@@ -80,7 +80,7 @@ namespace Roost.Twins.Entities
         public List<Token> tokens { get { return Crossroads.GetTokensByPath(path).FilterTokens(filter); } }
         public float value { get { return target.GetValueFromTokens(this.tokens); } }
 
-        public FucineRef(string referenceId, string referenceData)
+        public FucineRef(string referenceData, string referenceId)
         {
             this.idInExpression = referenceId;
             TwinsParser.ParseFucineRef(referenceData, out path, out filter, out target);
