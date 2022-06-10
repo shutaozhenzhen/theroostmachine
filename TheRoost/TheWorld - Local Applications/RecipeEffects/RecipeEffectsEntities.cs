@@ -218,7 +218,7 @@ namespace Roost.World.Recipes.Entities
                     List<Token> filteredTokens = allTokens.FilterTokens(filter);
                     while (level < 0 && filteredTokens.Count > 0)
                     {
-                        RecipeExecutionBuffer.ScheduleRetirement(filteredTokens[UnityEngine.Random.Range(0, filteredTokens.Count)], DestroyVFX);
+                        RecipeExecutionBuffer.ScheduleQuantityChange(filteredTokens[UnityEngine.Random.Range(0, filteredTokens.Count)], -1, DestroyVFX);
                         level++;
                     }
                 }
@@ -226,7 +226,7 @@ namespace Roost.World.Recipes.Entities
                     RecipeExecutionBuffer.ScheduleCreation(sphere, filter.formula, level, CreateVFX);
             }
 
-            RecipeExecutionBuffer.ApplyRetirements();
+            RecipeExecutionBuffer.ApplyQuantityChanges();
             RecipeExecutionBuffer.ApplyCreations();
         }
 
