@@ -33,7 +33,6 @@ namespace Roost.World.Recipes
             ApplyTransformations();
             ApplyCreations();
             ApplyMovements();
-            ApplyInductions();
         }
 
         public static void ApplyRetirements()
@@ -128,13 +127,8 @@ namespace Roost.World.Recipes
             foreach (Situation situation in inductions.Keys)
             {
                 AspectsInContext aspectsInContext = Watchman.Get<HornedAxe>().GetAspectsInContext(situation.GetAspects(true), null);
-                foreach (LinkedRecipeDetails linkedRecipeDetails in inductions[situation])
-                    if (linkedRecipeDetails.ShouldAlwaysSucceed() || UnityEngine.Random.Range(1, 101) <= linkedRecipeDetails.Chance)
-                    {
-                        Recipe recipe = Watchman.Get<Compendium>().GetEntityById<Recipe>(linkedRecipeDetails.Id);
-                        if (recipe.RequirementsSatisfiedBy(aspectsInContext))
-                            RecipeLinkMaster.SpawnSituation(situation, recipe, linkedRecipeDetails.Expulsion, FucinePath.Current());
-                    }
+                foreach (LinkedRecipeDetails link in inductions[situation])
+                    RecipeLinkMaster.TrySpawnSituation(situation, link, aspectsInContext);
             }
             inductions.Clear();
         }

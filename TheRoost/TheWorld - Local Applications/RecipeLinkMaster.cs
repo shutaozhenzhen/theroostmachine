@@ -12,7 +12,7 @@ namespace Roost.World.Recipes
 {
     public static class RecipeLinkMaster
     {
-        public readonly static Action<Situation, Recipe, Expulsion, FucinePath> SpawnSituation = Delegate.CreateDelegate(typeof(Action<Situation, Recipe, Expulsion, FucinePath>), typeof(Situation).GetMethodInvariant("AdditionalRecipeSpawnToken")) as Action<Situation, Recipe, Expulsion, FucinePath>;
+        private readonly static Action<Situation, Recipe, Expulsion, FucinePath> SpawnSituation = Delegate.CreateDelegate(typeof(Action<Situation, Recipe, Expulsion, FucinePath>), typeof(Situation).GetMethodInvariant("AdditionalRecipeSpawnToken")) as Action<Situation, Recipe, Expulsion, FucinePath>;
         private static readonly List<Recipe> xtriggerLinks = new List<Recipe>();
         const string CHANCE = "chance";
         internal static void Enact()
@@ -69,14 +69,19 @@ namespace Roost.World.Recipes
             AspectsInContext aspectsInContext = Watchman.Get<HornedAxe>().GetAspectsInContext(situation.GetAspects(true), null);
 
             foreach (LinkedRecipeDetails linkedRecipeDetails in aspectElement.Induces)
-                if (linkedRecipeDetails.ShouldAlwaysSucceed() || UnityEngine.Random.Range(1, 101) <= linkedRecipeDetails.Chance)
-                {
-                    Recipe recipe = Watchman.Get<Compendium>().GetEntityById<Recipe>(linkedRecipeDetails.Id);
-                    if (recipe.RequirementsSatisfiedBy(aspectsInContext))
-                        SpawnSituation(situation, recipe, linkedRecipeDetails.Expulsion, FucinePath.Current());
-                }
+                TrySpawnSituation(situation, linkedRecipeDetails, aspectsInContext);
 
             return false;
+        }
+
+        public static void TrySpawnSituation(Situation situation, LinkedRecipeDetails linkedRecipeDetails, AspectsInContext aspectsInContext)
+        {
+            if (linkedRecipeDetails.ShouldAlwaysSucceed() || UnityEngine.Random.Range(1, 101) <= linkedRecipeDetails.Chance)
+            {
+                Recipe recipe = Watchman.Get<Compendium>().GetEntityById<Recipe>(linkedRecipeDetails.Id);
+                if (recipe.RequirementsSatisfiedBy(aspectsInContext))
+                    SpawnSituation(situation, recipe, linkedRecipeDetails.Expulsion, FucinePath.Current());
+            }
         }
 
         //RecipeConductor.GetLinkedRecipe() prefix

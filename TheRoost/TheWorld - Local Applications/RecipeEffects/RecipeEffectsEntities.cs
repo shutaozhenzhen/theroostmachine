@@ -297,7 +297,10 @@ namespace Roost.World.Recipes.Entities
         [FucineValue(false)] public bool IgnoreAmount { get; set; }
         [FucineValue(false)] public bool IgnoreCatalystAmount { get; set; }
 
-        [FucineSubEntity(typeof(LinkedRecipeDetails))] public LinkedRecipeDetails Induction { get; set; }
+        private LinkedRecipeDetails Induction { get; set; }
+        [FucinePathValue("")] public FucinePath ToPath { get; set; }
+        [FucineSubEntity(typeof(Expulsion))] public Expulsion Expulsion { get; set; }
+
 
         public void QuickSpec(string value)
         {
@@ -307,7 +310,7 @@ namespace Roost.World.Recipes.Entities
             Level = new FucineExp<int>("1");
             IgnoreAmount = false;
             IgnoreCatalystAmount = false;
-            Induction = null;
+            Expulsion = null;
             VFX = RetirementVFX.CardTransformWhite;
         }
 
@@ -339,21 +342,25 @@ namespace Roost.World.Recipes.Entities
                     break;
                 case MorphEffectsExtended.Link:
                 case MorphEffectsExtended.Induce:
-                    if (string.IsNullOrEmpty(Induction.Id))
-                        Induction.SetId(this.Id);
+                    Recipe linkedRecipe = Machine.GetEntity<Recipe>(this.Id);
+                    if (linkedRecipe == null)
+                        Birdsong.Tweet($"Unknown recipe id '{this.Id}' in Morph Effects");
+
+                    Induction = LinkedRecipeDetails.AsCurrentRecipe(linkedRecipe); //no other way to construct it normally
+                    Induction.SetProperty("chance", this.Chance);
+                    Induction.ToPath = this.ToPath;
                     break;
                 case MorphEffectsExtended.DeckDraw:
                 case MorphEffectsExtended.DeckShuffle:
-
-                    if (Machine.GetEntity<Recipe>(this.Id) == null)
+                    if (Machine.GetEntity<DeckSpec>(this.Id) == null)
                         Birdsong.Tweet($"Unknown deck id '{this.Id}' in Morph Effects");
                     break;
                 default:
                     break;
             }
 
-            if (MorphEffect != MorphEffectsExtended.Induce)
-                Induction = null;
+            Expulsion = null;
+            ToPath = null;
         }
 
         public void Execute(Situation situation, Token targetToken, string targetElementId, int targetElementAmount, int catalystAmount, bool onToken)
