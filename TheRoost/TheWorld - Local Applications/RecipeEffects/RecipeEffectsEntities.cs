@@ -223,7 +223,7 @@ namespace Roost.World.Recipes.Entities
 
             foreach (GrandEffects sphereEffect in DistantEffects)
             {
-                List<Sphere> targetSpheres = Crossroads.GetSpheresByPath(Target);
+                List<Sphere> targetSpheres = Crossroads.GetSpheresByPath(sphereEffect.Target);
                 foreach (Sphere sphere in targetSpheres)
                     sphereEffect.Run(situation, sphere, false);
             }
