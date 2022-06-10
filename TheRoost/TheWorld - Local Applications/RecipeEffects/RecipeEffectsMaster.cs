@@ -34,6 +34,8 @@ namespace Roost.World.Recipes
             Dictionary<string, Type> allRecipeEffectsProperties = new Dictionary<string, Type>();
             foreach (CachedFucineProperty<GrandEffects> cachedProperty in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
                 allRecipeEffectsProperties.Add(cachedProperty.LowerCaseName, cachedProperty.ThisPropInfo.PropertyType);
+            //we don't want the first set of effects to have any target
+            allRecipeEffectsProperties.Remove("target");
             Machine.ClaimProperties<Recipe>(allRecipeEffectsProperties);
 
             AtTimeOfPower.OnPostImportRecipe.Schedule<Recipe, ContentImportLog, Compendium>(WrapAndFlushFirstPassEffects, PatchType.Prefix);
