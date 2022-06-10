@@ -168,7 +168,7 @@ namespace Roost.World
             {
                 Legacy legacy = Watchman.Get<Stable>().Protag().ActiveLegacy;
                 if (legacy == null) return;
-                Birdsong.Sing("Hello World from Fevered Imagination's Main Menu Manager!: Current legacy: " + legacy.Id);
+                Birdsong.Tweet(VerbosityLevel.SystemChatter, 0, "Hello World from Fevered Imagination's Main Menu Manager!: Current legacy: " + legacy.Id);
 
                 LegacyMenuVisualsOverride visualsOverride = legacy.RetrieveProperty<LegacyMenuVisualsOverride>("menuVisualsOverride");
                 if (visualsOverride == null) return;

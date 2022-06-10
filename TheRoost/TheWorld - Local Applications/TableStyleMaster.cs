@@ -57,7 +57,7 @@ namespace Roost.World
 
         public static void fetchReferencesAndInit()
         {
-            Birdsong.Sing("Hello World from Fevered Imagination's Table Manager!");
+            Birdsong.Tweet(VerbosityLevel.SystemChatter, 0, "Hello World from Fevered Imagination's Table Manager!");
             tabletop = GameObject.Find("TabletopBackground");
             tabletopImageComponent = tabletop.GetComponent<Image>();
             leather = GameObject.Find("Leather");
