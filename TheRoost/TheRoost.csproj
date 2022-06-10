@@ -40,6 +40,7 @@
   <ItemGroup>
     <Compile Include="Beachcomber - Data Loading\BeachcomberIgnore.cs" />
     <Compile Include="Elegiast - Achievements\ElegiastArchive.cs" />
+    <Compile Include="TheWorld - Local Applications\MainMenu\MainMenuStyleMaster.cs" />
     <Compile Include="TheWorld - Local Applications\Optimizations.cs" />
     <Compile Include="TheWorld - Local Applications\SituationWindowMaster.cs" />
     <Compile Include="TheWorld - Local Applications\CardVFXMaster.cs" />
@@ -49,29 +50,23 @@
     <Compile Include="TheWorld - Local Applications\TableStyleMaster.cs" />
     <Compile Include="TheWorld - Local Applications\StartupQuoteMaster.cs" />
     <Compile Include="TheWorld - Local Applications\MainMenu\LegacyMenuVisualsOverride.cs" />
-    <Compile Include="TheWorld - Local Applications\MainMenu\MainMenuMaster.cs" />
     <Compile Include="TheWorld - Local Applications\RecipeEffects\RecipeEffectsEntities.cs" />
     <Compile Include="TheWorld - Local Applications\RecipeEffects\DecksEffect.cs" />
-
     <Compile Include="Twins - Expressions and Contexts\ContextAccessors.cs" />
     <Compile Include="Twins - Expressions and Contexts\TwinsParser.cs" />
     <Compile Include="Twins - Expressions and Contexts\ExpressionsEntities.cs" />
-
     <Compile Include="Vagabond - Various Interventions\HarmonyPatchWrapper.cs" />
     <Compile Include="Vagabond - Various Interventions\VagabondConfig.cs" />
     <Compile Include="Vagabond - Various Interventions\VagabondMenu.cs" />
     <Compile Include="Vagabond - Various Interventions\CommandLine.cs" />
     <Compile Include="Vagabond - Various Interventions\CustomSavesMaster.cs" />
-
     <Compile Include="Elegiast - Achievements\ElegiastInterface.cs" />
     <Compile Include="Elegiast - Achievements\ElegiastEntities.cs" />
     <Compile Include="Elegiast - Achievements\ElegiastManager.cs" />
-
     <Compile Include="Beachcomber - Data Loading\BeachcomberLoader.cs" />
     <Compile Include="Beachcomber - Data Loading\BeachcomberExamples.cs" />
     <Compile Include="Beachcomber - Data Loading\BeachcomberImporter.cs" />
     <Compile Include="Beachcomber - Data Loading\BeachcomberUsurper.cs" />
-
     <Compile Include="Birdsong.cs" />
     <Compile Include="MainHall.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -142,6 +137,9 @@
     <Reference Include="UnityEngine.UIModule">
       <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.UIModule.dll</HintPath>
       <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.ParticleSystemModule">
+      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.ParticleSystemModule.dll</HintPath>
     </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
