@@ -45,7 +45,7 @@ namespace Roost
         }
 
         //finally, an optimal name for error throwing
-        public static System.Exception Cack(object data, params object[] furtherData)
+        public static Exception Cack(object data, params object[] furtherData)
         {
             string message = FormatMessage(data, furtherData);
             return new ApplicationException(message);

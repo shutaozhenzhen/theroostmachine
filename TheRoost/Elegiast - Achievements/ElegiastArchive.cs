@@ -2,11 +2,7 @@
 using System.Collections.Generic;
 
 using SecretHistories.UI;
-using SecretHistories.Spheres;
-using SecretHistories.Assets.Scripts.Application.Entities.NullEntities;
 using SecretHistories.Entities;
-using SecretHistories.Services;
-using SecretHistories.Commands;
 
 namespace Roost.Elegiast
 {
@@ -28,12 +24,12 @@ namespace Roost
 {
     public static partial class Machine
     {
-        internal static void SetGlobalValue(string key, string value)
+        public static void SetGlobalValue(string key, string value)
         {
             Roost.Elegiast.ElegiastArchive.SetValue(key, value);
         }
 
-        internal static string GetGlobalValue(string key)
+        public static string GetGlobalValue(string key)
         {
             return Roost.Elegiast.ElegiastArchive.GetValue(key);
         }

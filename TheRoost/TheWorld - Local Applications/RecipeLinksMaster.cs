@@ -12,7 +12,7 @@ namespace Roost.World.Recipes
 {
     public static class RecipeLinkMaster
     {
-        public readonly static Action<Situation, Recipe, Expulsion, FucinePath> SpawnNewSituation = Delegate.CreateDelegate(typeof(Action<Situation, Recipe, Expulsion, FucinePath>), typeof(Situation).GetMethodInvariant("SpawnNewSituation")) as Action<Situation, Recipe, Expulsion, FucinePath>;
+        public readonly static Action<Situation, Recipe, Expulsion, FucinePath> SpawnNewSituation = Delegate.CreateDelegate(typeof(Action<Situation, Recipe, Expulsion, FucinePath>), typeof(Situation).GetMethodInvariant("AdditionalRecipeSpawnToken")) as Action<Situation, Recipe, Expulsion, FucinePath>;
         private static readonly List<Recipe> xtriggerLinks = new List<Recipe>();
         const string CHANCE = "chance";
         internal static void Enact()

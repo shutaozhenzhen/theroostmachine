@@ -118,19 +118,7 @@ namespace Roost.Vagabond.SettingSubscribers
 
         public override void WhenSettingUpdated(object newValue)
         {
-            int setting = (int)newValue;
-
-            SituationWindow situationWindowPrefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<SituationWindow>();
-            GameObject storageSpherePrefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<SituationStorageSphere>().gameObject;
-            Roost.World.Recipes.SituationWindowMaster.SetSituationWindowSettings(situationWindowPrefab.gameObject, storageSpherePrefab, setting);
-
-            SituationWindow[] allWindows = GameObject.FindObjectsOfType<SituationWindow>(); //zhestko
-            foreach (SituationWindow window in allWindows)
-            {
-                SituationStorageSphere storageSphere = window.gameObject.GetComponentInChildren<SituationStorageSphere>(); //zhestko
-                Roost.World.Recipes.SituationWindowMaster.SetSituationWindowSettings(window.gameObject, storageSphere.gameObject, setting);
-                Roost.World.Recipes.SituationWindowMaster.UpdateSituationWindowDisplay(storageSphere);
-            }
+            Roost.World.Recipes.SituationWindowMaster.UpdateDisplaySettingsForSituationWindows((int)newValue);
         }
     }
 

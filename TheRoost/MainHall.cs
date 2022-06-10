@@ -69,8 +69,6 @@ namespace Roost.Enactors
         {
             if (Machine.GetConfigValue<int>(enabledSettingId, 1) == 1)
                 Roost.Elegiast.CustomAchievementsManager.Enact();
-
-            Roost.Elegiast.ElegiastArchive.Enact();
         }
     }
 

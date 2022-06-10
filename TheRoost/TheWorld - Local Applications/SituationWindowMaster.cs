@@ -15,6 +15,7 @@ using Assets.Scripts.Application.UI.Situation;
 using SecretHistories.Assets.Scripts.Application.Entities;
 using SecretHistories.Assets.Scripts.Application.Infrastructure.Events;
 using SecretHistories.Spheres;
+using SecretHistories.Services;
 
 namespace Roost.World.Recipes
 {
@@ -140,8 +141,23 @@ namespace Roost.World.Recipes
             return storedManifestation.GetChild(0).GetChild(1).gameObject;
         }
 
+        public static void UpdateDisplaySettingsForSituationWindows(int setting)
+        {
+            SituationWindow situationWindowPrefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<SituationWindow>();
+            GameObject storageSpherePrefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<SituationStorageSphere>().gameObject;
+            SetDisplaySettingForSituationWindow(situationWindowPrefab.gameObject, storageSpherePrefab, setting);
+
+            SituationWindow[] allWindows = GameObject.FindObjectsOfType<SituationWindow>(); //zhestko
+            foreach (SituationWindow window in allWindows)
+            {
+                SituationStorageSphere storageSphere = window.gameObject.GetComponentInChildren<SituationStorageSphere>(); //zhestko
+                SetDisplaySettingForSituationWindow(window.gameObject, storageSphere.gameObject, setting);
+                UpdateSituationWindowDisplay(storageSphere);
+            }
+        }
+
         //called from the VagabondConfig.StorageSphereDisplay
-        public static void SetSituationWindowSettings(GameObject situationWindow, GameObject storageSphereObject, int storagePlacementType)
+        private static void SetDisplaySettingForSituationWindow(GameObject situationWindow, GameObject storageSphereObject, int storagePlacementType)
         {
             GameObject storageDominion = situationWindow.gameObject.FindInChildren("StorageDominion", true);
             RectTransform storageDominionTransform = storageDominion.transform.GetComponent<RectTransform>();
