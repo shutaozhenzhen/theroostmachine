@@ -43,7 +43,7 @@
     <Compile Include="TheWorld - Local Applications\TableStyleMaster.cs" />
     <Compile Include="TheWorld - Local Applications\StartupQuoteMaster.cs" />
     <Compile Include="TheWorld - Local Applications\MainMenu\LegacyMenuVisualsOverride.cs" />
-    <Compile Include="TheWorld - Local Applications\MainMenu\MainMenuMaster.cs" />
+    <Compile Include="TheWorld - Local Applications\MainMenu\MainMenuStyleMaster.cs" />
     <Compile Include="TheWorld - Local Applications\Optimizations.cs" />
     <Compile Include="TheWorld - Local Applications\SituationWindowMaster.cs" />
     <Compile Include="TheWorld - Local Applications\CardVFXMaster.cs" />

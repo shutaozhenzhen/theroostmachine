@@ -11,7 +11,7 @@ using static UnityEngine.ParticleSystem;
 
 namespace Roost.World
 {
-    class MainMenuMaster
+    class MainMenuStyleMaster
     {
         public static void setSpriteAndTransform(string objectName, Sprite sprite, Vector2 position)
         {

@@ -96,7 +96,7 @@ namespace Roost.Enactors
             Roost.World.Elements.CardVFXMaster.Enact();
 
             Roost.World.StartupQuoteMaster.Enact();
-            Roost.World.MainMenuMaster.Enact();
+            Roost.World.MainMenuStyleMaster.Enact();
             Roost.World.TableStyleMaster.Enact();
         }
     }
