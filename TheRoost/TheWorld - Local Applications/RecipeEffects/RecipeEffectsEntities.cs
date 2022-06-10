@@ -103,7 +103,7 @@ namespace Roost.World.Recipes.Entities
                     continue;
 
                 foreach (TokenFilterSpec filter in Movements[fucinePath])
-                    foreach (Token token in filter.GetTokens(tokens, true))
+                    foreach (Token token in filter.GetTokens(tokens))
                         RecipeExecutionBuffer.ScheduleMovement(token, targetSpheres[UnityEngine.Random.Range(0, targetSpheres.Count)], MovementsVFX);
             }
 
@@ -132,7 +132,7 @@ namespace Roost.World.Recipes.Entities
 
             foreach (TokenFilterSpec filter in Mutations.Keys)
             {
-                List<Token> targets = filter.GetTokens(tokens, true);
+                List<Token> targets = filter.GetTokens(tokens);
 
                 if (targets.Count > 0)
                     foreach (RefMutationEffect mutationEffect in Mutations[filter])
@@ -239,7 +239,7 @@ namespace Roost.World.Recipes.Entities
             List<Token> tokens = sphere.GetElementTokens();
 
             foreach (TokenFilterSpec tokenFilterSpec in Decays)
-                foreach (Token token in tokenFilterSpec.GetTokens(tokens, true))
+                foreach (Token token in tokenFilterSpec.GetTokens(tokens))
                     RecipeExecutionBuffer.ScheduleDecay(token, DecaysVFX);
 
             RecipeExecutionBuffer.ApplyRetirements();
