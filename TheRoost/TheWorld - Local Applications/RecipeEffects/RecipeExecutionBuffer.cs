@@ -4,6 +4,7 @@ using SecretHistories.Entities;
 using SecretHistories.UI;
 using SecretHistories.Spheres;
 using SecretHistories.Enums;
+using SecretHistories.Fucine;
 
 namespace Roost.World.Recipes
 {
@@ -15,7 +16,7 @@ namespace Roost.World.Recipes
         private static readonly Dictionary<Sphere, List<ScheduledCreation>> creations = new Dictionary<Sphere, List<ScheduledCreation>>();
         private static readonly Dictionary<Token, int> quantityChanges = new Dictionary<Token, int>();
         private static readonly Dictionary<Token, Sphere> movements = new Dictionary<Token, Sphere>();
-        private static readonly List<ScheduledInduction> inductions = new List<ScheduledInduction>();
+        private static readonly Dictionary<Situation, List<LinkedRecipeDetails>> inductions = new Dictionary<Situation, List<LinkedRecipeDetails>>();
         private static readonly HashSet<string> deckRenews = new HashSet<string>();
 
         private static readonly Dictionary<Token, RetirementVFX> vfxs = new Dictionary<Token, RetirementVFX>();
@@ -124,8 +125,17 @@ namespace Roost.World.Recipes
 
         public static void ApplyInductions()
         {
-            foreach (ScheduledInduction induction in inductions)
-                induction.Apply();
+            foreach (Situation situation in inductions.Keys)
+            {
+                AspectsInContext aspectsInContext = Watchman.Get<HornedAxe>().GetAspectsInContext(situation.GetAspects(true), null);
+                foreach (LinkedRecipeDetails linkedRecipeDetails in inductions[situation])
+                    if (linkedRecipeDetails.ShouldAlwaysSucceed() || UnityEngine.Random.Range(1, 101) <= linkedRecipeDetails.Chance)
+                    {
+                        Recipe recipe = Watchman.Get<Compendium>().GetEntityById<Recipe>(linkedRecipeDetails.Id);
+                        if (recipe.RequirementsSatisfiedBy(aspectsInContext))
+                            RecipeLinkMaster.SpawnSituation(situation, recipe, linkedRecipeDetails.Expulsion, FucinePath.Current());
+                    }
+            }
             inductions.Clear();
         }
 
@@ -216,9 +226,11 @@ namespace Roost.World.Recipes
             ScheduleVFX(token, vfx);
         }
 
-        public static void ScheduleInduction(Situation situation, Recipe recipe, Expulsion withExpulsion)
+        public static void ScheduleInduction(Situation situation, LinkedRecipeDetails link)
         {
-            inductions.Add(new ScheduledInduction(situation, recipe, withExpulsion));
+            if (inductions.ContainsKey(situation) == false)
+                inductions[situation] = new List<LinkedRecipeDetails>();
+            inductions[situation].Add(link);
         }
 
         public static void ScheduleVFX(Token token, RetirementVFX vfx)
@@ -272,17 +284,6 @@ namespace Roost.World.Recipes
 
             public bool IsSameElementWithSameVFX(string element, RetirementVFX vfx) { return (element == this.element && vfx == this.vfx); }
             public ScheduledCreation IncreaseAmount(int add) { return new ScheduledCreation(this.element, this.amount + add, this.vfx); }
-        }
-
-        private struct ScheduledInduction
-        {
-            Situation situation; Recipe recipe; Expulsion withExpulsion;
-            public ScheduledInduction(Situation situation, Recipe recipe, Expulsion withExpulsion)
-            { this.recipe = recipe; this.withExpulsion = withExpulsion; this.situation = situation; }
-            public void Apply()
-            {
-                RecipeLinkMaster.SpawnNewSituation(situation, recipe, withExpulsion, SecretHistories.Fucine.FucinePath.Current());
-            }
         }
 
         private static bool SupportsVFX(this Sphere sphere)

@@ -278,7 +278,7 @@ namespace Roost.World.Recipes.Entities
 
         public void QuickSpec(string value)
         {
-            this.SetId(value);
+            SetId(value);
             Mutate = value;
             Level = new FucineExp<int>("1");
             Additive = false;
@@ -293,22 +293,21 @@ namespace Roost.World.Recipes.Entities
         [FucineConstruct("1")] public FucineExp<int> Level { get; set; }
         [FucineConstruct("100")] public FucineExp<int> Chance { get; set; }
 
-
         [FucineEverValue(DefaultValue = RetirementVFX.CardTransformWhite)] public RetirementVFX VFX { get; set; }
         [FucineValue(false)] public bool IgnoreAmount { get; set; }
         [FucineValue(false)] public bool IgnoreCatalystAmount { get; set; }
 
-        [FucineSubEntity(typeof(Expulsion))] public Expulsion Expulsion { get; set; }
+        [FucineSubEntity(typeof(LinkedRecipeDetails))] public LinkedRecipeDetails Induction { get; set; }
 
         public void QuickSpec(string value)
         {
             this.SetId(value);
-            this.Chance = new FucineExp<int>("100");
-            this.MorphEffect = MorphEffectsExtended.Transform;
-            this.Level = new FucineExp<int>("1");
-            this.IgnoreAmount = false;
-            this.IgnoreCatalystAmount = false;
-            Expulsion = null;
+            Chance = new FucineExp<int>("100");
+            MorphEffect = MorphEffectsExtended.Transform;
+            Level = new FucineExp<int>("1");
+            IgnoreAmount = false;
+            IgnoreCatalystAmount = false;
+            Induction = null;
             VFX = RetirementVFX.CardTransformWhite;
         }
 
@@ -340,11 +339,12 @@ namespace Roost.World.Recipes.Entities
                     break;
                 case MorphEffectsExtended.Link:
                 case MorphEffectsExtended.Induce:
-                    if (Machine.GetEntity<Recipe>(this.Id) == null)
-                        Birdsong.Tweet($"Unknown recipe id '{this.Id}' in Morph Effects");
+                    if (string.IsNullOrEmpty(Induction.Id))
+                        Induction.SetId(this.Id);
                     break;
                 case MorphEffectsExtended.DeckDraw:
                 case MorphEffectsExtended.DeckShuffle:
+
                     if (Machine.GetEntity<Recipe>(this.Id) == null)
                         Birdsong.Tweet($"Unknown deck id '{this.Id}' in Morph Effects");
                     break;
@@ -353,7 +353,7 @@ namespace Roost.World.Recipes.Entities
             }
 
             if (MorphEffect != MorphEffectsExtended.Induce)
-                Expulsion = null;
+                Induction = null;
         }
 
         public void Execute(Situation situation, Token targetToken, string targetElementId, int targetElementAmount, int catalystAmount, bool onToken)
@@ -401,9 +401,7 @@ namespace Roost.World.Recipes.Entities
                         RecipeExecutionBuffer.ScheduleMutation(targetToken, targetElementId, -targetElementAmount, true, RetirementVFX.None);
                     break;
                 case MorphEffectsExtended.Induce:
-                    Recipe recipeToInduce = Watchman.Get<Compendium>().GetEntityById<Recipe>(this.Id);
-                    for (int i = Level.value; i > 0; i--)
-                        RecipeExecutionBuffer.ScheduleInduction(situation, recipeToInduce, this.Expulsion);
+                    RecipeExecutionBuffer.ScheduleInduction(situation, Induction);
                     break;
                 case MorphEffectsExtended.Link: Machine.PushXtriggerLink(this.Id, Level.value); break;
                 default: Birdsong.Tweet($"Unknown trigger '{MorphEffect}' for element stack '{targetToken.PayloadEntityId}'"); break;

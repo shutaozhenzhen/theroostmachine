@@ -43,7 +43,7 @@
     <Compile Include="TheWorld - Local Applications\Optimizations.cs" />
     <Compile Include="TheWorld - Local Applications\SituationWindowMaster.cs" />
     <Compile Include="TheWorld - Local Applications\CardVFXMaster.cs" />
-    <Compile Include="TheWorld - Local Applications\RecipeLinksMaster.cs" />
+    <Compile Include="TheWorld - Local Applications\RecipeLinkMaster.cs" />
     <Compile Include="TheWorld - Local Applications\RecipeEffects\RecipeExecutionBuffer.cs" />
     <Compile Include="TheWorld - Local Applications\RecipeEffects\RecipeEffectsMaster.cs" />
     <Compile Include="Twins - Expressions and Contexts\ContextAccessors.cs" />
