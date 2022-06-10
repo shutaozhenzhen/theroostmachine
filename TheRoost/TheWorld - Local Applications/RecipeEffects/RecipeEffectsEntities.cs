@@ -26,7 +26,6 @@ namespace Roost.World.Recipes.Entities
         [FucineDict] public Dictionary<string, FucineExp<int>> DeckEffects { get; set; }
         [FucineDict] public Dictionary<FucineExp<bool>, FucineExp<int>> Effects { get; set; }
         [FucineList] public List<TokenFilterSpec> Decays { get; set; }
-        [FucineList] public Dictionary<string, int> Purge { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> HaltVerb { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> DeleteVerb { get; set; }
         [FucineDict] public List<LinkedRecipeDetails> Induces { get; set; }
@@ -80,7 +79,6 @@ namespace Roost.World.Recipes.Entities
             RunEffects(localSphere);
             RunDecays(localSphere);
             RunVerbManipulations();
-            RunPurges();
             RunDistantEffects(situation);
             RunMovements(localSphere);
             RunInductions(situation);
@@ -223,16 +221,6 @@ namespace Roost.World.Recipes.Entities
 
             RecipeExecutionBuffer.ApplyRetirements();
             RecipeExecutionBuffer.ApplyTransformations();
-        }
-
-        private void RunPurges()
-        {
-            if (Purge == null)
-                return;
-
-            HornedAxe hornedAxe = Watchman.Get<HornedAxe>();
-            foreach (KeyValuePair<string, int> purgeEffect in Purge)
-                hornedAxe.PurgeElement(purgeEffect.Key, purgeEffect.Value);
         }
 
         private void RunVerbManipulations()
