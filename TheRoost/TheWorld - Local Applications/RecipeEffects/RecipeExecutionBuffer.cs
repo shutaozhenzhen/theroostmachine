@@ -9,20 +9,24 @@ namespace Roost.World.Recipes
 {
     public static class RecipeExecutionBuffer
     {
-        private static readonly Dictionary<Token, RetirementVFX> retirements = new Dictionary<Token, RetirementVFX>();
+        private static readonly HashSet<Token> retirements = new HashSet<Token>();
         private static readonly Dictionary<ScheduledMutation, List<Token>> mutations = new Dictionary<ScheduledMutation, List<Token>>();
-        private static readonly Dictionary<ElementStack, ScheduledTransformation> transformations = new Dictionary<ElementStack, ScheduledTransformation>();
+        private static readonly Dictionary<ElementStack, string> transformations = new Dictionary<ElementStack, string>();
         private static readonly Dictionary<Sphere, List<ScheduledCreation>> creations = new Dictionary<Sphere, List<ScheduledCreation>>();
-        private static readonly Dictionary<Token, ScheduledMovement> movements = new Dictionary<Token, ScheduledMovement>();
+        private static readonly Dictionary<Token, int> quantityChanges = new Dictionary<Token, int>();
+        private static readonly Dictionary<Token, Sphere> movements = new Dictionary<Token, Sphere>();
         private static readonly List<ScheduledInduction> inductions = new List<ScheduledInduction>();
-        private static readonly List<string> deckRenews = new List<string>();
+        private static readonly HashSet<string> deckRenews = new HashSet<string>();
+
+        private static readonly Dictionary<Token, RetirementVFX> vfxs = new Dictionary<Token, RetirementVFX>();
 
         private static readonly HashSet<Sphere> dirtySpheres = new HashSet<Sphere>();
         public static readonly Context situationEffectContext = new Context(Context.ActionSource.SituationEffect);
 
-        public static void ApplyAll()
+        public static void ApplyAllEffects()
         {
             ApplyRetirements();
+            ApplyQuantityChanges();
             ApplyRenews();
             ApplyMutations();
             ApplyTransformations();
@@ -33,9 +37,26 @@ namespace Roost.World.Recipes
 
         public static void ApplyRetirements()
         {
-            foreach (Token token in retirements.Keys)
-                token.Retire(retirements[token]);
+            foreach (Token token in retirements)
+            {
+                token.Retire(vfxs.ContainsKey(token) ? vfxs[token] : RetirementVFX.None);
+                vfxs.Remove(token);
+            }
             retirements.Clear();
+        }
+
+        public static void ApplyQuantityChanges()
+        {
+            foreach (Token token in quantityChanges.Keys)
+            {
+                if (token.Quantity + quantityChanges[token] <= 0)
+                    token.Retire(vfxs.ContainsKey(token) ? vfxs[token] : RetirementVFX.None);
+                else
+                    token.Payload.SetQuantity(token.Quantity + quantityChanges[token], situationEffectContext);
+
+                token.Sphere.MarkAsDirty();
+            }
+            quantityChanges.Clear();
         }
 
         public static void ApplyRenews()
@@ -45,7 +66,7 @@ namespace Roost.World.Recipes
                 Sphere drawSphere = Legerdemain.RenewDeck(deckId);
                 drawSphere.MarkAsDirty();
             }
-                
+
             deckRenews.Clear();
         }
 
@@ -64,7 +85,8 @@ namespace Roost.World.Recipes
         {
             foreach (ElementStack stack in transformations.Keys)
             {
-                transformations[stack].Apply(stack);
+                stack.ChangeTo(transformations[stack]);
+                stack.Token.Unshroud();
                 stack.Token.Sphere.MarkAsDirty();
             }
             transformations.Clear();
@@ -87,10 +109,15 @@ namespace Roost.World.Recipes
 
         public static void ApplyMovements()
         {
-            foreach (Token tokenToMove in movements.Keys)
+            foreach (Token token in movements.Keys)
             {
-                movements[tokenToMove].Apply(tokenToMove);
-                movements[tokenToMove].toSphere.MarkAsDirty();
+                Sphere sphere = movements[token];
+                if (sphere.SupportsVFX())
+                    sphere.GetItineraryFor(token).WithDuration(0.3f).Depart(token, situationEffectContext);
+                else
+                    sphere.AcceptToken(token, situationEffectContext);
+
+                sphere.MarkAsDirty();
             }
             movements.Clear();
         }
@@ -102,26 +129,18 @@ namespace Roost.World.Recipes
             inductions.Clear();
         }
 
-        public static void ScheduleMutation(Token token, string mutate, int level, bool additive, RetirementVFX vfx)
+        public static void ApplyVFX()
         {
-            ScheduledMutation futureMutation = new ScheduledMutation(mutate, level, additive, vfx);
-            if (mutations.ContainsKey(futureMutation) == false)
-                mutations[futureMutation] = new List<Token>();
-            mutations[futureMutation].Add(token);
+            foreach (Token token in vfxs.Keys)
+                if (token.Sphere.SupportsVFX())
+                    token.Remanifest(vfxs[token]);
+            vfxs.Clear();
         }
 
-        public static void ScheduleMutation(List<Token> tokens, string mutate, int level, bool additive, RetirementVFX vfx)
+        public static void ScheduleRetirement(Token token, RetirementVFX vfx)
         {
-            ScheduledMutation futureMutation = new ScheduledMutation(mutate, level, additive, vfx);
-            if (mutations.ContainsKey(futureMutation) == false)
-                mutations[futureMutation] = new List<Token>();
-            mutations[futureMutation].AddRange(tokens);
-        }
-
-        public static void ScheduleTransformation(Token token, string transformTo, RetirementVFX vfx)
-        {
-            ScheduledTransformation futureTransformation = new ScheduledTransformation(transformTo, vfx);
-            transformations[token.Payload as ElementStack] = futureTransformation;
+            ScheduleVFX(token, vfx);
+            retirements.Add(token);
         }
 
         public static void ScheduleDecay(Token token, RetirementVFX vfx)
@@ -130,10 +149,49 @@ namespace Roost.World.Recipes
             if (string.IsNullOrEmpty(element.DecayTo))
                 ScheduleRetirement(token, vfx);
             else
-            {
-                ScheduledTransformation futureTransformation = new ScheduledTransformation(element.DecayTo, vfx);
-                transformations[token.Payload as ElementStack] = futureTransformation;
-            }
+                ScheduleTransformation(token, element.DecayTo, vfx);
+        }
+
+        public static void ScheduleQuantityChange(Token token, int amount, RetirementVFX vfx)
+        {
+            if (quantityChanges.ContainsKey(token))
+                quantityChanges[token] += amount;
+            else
+                quantityChanges.Add(token, amount);
+
+            ScheduleVFX(token, vfx);
+        }
+
+        public static void ScheduleDeckRenew(string deckId)
+        {
+            deckRenews.Add(deckId);
+        }
+
+        public static void ScheduleMutation(Token token, string mutate, int level, bool additive, RetirementVFX vfx)
+        {
+            ScheduledMutation futureMutation = new ScheduledMutation(mutate, level, additive);
+            if (mutations.ContainsKey(futureMutation) == false)
+                mutations[futureMutation] = new List<Token>();
+            mutations[futureMutation].Add(token);
+
+            ScheduleVFX(token, vfx);
+        }
+
+        public static void ScheduleMutation(List<Token> tokens, string mutate, int level, bool additive, RetirementVFX vfx)
+        {
+            ScheduledMutation futureMutation = new ScheduledMutation(mutate, level, additive);
+            if (mutations.ContainsKey(futureMutation) == false)
+                mutations[futureMutation] = new List<Token>();
+            mutations[futureMutation].AddRange(tokens);
+
+            foreach (Token token in tokens)
+                ScheduleVFX(token, vfx);
+        }
+
+        public static void ScheduleTransformation(Token token, string transformTo, RetirementVFX vfx)
+        {
+            transformations[token.Payload as ElementStack] = transformTo;
+            ScheduleVFX(token, vfx);
         }
 
         public static void ScheduleCreation(Sphere sphere, string element, int amount, RetirementVFX vfx)
@@ -154,22 +212,19 @@ namespace Roost.World.Recipes
 
         public static void ScheduleMovement(Token token, Sphere toSphere, RetirementVFX vfx)
         {
-            movements[token] = new ScheduledMovement(toSphere, vfx);
-        }
-
-        public static void ScheduleDeckRenew(string deckId)
-        {
-            deckRenews.Add(deckId);
-        }
-
-        public static void ScheduleRetirement(Token token, RetirementVFX vfx)
-        {
-            retirements[token] = vfx;
+            movements[token] = toSphere;
+            ScheduleVFX(token, vfx);
         }
 
         public static void ScheduleInduction(Situation situation, Recipe recipe, Expulsion withExpulsion)
         {
             inductions.Add(new ScheduledInduction(situation, recipe, withExpulsion));
+        }
+
+        public static void ScheduleVFX(Token token, RetirementVFX vfx)
+        {
+            if (vfx != RetirementVFX.None && vfx != RetirementVFX.Default && retirements.Contains(token) == false)
+                vfxs[token] = vfx;
         }
 
         public static void MarkAsDirty(this Sphere sphere)
@@ -186,48 +241,13 @@ namespace Roost.World.Recipes
 
         private struct ScheduledMutation
         {
-            string mutate; int level; bool additive; RetirementVFX vfx;
-            public ScheduledMutation(string mutate, int level, bool additive, RetirementVFX vfx)
-            { this.mutate = mutate; this.level = level; this.additive = additive; this.vfx = vfx; }
+            string mutate; int level; bool additive;
+            public ScheduledMutation(string mutate, int level, bool additive)
+            { this.mutate = mutate; this.level = level; this.additive = additive; }
 
             public void Apply(Token onToken)
             {
                 onToken.Payload.SetMutation(mutate, level, additive);
-                if (onToken.Sphere.SupportsVFX())
-                    onToken.Remanifest(vfx);
-            }
-        }
-
-        private struct ScheduledTransformation
-        {
-            string toElementId; RetirementVFX vfx;
-            public ScheduledTransformation(string toElementId, RetirementVFX vfx)
-            { this.toElementId = toElementId; this.vfx = vfx; }
-
-            public void Apply(ElementStack onStack)
-            {
-                onStack.ChangeTo(toElementId);
-                onStack.Token.Unshroud();
-                if (onStack.Token.Sphere.SupportsVFX())
-                    onStack.Token.Remanifest(vfx);
-            }
-        }
-
-        private struct ScheduledMovement
-        {
-            public Sphere toSphere; RetirementVFX vfx;
-            public ScheduledMovement(Sphere sphere, RetirementVFX vfx)
-            { this.toSphere = sphere; this.vfx = vfx; }
-
-            public void Apply(Token token)
-            {
-                if (toSphere.SupportsVFX())
-                {
-                    toSphere.GetItineraryFor(token).WithDuration(0.3f).Depart(token, situationEffectContext);
-                    token.Remanifest(vfx);
-                }
-                else
-                    toSphere.AcceptToken(token, situationEffectContext);
             }
         }
 
