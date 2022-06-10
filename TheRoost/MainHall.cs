@@ -57,6 +57,7 @@ namespace Roost.Enactors
             Roost.Vagabond.MenuMask.Enact();
             Roost.Vagabond.ConfigMask.Enact();
             Roost.Vagabond.CommandLine.Enact();
+            Roost.Vagabond.CustomSavesMaster.Enact();
         }
     }
 
@@ -93,6 +94,10 @@ namespace Roost.Enactors
             Roost.World.Recipes.RecipeLinkMaster.Enact();
 
             Roost.World.Elements.CardVFXMaster.Enact();
+
+            Roost.World.StartupQuoteMaster.Enact();
+            Roost.World.MainMenuStyleMaster.Enact();
+            Roost.World.TableStyleMaster.Enact();
         }
     }
 }
