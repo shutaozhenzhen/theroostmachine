@@ -68,7 +68,6 @@ namespace Roost.World.Recipes.Entities
             RunDistantEffects(situation);
             RunMutations(localSphere);
             RunCoreXTriggers(localSphere, situation, Aspects);
-            RunTargetedXTriggers(localSphere, situation);
             RunDeckShuffles();
             RunDeckEffects(localSphere);
             RunEffects(localSphere);
