@@ -21,7 +21,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>C:\Users\Root\AppData\LocalLow\Weather Factory\Cultist Simulator\mods\TheRoost\dll\</OutputPath>
+    <OutputPath>..\..\..\..\AppData\LocalLow\Weather Factory\Cultist Simulator\mods\Roost\dll\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -40,6 +40,10 @@
   <ItemGroup>
     <Compile Include="Beachcomber - Data Loading\BeachcomberIgnore.cs" />
     <Compile Include="Elegiast - Achievements\ElegiastArchive.cs" />
+    <Compile Include="TheWorld - Local Applications\TableStyleMaster.cs" />
+    <Compile Include="TheWorld - Local Applications\StartupQuoteMaster.cs" />
+    <Compile Include="TheWorld - Local Applications\MainMenu\LegacyMenuVisualsOverride.cs" />
+    <Compile Include="TheWorld - Local Applications\MainMenu\MainMenuMaster.cs" />
     <Compile Include="TheWorld - Local Applications\Optimizations.cs" />
     <Compile Include="TheWorld - Local Applications\SituationWindowMaster.cs" />
     <Compile Include="TheWorld - Local Applications\CardVFXMaster.cs" />
@@ -51,6 +55,7 @@
     <Compile Include="Twins - Expressions and Contexts\TwinsParser.cs" />
     <Compile Include="TheWorld - Local Applications\RecipeEffects\DecksEffect.cs" />
     <Compile Include="Twins - Expressions and Contexts\ExpressionsEntities.cs" />
+    <Compile Include="Vagabond - Various Interventions\CustomSavesMaster.cs" />
     <Compile Include="Vagabond - Various Interventions\HarmonyPatchWrapper.cs" />
     <Compile Include="Vagabond - Various Interventions\VagabondConfig.cs" />
     <Compile Include="Vagabond - Various Interventions\VagabondMenu.cs" />
@@ -69,68 +74,72 @@
   <ItemGroup>
     <Reference Include="0Harmony, Version=2.1.1.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\0Harmony.dll</HintPath>
+      <HintPath>..\..\..\..\AppData\LocalLow\Weather Factory\Cultist Simulator\mods\Roost\dll\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="GalaxyCSharp">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\GalaxyCSharp.dll</HintPath>
+      <HintPath>G:\Games\SteamLibrary\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\GalaxyCSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="NCalc, Version=3.5.0.2, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\NCalc.dll</HintPath>
+      <HintPath>..\..\..\..\AppData\LocalLow\Weather Factory\Cultist Simulator\mods\Roost\dll\NCalc.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\Newtonsoft.Json.dll</HintPath>
+      <HintPath>G:\Games\SteamLibrary\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\Newtonsoft.Json.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="OrbCreations">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\OrbCreations.dll</HintPath>
+      <HintPath>G:\Games\SteamLibrary\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\OrbCreations.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="SecretHistories.Enums">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\SecretHistories.Enums.dll</HintPath>
+      <HintPath>G:\Games\SteamLibrary\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\SecretHistories.Enums.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="SecretHistories.Interfaces">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\SecretHistories.Interfaces.dll</HintPath>
+      <HintPath>G:\Games\SteamLibrary\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\SecretHistories.Interfaces.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="SecretHistories.Main">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\SecretHistories.Main.dll</HintPath>
+      <HintPath>G:\Games\SteamLibrary\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\SecretHistories.Main.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Steamworks">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\Steamworks.dll</HintPath>
+      <HintPath>G:\Games\SteamLibrary\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\Steamworks.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="Unity.InputSystem">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\Unity.InputSystem.dll</HintPath>
+      <HintPath>G:\Games\SteamLibrary\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\Unity.InputSystem.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.TextMeshPro">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\Unity.TextMeshPro.dll</HintPath>
+      <HintPath>G:\Games\SteamLibrary\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\Unity.TextMeshPro.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>G:\Games\SteamLibrary\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>G:\Games\SteamLibrary\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.ParticleSystemModule">
+      <HintPath>G:\Games\SteamLibrary\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.ParticleSystemModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.TextRenderingModule">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
+      <HintPath>G:\Games\SteamLibrary\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.UI">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.UI.dll</HintPath>
+      <HintPath>G:\Games\SteamLibrary\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.UIModule">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.UIModule.dll</HintPath>
+      <HintPath>G:\Games\SteamLibrary\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.UIModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>

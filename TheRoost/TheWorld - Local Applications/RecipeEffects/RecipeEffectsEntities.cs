@@ -297,7 +297,7 @@ namespace Roost.World.Recipes.Entities
         [FucineValue(false)] public bool IgnoreAmount { get; set; }
         [FucineValue(false)] public bool IgnoreCatalystAmount { get; set; }
 
-        [FucineSubEntity(typeof(LinkedRecipeDetails))] public LinkedRecipeDetails Induction { get; set; }
+        [FucineSubEntity(typeof(Expulsion))] public Expulsion Induction { get; set; }
 
         public void QuickSpec(string value)
         {
@@ -401,7 +401,7 @@ namespace Roost.World.Recipes.Entities
                         RecipeExecutionBuffer.ScheduleMutation(targetToken, targetElementId, -targetElementAmount, true, RetirementVFX.None);
                     break;
                 case MorphEffectsExtended.Induce:
-                    RecipeExecutionBuffer.ScheduleInduction(situation, Induction);
+                    //RecipeExecutionBuffer.ScheduleInduction(situation, Induction);
                     break;
                 case MorphEffectsExtended.Link: Machine.PushXtriggerLink(this.Id, Level.value); break;
                 default: Birdsong.Tweet($"Unknown trigger '{MorphEffect}' for element stack '{targetToken.PayloadEntityId}'"); break;
