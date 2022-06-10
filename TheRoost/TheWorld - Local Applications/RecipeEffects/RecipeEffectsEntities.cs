@@ -26,6 +26,11 @@ namespace Roost.World.Recipes.Entities
         [FucineDict] public Dictionary<string, FucineExp<int>> DeckEffects { get; set; }
         [FucineDict] public Dictionary<FucineExp<bool>, FucineExp<int>> Effects { get; set; }
         [FucineList] public List<TokenFilterSpec> Decays { get; set; }
+        [FucineList] public Dictionary<string, int> Purge { get; set; }
+        [FucineDict] public Dictionary<string, FucineExp<int>> HaltVerb { get; set; }
+        [FucineDict] public Dictionary<string, FucineExp<int>> DeleteVerb { get; set; }
+        [FucineDict] public List<LinkedRecipeDetails> Induces { get; set; }
+
         [FucineDict] public List<GrandEffects> DistantEffects { get; set; }
         [FucineDict] public Dictionary<FucinePath, List<TokenFilterSpec>> Movements { get; set; }
 
@@ -60,6 +65,7 @@ namespace Roost.World.Recipes.Entities
                 grandEffects.Run(situation, localSphere, true);
 
             RecipeExecutionBuffer.ApplyVFX();
+            RecipeExecutionBuffer.ApplyInductions();
         }
 
         private void Run(Situation situation, Sphere localSphere, bool localXtriggers)
@@ -73,8 +79,11 @@ namespace Roost.World.Recipes.Entities
             RunDeckEffects(localSphere);
             RunEffects(localSphere);
             RunDecays(localSphere);
+            RunVerbManipulations();
+            RunPurges();
             RunDistantEffects(situation);
             RunMovements(localSphere);
+            RunInductions(situation);
         }
 
         private void RunRootEffects()
@@ -216,6 +225,26 @@ namespace Roost.World.Recipes.Entities
             RecipeExecutionBuffer.ApplyTransformations();
         }
 
+        private void RunPurges()
+        {
+            if (Purge == null)
+                return;
+
+            HornedAxe hornedAxe = Watchman.Get<HornedAxe>();
+            foreach (KeyValuePair<string, int> purgeEffect in Purge)
+                hornedAxe.PurgeElement(purgeEffect.Key, purgeEffect.Value);
+        }
+
+        private void RunVerbManipulations()
+        {
+            if (HaltVerb != null)
+                foreach (KeyValuePair<string, FucineExp<int>> haltVerbEffect in HaltVerb)
+                    Watchman.Get<HornedAxe>().HaltSituation(haltVerbEffect.Key, haltVerbEffect.Value.value);
+            if (DeleteVerb != null)
+                foreach (KeyValuePair<string, FucineExp<int>> deleteVerbEffect in DeleteVerb)
+                    Watchman.Get<HornedAxe>().PurgeSituation(deleteVerbEffect.Key, deleteVerbEffect.Value.value);
+        }
+
         private void RunDistantEffects(Situation situation)
         {
             if (DistantEffects == null)
@@ -248,6 +277,15 @@ namespace Roost.World.Recipes.Entities
             }
 
             RecipeExecutionBuffer.ApplyMovements();
+        }
+
+        private void RunInductions(Situation situation)
+        {
+            if (Induces == null)
+                return;
+
+            foreach (LinkedRecipeDetails link in Induces)
+                RecipeExecutionBuffer.ScheduleInduction(situation, link);
         }
     }
 
