@@ -253,7 +253,7 @@ namespace Roost.Beachcomber
 
             try
             {
-                FucinePath pathValue = Roost.Twins.ExpressionsParser.ParseSpherePath(pathValueAsString);
+                FucinePath pathValue = Roost.Twins.TwinsParser.ParseSpherePath(pathValueAsString);
 
                 if (pathValue.IsValid())
                     return pathValue;

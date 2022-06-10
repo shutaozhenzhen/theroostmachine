@@ -185,7 +185,7 @@ namespace Roost.Twins
             string path = string.Concat(command);
             try
             {
-                FucineRef reference = ExpressionsParser.ParseFucineRef(path, "A");
+                FucineRef reference = new FucineRef(path);
                 Birdsong.Tweet($"Reference value '{reference.value}'");
             }
             catch (Exception ex)
@@ -216,7 +216,7 @@ namespace Roost.Twins
                 foundSpheres = new List<Sphere>(Watchman.Get<HornedAxe>().GetSpheres());
             else
             {
-                FucinePath path = ExpressionsParser.ParseSpherePath(command[0]);
+                FucinePath path = TwinsParser.ParseSpherePath(command[0]);
 
                 DateTime startTime = DateTime.Now;
                 foundSpheres = Crossroads.GetSpheresByPath(path);
@@ -243,7 +243,7 @@ namespace Roost.Twins
                 return;
             }
 
-            FucinePath path = ExpressionsParser.ParseSpherePath(command[0]);
+            FucinePath path = TwinsParser.ParseSpherePath(command[0]);
 
             List<Sphere> foundSpheres = Crossroads.GetSpheresByPath(path);
 

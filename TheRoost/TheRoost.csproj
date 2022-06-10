@@ -48,7 +48,7 @@
     <Compile Include="TheWorld - Local Applications\RecipeEffects\RecipeEffectsMaster.cs" />
     <Compile Include="Twins - Expressions and Contexts\ContextAccessors.cs" />
     <Compile Include="TheWorld - Local Applications\RecipeEffects\RecipeEffectsEntities.cs" />
-    <Compile Include="Twins - Expressions and Contexts\ExpressionsParser.cs" />
+    <Compile Include="Twins - Expressions and Contexts\TwinsParser.cs" />
     <Compile Include="TheWorld - Local Applications\RecipeEffects\DecksEffect.cs" />
     <Compile Include="Twins - Expressions and Contexts\ExpressionsEntities.cs" />
     <Compile Include="Vagabond - Various Interventions\HarmonyPatchWrapper.cs" />

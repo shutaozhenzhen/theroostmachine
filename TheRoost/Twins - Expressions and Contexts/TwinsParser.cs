@@ -9,7 +9,7 @@ using Roost.Twins.Entities;
 
 namespace Roost.Twins
 {
-    public static class ExpressionsParser
+    public static class TwinsParser
     {
         const char referenceOpening = '[';
         const char referenceClosing = ']';
@@ -34,7 +34,7 @@ namespace Roost.Twins
                 while (openingPosition > -1)
                 {
                     string referenceId = GenerateUniqueReferenceId(references.Count);
-                    FucineRef reference = ParseFucineRef(referenceData, referenceId);
+                    FucineRef reference = new FucineRef(referenceData, referenceId);
 
                     bool referenceIsUnique = true;
                     foreach (FucineRef olderReference in references)
@@ -67,10 +67,9 @@ namespace Roost.Twins
                 && expression.Equals("false", StringComparison.InvariantCultureIgnoreCase) == false;
         }
 
-        public static FucineRef ParseFucineRef(string data, string referenceId)
+        public static void ParseFucineRef(string data, out FucinePath targetPath, out FucineExp<bool> filter, out FucineValueGetter target)
         {
             const char partsSeparator = ':';
-            FucinePath targetPath; FucineExp<bool> filter; FucineValueGetter target;
 
             GetBordersOfSeparatedArea(data, out int openingPosition, out int closingPosition, filterOpening, filterClosing);
             FucineExp<bool> separatedFilter = default(FucineExp<bool>);
@@ -107,8 +106,6 @@ namespace Roost.Twins
 
             if (separatedFilter.isUndefined == false)
                 filter = separatedFilter;
-
-            return new FucineRef(referenceId, targetPath, filter, target);
         }
 
         public static FucinePath ParseSpherePath(string path)

@@ -8,6 +8,7 @@ using SecretHistories.Entities;
 using SecretHistories.UI;
 using SecretHistories.Enums;
 using SecretHistories.Fucine;
+using SecretHistories.Spheres;
 
 using NCalc;
 
@@ -33,7 +34,7 @@ namespace Roost.Twins.Entities
             this.formula = data;
             try
             {
-                this.references = ExpressionsParser.LoadReferencesForExpressin(ref data).ToArray();
+                this.references = TwinsParser.LoadReferencesForExpressin(ref data).ToArray();
                 this.expression = new Expression(Expression.Compile(data, false));
             }
             catch (Exception ex)
@@ -69,35 +70,31 @@ namespace Roost.Twins.Entities
 
     public struct FucineRef
     {
-        public delegate List<Token> SphereTokensRef();
-
         public readonly string idInExpression;
 
         public readonly FucinePath path;
         public readonly FucineExp<bool> filter;
-        public readonly FucineValueGetter valueGetter;
+        public readonly FucineValueGetter target;
 
-        public float value
-        {
-            get
-            {
-                List<Token> tokens = Crossroads.GetTokensByPath(path).FilterTokens(filter);
+        public List<Sphere> targetSpheres { get { return Crossroads.GetSpheresByPath(path); } }
+        public List<Token> tokens { get { return Crossroads.GetTokensByPath(path).FilterTokens(filter); } }
+        public float value { get { return target.GetValueFromTokens(this.tokens); } }
 
-                return valueGetter.GetValueFromTokens(tokens);
-            }
-        }
-
-        public FucineRef(string referenceId, FucinePath path, FucineExp<bool> filter, FucineValueGetter valueGetter)
+        public FucineRef(string referenceId, string referenceData)
         {
             this.idInExpression = referenceId;
-            this.path = path;
-            this.filter = filter;
-            this.valueGetter = valueGetter;
+            TwinsParser.ParseFucineRef(referenceData, out path, out filter, out target);
+        }
+
+        public FucineRef(string referenceData)
+        {
+            idInExpression = null;
+            TwinsParser.ParseFucineRef(referenceData, out path, out filter, out target);
         }
 
         public bool Equals(FucineRef otherReference)
         {
-            return otherReference.path == this.path && otherReference.filter.formula == this.filter.formula && otherReference.valueGetter.Equals(this.valueGetter);
+            return otherReference.path == this.path && otherReference.filter.formula == this.filter.formula && otherReference.target.Equals(this.target);
         }
     }
 
@@ -324,6 +321,7 @@ namespace Roost.Twins.Entities
             return typeof(Situation).IsAssignableFrom(payload.GetType());
         }
 
+        //WIP
         static Func<TClass, float> CreatePropertyReturner<TClass, TProperty>(MethodInfo getMethod)
         {
             try
