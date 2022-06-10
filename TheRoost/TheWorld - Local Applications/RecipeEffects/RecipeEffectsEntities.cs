@@ -23,9 +23,6 @@ namespace Roost.World.Recipes.Entities
         [FucineDict] public Dictionary<FucinePath, GrandEffects> DistantEffects { get; set; }
         [FucineDict] public Dictionary<TokenFilterSpec, List<RefMutationEffect>> Mutations { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> Aspects { get; set; }
-
-        [FucineDict] public Dictionary<FucineExp<bool>, List<RefMorphDetails>> XTriggers { get; set; }
-
         [FucineList] public List<string> DeckShuffles { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> DeckEffects { get; set; }
 
@@ -106,7 +103,7 @@ namespace Roost.World.Recipes.Entities
                     continue;
 
                 foreach (TokenFilterSpec filter in Movements[fucinePath])
-                    foreach (Token token in filter.FilterTokens(tokens))
+                    foreach (Token token in filter.GetTokens(tokens, true))
                         RecipeExecutionBuffer.ScheduleMovement(token, targetSpheres[UnityEngine.Random.Range(0, targetSpheres.Count)], MovementsVFX);
             }
 
@@ -135,13 +132,12 @@ namespace Roost.World.Recipes.Entities
 
             foreach (TokenFilterSpec filter in Mutations.Keys)
             {
-                List<Token> targets = filter.FilterTokens(tokens);
+                List<Token> targets = filter.GetTokens(tokens, true);
 
                 if (targets.Count > 0)
                     foreach (RefMutationEffect mutationEffect in Mutations[filter])
                         RecipeExecutionBuffer.ScheduleMutation(targets, mutationEffect.Mutate, mutationEffect.Level.value, mutationEffect.Additive, mutationEffect.VFX);
             }
-
             RecipeExecutionBuffer.ApplyMutations();
         }
 
@@ -182,25 +178,6 @@ namespace Roost.World.Recipes.Entities
                             if (xtriggers.ContainsKey(catalyst.Key)) foreach (RefMorphDetails morphDetails in xtriggers[catalyst.Key])
                                     morphDetails.Execute(situation, token, aspect.Key, aspect.Value, catalyst.Value, false);
                 }
-            }
-
-            Crossroads.UnmarkLocalToken();
-            RecipeExecutionBuffer.ApplyAll();
-        }
-
-        public void RunTargetedXTriggers(Sphere sphere, Situation situation)
-        {
-            if (XTriggers == null)
-                return;
-
-            List<Token> allTokens = sphere.GetElementTokens();
-            foreach (FucineExp<bool> filter in XTriggers.Keys)
-            {
-                List<Token> filteredTokens = allTokens.FilterTokens(filter);
-
-                foreach (Token token in filteredTokens)
-                    foreach (RefMorphDetails morphDetails in XTriggers[filter])
-                        morphDetails.Execute(situation, token, token.PayloadEntityId, 1, 1, true);
             }
 
             Crossroads.UnmarkLocalToken();
@@ -262,7 +239,7 @@ namespace Roost.World.Recipes.Entities
             List<Token> tokens = sphere.GetElementTokens();
 
             foreach (TokenFilterSpec tokenFilterSpec in Decays)
-                foreach (Token token in tokenFilterSpec.FilterTokens(tokens))
+                foreach (Token token in tokenFilterSpec.GetTokens(tokens, true))
                     RecipeExecutionBuffer.ScheduleDecay(token, DecaysVFX);
 
             RecipeExecutionBuffer.ApplyRetirements();
@@ -439,31 +416,10 @@ namespace Roost.World.Recipes.Entities
         public TokenFilterSpec(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
 
-        public List<Token> FilterTokens(List<Token> tokens)
+        public List<Token> GetTokens(List<Token> tokens)
         {
             //NB - intrusive, splits tokens
-            List<Token> filteredTokens = tokens.FilterTokens(Filter);
-            if (filteredTokens.Count == 0)
-                return new List<Token>();
-
-            int tokensToMove = Limit.isUndefined ? int.MaxValue : Limit.value;
-            List<Token> result = new List<Token>();
-            foreach (Token token in filteredTokens)
-            {
-                if (token.Quantity > tokensToMove)
-                {
-                    token.CalveToken(token.Quantity - tokensToMove, RecipeExecutionBuffer.situationEffectContext);
-                    tokensToMove = 0;
-                }
-                else
-                    tokensToMove -= token.Quantity;
-
-                result.Add(token);
-                if (tokensToMove <= 0)
-                    break;
-            }
-
-            return result;
+            return tokens.FilterTokens(Filter).ShuffleTokens().LimitTokens(Limit.value);
         }
 
         public void QuickSpec(string data)

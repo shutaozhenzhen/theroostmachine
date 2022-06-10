@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using SecretHistories.Entities;
 using SecretHistories.UI;
@@ -166,6 +167,37 @@ namespace Roost.Twins
             }
 
             UnmarkLocalToken();
+            return result;
+        }
+
+        private static readonly Random rng = new Random();
+        public static List<Token> ShuffleTokens(this List<Token> filteredTokens)
+        {
+            return filteredTokens.OrderBy(entry => rng.Next()).ToList();
+        }
+
+        public static List<Token> LimitTokens(this List<Token> filteredTokens, int tokensToMove)
+        {
+            //NB - intrusive, splits tokens
+            if (filteredTokens.Count == 0 || tokensToMove == 0)
+                return new List<Token>();
+
+            List<Token> result = new List<Token>();
+            foreach (Token token in filteredTokens)
+            {
+                if (token.Quantity > tokensToMove)
+                {
+                    token.CalveToken(token.Quantity - tokensToMove, Roost.World.Recipes.RecipeExecutionBuffer.situationEffectContext);
+                    tokensToMove = 0;
+                }
+                else
+                    tokensToMove -= token.Quantity;
+
+                result.Add(token);
+                if (tokensToMove <= 0)
+                    break;
+            }
+
             return result;
         }
     }
