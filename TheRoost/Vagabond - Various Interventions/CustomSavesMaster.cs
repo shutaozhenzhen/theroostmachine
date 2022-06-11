@@ -49,7 +49,7 @@ namespace Roost.Vagabond
             FileInfo[] saveFiles = d.GetFiles("custom_save_*");
             if (saveFiles.Length == 0)
             {
-                Birdsong.Sing("Didn't find any custom save file.");
+                Birdsong.Tweet("Didn't find any custom save file.");
                 return;
             }
             foreach (FileInfo fileInfo in saveFiles)
@@ -57,7 +57,7 @@ namespace Roost.Vagabond
                 char[] sep = { '.' };
                 string saveWithExtension = fileInfo.Name.Substring(12);
                 string saveWithoutExtension = saveWithExtension.Split(sep)[0];
-                Birdsong.Sing("→ " + saveWithoutExtension);
+                Birdsong.Tweet("→ " + saveWithoutExtension);
             }
         }
 
@@ -65,11 +65,11 @@ namespace Roost.Vagabond
         {
             if (args.Length < 1)
             {
-                Birdsong.Sing("This command requires to provide the save name as the first argument");
+                Birdsong.Tweet("This command requires to provide the save name as the first argument");
                 return;
             }
             string saveName = args[0];
-            Birdsong.Sing("Trying to load custom save", args[0]);
+            Birdsong.Tweet("Trying to load custom save", args[0]);
 
             var persistenceProvider = new CustomSavePersistenceProvider(saveName);
             Watchman.Get<StageHand>().LoadGameOnTabletop(persistenceProvider);
@@ -79,11 +79,11 @@ namespace Roost.Vagabond
         {
             if (args.Length < 1)
             {
-                Birdsong.Sing("This command requires to provide the save name as the first argument");
+                Birdsong.Tweet("This command requires to provide the save name as the first argument");
                 return;
             }
             string saveName = args[0];
-            Birdsong.Sing("Trying to save to custom save", args[0]);
+            Birdsong.Tweet("Trying to save to custom save", args[0]);
 
             Watchman.Get<Heart>().Metapause();
             Watchman.Get<LocalNexus>().DisablePlayerInput(0f);
@@ -94,7 +94,7 @@ namespace Roost.Vagabond
             {
                 Watchman.Get<Heart>().Unmetapause();
                 Watchman.Get<LocalNexus>().EnablePlayerInput();
-                Birdsong.Sing("Saved!");
+                Birdsong.Tweet("Saved!");
             }
         }
 
