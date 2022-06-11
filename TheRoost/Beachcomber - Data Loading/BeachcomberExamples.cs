@@ -58,7 +58,7 @@ namespace Roost.Beachcomber.Entities
         [FucineCustomList(typeof(FucinePathPanImporter))] 
         List<FucinePath> Paths { get; set; }
         //and FucineCustomDict:
-        [FucineCustomDict(KeyImporter: typeof(FucinePathPanImporter), ValueImporter: typeof(ConstructorPanImporter)] 
+        [FucineCustomDict(KeyImporter: typeof(FucinePathPanImporter), ValueImporter: typeof(ConstructorPanImporter))] 
         Dictionary<FucinePath, Vector2> PathLocations { get; set; }
 
         //finally, your entity needs to implement two methods of AbstractEntity<T> - constructor and OnPostImportForSpecificEntity()

@@ -6,6 +6,7 @@ using SecretHistories.UI;
 using UnityEngine;
 using UnityEngine.UI;
 using static UnityEngine.ParticleSystem;
+using Roost.World.Legacies.Entities;
 
 namespace Roost.World.Beauty
 {

@@ -93,11 +93,11 @@ namespace Roost.Enactors
             Roost.World.Recipes.Legerdemain.Enact();
             Roost.World.Recipes.RecipeLinkMaster.Enact();
 
-            Roost.World.Elements.CardVFXMaster.Enact();
+            Roost.World.Beauty.CardVFXMaster.Enact();
 
-            Roost.World.StartupQuoteMaster.Enact();
-            Roost.World.MainMenuStyleMaster.Enact();
-            Roost.World.TableStyleMaster.Enact();
+            Roost.World.Beauty.StartupQuoteMaster.Enact();
+            Roost.World.Beauty.MainMenuStyleMaster.Enact();
+            Roost.World.Beauty.TableStyleMaster.Enact();
         }
     }
 }
