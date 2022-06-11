@@ -28,10 +28,11 @@ namespace Roost.World.Recipes.Entities
         [FucineList] public List<TokenFilterSpec> Decays { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> HaltVerb { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> DeleteVerb { get; set; }
-        [FucineDict] public List<LinkedRecipeDetails> Induces { get; set; }
-
         [FucineDict] public List<GrandEffects> DistantEffects { get; set; }
         [FucineDict] public Dictionary<FucinePath, List<TokenFilterSpec>> Movements { get; set; }
+
+        [FucineDict] public List<LinkedRecipeDetails> Induces { get; set; }
+
 
         [FucineValue(DefaultValue = RetirementVFX.None)] public RetirementVFX DeckEffectsVFX { get; set; }
         [FucineValue(DefaultValue = RetirementVFX.CardTransformWhite)] public RetirementVFX CreateVFX { get; set; }
@@ -120,8 +121,6 @@ namespace Roost.World.Recipes.Entities
         private static readonly AspectsDictionary allCatalystsInSphere = new AspectsDictionary();
         public static void RunXTriggers(Dictionary<string, FucineExp<int>> Aspects, Sphere sphere, Situation situation, bool catalystFromElements)
         {
-            allCatalystsInSphere.Clear();
-
             if (Aspects != null)
                 foreach (KeyValuePair<string, FucineExp<int>> catalyst in Aspects)
                     allCatalystsInSphere[catalyst.Key] = catalyst.Value.value;
@@ -157,6 +156,7 @@ namespace Roost.World.Recipes.Entities
                 }
             }
 
+            allCatalystsInSphere.Clear();
             Crossroads.UnmarkLocalToken();
             RecipeExecutionBuffer.ApplyAllEffects();
         }
@@ -226,11 +226,26 @@ namespace Roost.World.Recipes.Entities
         private void RunVerbManipulations()
         {
             if (HaltVerb != null)
+            {
                 foreach (KeyValuePair<string, FucineExp<int>> haltVerbEffect in HaltVerb)
-                    Watchman.Get<HornedAxe>().HaltSituation(haltVerbEffect.Key, haltVerbEffect.Value.value);
+                    allCatalystsInSphere.Add(haltVerbEffect.Key, haltVerbEffect.Value.value);
+
+                foreach (KeyValuePair<string, int> haltVerbEffect in allCatalystsInSphere)
+                    Watchman.Get<HornedAxe>().HaltSituation(haltVerbEffect.Key, haltVerbEffect.Value);
+
+                allCatalystsInSphere.Clear();
+            }
+
             if (DeleteVerb != null)
+            {
                 foreach (KeyValuePair<string, FucineExp<int>> deleteVerbEffect in DeleteVerb)
-                    Watchman.Get<HornedAxe>().PurgeSituation(deleteVerbEffect.Key, deleteVerbEffect.Value.value);
+                    allCatalystsInSphere.Add(deleteVerbEffect.Key, deleteVerbEffect.Value.value);
+
+                foreach (KeyValuePair<string, int> deleteVerbEffect in allCatalystsInSphere)
+                    Watchman.Get<HornedAxe>().HaltSituation(deleteVerbEffect.Key, deleteVerbEffect.Value);
+
+                allCatalystsInSphere.Clear();
+            }
         }
 
         private void RunDistantEffects(Situation situation)
