@@ -454,6 +454,9 @@ namespace Roost.World.Recipes.Entities
         public List<Token> GetTokens(List<Token> tokens)
         {
             //NB - intrusive, splits tokens
+            if (Limit.isUndefined)
+                return tokens.FilterTokens(Filter).ShuffleTokens();
+
             return tokens.FilterTokens(Filter).ShuffleTokens().LimitTokens(Limit.value);
         }
 
