@@ -44,8 +44,8 @@ namespace SecretHistories.Fucine
                 return cachedFucineProperty.FucineAttribute.DefaultValue;
             else if (cachedFucineProperty.FucineAttribute.DefaultValue != null)
                 return Panimporter.ConstuctFromParameters(cachedFucineProperty.FucineAttribute.DefaultValue, propertyType, log);
-            else
-                return FactoryInstantiator.CreateObjectWithDefaultConstructor(propertyType);
+
+            return FactoryInstantiator.CreateObjectWithDefaultConstructor(propertyType);
         }
     }
 
@@ -84,8 +84,7 @@ namespace SecretHistories.Fucine
         {
             if (cachedFucineProperty.FucineAttribute.DefaultValue != null)
                 return Panimporter.ConstuctFromParameters(cachedFucineProperty.FucineAttribute.DefaultValue, cachedFucineProperty.ThisPropInfo.PropertyType, log);
-            else
-                return FactoryInstantiator.CreateObjectWithDefaultConstructor(cachedFucineProperty.ThisPropInfo.PropertyType);
+            return FactoryInstantiator.CreateObjectWithDefaultConstructor(cachedFucineProperty.ThisPropInfo.PropertyType);
         }
     }
 
@@ -97,8 +96,8 @@ namespace SecretHistories.Fucine
         {
             if (cachedFucineProperty.FucineAttribute.DefaultValue != null)
                 return Panimporter.ConstuctFromParameters(cachedFucineProperty.FucineAttribute.DefaultValue, cachedFucineProperty.ThisPropInfo.PropertyType, log);
-            else
-                return FactoryInstantiator.CreateObjectWithDefaultConstructor(cachedFucineProperty.ThisPropInfo.PropertyType);
+
+            return FactoryInstantiator.CreateObjectWithDefaultConstructor(cachedFucineProperty.ThisPropInfo.PropertyType);
         }
     }
 
@@ -107,7 +106,9 @@ namespace SecretHistories.Fucine
         public static bool CreateImporterInstance(ref AbstractImporter __result) { __result = new FucinePathPanImporter(); return false; }
         public override object Import(object pathData, Type type, ContentImportLog log) { return Panimporter.ImportFucinePath(pathData, type, log); }
         protected override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty, ContentImportLog log)
-        { return cachedFucineProperty.FucineAttribute.DefaultValue ?? FucinePath.Current(); }
+        {
+            return Roost.Twins.TwinsParser.ParseSpherePath(cachedFucineProperty.FucineAttribute.DefaultValue as string);
+        }
     }
 
     class CustomListPanImporter : AbstractImporter

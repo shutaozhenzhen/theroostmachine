@@ -110,6 +110,9 @@ namespace Roost.Twins
 
         public static FucinePath ParseSpherePath(string path)
         {
+            if (string.IsNullOrEmpty(path))
+                return FucinePath.Current();
+
             bool pathIsMultiPath = path.Contains('+') || path[path.Length - 1] == referenceClosing;
             if (pathIsMultiPath)
             {

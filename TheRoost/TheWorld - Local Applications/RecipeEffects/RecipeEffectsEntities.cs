@@ -18,7 +18,7 @@ namespace Roost.World.Recipes.Entities
 {
     public class GrandEffects : AbstractEntity<GrandEffects>
     {
-        [FucinePathValue(DefaultValue = "")] public FucinePath Target { get; set; }
+        [FucinePathValue] public FucinePath Target { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> RootEffects { get; set; }
         [FucineDict] public Dictionary<TokenFilterSpec, List<RefMutationEffect>> Mutations { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> Aspects { get; set; }
