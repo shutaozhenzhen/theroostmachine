@@ -2,6 +2,7 @@
 using System.Collections;
 using SecretHistories.Fucine.DataImport;
 using Roost.Beachcomber;
+using Roost;
 
 namespace SecretHistories.Fucine
 {

@@ -89,7 +89,7 @@ namespace Roost.World.Recipes
                 recipe.InternalDeck = new DeckSpec();
             }
 
-            GrandEffects firstPassEffects = new GrandEffects();
+            GrandEffects firstPassEffects = new GrandEffects(log);
             bool atLeastOneEffect = false;
             foreach (CachedFucineProperty<GrandEffects> cachedProperty in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
                 if (recipe.HasCustomProperty(cachedProperty.LowerCaseName))

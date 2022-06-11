@@ -33,7 +33,8 @@ namespace Roost.World.Recipes
             dealerstable = Watchman.Get<DealersTable>();
             dealer = new Dealer(dealerstable);
 
-            return;
+            //this code shuffles all the decks at the start of the game; 
+            /*
             Compendium compendium = Watchman.Get<Compendium>();
             if (RecipeEffectsMaster.newGameStarted)
                 foreach (IHasElementTokens deckDrawPile in dealerstable.GetDrawPiles())
@@ -49,7 +50,7 @@ namespace Roost.World.Recipes
                         else
                             Birdsong.Tweet($"For whatever reason, deck {deckId} is completely empty, can't be reshuffled and has no default card");
                     }
-                }
+                }*/
         }
 
         public static void Deal(string deckId, Sphere toSphere, int draws = 1)

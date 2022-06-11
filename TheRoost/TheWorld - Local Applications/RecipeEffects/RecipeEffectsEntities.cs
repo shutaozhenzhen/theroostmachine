@@ -43,6 +43,7 @@ namespace Roost.World.Recipes.Entities
         [FucineValue(DefaultValue = RetirementVFX.None)] public RetirementVFX MovementsVFX { get; set; }
 
         public GrandEffects() { }
+        public GrandEffects(ContentImportLog log) : base(new EntityData(), log) { }
         public GrandEffects(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
         {
