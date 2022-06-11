@@ -38,6 +38,7 @@
     <LangVersion>7</LangVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Beachcomber - Data Loading\BeachcomberFucineExtensions.cs" />
     <Compile Include="Beachcomber - Data Loading\BeachcomberIgnore.cs" />
     <Compile Include="Elegiast - Achievements\ElegiastArchive.cs" />
     <Compile Include="TheWorld - Local Applications\MainMenu\MainMenuStyleMaster.cs" />

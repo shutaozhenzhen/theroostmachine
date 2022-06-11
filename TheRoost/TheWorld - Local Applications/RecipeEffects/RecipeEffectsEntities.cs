@@ -46,7 +46,6 @@ namespace Roost.World.Recipes.Entities
         public GrandEffects(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
         {
-            Birdsong.Sing(DeckEffectsVFX, CreateVFX, DestroyVFX, DecaysVFX, MovementsVFX);
             //reducing amount of entities
             foreach (CachedFucineProperty<GrandEffects> property in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
             {
