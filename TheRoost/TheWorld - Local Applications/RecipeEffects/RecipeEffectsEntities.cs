@@ -8,11 +8,11 @@ using SecretHistories.Fucine;
 using SecretHistories.Fucine.DataImport;
 using SecretHistories.Entities;
 using SecretHistories.Core;
+using SecretHistories.Spheres;
 using SecretHistories.Assets.Scripts.Application.Entities.NullEntities;
 
 using Roost.Twins;
 using Roost.Twins.Entities;
-using SecretHistories.Spheres;
 
 namespace Roost.World.Recipes.Entities
 {
@@ -29,7 +29,9 @@ namespace Roost.World.Recipes.Entities
         [FucineDict] public Dictionary<string, FucineExp<int>> HaltVerb { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> DeleteVerb { get; set; }
         [FucineDict] public List<GrandEffects> DistantEffects { get; set; }
-        [FucineDict] public Dictionary<FucinePath, List<TokenFilterSpec>> Movements { get; set; }
+
+        [FucineCustomDict(KeyImporter: typeof(FucinePathPanImporter), ValueImporter: typeof(ListPanImporter))]
+        public Dictionary<FucinePath, List<TokenFilterSpec>> Movements { get; set; }
 
         [FucineDict] public List<LinkedRecipeDetails> Induces { get; set; }
 
@@ -44,6 +46,7 @@ namespace Roost.World.Recipes.Entities
         public GrandEffects(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
         {
+            Birdsong.Sing(DeckEffectsVFX, CreateVFX, DestroyVFX, DecaysVFX, MovementsVFX);
             //reducing amount of entities
             foreach (CachedFucineProperty<GrandEffects> property in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
             {
