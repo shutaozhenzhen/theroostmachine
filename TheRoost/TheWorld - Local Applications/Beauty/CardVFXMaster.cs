@@ -10,7 +10,7 @@ using Assets.Scripts.Application.Infrastructure.Events;
 
 using HarmonyLib;
 
-namespace Roost.World.Elements
+namespace Roost.World.Beauty
 {
     public static class CardVFXMaster
     {

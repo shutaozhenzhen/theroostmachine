@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Roost.World
+namespace Roost.World.Beauty
 { 
     class CanvasRendererFading : MonoBehaviour
     {

@@ -1,15 +1,13 @@
-﻿using SecretHistories.Entities;
-using SecretHistories.UI;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using SecretHistories.Entities;
+using SecretHistories.UI;
+
 using UnityEngine;
 using UnityEngine.UI;
 using static UnityEngine.ParticleSystem;
 
-namespace Roost.World
+namespace Roost.World.Beauty
 {
     class MainMenuStyleMaster
     {

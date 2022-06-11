@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-namespace Roost.World
+namespace Roost.World.Beauty
 {
     class StartupQuoteMaster
     {
