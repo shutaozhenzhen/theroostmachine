@@ -23,8 +23,8 @@ public static class TheRoostMachine
                 SecretHistories.UI.Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
 
                 Roost.Enactors.Beachcomber.Enact();
-                Roost.Enactors.Elegiast.Enact();
                 Roost.Enactors.Vagabond.Enact();
+                Roost.Enactors.Elegiast.Enact();
                 Roost.Enactors.Twins.Enact();
                 Roost.Enactors.World.Enact();
 

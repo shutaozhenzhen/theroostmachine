@@ -16,8 +16,10 @@ namespace Roost.World
         const string DECK_LEGACY_FAMILY = nameof(DeckSpec.ForLegacyFamily);
         internal static void Enact()
         {
+
             Machine.Patch(
                 original: typeof(Sphere).GetMethodInvariant(nameof(Sphere.AcceptToken)),
+                prefix: typeof(Optimizations).GetMethodInvariant(nameof(EnableNonDormantTokens)),
                 postfix: typeof(Optimizations).GetMethodInvariant(nameof(DisableDormantTokens)));
 
             Machine.ClaimProperty<Legacy, List<string>>(LEGACY_FAMILY);
@@ -30,7 +32,6 @@ namespace Roost.World
                 original: typeof(DeckSpec).GetPropertyInvariant(DECK_LEGACY_FAMILY).GetGetMethod(),
                 prefix: typeof(Optimizations).GetMethodInvariant(nameof(GetDeckFamily)));
 
-
             //the changes are nigh identical, only arguments we need to access are different
             Machine.Patch(
                 original: typeof(RootPopulationCommand).GetMethodInvariant("DealersTableForLegacy"),
@@ -41,17 +42,16 @@ namespace Roost.World
                 transpiler: typeof(Optimizations).GetMethodInvariant(nameof(CheckActiveDecksForSaveConversion)));
         }
 
-        private static bool NoUselessUpdate()
+        private static void EnableNonDormantTokens(Sphere __instance, Token token)
         {
-            return false;
+            if (__instance.SphereCategory != SecretHistories.Enums.SphereCategory.Dormant)
+                token.gameObject.SetActive(true);
         }
 
         private static void DisableDormantTokens(Sphere __instance, Token token)
         {
             if (__instance.SphereCategory == SecretHistories.Enums.SphereCategory.Dormant)
                 token.gameObject.SetActive(false);
-            else
-                token.gameObject.SetActive(true);
         }
 
         private static bool GetLegacyFamily(Legacy __instance, ref string __result)
