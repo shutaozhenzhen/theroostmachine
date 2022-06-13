@@ -74,7 +74,7 @@ namespace Roost
         {
             string result = string.Empty;
             foreach (object obj in collection)
-                result += (obj == null ? "null" : obj.ToString()) + ' ';
+                result += (obj == null ? "null " : obj.ToString()) + ' ';
             return result;
         }
 
@@ -82,7 +82,7 @@ namespace Roost
         {
             string result = string.Empty;
             foreach (object obj in collection)
-                result += selector(obj);
+                result += (obj == null ? "null " : selector(obj)) + ' ';
             return result;
         }
 
