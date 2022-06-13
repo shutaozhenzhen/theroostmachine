@@ -11,6 +11,7 @@ using SecretHistories.Enums;
 using SecretHistories.Fucine;
 using SecretHistories.Fucine.DataImport;
 using SecretHistories.Spheres;
+using SecretHistories.Spheres.Angels;
 
 using Roost.Twins;
 using Roost.Twins.Entities;
@@ -24,6 +25,8 @@ namespace Roost.World.Recipes
     {
         const string GRAND_REQS = "grandreqs";
         const string GRAND_EFFECTS = "grandeffects";
+
+        const string GRAB_FILTER = "grabfilter";
 
         internal static void Enact()
         {
@@ -56,6 +59,38 @@ namespace Roost.World.Recipes
             Machine.Patch(
                 original: typeof(SituationStorageSphere).GetPropertyInvariant("AllowStackMerge").GetGetMethod(),
                 prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(AllowStackMerge)));
+
+            Machine.ClaimProperty<SphereSpec, FucineExp<bool>>(GRAB_FILTER, false, FucineExp<bool>.UNDEFINED);
+            Machine.Patch(
+                original: typeof(GreedyAngel).GetMethodInvariant("TryGrabStack"),
+                prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(TryGrabStackRandom)));
+
+        }
+
+        private static bool TryGrabStackRandom(Sphere destinationThresholdSphere)
+        {
+            List<Token> tokens = new List<Token>();
+            SphereSpec slotSpec = destinationThresholdSphere.GoverningSphereSpec;
+            foreach (Sphere sphere in Watchman.Get<HornedAxe>().GetSpheres())
+                if (!sphere.Defunct && sphere.AllowDrag &&
+                    (sphere.SphereCategory == SphereCategory.World || sphere.SphereCategory == SphereCategory.Threshold || sphere.SphereCategory == SphereCategory.Output))
+                    foreach (Token candidateToken in sphere.GetElementTokens())
+                        if (candidateToken.CanBePulled() && slotSpec.CheckPayloadAllowedHere(candidateToken.Payload).MatchType == SlotMatchForAspectsType.Okay)
+                            tokens.Add(candidateToken);
+
+            Token grabToken = tokens.FilterTokens(slotSpec.RetrieveProperty<FucineExp<bool>>(GRAB_FILTER)).SelectSingleToken();
+            if (grabToken == null)
+                return false;
+
+            if (grabToken.CurrentlyBeingDragged())
+                grabToken.ForceEndDrag();
+            if (grabToken.Quantity > 1)
+                grabToken.CalveToken(grabToken.Quantity - 1, new Context(Context.ActionSource.GreedyGrab));
+            TokenTravelItinerary tokenItinerary = destinationThresholdSphere.GetItineraryFor(grabToken).WithDuration(0.3f);
+            grabToken.RequestHomingAngelFromCurrentSphere();
+            tokenItinerary.Depart(grabToken, new Context(Context.ActionSource.GreedyGrab));
+
+            return false;
         }
 
         public static bool newGameStarted = false;
