@@ -196,18 +196,15 @@ namespace Roost.World.Recipes.Entities
                 int level = Effects[filter].value;
                 if (level < 0)
                 {
-                    List<Token> filteredTokens = allTokens.FilterTokens(filter);
-                    while (level < 0 && filteredTokens.Count > 0)
-                    {
-                        RecipeExecutionBuffer.ScheduleQuantityChange(filteredTokens[UnityEngine.Random.Range(0, filteredTokens.Count)], -1, DestroyVFX);
-                        level++;
-                    }
+                    List<Token> affectedTokens = allTokens.FilterTokens(filter).SelectRandom(Math.Abs(level));
+                    foreach (Token token in affectedTokens)
+                        RecipeExecutionBuffer.ScheduleRetirement(token, DestroyVFX);
                 }
                 else
                     RecipeExecutionBuffer.ScheduleCreation(sphere, filter.formula, level, CreateVFX);
             }
 
-            RecipeExecutionBuffer.ApplyQuantityChanges();
+            RecipeExecutionBuffer.ApplyRetirements();
             RecipeExecutionBuffer.ApplyCreations();
         }
 
@@ -460,7 +457,7 @@ namespace Roost.World.Recipes.Entities
         }
     }
 
-    public class TokenFilterSpec : AbstractEntity<TokenFilterSpec>, IQuickSpecEntity
+    public class TokenFilterSpec : AbstractEntity<TokenFilterSpec>, IQuickSpecEntity, ICustomSpecEntity
     {
         [FucineConstruct] public FucineExp<bool> Filter { get; set; }
         [FucineConstruct(FucineExp<int>.UNDEFINED)] public FucineExp<int> Limit { get; set; } //unlimited by default
@@ -471,11 +468,10 @@ namespace Roost.World.Recipes.Entities
 
         public List<Token> GetTokens(List<Token> tokens)
         {
-            //NB - intrusive, splits tokens
             if (Limit.isUndefined)
-                return tokens.FilterTokens(Filter).ShuffleTokens();
+                return tokens.FilterTokens(Filter);
 
-            return tokens.FilterTokens(Filter).ShuffleTokens().LimitTokens(Limit.value);
+            return tokens.FilterTokens(Filter).SelectRandom(Limit.value);
         }
 
         public void QuickSpec(string data)
@@ -487,6 +483,20 @@ namespace Roost.World.Recipes.Entities
             catch (Exception ex)
             {
                 throw ex;
+            }
+        }
+
+        public void CustomSpec(Hashtable data)
+        {
+            if (Filter.isUndefined)
+            {
+                foreach (object key in UnknownProperties.Keys)
+                {
+                    this.Filter = new FucineExp<bool>(key.ToString());
+                    this.Limit = new FucineExp<int>(UnknownProperties[key].ToString());
+                    break;
+                }
+                UnknownProperties.Remove(this.Filter.formula);
             }
         }
     }
