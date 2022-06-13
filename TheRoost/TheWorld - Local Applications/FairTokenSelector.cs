@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-
 using SecretHistories.UI;
 
 using Roost.Twins.Entities;
@@ -15,6 +14,8 @@ namespace Roost.World
             if (filter.isUndefined)
                 return tokens;
 
+            Twins.Crossroads.MarkAllLocalTokens(tokens);
+
             List<Token> result = new List<Token>();
             foreach (Token token in tokens)
             {
@@ -24,7 +25,7 @@ namespace Roost.World
                     result.Add(token);
             }
 
-            Twins.Crossroads.UnmarkLocalToken();
+            Twins.Crossroads.UnmarkAllLocalTokens();
             return result;
         }
 

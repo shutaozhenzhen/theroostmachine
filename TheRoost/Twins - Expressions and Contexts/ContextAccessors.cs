@@ -47,17 +47,21 @@ namespace Roost.Twins
 
         public const string currentSituation = "~/situation";
         public const string currentSphere = "~/sphere";
+        public const string currentTokens = "~/tokens";
         public const string currentToken = "~/token";
         public const string currentScope = "~/local";
 
-        private static readonly List<Sphere> localTokenContainer = new List<Sphere> { new TokenFakeSphere() };
+
+        private static readonly List<Sphere> localSingleTokenContainer = new List<Sphere> { new TokenFakeSphere() };
+        private static readonly List<Sphere> allLocalTokensContainer = new List<Sphere> { new TokenFakeSphere() };
         public static readonly List<Sphere> defaultSphereContainer = new List<Sphere>();
 
         private static readonly Dictionary<string, List<Sphere>> cachedSpheres = new Dictionary<string, List<Sphere>>()
         {
             { currentSituation, null },
             { currentSphere, defaultSphereContainer },
-            { currentToken, localTokenContainer },
+            { currentTokens, allLocalTokensContainer },
+            { currentToken, localSingleTokenContainer },
             { currentScope, defaultSphereContainer }
         };
 
@@ -121,9 +125,14 @@ namespace Roost.Twins
             MarkLocalScope(cachedSpheres[currentSphere]);
         }
 
+        public static void MarkAllLocalTokens(List<Token> tokens)
+        {
+            (allLocalTokensContainer[0] as TokenFakeSphere).Set(tokens);
+        }
+
         public static void MarkLocalToken(Token token)
         {
-            (localTokenContainer[0] as TokenFakeSphere).Set(token);
+            (localSingleTokenContainer[0] as TokenFakeSphere).Set(token);
             MarkLocalScope(cachedSpheres[currentToken]);
         }
 
@@ -138,16 +147,24 @@ namespace Roost.Twins
             MarkLocalScope(cachedSpheres[currentSituation]);
         }
 
+        public static void UnmarkAllLocalTokens()
+        {
+            allLocalTokensContainer[0].RetireAllTokens(); //don't be afraid, the method is overriden to just clear the list
+            localSingleTokenContainer[0].RetireAllTokens(); //don't be afraid, the method is overriden to just clear the list
+            MarkLocalScope(cachedSpheres[currentSphere]);
+        }
+
         public static void UnmarkLocalToken()
         {
-            (localTokenContainer[0] as TokenFakeSphere).Clear();
+            localSingleTokenContainer[0].RetireAllTokens(); //don't be afraid, the method is overriden to just clear the list
             MarkLocalScope(cachedSpheres[currentSphere]);
         }
 
         public static void ResetCache()
         {
             cachedSpheres.Clear();
-            cachedSpheres[currentToken] = localTokenContainer;
+            cachedSpheres[currentTokens] = allLocalTokensContainer;
+            cachedSpheres[currentToken] = localSingleTokenContainer;
             cachedSpheres[currentSphere] = defaultSphereContainer;
             cachedSpheres[currentScope] = defaultSphereContainer;
         }
@@ -156,14 +173,14 @@ namespace Roost.Twins
     public class TokenFakeSphere : Sphere
     {
         public override SphereCategory SphereCategory { get { return SphereCategory.Meta; } }
-
+        public void Set(List<Token> token) { _tokens.Clear(); _tokens.AddRange(token); }
         public void Set(Token token) { _tokens.Clear(); _tokens.Add(token); }
-        public void Clear() { _tokens.Clear(); }
+        public override void RetireAllTokens() { _tokens.Clear(); }
     }
 
     internal class TwinsDebug
     {
-        public static void TestReference(string[] command)
+        public static void TestReference(params string[] command)
         {
             string path = string.Concat(command);
             try
