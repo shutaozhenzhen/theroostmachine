@@ -45,16 +45,6 @@ namespace Roost.World.Recipes.Entities
         public GrandEffects() { }
         public GrandEffects(ContentImportLog log) : base(new EntityData(), log) { }
         public GrandEffects(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
-        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
-        {
-            //reducing amount of entities
-            foreach (CachedFucineProperty<GrandEffects> property in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
-            {
-                object value = property.GetViaFastInvoke(this);
-                if ((value as ICollection)?.Count == 0)
-                    property.SetViaFastInvoke(this, null);
-            }
-        }
 
         public static void RunGrandEffects(GrandEffects grandEffects, Situation situation, Sphere localSphere)
         {
@@ -290,9 +280,56 @@ namespace Roost.World.Recipes.Entities
             foreach (LinkedRecipeDetails link in Induces)
                 RecipeExecutionBuffer.ScheduleInduction(situation, link);
         }
+
+        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
+        {
+            ContentImportLog subLog = new ContentImportLog();
+            foreach (TokenFilterSpec filter in Mutations.Keys)
+            {
+                filter.OnPostImport(subLog, populatedCompendium);
+                foreach (RefMutationEffect mutation in Mutations[filter])
+                    mutation.OnPostImport(subLog, populatedCompendium);
+            }
+
+            foreach (string deckId in DeckShuffles)
+                if (populatedCompendium.GetEntityById<DeckSpec>(deckId) == null)
+                    log.LogWarning($"UNKNOWN DECK ID '{deckId}' TO SHUFFLE IN RECIPE EFFECTS '{Id}'");
+
+            foreach (string deckId in DeckEffects.Keys)
+                if (populatedCompendium.GetEntityById<DeckSpec>(deckId) == null)
+                    log.LogWarning($"UNKNOWN DECK ID '{deckId}' TO DRAW FROM IN RECIPE EFFECTS '{Id}'");
+
+            foreach (TokenFilterSpec filter in Decays)
+                filter.OnPostImport(subLog, populatedCompendium);
+
+            foreach (List<TokenFilterSpec> filters in Movements.Values)
+                foreach (TokenFilterSpec filter in filters)
+                    filter.OnPostImport(subLog, populatedCompendium);
+
+            foreach (ILogMessage message in subLog.GetMessages())
+                log.LogWarning($"PROBLEM IN RECIPE '{this.Id}' - {message.Description}'");
+
+            int i = 0;
+            foreach (GrandEffects distantEffect in DistantEffects)
+            {
+                distantEffect.SetId(this.Id + "_distant_" + i++);
+                distantEffect.OnPostImport(log, populatedCompendium);
+            }
+
+            foreach (LinkedRecipeDetails link in Induces)
+                link.OnPostImport(log, populatedCompendium);
+
+            //reducing amount of entities
+            foreach (CachedFucineProperty<GrandEffects> property in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
+            {
+                object value = property.GetViaFastInvoke(this);
+                if ((value as ICollection)?.Count == 0)
+                    property.SetViaFastInvoke(this, null);
+            }
+        }
     }
 
-    public class RefMutationEffect : AbstractEntity<RefMutationEffect>, IQuickSpecEntity, ICustomSpecEntity
+    public class RefMutationEffect : AbstractEntity<RefMutationEffect>, IQuickSpecEntity
     {
         [FucineEverValue(ValidateAsElementId = true, DefaultValue = null)] public string Mutate { get; set; }
         [FucineEverValue("1")] public FucineExp<int> Level { get; set; }
