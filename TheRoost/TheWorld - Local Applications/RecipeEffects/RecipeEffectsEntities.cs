@@ -133,7 +133,8 @@ namespace Roost.World.Recipes.Entities
                 xtriggers = compendium.GetEntityById<Element>(token.PayloadEntityId).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
                 if (xtriggers != null)
                     foreach (KeyValuePair<string, int> catalyst in allCatalystsInSphere)
-                        if (xtriggers.ContainsKey(catalyst.Key)) foreach (RefMorphDetails morphDetails in xtriggers[catalyst.Key])
+                        if (xtriggers.ContainsKey(catalyst.Key))
+                            foreach (RefMorphDetails morphDetails in xtriggers[catalyst.Key])
                                 morphDetails.Execute(situation, token, token.PayloadEntityId, token.Quantity, catalyst.Value, true);
 
                 AspectsDictionary tokenAspects = new AspectsDictionary(Machine.GetEntity<Element>(token.PayloadEntityId).Aspects);
@@ -144,7 +145,8 @@ namespace Roost.World.Recipes.Entities
                     xtriggers = compendium.GetEntityById<Element>(aspect.Key).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
                     if (xtriggers != null)
                         foreach (KeyValuePair<string, int> catalyst in allCatalystsInSphere)
-                            if (xtriggers.ContainsKey(catalyst.Key)) foreach (RefMorphDetails morphDetails in xtriggers[catalyst.Key])
+                            if (xtriggers.ContainsKey(catalyst.Key))
+                                foreach (RefMorphDetails morphDetails in xtriggers[catalyst.Key])
                                     morphDetails.Execute(situation, token, aspect.Key, aspect.Value, catalyst.Value, false);
                 }
             }
@@ -388,7 +390,6 @@ namespace Roost.World.Recipes.Entities
         [FucinePathValue("")] public FucinePath ToPath { get; set; }
         [FucineSubEntity(typeof(Expulsion))] public Expulsion Expulsion { get; set; }
 
-
         public void QuickSpec(string value)
         {
             this.SetId(value);
@@ -443,10 +444,13 @@ namespace Roost.World.Recipes.Entities
                     if (linkedRecipe == null)
                         log.LogWarning($"unknown recipe id '{this.Id}'");
 
-                    Induction = LinkedRecipeDetails.AsCurrentRecipe(linkedRecipe); //no other way to construct it normally
-                    Induction.SetProperty("chance", this.Chance);
-                    Induction.ToPath = this.ToPath;
-                    Induction.Expulsion = this.Expulsion;
+                    if (MorphEffect == MorphEffectsExtended.Induce)
+                    {
+                        Induction = LinkedRecipeDetails.AsCurrentRecipe(linkedRecipe); //no other way to construct it normally
+                        Induction.SetProperty("chance", new FucineExp<int>("100")); //xtriggers already have chance
+                        Induction.ToPath = this.ToPath;
+                        Induction.Expulsion = this.Expulsion;
+                    }
                     break;
                 case MorphEffectsExtended.DeckDraw:
                 case MorphEffectsExtended.DeckShuffle:
@@ -470,7 +474,9 @@ namespace Roost.World.Recipes.Entities
             }
 
             UnknownProperties.Remove(this.Id);
-            //even if these properties are needed, they are safely wrapped inside the LinkedRecipe by now
+            if (MorphEffect != MorphEffectsExtended.Induce)
+                Induction = null;
+            //even if these properties are needed, they are safely wrapped inside the Induction by now
             Expulsion = null;
             ToPath = null;
             return;
@@ -485,7 +491,7 @@ namespace Roost.World.Recipes.Entities
         {
             Crossroads.MarkLocalToken(targetToken);
 
-            if (Chance.value < UnityEngine.Random.Range(1, 101))
+            if (UnityEngine.Random.Range(1, 101) > Chance.value)
                 return;
 
             if (IgnoreAmount)
@@ -528,7 +534,9 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.Induce:
                     RecipeExecutionBuffer.ScheduleInduction(situation, Induction);
                     break;
-                case MorphEffectsExtended.Link: Machine.PushXtriggerLink(this.Id, Level.value); break;
+                case MorphEffectsExtended.Link:
+                    Machine.PushTemporaryRecipeLink(this.Id, Level.value);
+                    break;
                 default: Birdsong.Tweet($"Unknown trigger '{MorphEffect}' for element stack '{targetToken.PayloadEntityId}'"); break;
             }
         }

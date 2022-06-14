@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+
 using SecretHistories.Entities;
 using SecretHistories.UI;
 using SecretHistories.Commands.SituationCommands;
@@ -13,7 +14,7 @@ namespace Roost.World.Recipes
     public static class RecipeLinkMaster
     {
         private readonly static Action<Situation, Recipe, Expulsion, FucinePath> SpawnSituation = Delegate.CreateDelegate(typeof(Action<Situation, Recipe, Expulsion, FucinePath>), typeof(Situation).GetMethodInvariant("AdditionalRecipeSpawnToken")) as Action<Situation, Recipe, Expulsion, FucinePath>;
-        private static readonly List<Recipe> xtriggerLinks = new List<Recipe>();
+        public static readonly SortedList<int, Recipe> temporaryLinks = new SortedList<int, Recipe>(new DuplicateKeyComparer<int>());
         const string CHANCE = "chance";
         internal static void Enact()
         {
@@ -30,7 +31,7 @@ namespace Roost.World.Recipes
             //there are xtrigger links
             Machine.Patch(
                 original: typeof(RecipeConductor).GetMethodInvariant(nameof(RecipeConductor.GetLinkedRecipe)),
-                prefix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(CheckXTriggerLinks)));
+                prefix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(EvaluateTempLinks)));
 
             //chance is an expression
             Machine.ClaimProperty<LinkedRecipeDetails, FucineExp<int>>(CHANCE, false, "100");
@@ -85,22 +86,35 @@ namespace Roost.World.Recipes
         }
 
         //RecipeConductor.GetLinkedRecipe() prefix
-        private static bool CheckXTriggerLinks(ref Recipe __result, AspectsInContext ____aspectsInContext)
+        private static bool EvaluateTempLinks(ref Recipe __result, AspectsInContext ____aspectsInContext)
         {
-            foreach (Recipe recipe in xtriggerLinks)
+            foreach (Recipe recipe in temporaryLinks.Values)
                 if (recipe.RequirementsSatisfiedBy(____aspectsInContext))
                 {
                     __result = recipe;
                     break;
                 }
 
-            xtriggerLinks.Clear();
+            temporaryLinks.Clear();
             return __result == null;
         }
 
-        internal static void PushXtriggerLink(Recipe recipe, int orderShift)
+        internal static void PushTemporaryRecipeLink(Recipe recipe, int priority)
         {
-            xtriggerLinks.Insert(Math.Min(xtriggerLinks.Count, xtriggerLinks.Count + orderShift), recipe);
+            temporaryLinks.Add(priority, recipe);
+        }
+
+        private class DuplicateKeyComparer<TKey> : IComparer<TKey> where TKey : IComparable
+        {
+            public int Compare(TKey x, TKey y)
+            {
+                int result = x.CompareTo(y);
+
+                if (result == 0)
+                    return 1;   // Handle equality as beeing greater
+                else
+                    return result;
+            }
         }
     }
 }
@@ -109,18 +123,18 @@ namespace Roost
 {
     public static partial class Machine
     {
-        public static void PushXtriggerLink(Recipe recipe, int orderShift = 0)
+        public static void PushTemporaryRecipeLink(Recipe recipe, int priority = 0)
         {
-            Roost.World.Recipes.RecipeLinkMaster.PushXtriggerLink(recipe, orderShift);
+            Roost.World.Recipes.RecipeLinkMaster.PushTemporaryRecipeLink(recipe, priority);
         }
 
-        public static void PushXtriggerLink(string recipeId, int orderShift = 0)
+        public static void PushTemporaryRecipeLink(string recipeId, int priority = 0)
         {
             Recipe recipe = Machine.GetEntity<Recipe>(recipeId);
             if (recipeId == null)
-                Birdsong.Tweet($"Trying to push non-existed recipe link '{recipeId}'");
+                Birdsong.Tweet(VerbosityLevel.Essential, 1, $"Trying to push non-existed recipe link '{recipeId}'");
             else
-                PushXtriggerLink(recipe, orderShift);
+                PushTemporaryRecipeLink(recipe, priority);
         }
     }
 }
