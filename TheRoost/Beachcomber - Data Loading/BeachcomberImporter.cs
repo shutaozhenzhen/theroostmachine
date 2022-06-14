@@ -162,9 +162,6 @@ namespace Roost.Beachcomber
                 if (fullSpecEntityData != null)
                 {
                     IEntityWithId entity = FactoryInstantiator.CreateEntity(entityType, entityData as EntityData, log);
-                    if (typeof(ICustomSpecEntity).IsAssignableFrom(entityType))
-                        (entity as ICustomSpecEntity).CustomSpec(fullSpecEntityData.ValuesTable);
-
                     return entity;
                 }
                 else if (typeof(IQuickSpecEntity).IsAssignableFrom(entityType))

@@ -15,8 +15,8 @@ namespace Roost.Beachcomber.Entities
     //Accordingly, entities of this type will be loaded from JSON of the form {"beachcomberexample":[ content ]}
     [FucineImportable("beachcomberexample")]
     //the class itself needs to derive from AbstractEntity<T> where T is the name of the class
-    //IQuickSpecEntity and ICustomSpecEntity are optional, explained below
-    public class ExampleFucineClass : AbstractEntity<ExampleFucineClass>, IQuickSpecEntity, ICustomSpecEntity
+    //IQuickSpecEntit, ICustomSpecEntity and IMalleable are optional, explained below
+    public class ExampleFucineClass : AbstractEntity<ExampleFucineClass>, IQuickSpecEntity, ICustomSpecEntity, IMalleable
     {
 
         //each loadable property needs to have a corresponding FucineValue attribute
@@ -55,10 +55,10 @@ namespace Roost.Beachcomber.Entities
         //Finally, sometimes you need to explicitly specify the importer for collection entries
         //these attributes allow you to do that
         //FucineCustomList: 
-        [FucineCustomList(typeof(FucinePathPanImporter))] 
+        [FucineCustomList(typeof(FucinePathPanImporter))]
         List<FucinePath> Paths { get; set; }
         //and FucineCustomDict:
-        [FucineCustomDict(KeyImporter: typeof(FucinePathPanImporter), ValueImporter: typeof(ConstructorPanImporter))] 
+        [FucineCustomDict(KeyImporter: typeof(FucinePathPanImporter), ValueImporter: typeof(ConstructorPanImporter))]
         Dictionary<FucinePath, Vector2> PathLocations { get; set; }
 
         //finally, your entity needs to implement two methods of AbstractEntity<T> - constructor and OnPostImportForSpecificEntity()
@@ -95,11 +95,23 @@ namespace Roost.Beachcomber.Entities
             //here in this method you interpret this single string and assign entity properties accordingly
         }
 
-        public void CustomSpec(Hashtable data)
+        public void Mold(EntityData entityData, ContentImportLog log)
+        {
+            //an IMalleable method; is called right after the entity was created, but none of its properties were set (except for id)
+            //is useful, for example, to convert some legacy syntax into the new one
+        }
+
+        public void CustomSpec(EntityData entityData, ContentImportLog log)
         {
             //some people want weird things; ICustomSpec is for you
-            //it allows you to shape your entity using properties from JSON that won't be recognized normally
-            //I'll leave the possible use-cases to your imagination
+            //it's called after EntityData was processed and all the properties were set (including their default values)
+            //but before unknown keys were pushed to the log
+            //thus, CustomSpec allows you to shape your entity using the keys that won't be recognized normally
+            //for example, keys that represent other entity IDs
+
+            //after a bit of practice, I've figured that it's simpler to just use OnPostImportForSpecificEntity(), but leaving this for legacy reasons and just in case
         }
+
+
     }
 }

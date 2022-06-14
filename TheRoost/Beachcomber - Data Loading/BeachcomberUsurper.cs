@@ -74,6 +74,9 @@ namespace Roost.Beachcomber
                 importDataForEntity.ValuesTable.Remove("id");
             }
 
+            if (typeof(IMalleable).IsAssignableFrom(typeof(T)))
+                (entity as IMalleable).Mold(importDataForEntity, log);
+
             Hoard.InterceptClaimedProperties(entity, importDataForEntity, typeof(T), log);
 
             foreach (CachedFucineProperty<T> cachedFucineProperty in TypeInfoCache<T>.GetCachedFucinePropertiesForType())
@@ -93,6 +96,10 @@ namespace Roost.Beachcomber
                     log.LogProblem($"Failed to import property '{cachedFucineProperty.LowerCaseName}' of {typeof(T).Name} '{entity.Id}', reason:\n{ex}");
                 }
             }
+
+            if (typeof(ICustomSpecEntity).IsAssignableFrom(typeof(T)))
+                (entity as ICustomSpecEntity).CustomSpec(importDataForEntity, log);
+
             AbstractEntity<T> abstractEntity = entity as AbstractEntity<T>;
             foreach (object key in importDataForEntity.ValuesTable.Keys)
                 abstractEntity.PushUnknownProperty(key, importDataForEntity.ValuesTable[key]);

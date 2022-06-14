@@ -301,20 +301,25 @@ namespace Roost.World.Recipes.Entities
 
         public RefMutationEffect() { }
         public RefMutationEffect(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
-        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { this.SetId(Mutate); }
-
-        public void CustomSpec(Hashtable data)
+        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
         {
             if (Mutate == null)
             {
                 foreach (object key in UnknownProperties.Keys)
-                {
-                    this.Mutate = key.ToString();
-                    this.Level = new FucineExp<int>(UnknownProperties[key].ToString());
-                    break;
-                }
-                UnknownProperties.Remove(Mutate);
+                    if (Watchman.Get<Compendium>().GetEntityById<Element>(key.ToString()) != null)
+                    {
+                        this.Mutate = key.ToString();
+                        this.Level = new FucineExp<int>(UnknownProperties[key].ToString());
+                        break;
+                    }
+
+                if (Mutate == null)
+                    log.LogProblem($"Mutation has no target effect");
+                else
+                    UnknownProperties.Remove(Mutate);
             }
+
+            this.SetId(Mutate);
         }
 
         public void QuickSpec(string value)
@@ -328,7 +333,7 @@ namespace Roost.World.Recipes.Entities
     }
 
     public enum MorphEffectsExtended { Transform, Spawn, Mutate, SetMutation, DeckDraw, DeckShuffle, Destroy, Decay, Induce, Link }
-    public class RefMorphDetails : AbstractEntity<RefMorphDetails>, IQuickSpecEntity, ICustomSpecEntity
+    public class RefMorphDetails : AbstractEntity<RefMorphDetails>, IQuickSpecEntity
     {
         [FucineValue(DefaultValue = MorphEffectsExtended.Transform)] public MorphEffectsExtended MorphEffect { get; set; }
         [FucineConstruct("1")] public FucineExp<int> Level { get; set; }
@@ -355,7 +360,9 @@ namespace Roost.World.Recipes.Entities
             VFX = RetirementVFX.CardTransformWhite;
         }
 
-        public void CustomSpec(Hashtable data)
+        public RefMorphDetails() { }
+        public RefMorphDetails(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
+        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
         {
             if (Id == null)
             {
@@ -365,14 +372,16 @@ namespace Roost.World.Recipes.Entities
                     this.Level = new FucineExp<int>(UnknownProperties[key].ToString());
                     break;
                 }
-                UnknownProperties.Remove(this.Id);
-            }
-        }
 
-        public RefMorphDetails() { }
-        public RefMorphDetails(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
-        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
-        {
+                if (Id == null)
+                {
+                    log.LogWarning("XTrigger id not set");
+                    return;
+                }
+                else
+                    UnknownProperties.Remove(this.Id);
+            }
+
             switch (MorphEffect)
             {
                 case MorphEffectsExtended.Transform:
@@ -457,14 +466,30 @@ namespace Roost.World.Recipes.Entities
         }
     }
 
-    public class TokenFilterSpec : AbstractEntity<TokenFilterSpec>, IQuickSpecEntity, ICustomSpecEntity
+    public class TokenFilterSpec : AbstractEntity<TokenFilterSpec>, IQuickSpecEntity
     {
-        [FucineConstruct] public FucineExp<bool> Filter { get; set; }
+        [FucineConstruct(FucineExp<int>.UNDEFINED)] public FucineExp<bool> Filter { get; set; }
         [FucineConstruct(FucineExp<int>.UNDEFINED)] public FucineExp<int> Limit { get; set; } //unlimited by default
 
         public TokenFilterSpec() { }
         public TokenFilterSpec(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
-        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
+        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
+        {
+            if (Filter.isUndefined)
+            {
+                foreach (object key in UnknownProperties.Keys)
+                {
+                    this.Filter = new FucineExp<bool>(key.ToString());
+                    this.Limit = new FucineExp<int>(UnknownProperties[key].ToString());
+                    break;
+                }
+
+                if (Filter.isUndefined)
+                    log.LogWarning("Filter is undefined");
+                else
+                    UnknownProperties.Remove(this.Filter.formula);
+            }
+        }
 
         public List<Token> GetTokens(List<Token> tokens)
         {
@@ -483,20 +508,6 @@ namespace Roost.World.Recipes.Entities
             catch (Exception ex)
             {
                 throw ex;
-            }
-        }
-
-        public void CustomSpec(Hashtable data)
-        {
-            if (Filter.isUndefined)
-            {
-                foreach (object key in UnknownProperties.Keys)
-                {
-                    this.Filter = new FucineExp<bool>(key.ToString());
-                    this.Limit = new FucineExp<int>(UnknownProperties[key].ToString());
-                    break;
-                }
-                UnknownProperties.Remove(this.Filter.formula);
             }
         }
     }

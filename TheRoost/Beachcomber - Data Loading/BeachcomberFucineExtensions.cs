@@ -222,6 +222,11 @@ namespace SecretHistories.Fucine
 
     public interface ICustomSpecEntity
     {
-        void CustomSpec(Hashtable data);
+        void CustomSpec(EntityData data, ContentImportLog log);
+    }
+
+    public interface IMalleable
+    {
+        void Mold(EntityData data, ContentImportLog log);
     }
 }
