@@ -43,13 +43,14 @@ namespace Roost.World.Recipes
             allRecipeEffectsProperties.Remove("target");
             Machine.ClaimProperties<Recipe>(allRecipeEffectsProperties);
 
+            Machine.AddImportMolding<Recipe>(ConvertLegacyMutations);
+
             AtTimeOfPower.OnPostImportRecipe.Schedule<Recipe, ContentImportLog, Compendium>(WrapAndFlushFirstPassEffects, PatchType.Prefix);
+            AtTimeOfPower.OnPostImportElement.Schedule<Element, ContentImportLog, Compendium>(PostImportForTheNewXtriggers, PatchType.Postfix);
 
             Machine.Patch(
                 original: typeof(RecipeCompletionEffectCommand).GetMethodInvariant(nameof(RecipeCompletionEffectCommand.Execute), typeof(Situation)),
                 transpiler: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(RunRefEffectsTranspiler)));
-
-            Machine.AddImportMolding<Recipe>(ConvertLegacyMutations);
 
             AtTimeOfPower.NewGame.Schedule(CatchNewGame, PatchType.Prefix);
             AtTimeOfPower.TabletopSceneInit.Schedule(TabletopEnter, PatchType.Postfix);
@@ -145,6 +146,21 @@ namespace Roost.World.Recipes
                 if (firstPassEffects.Aspects != null)
                     foreach (string aspectId in firstPassEffects.Aspects.Keys)
                         recipe.Aspects.Add(aspectId, 1);
+            }
+        }
+
+        private static void PostImportForTheNewXtriggers(Element __instance, ContentImportLog log, Compendium populatedCompendium)
+        {
+            Dictionary<string, List<RefMorphDetails>> xtriggers = __instance.RetrieveProperty<Dictionary<string, List<RefMorphDetails>>>("xtriggers");
+            if (xtriggers != null)
+            {
+                ContentImportLog subLog = new ContentImportLog();
+                foreach (string catalyst in xtriggers.Keys)
+                    foreach (RefMorphDetails morphDetails in xtriggers[catalyst])
+                        morphDetails.OnPostImport(subLog, populatedCompendium);
+
+                foreach (ILogMessage message in subLog.GetMessages())
+                    Birdsong.Tweet(VerbosityLevel.Essential, message.MessageLevel, $"PROBLEM IN XTRIGGERS FOR ELEMENT '{__instance.Id}' - {message.Description}'");
             }
         }
 
