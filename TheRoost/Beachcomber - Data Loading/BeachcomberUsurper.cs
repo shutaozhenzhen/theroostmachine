@@ -12,6 +12,8 @@ namespace Roost.Beachcomber
 {
     internal static class Usurper
     {
+        private static Dictionary<Type, List<Action<EntityData, ContentImportLog>>> _moldings = new Dictionary<Type, List<Action<EntityData, ContentImportLog>>>();
+
         internal static void OverthrowNativeImportingButNotCompletely()
         {
             //patching generics is tricky - the patch is applied to the whole generic class/method
@@ -74,6 +76,17 @@ namespace Roost.Beachcomber
                 importDataForEntity.ValuesTable.Remove("id");
             }
 
+            if (_moldings.ContainsKey(typeof(T)))
+                foreach (Action<EntityData, ContentImportLog> Mold in _moldings[typeof(T)])
+                    try
+                    {
+                        Mold(importDataForEntity, log);
+                    }
+                    catch (Exception ex)
+                    {
+                        log.LogProblem($"Failed to apply molding '{Mold.Method.Name}' to {typeof(T).Name} '{entity.Id}', reason:\n{ex.FormatException()}");
+                    }
+
             if (typeof(IMalleable).IsAssignableFrom(typeof(T)))
                 (entity as IMalleable).Mold(importDataForEntity, log);
 
@@ -93,7 +106,7 @@ namespace Roost.Beachcomber
                 }
                 catch (Exception ex)
                 {
-                    log.LogProblem($"Failed to import property '{cachedFucineProperty.LowerCaseName}' of {typeof(T).Name} '{entity.Id}', reason:\n{ex}");
+                    log.LogProblem($"Failed to import property '{cachedFucineProperty.LowerCaseName}' of {typeof(T).Name} '{entity.Id}', reason:\n{ex.FormatException()}");
                 }
             }
 
@@ -105,6 +118,12 @@ namespace Roost.Beachcomber
                 abstractEntity.PushUnknownProperty(key, importDataForEntity.ValuesTable[key]);
         }
 
+        internal static void AddMolding<T>(Action<EntityData, ContentImportLog> moldingForType)
+        {
+            if (_moldings.ContainsKey(typeof(T)) == false)
+                _moldings[typeof(T)] = new List<Action<EntityData, ContentImportLog>>();
+            _moldings[typeof(T)].Add(moldingForType);
+        }
 
     }
 }

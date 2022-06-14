@@ -337,5 +337,10 @@ namespace Roost
         {
             return SecretHistories.UI.Watchman.Get<Compendium>().GetEntityById<T>(id);
         }
+
+        public static void AddImportMolding<T>(Action<EntityData, ContentImportLog> moldingForType)
+        {
+            Beachcomber.Usurper.AddMolding<T>(moldingForType);
+        }
     }
 }

@@ -30,6 +30,8 @@ namespace Roost.World.Recipes
 
         internal static void Enact()
         {
+            Machine.ClaimProperty<Element, Dictionary<string, List<RefMorphDetails>>>("xtriggers");
+
             Machine.ClaimProperty<Recipe, Dictionary<FucineExp<int>, FucineExp<int>>>(GRAND_REQS);
             AtTimeOfPower.RecipeRequirementsCheck.Schedule<Recipe, AspectsInContext>(RefReqs);
 
@@ -47,11 +49,7 @@ namespace Roost.World.Recipes
                 original: typeof(RecipeCompletionEffectCommand).GetMethodInvariant(nameof(RecipeCompletionEffectCommand.Execute), typeof(Situation)),
                 transpiler: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(RunRefEffectsTranspiler)));
 
-            Machine.Patch(
-                 original: typeof(Beachcomber.Usurper).GetMethodInvariant("InvokeGenericImporterForAbstractRootEntity"),
-                 prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(ConvertLegacyMutationDefinitions)));
-
-            Machine.ClaimProperty<Element, Dictionary<string, List<RefMorphDetails>>>("xtriggers");
+            Machine.AddImportMolding<Recipe>(ConvertLegacyMutations);
 
             AtTimeOfPower.NewGame.Schedule(CatchNewGame, PatchType.Prefix);
             AtTimeOfPower.TabletopSceneInit.Schedule(TabletopEnter, PatchType.Postfix);
@@ -64,7 +62,6 @@ namespace Roost.World.Recipes
             Machine.Patch(
                 original: typeof(GreedyAngel).GetMethodInvariant("TryGrabStack"),
                 prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(TryGrabStackRandom)));
-
         }
 
         private static bool TryGrabStackRandom(Sphere destinationThresholdSphere)
@@ -151,42 +148,40 @@ namespace Roost.World.Recipes
             }
         }
 
-        //Usurper.InvokeGenericImporterForAbstractRootEntity()
-        private static void ConvertLegacyMutationDefinitions(IEntityWithId entity, EntityData entityData, ContentImportLog log)
+        private static void ConvertLegacyMutations(EntityData entityData, ContentImportLog log)
         {
             try
             {
-                if (entity is Recipe)
-                    if (entityData.ValuesTable.ContainsKey("mutations") && entityData.ValuesTable["mutations"] is ArrayList)
+                if (entityData.ValuesTable.ContainsKey("mutations") && entityData.ValuesTable["mutations"] is ArrayList)
+                {
+                    ArrayList oldMutations = entityData.ValuesTable["mutations"] as ArrayList;
+                    EntityData newMutations = new EntityData();
+
+                    foreach (EntityData mutation in oldMutations)
                     {
-                        ArrayList oldMutations = entityData.ValuesTable["mutations"] as ArrayList;
-                        EntityData newMutations = new EntityData();
-
-                        foreach (EntityData mutation in oldMutations)
+                        object filter;
+                        if (mutation.ContainsKey("limit"))
                         {
-                            object filter;
-                            if (mutation.ContainsKey("limit"))
-                            {
-                                filter = new EntityData();
-                                (filter as EntityData).ValuesTable.Add("filter", mutation.ValuesTable["filter"]);
-                                (filter as EntityData).ValuesTable.Add("limit", mutation.ValuesTable["limit"]);
-                            }
-                            else
-                                filter = mutation.ValuesTable["filter"].ToString();
-
-                            if (newMutations.ContainsKey(filter) == false)
-                                newMutations.ValuesTable[filter] = new ArrayList();
-
-                            (newMutations.ValuesTable[filter] as ArrayList).Add(mutation);
-                            mutation.ValuesTable.Remove("filter");
+                            filter = new EntityData();
+                            (filter as EntityData).ValuesTable.Add("filter", mutation.ValuesTable["filter"]);
+                            (filter as EntityData).ValuesTable.Add("limit", mutation.ValuesTable["limit"]);
                         }
+                        else
+                            filter = mutation.ValuesTable["filter"].ToString();
 
-                        entityData.ValuesTable["mutations"] = newMutations;
+                        if (newMutations.ContainsKey(filter) == false)
+                            newMutations.ValuesTable[filter] = new ArrayList();
+
+                        (newMutations.ValuesTable[filter] as ArrayList).Add(mutation);
+                        mutation.ValuesTable.Remove("filter");
                     }
+
+                    entityData.ValuesTable["mutations"] = newMutations;
+                }
             }
             catch (Exception ex)
             {
-                log.LogProblem($"Failed to convert legacy mutation:\n{ex.FormatException()}");
+                throw ex;
             }
         }
 
