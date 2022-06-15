@@ -214,7 +214,7 @@ namespace Roost.World.Recipes
             };
 
             Vagabond.CodeInstructionMask mask = instruction => instruction.operand as System.Reflection.MethodInfo == typeof(RecipeCompletionEffectCommand).GetMethodInvariant("RunVerbManipulations");
-            return instructions.ReplaceBeforeMask(mask, myCode, false);
+            return instructions.ReplaceBeforeMask(mask, myCode, true);
         }
 
         private static void RefEffects(RecipeCompletionEffectCommand command, Situation situation)

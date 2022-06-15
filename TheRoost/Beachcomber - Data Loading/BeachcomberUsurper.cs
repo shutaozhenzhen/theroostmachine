@@ -47,10 +47,11 @@ namespace Roost.Beachcomber
                 new CodeInstruction(OpCodes.Ldarg_1),
                 new CodeInstruction(OpCodes.Ldarg_2),
                 new CodeInstruction(OpCodes.Call, typeof(Usurper).GetMethodInvariant(nameof(InvokeGenericImporterForAbstractRootEntity))),
+                new CodeInstruction(OpCodes.Ret)
             };
 
             Vagabond.CodeInstructionMask mask = instruction => instruction.opcode == OpCodes.Call;
-            return instructions.ReplaceAfterMask(mask, myCode, true);
+            return instructions.ReplaceAfterMask(mask, myCode, false);
         }
 
 

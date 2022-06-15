@@ -77,7 +77,7 @@ namespace Roost.World
 
             Vagabond.CodeInstructionMask startMask = instruction => instruction.opcode == OpCodes.Ldloc_2;
             Vagabond.CodeInstructionMask endMask = instruction => instruction.opcode == OpCodes.Brfalse_S;
-            return instructions.ReplaceSegment(startMask, endMask, myCode);
+            return instructions.ReplaceSegment(startMask, endMask, myCode, true, false);
         }
 
         private static IEnumerable<CodeInstruction> CheckActiveDecksForSaveConversion(IEnumerable<CodeInstruction> instructions)
@@ -91,7 +91,7 @@ namespace Roost.World
 
             Vagabond.CodeInstructionMask startMask = instruction => instruction.opcode == OpCodes.Ldloc_3;
             Vagabond.CodeInstructionMask endMask = instruction => instruction.opcode == OpCodes.Brfalse_S;
-            return instructions.ReplaceSegment(startMask, endMask, myCode);
+            return instructions.ReplaceSegment(startMask, endMask, myCode, true, false);
         }
     }
 }
