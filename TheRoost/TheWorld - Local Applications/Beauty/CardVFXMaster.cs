@@ -17,7 +17,6 @@ namespace Roost.World.Beauty
         const string ELEMENT_DECAY_VFX = "decayvfx";
         //CardBurn,	CardBlood,	CardBloodSplatter, CardDrown, CardLight, CardLightDramatic,	CardSpend, CardTaken, CardTakenShadow,
         //CardTakenShadowSlow, CardTransformWhite, CardHide, Default, None
-
         internal static void Enact()
         {
             Machine.ClaimProperty<Element, RetirementVFX>(ELEMENT_DECAY_VFX);
@@ -46,17 +45,18 @@ namespace Roost.World.Beauty
               new CodeInstruction(OpCodes.Call, typeof(ElementStack).GetMethodInvariant("get_Element")),
               new CodeInstruction(OpCodes.Call, typeof(CardVFXMaster).GetMethodInvariant(nameof(RetireWithVFX))),
             };
-
-            MethodInfo methodCallToReplace = typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.Retire), typeof(SecretHistories.Enums.RetirementVFX));
-            return instructions.ReplaceMethodCall(methodCallToReplace, myCode);
+            //technically I can just pass the appropriate vfx to the original retire method instead of replacing it
+            //but it's safer to look for the method call
+            Vagabond.CodeInstructionMask mask = instruction => instruction.operand as MethodInfo == typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.Retire), typeof(RetirementVFX));
+            return instructions.ReplaceInstruction(mask, myCode);
         }
 
         private static void RetireWithVFX(ElementStack stack, Element element)
         {
             if (element.HasCustomProperty(ELEMENT_DECAY_VFX))
                 stack.Retire(element.RetrieveProperty<RetirementVFX>(ELEMENT_DECAY_VFX));
-            else
-                stack.Retire(RetirementVFX.CardBurn);
+
+            stack.Retire(RetirementVFX.CardBurn);
         }
 
         private static IEnumerable<CodeInstruction> RemanifestWithVFXTranspiler(IEnumerable<CodeInstruction> instructions)
@@ -68,12 +68,12 @@ namespace Roost.World.Beauty
               new CodeInstruction(OpCodes.Call, typeof(CardVFXMaster).GetMethodInvariant(nameof(RemanifestWithVFX))),
             };
 
-            MethodInfo methodCallToReplace = typeof(Token).GetMethodInvariant(nameof(Token.Remanifest));
-            return instructions.ReplaceMethodCall(methodCallToReplace, myCode);
+            Vagabond.CodeInstructionMask mask = instruction => instruction.operand as MethodInfo == typeof(Token).GetMethodInvariant(nameof(Token.Remanifest));
+            return instructions.ReplaceInstruction(mask, myCode);
         }
 
         //the cleaner solution would be to pass VFX with TokenPayloadChangeArgs
-        //but the vanilla code does everything to ensure that doing that will be the most horrible, most annoying pain in the ay which CS modding community ever faced since $ ops incompatibility bug was discovered
+        //but the code compiled in an absolutely atrocious way that makes the transpiling an absolute pain
         private static RetirementVFX VFXforCurrentTransformation = RetirementVFX.CardBurn;
         private static void StoreOldElementVFX(ElementStack __instance)
         {
