@@ -542,7 +542,7 @@ namespace Roost.World.Recipes.Entities
         }
     }
 
-    public class TokenFilterSpec : AbstractEntity<TokenFilterSpec>, IQuickSpecEntity
+    public class TokenFilterSpec : AbstractEntity<TokenFilterSpec>, IQuickSpecEntity, IMalleable
     {
         [FucineConstruct(FucineExp<int>.UNDEFINED)] public FucineExp<bool> Filter { get; set; }
         [FucineConstruct(FucineExp<int>.UNDEFINED)] public FucineExp<int> Limit { get; set; } //unlimited by default
@@ -580,6 +580,18 @@ namespace Roost.World.Recipes.Entities
             try
             {
                 Filter = new FucineExp<bool>(data);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public void Mold(EntityData data, ContentImportLog log)
+        {
+            try
+            {
+                MoldingsStorage.ConvertExpulsionFilters(data);
             }
             catch (Exception ex)
             {

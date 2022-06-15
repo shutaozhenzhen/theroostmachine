@@ -10,7 +10,7 @@ namespace Roost.World.Recipes.Entities
 {    
     internal static class MoldingsStorage
     {
-        internal static void ConvertLegacyMutations(EntityData entityData, ContentImportLog log)
+        internal static void ConvertLegacyMutations(EntityData entityData)
         {
             try
             {
@@ -47,7 +47,7 @@ namespace Roost.World.Recipes.Entities
             }
         }
 
-        internal static void ConvertExpulsionFilters(EntityData data, ContentImportLog log)
+        internal static void ConvertExpulsionFilters(EntityData data)
         {
             try
             {

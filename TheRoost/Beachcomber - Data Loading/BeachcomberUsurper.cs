@@ -12,7 +12,7 @@ namespace Roost.Beachcomber
 {
     internal static class Usurper
     {
-        private static Dictionary<Type, List<Action<EntityData, ContentImportLog>>> _moldings = new Dictionary<Type, List<Action<EntityData, ContentImportLog>>>();
+        private static Dictionary<Type, List<Action<EntityData>>> _moldings = new Dictionary<Type, List<Action<EntityData>>>();
 
         internal static void OverthrowNativeImportingButNotCompletely()
         {
@@ -78,18 +78,26 @@ namespace Roost.Beachcomber
             }
 
             if (_moldings.ContainsKey(typeof(T)))
-                foreach (Action<EntityData, ContentImportLog> Mold in _moldings[typeof(T)])
+                foreach (Action<EntityData> Mold in _moldings[typeof(T)])
                     try
                     {
-                        Mold(importDataForEntity, log);
+                        Mold(importDataForEntity);
                     }
                     catch (Exception ex)
                     {
                         log.LogProblem($"Failed to apply molding '{Mold.Method.Name}' to {typeof(T).Name} '{entity.Id}', reason:\n{ex.FormatException()}");
                     }
 
+
             if (typeof(IMalleable).IsAssignableFrom(typeof(T)))
-                (entity as IMalleable).Mold(importDataForEntity, log);
+                try
+                {
+                    (entity as IMalleable).Mold(importDataForEntity, log);
+                }
+                catch (Exception ex)
+                {
+                    log.LogProblem($"Failed to apply molding to malleable {typeof(T).Name} '{entity.Id}', reason:\n{ex.FormatException()}");
+                }
 
             Hoard.InterceptClaimedProperties(entity, importDataForEntity, typeof(T), log);
 
@@ -119,10 +127,10 @@ namespace Roost.Beachcomber
                 abstractEntity.PushUnknownProperty(key, importDataForEntity.ValuesTable[key]);
         }
 
-        internal static void AddMolding<T>(Action<EntityData, ContentImportLog> moldingForType)
+        internal static void AddMolding<T>(Action<EntityData> moldingForType)
         {
             if (_moldings.ContainsKey(typeof(T)) == false)
-                _moldings[typeof(T)] = new List<Action<EntityData, ContentImportLog>>();
+                _moldings[typeof(T)] = new List<Action<EntityData>>();
             _moldings[typeof(T)].Add(moldingForType);
         }
 
