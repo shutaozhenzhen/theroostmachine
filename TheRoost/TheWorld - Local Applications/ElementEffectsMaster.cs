@@ -22,7 +22,7 @@ namespace Roost.World.Elements
 
         const string DISPLACE_TO = "displaceTo";
         const string DISPLACEMENT_VFX = "displacementVFX";
-        const string DISPLACEMENT_REVERSE = "reversedisplacement";
+        const string DISPLACEMENT_REVERSE = "reverseDisplacement";
         //CardBurn,	CardBlood,	CardBloodSplatter, CardDrown, CardLight, CardLightDramatic,	CardSpend, CardTaken, CardTakenShadow,
         //CardTakenShadowSlow, CardTransformWhite, CardHide, Default, None
         internal static void Enact()
@@ -125,12 +125,12 @@ namespace Roost.World.Elements
                 return false;
 
             bool hasUQ = !string.IsNullOrEmpty(incomingStack.UniquenessGroup);
-            foreach (ITokenPayload tokenPayload in new List<ElementStack>(sphere.GetElementStacks()))
+            foreach (ElementStack tokenPayload in new List<ElementStack>(sphere.GetElementStacks()))
                 if (tokenPayload != incomingStack &&
                     ((hasUQ && tokenPayload.UniquenessGroup == incomingStack.UniquenessGroup)
                     || tokenPayload.EntityId == incomingStack.EntityId))
                 {
-                    ITokenPayload affectedStack = tokenPayload;
+                    ElementStack affectedStack = tokenPayload;
                     Element element = Machine.GetEntity<Element>(tokenPayload.EntityId);
 
                     if (element == null)
@@ -141,20 +141,27 @@ namespace Roost.World.Elements
 
                     if (element.RetrieveProperty<bool>(DISPLACEMENT_REVERSE) == true)
                     {
-                        affectedStack = incomingStack;
-                        element = Machine.GetEntity<Element>(affectedStack.EntityId);
+                        affectedStack = incomingStack as ElementStack;
+                        element = Machine.GetEntity<Element>(incomingStack.EntityId);
                     }
 
-                    string uniqueAlt = element.RetrieveProperty<string>(DISPLACE_TO);
+                    string displaceTo = element.RetrieveProperty<string>(DISPLACE_TO);
                     RetirementVFX vfx = element.RetrieveProperty<RetirementVFX>(DISPLACEMENT_VFX);
-                    Birdsong.Sing(vfx);
-                    if (string.IsNullOrWhiteSpace(uniqueAlt) == false)
+
+                    element = Machine.GetEntity<Element>(displaceTo);
+                    while (string.IsNullOrWhiteSpace(displaceTo) == false && element?.UniquenessGroup == incomingStack.UniquenessGroup)
+                    {
+                        displaceTo = element.RetrieveProperty<string>(DISPLACE_TO);
+                        element = Machine.GetEntity<Element>(displaceTo);
+                    }
+
+                    if (string.IsNullOrWhiteSpace(displaceTo))
+                        affectedStack.Retire(vfx);
+                    else
                     {
                         StoreVFXForCurrentTransformation(vfx);
-                        (affectedStack as ElementStack).ChangeTo(uniqueAlt);
+                        affectedStack.ChangeTo(displaceTo);
                     }
-                    else
-                        affectedStack.Retire(vfx);
                 }
 
             return false;
