@@ -182,7 +182,7 @@ namespace Roost.World.Elements
 
             Compendium compendium = Watchman.Get<Compendium>();
             foreach (SphereSpec slot in compendium.GetEntityById<Element>(t.PayloadEntityId).Slots)
-                if ((string.IsNullOrWhiteSpace(slot.ActionId) || verbId.Contains(slot.ActionId)) && slot.RetrieveProperty<bool>(PASS_UPWARDS))
+                if ((string.IsNullOrWhiteSpace(slot.ActionId) || verbId.Contains(slot.ActionId)))
                     __result.Add(slot);
 
             foreach (string aspectId in t.GetAspects().Keys)
