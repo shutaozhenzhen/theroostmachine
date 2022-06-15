@@ -1,21 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 
+using System.Reflection.Emit;
+
 using SecretHistories.Entities;
 using SecretHistories.UI;
 using SecretHistories.Commands.SituationCommands;
 using SecretHistories.Core;
 using SecretHistories.Fucine;
-
 using Roost.Twins.Entities;
+
+using HarmonyLib;
 
 namespace Roost.World.Recipes
 {
     public static class RecipeLinkMaster
     {
         private readonly static Action<Situation, Recipe, Expulsion, FucinePath> SpawnSituation = Delegate.CreateDelegate(typeof(Action<Situation, Recipe, Expulsion, FucinePath>), typeof(Situation).GetMethodInvariant("AdditionalRecipeSpawnToken")) as Action<Situation, Recipe, Expulsion, FucinePath>;
-        public static readonly SortedList<int, Recipe> temporaryLinks = new SortedList<int, Recipe>(new DuplicateKeyComparer<int>());
+
         const string CHANCE = "chance";
+        const string LIMIT = "limit";
+        const string FILTER = "filter";
         internal static void Enact()
         {
             //instant recipes are instant
@@ -41,6 +46,14 @@ namespace Roost.World.Recipes
             Machine.Patch(
                 original: typeof(LinkedRecipeDetails).GetMethodInvariant(nameof(LinkedRecipeDetails.ShouldAlwaysSucceed)),
                 prefix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(ShouldAlwaysSucceed)));
+
+            //expulsions use expressions
+            Machine.ClaimProperty<Expulsion, FucineExp<bool>>(FILTER, false);
+            Machine.ClaimProperty<Expulsion, FucineExp<int>>(LIMIT, false);
+            Machine.AddImportMolding<Expulsion>(Entities.MoldingsStorage.ConvertExpulsionFilters);
+            Machine.Patch(
+                original: typeof(Situation).GetMethodInvariant("AdditionalRecipeSpawnToken"),
+                transpiler: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(UseNewExpulsion)));
         }
 
         private static void ProceedWithInstantRecipe(Situation __instance)
@@ -85,6 +98,19 @@ namespace Roost.World.Recipes
             }
         }
 
+        public static readonly SortedList<int, Recipe> temporaryLinks = new SortedList<int, Recipe>(new DuplicateKeyComparer<int>());
+        private class DuplicateKeyComparer<TKey> : IComparer<TKey> where TKey : IComparable
+        {
+            public int Compare(TKey x, TKey y)
+            {
+                int result = x.CompareTo(y);
+
+                if (result == 0)
+                    return 1;   // Handle equality as beeing greater
+                else
+                    return result;
+            }
+        }
         //RecipeConductor.GetLinkedRecipe() prefix
         private static bool EvaluateTempLinks(ref Recipe __result, AspectsInContext ____aspectsInContext)
         {
@@ -102,20 +128,44 @@ namespace Roost.World.Recipes
         internal static void PushTemporaryRecipeLink(Recipe recipe, int priority)
         {
             temporaryLinks.Add(priority, recipe);
+
         }
 
-        private class DuplicateKeyComparer<TKey> : IComparer<TKey> where TKey : IComparable
+        private static IEnumerable<CodeInstruction> UseNewExpulsion(IEnumerable<CodeInstruction> instructions)
         {
-            public int Compare(TKey x, TKey y)
+            List<CodeInstruction> myCode = new List<CodeInstruction>()
             {
-                int result = x.CompareTo(y);
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Ldarg_2),
+                new CodeInstruction(OpCodes.Call, typeof(RecipeLinkMaster).GetMethodInvariant(nameof(RecipeLinkMaster.FilterTokensWithExpulsion))),
+                new CodeInstruction(OpCodes.Stloc_2), //for some reason the code doesn't want me to load the data directly into the loc_0
+                new CodeInstruction(OpCodes.Ldloc_2),
+                new CodeInstruction(OpCodes.Stloc_0),
+            };
 
-                if (result == 0)
-                    return 1;   // Handle equality as beeing greater
-                else
-                    return result;
-            }
+            Vagabond.CodeInstructionMask mask = instruction => instruction.opcode == OpCodes.Bgt_S;
+            return instructions.ReplaceBeforeMask(mask, myCode, true);
         }
+
+        private static List<Token> FilterTokensWithExpulsion(Situation situation, Expulsion expulsion)
+        {
+            FucineExp<bool> filter = expulsion.RetrieveProperty<FucineExp<bool>>(FILTER);
+            if (filter.isUndefined)
+                return new List<Token>();
+
+            Twins.Crossroads.MarkLocalSituation(situation);
+            List<Token> tokens = situation.GetElementTokensInSituation().FilterTokens(filter);
+
+            FucineExp<int> limit = expulsion.RetrieveProperty<FucineExp<int>>(LIMIT);
+            if (!limit.isUndefined)
+                tokens = tokens.SelectRandom(limit.value);
+
+            Twins.Crossroads.ResetCache();
+
+            return tokens;
+        }
+
+
     }
 }
 

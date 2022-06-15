@@ -46,6 +46,7 @@
     <Compile Include="TheWorld - Local Applications\Optimizations.cs" />
     <Compile Include="TheWorld - Local Applications\Beauty\SituationWindowMaster.cs" />
     <Compile Include="TheWorld - Local Applications\Beauty\CardVFXMaster.cs" />
+    <Compile Include="TheWorld - Local Applications\RecipeEffects\MoldingsStorage.cs" />
     <Compile Include="TheWorld - Local Applications\RecipeEffects\RecipeLinkMaster.cs" />
     <Compile Include="TheWorld - Local Applications\RecipeEffects\RecipeExecutionBuffer.cs" />
     <Compile Include="TheWorld - Local Applications\RecipeEffects\RecipeEffectsMaster.cs" />

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 
 using System.Reflection.Emit;
@@ -9,7 +8,6 @@ using SecretHistories.Entities;
 using SecretHistories.UI;
 using SecretHistories.Enums;
 using SecretHistories.Fucine;
-using SecretHistories.Fucine.DataImport;
 using SecretHistories.Spheres;
 using SecretHistories.Spheres.Angels;
 
@@ -43,7 +41,7 @@ namespace Roost.World.Recipes
             allRecipeEffectsProperties.Remove("target");
             Machine.ClaimProperties<Recipe>(allRecipeEffectsProperties);
 
-            Machine.AddImportMolding<Recipe>(ConvertLegacyMutations);
+            Machine.AddImportMolding<Recipe>(MoldingsStorage.ConvertLegacyMutations);
 
             AtTimeOfPower.OnPostImportRecipe.Schedule<Recipe, ContentImportLog, Compendium>(WrapAndFlushFirstPassEffects, PatchType.Prefix);
             AtTimeOfPower.OnPostImportElement.Schedule<Element, ContentImportLog, Compendium>(PostImportForTheNewXtriggers, PatchType.Postfix);
@@ -164,42 +162,7 @@ namespace Roost.World.Recipes
             }
         }
 
-        private static void ConvertLegacyMutations(EntityData entityData, ContentImportLog log)
-        {
-            try
-            {
-                if (entityData.ValuesTable.ContainsKey("mutations") && entityData.ValuesTable["mutations"] is ArrayList)
-                {
-                    ArrayList oldMutations = entityData.ValuesTable["mutations"] as ArrayList;
-                    EntityData newMutations = new EntityData();
 
-                    foreach (EntityData mutation in oldMutations)
-                    {
-                        object filter;
-                        if (mutation.ContainsKey("limit"))
-                        {
-                            filter = new EntityData();
-                            (filter as EntityData).ValuesTable.Add("filter", mutation.ValuesTable["filter"]);
-                            (filter as EntityData).ValuesTable.Add("limit", mutation.ValuesTable["limit"]);
-                        }
-                        else
-                            filter = mutation.ValuesTable["filter"].ToString();
-
-                        if (newMutations.ContainsKey(filter) == false)
-                            newMutations.ValuesTable[filter] = new ArrayList();
-
-                        (newMutations.ValuesTable[filter] as ArrayList).Add(mutation);
-                        mutation.ValuesTable.Remove("filter");
-                    }
-
-                    entityData.ValuesTable["mutations"] = newMutations;
-                }
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
 
         private static IEnumerable<CodeInstruction> RunRefEffectsTranspiler(IEnumerable<CodeInstruction> instructions)
         {
