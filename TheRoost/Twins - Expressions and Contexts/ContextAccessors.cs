@@ -187,6 +187,7 @@ namespace Roost.Twins
             {
                 FucineRef reference = new FucineRef(path);
                 Birdsong.Tweet($"Reference value '{reference.value}'");
+                Crossroads.ResetCache();
             }
             catch (Exception ex)
             {
@@ -200,6 +201,7 @@ namespace Roost.Twins
             {
                 string formula = string.Concat(command);
                 Birdsong.Tweet(new FucineExp<float>(formula));
+                Crossroads.ResetCache();
             }
             catch (Exception ex)
             {
@@ -224,7 +226,7 @@ namespace Roost.Twins
 
                 result += $"Search time {searchTime.TotalSeconds} sec\n";
                 if (foundSpheres.Count == 0)
-                    result = $"No spheres found for path '{path.ToString()}'\n";
+                    result = $"No spheres found for path '{path}'\n";
             }
 
             foreach (Sphere sphere in foundSpheres)
@@ -256,7 +258,7 @@ namespace Roost.Twins
                     result += "--------------\n";
                 }
             else
-                result = $"No spheres found for path '{path.ToString()}'\n";
+                result = $"No spheres found for path '{path}'\n";
 
             Birdsong.Tweet(result);
         }
