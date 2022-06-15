@@ -23,6 +23,8 @@ namespace Roost.World.Elements
         const string DISPLACE_TO = "displaceTo";
         const string DISPLACEMENT_VFX = "displacementVFX";
         const string DISPLACEMENT_REVERSE = "reverseDisplacement";
+
+        const string PASS_UPWARDS = "passUpwards";
         //CardBurn,	CardBlood,	CardBloodSplatter, CardDrown, CardLight, CardLightDramatic,	CardSpend, CardTaken, CardTakenShadow,
         //CardTakenShadowSlow, CardTransformWhite, CardHide, Default, None
         internal static void Enact()
@@ -46,6 +48,13 @@ namespace Roost.World.Elements
             Machine.Patch(
                 original: typeof(Sphere).GetMethodInvariant(nameof(Sphere.RemoveDuplicates)),
                 prefix: typeof(ElementEffectsMaster).GetMethodInvariant(nameof(ApplyDisplacements)));
+
+            //aspects can add slots
+            Machine.ClaimProperty<SphereSpec, bool>(PASS_UPWARDS);
+            Machine.Patch(
+                original: typeof(Sphere).GetMethodInvariant(nameof(Sphere.GetChildSpheresSpecsToAddIfThisTokenAdded)),
+                prefix: typeof(ElementEffectsMaster).GetMethodInvariant(nameof(GetSlotsForVerb)));
+
         }
 
         //the cleaner solution would be to pass VFX with TokenPayloadChangeArgs
@@ -163,6 +172,23 @@ namespace Roost.World.Elements
                         affectedStack.ChangeTo(displaceTo);
                     }
                 }
+
+            return false;
+        }
+
+        public static bool GetSlotsForVerb(Token t, string verbId, ref List<SphereSpec> __result)
+        {
+            __result = new List<SphereSpec>();
+
+            Compendium compendium = Watchman.Get<Compendium>();
+            foreach (SphereSpec slot in compendium.GetEntityById<Element>(t.PayloadEntityId).Slots)
+                if ((string.IsNullOrWhiteSpace(slot.ActionId) || verbId.Contains(slot.ActionId)) && slot.RetrieveProperty<bool>(PASS_UPWARDS))
+                    __result.Add(slot);
+
+            foreach (string aspectId in t.GetAspects().Keys)
+                foreach (SphereSpec slot in compendium.GetEntityById<Element>(aspectId).Slots)
+                    if ((string.IsNullOrWhiteSpace(slot.ActionId) || verbId.Contains(slot.ActionId)) && slot.RetrieveProperty<bool>(PASS_UPWARDS))
+                        __result.Add(slot);
 
             return false;
         }
