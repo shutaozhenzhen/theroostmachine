@@ -3,6 +3,7 @@
   <Target Name="CheckEnvironmentVars">
     <Error Text="Please set the CSDir environment variable." Condition="'$(CSDir)' == ''" ContinueOnError="false" />
   </Target>
+  
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
     <CSDataDir>$([System.IO.Path]::Combine($(CSDir), 'cultistsimulator_Data'))</CSDataDir>
     <CSModDir>$([System.IO.Path]::Combine($(USERPROFILE), 'AppData\LocalLow\Weather Factory\Cultist Simulator\mods'))</CSModDir>
@@ -32,7 +33,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>$([System.IO.Path]::Combine($(CSModDir), 'TheRoost\dll'))</OutputPath>
+    <OutDir>$([System.IO.Path]::Combine($(CSModDir), 'Roost\dll'))</OutDir>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -41,7 +42,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>$([System.IO.Path]::Combine($(CSModDir), 'TheRoost\dll'))</OutputPath>
+    <OutDir>$([System.IO.Path]::Combine($(CSModDir), 'Roost\dll'))</OutDir>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
