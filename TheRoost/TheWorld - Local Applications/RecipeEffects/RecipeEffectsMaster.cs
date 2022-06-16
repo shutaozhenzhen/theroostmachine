@@ -270,7 +270,7 @@ namespace Roost.World.Recipes
 
             for (int n = tokens.Count - 1; n >= 0; n--)
                 for (int m = n - 1; m >= 0; m--)
-                    if (tokens[n].CanMergeWithToken(tokens[m]))
+                    if (tokens[n].CanMergeWithToken(tokens[m]) && tokens[n].Shrouded() == tokens[m].Shrouded())
                     {
                         tokens[n].Payload.SetQuantity(tokens[n].Quantity + tokens[m].Quantity, RecipeExecutionBuffer.situationEffectContext);
                         tokens[m].Retire();

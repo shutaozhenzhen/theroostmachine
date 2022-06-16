@@ -172,7 +172,7 @@ namespace Roost.Beachcomber
                 if (claimedProperties.ContainsKey(entityType) && claimedProperties[entityType].ContainsKey(propertyName))
                     return claimedProperties[entityType][propertyName].defaultValue;
                 else
-                    return false;
+                    return null;
             }
         }
 

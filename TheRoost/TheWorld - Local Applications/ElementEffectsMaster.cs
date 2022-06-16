@@ -6,11 +6,9 @@ using System.Reflection.Emit;
 using SecretHistories.Entities;
 using SecretHistories.UI;
 using SecretHistories.Enums;
-using Assets.Scripts.Application.Infrastructure.Events;
 using SecretHistories.Spheres;
 using SecretHistories.Abstract;
 
-using Roost.Twins.Entities;
 
 using HarmonyLib;
 
@@ -18,18 +16,21 @@ namespace Roost.World.Elements
 {
     public static class ElementEffectsMaster
     {
-        const string DECAY_VFX = "decayvfx";
+        public const string DECAY_VFX = "decayvfx";
 
-        const string DISPLACE_TO = "displaceTo";
-        const string DISPLACEMENT_VFX = "displacementVFX";
-        const string DISPLACEMENT_REVERSE = "reverseDisplacement";
+        public const string DISPLACE_TO = "displaceTo";
+        public const string DISPLACEMENT_VFX = "displacementVFX";
+        public const string DISPLACEMENT_REVERSE = "reverseDisplacement";
 
-        const string PASS_UPWARDS = "passUpwards";
+        public const string PASS_UPWARDS = "passUpwards";
+
+        public const string SHROUDED = "shrouded";
         //CardBurn,	CardBlood,	CardBloodSplatter, CardDrown, CardLight, CardLightDramatic,	CardSpend, CardTaken, CardTakenShadow,
         //CardTakenShadowSlow, CardTransformWhite, CardHide, Default, None
         internal static void Enact()
         {
             Machine.ClaimProperty<Element, RetirementVFX>(DECAY_VFX, false, RetirementVFX.CardBurn);
+            Machine.ClaimProperty<Element, bool>(SHROUDED);
 
             //vfx for decay retirements and transformation
             Machine.Patch(
