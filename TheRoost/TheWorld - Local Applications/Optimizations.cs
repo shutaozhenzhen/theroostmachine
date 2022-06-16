@@ -16,7 +16,6 @@ namespace Roost.World
         const string DECK_LEGACY_FAMILY = nameof(DeckSpec.ForLegacyFamily);
         internal static void Enact()
         {
-
             Machine.Patch(
                 original: typeof(Sphere).GetMethodInvariant(nameof(Sphere.AcceptToken)),
                 prefix: typeof(Optimizations).GetMethodInvariant(nameof(EnableNonDormantTokens)),

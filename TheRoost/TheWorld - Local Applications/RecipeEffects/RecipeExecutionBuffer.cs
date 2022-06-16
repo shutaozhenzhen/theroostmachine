@@ -4,8 +4,6 @@ using SecretHistories.Entities;
 using SecretHistories.UI;
 using SecretHistories.Spheres;
 using SecretHistories.Enums;
-using SecretHistories.Fucine;
-using UnityEngine;
 
 namespace Roost.World.Recipes
 {

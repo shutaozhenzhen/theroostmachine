@@ -203,7 +203,7 @@ namespace Roost.Twins
                         string specialOpName = parts[0].Substring(1);
                         FucineValueGetter.ValueOperation specialOp;
                         if (Enum.TryParse(specialOpName, true, out specialOp))
-                            return new FucineValueGetter(null, FucineValueGetter.ValueArea.Targetless, specialOp);
+                            return new FucineValueGetter(null, FucineValueGetter.ValueArea.NoArea, specialOp);
                         else
                             throw Birdsong.Cack($"Unknown special token value reference '{parts[0]}'");
                     }
