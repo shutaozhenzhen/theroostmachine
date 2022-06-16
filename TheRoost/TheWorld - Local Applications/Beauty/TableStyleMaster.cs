@@ -77,7 +77,7 @@ namespace Roost.World.Beauty
         static void fadeLayer(GameObject gameObject, Image imageComponent, string newSpriteName, string storeKey)
         {
             Machine.SetLeverPast(storeKey, newSpriteName);
-            GameObject fadingObject = Object.Instantiate(gameObject, gameObject.transform.parent);
+            GameObject fadingObject = UnityEngine.Object.Instantiate(gameObject, gameObject.transform.parent);
             imageComponent.sprite = ResourcesManager.GetSpriteForUI(newSpriteName);
             CanvasRendererFading imgf = fadingObject.AddComponent<CanvasRendererFading>();
             imgf.fadingCR = fadingObject.GetComponent<CanvasRenderer>();
