@@ -194,6 +194,7 @@ namespace Roost.Twins.Entities
             //Entity, //should return token payload entity property, but it's a hassle so not implemented
             NoArea
         };
+
         private static readonly Dictionary<ValueArea, GetTokenValue> allAreaGetters = new Dictionary<ValueArea, GetTokenValue>()
                 {
                     { ValueArea.Aspect, AreaOperationsStorage.Aspect }, //returns aspect amount from the tokens

@@ -40,9 +40,9 @@
   <ItemGroup>
     <Compile Include="Beachcomber - Data Loading\BeachcomberFucineExtensions.cs" />
     <Compile Include="Beachcomber - Data Loading\BeachcomberIgnore.cs" />
-    <Compile Include="Elegiast - Achievements\ElegiastArchive.cs" />
     <Compile Include="TheWorld - Local Applications\Beauty\MainMenu\MainMenuStyleMaster.cs" />
     <Compile Include="TheWorld - Local Applications\FairTokenSelector.cs" />
+    <Compile Include="TheWorld - Local Applications\Scribe.cs" />
     <Compile Include="TheWorld - Local Applications\Optimizations.cs" />
     <Compile Include="TheWorld - Local Applications\Beauty\SituationWindowMaster.cs" />
     <Compile Include="TheWorld - Local Applications\ElementEffectsMaster.cs" />
