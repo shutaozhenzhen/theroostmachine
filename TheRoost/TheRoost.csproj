@@ -3,17 +3,16 @@
   <Target Name="CheckEnvironmentVars">
     <Error Text="Please set the CSDir environment variable." Condition="'$(CSDir)' == ''" ContinueOnError="false" />
   </Target>
-  
+
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
     <CSDataDir>$([System.IO.Path]::Combine($(CSDir), 'cultistsimulator_Data'))</CSDataDir>
     <CSModDir>$([System.IO.Path]::Combine($(USERPROFILE), 'AppData\LocalLow\Weather Factory\Cultist Simulator\mods'))</CSModDir>
-    
+
   </PropertyGroup>
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
     <CSDataDir>$([System.IO.Path]::Combine($(CSDir), 'OSX.app\Contents\Resources\Data'))</CSDataDir>
     <CSModDir>$([System.IO.Path]::Combine($(HOME), 'Library\Application Support\Weather Factory\Cultist Simulator\mods'))</CSModDir>
   </PropertyGroup>
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -121,6 +120,7 @@
     </Reference>
     <Reference Include="UnityEngine.ParticleSystemModule">
       <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\UnityEngine.ParticleSystemModule.dll'))</HintPath>
+      <Private>false</Private>
     </Reference>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
