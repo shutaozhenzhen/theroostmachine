@@ -11,7 +11,6 @@ namespace Roost.World
 {
     class SlideshowBurnImagesMaster : TabletopImageBurner
     {
-
         public static void Enact()
         {
             Machine.ClaimProperty<Recipe, List<string>>("burnimages", true);
@@ -51,7 +50,6 @@ namespace Roost.World
 
             if (!coroutineRunning)
                 StartCoroutine(DecayImages());
-        }
-        */
+        }*/
     }
 }
