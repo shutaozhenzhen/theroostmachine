@@ -11,6 +11,7 @@ namespace Roost.World
 {
     class SlideshowBurnImagesMaster : TabletopImageBurner
     {
+
         public static void Enact()
         {
             Machine.ClaimProperty<Recipe, List<string>>("burnimages", true);
@@ -24,7 +25,7 @@ namespace Roost.World
 
             // Start a coroutine where you call
         }
-
+        /*
         public void ShowImageBurn(string spriteName, Vector3 atPosition, float duration, float scale, ImageLayoutConfig config)
         {
             var sprite = LoadBurnSprite(spriteName);
@@ -51,5 +52,6 @@ namespace Roost.World
             if (!coroutineRunning)
                 StartCoroutine(DecayImages());
         }
+        */
     }
 }
