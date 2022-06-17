@@ -14,10 +14,10 @@ namespace Roost.World.Beauty
         private static readonly FieldInfo DefaultSpriteAsset =
             typeof(TMP_Settings).GetFieldInvariant("m_defaultSpriteAsset");
 
-        private static Sprite NamedSprite(string name, float x, float y, float width, float height)
+        private static Sprite NamedSprite(Texture2D t, string name, float x, float y, float width, float height)
         {
             var s = Sprite.Create(
-                (Texture2D)TMP_Settings.defaultSpriteAsset.spriteSheet,
+                t,
                 new Rect(x, y, width, height),
                 Vector2.zero
             );
@@ -97,7 +97,7 @@ namespace Roost.World.Beauty
 
             var (t, sprites) = PaintTexture(spritesList);
             var sa = CreateSpriteAssetFromSelectedObject(t,
-                sprites.Select(s => NamedSprite(s.Sprite.name, s.X, s.Y, s.W, s.H)));
+                sprites.Select(s => NamedSprite(t, s.Sprite.name, s.X, s.Y, s.W, s.H)));
             DefaultSpriteAsset.SetValue(TMP_Settings.instance, sa);
         }
 
