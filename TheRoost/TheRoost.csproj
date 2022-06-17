@@ -24,7 +24,6 @@
     <AssemblyName>TheRoostMachine</AssemblyName>
     <LangVersion>latest</LangVersion>
     <TargetFramework>net472</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
     <FileAlignment>512</FileAlignment>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <TargetFrameworkProfile />
