@@ -135,6 +135,7 @@ namespace Roost.Vagabond
  { AtTimeOfPower.OnPostImpostSetting, typeof(Setting).GetMethodInvariant("OnPostImportForSpecificEntity") },
  { AtTimeOfPower.OnPostImportSlot, typeof(SphereSpec).GetMethodInvariant("OnPostImportForSpecificEntity") },
  { AtTimeOfPower.OnPostImportVerb, typeof(Verb).GetMethodInvariant("OnPostImportForSpecificEntity") },
+ { AtTimeOfPower.CompendiumLoad , typeof(CompendiumLoader).GetMethodInvariant("PopulateCompendium") }
         };
 
         internal static void Unite(AtTimeOfPower time, Delegate patchMethod, PatchType patchType, string patchId)
@@ -309,7 +310,8 @@ namespace Roost
         RecipeRequirementsCheck, RecipeExecution,
         RecipePortals, RecipeVFX,
         OnPostImportCulture, OnPostImportDeck, OnPostImportElement, OnPostImportEnding, OnPostImportExpulsion, OnPostImportLegacy, OnPostImportLink,
-        OnPostImportXTrigger, OnPostImportMutation, OnPostImportPortal, OnPostImportRecipe, OnPostImpostSetting, OnPostImportSlot, OnPostImportVerb
+        OnPostImportXTrigger, OnPostImportMutation, OnPostImportPortal, OnPostImportRecipe, OnPostImpostSetting, OnPostImportSlot, OnPostImportVerb,
+        CompendiumLoad
     }
 
     //times of power scheduling methods

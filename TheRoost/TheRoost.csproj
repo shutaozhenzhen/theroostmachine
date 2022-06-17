@@ -1,5 +1,18 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" Sdk="Microsoft.NET.Sdk" InitialTargets="CheckEnvironmentVars">
+  <Target Name="CheckEnvironmentVars">
+    <Error Text="Please set the CSDir environment variable." Condition="'$(CSDir)' == ''" ContinueOnError="false" />
+  </Target>
+  
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <CSDataDir>$([System.IO.Path]::Combine($(CSDir), 'cultistsimulator_Data'))</CSDataDir>
+    <CSModDir>$([System.IO.Path]::Combine($(USERPROFILE), 'AppData\LocalLow\Weather Factory\Cultist Simulator\mods'))</CSModDir>
+    
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <CSDataDir>$([System.IO.Path]::Combine($(CSDir), 'OSX.app\Contents\Resources\Data'))</CSDataDir>
+    <CSModDir>$([System.IO.Path]::Combine($(HOME), 'Library\Application Support\Weather Factory\Cultist Simulator\mods'))</CSModDir>
+  </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -9,19 +22,18 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Roost</RootNamespace>
     <AssemblyName>TheRoostMachine</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <assemblies>
-      <add assembly="netstandard, Version=2.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51" />
-    </assemblies>
+    <LangVersion>latest</LangVersion>
+    <TargetFramework>net472</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
     <FileAlignment>512</FileAlignment>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <TargetFrameworkProfile />
-    <NuGetPackageImportStamp>018a306d</NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>C:\Users\Root\AppData\LocalLow\Weather Factory\Cultist Simulator\mods\TheRoost\dll\</OutputPath>
+    <OutDir>$([System.IO.Path]::Combine($(CSModDir), 'Roost\dll'))</OutDir>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -30,7 +42,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\..\Users\Root\AppData\LocalLow\Weather Factory\Cultist Simulator\mods\Roost\dll\</OutputPath>
+    <OutDir>$([System.IO.Path]::Combine($(CSModDir), 'Roost\dll'))</OutDir>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -38,49 +50,12 @@
     <LangVersion>7</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Beachcomber - Data Loading\BeachcomberFucineExtensions.cs" />
-    <Compile Include="Beachcomber - Data Loading\BeachcomberIgnore.cs" />
-    <Compile Include="TheWorld - Local Applications\Beauty\MainMenu\MainMenuStyleMaster.cs" />
-    <Compile Include="TheWorld - Local Applications\FairTokenSelector.cs" />
-    <Compile Include="TheWorld - Local Applications\Scribe.cs" />
-    <Compile Include="TheWorld - Local Applications\Optimizations.cs" />
-    <Compile Include="TheWorld - Local Applications\Beauty\SituationWindowMaster.cs" />
-    <Compile Include="TheWorld - Local Applications\ElementEffectsMaster.cs" />
-    <Compile Include="TheWorld - Local Applications\RecipeEffects\MoldingsStorage.cs" />
-    <Compile Include="TheWorld - Local Applications\RecipeEffects\RecipeLinkMaster.cs" />
-    <Compile Include="TheWorld - Local Applications\RecipeEffects\RecipeExecutionBuffer.cs" />
-    <Compile Include="TheWorld - Local Applications\RecipeEffects\RecipeEffectsMaster.cs" />
-    <Compile Include="TheWorld - Local Applications\Beauty\TableStyleMaster.cs" />
-    <Compile Include="TheWorld - Local Applications\Beauty\StartupQuoteMaster.cs" />
-    <Compile Include="TheWorld - Local Applications\Beauty\MainMenu\LegacyMenuVisualsOverride.cs" />
-    <Compile Include="TheWorld - Local Applications\RecipeEffects\RecipeEffectsEntities.cs" />
-    <Compile Include="TheWorld - Local Applications\RecipeEffects\DecksEffect.cs" />
-    <Compile Include="Twins - Expressions and Contexts\ContextAccessors.cs" />
-    <Compile Include="Twins - Expressions and Contexts\TwinsParser.cs" />
-    <Compile Include="Twins - Expressions and Contexts\ExpressionsEntities.cs" />
-    <Compile Include="Vagabond - Various Interventions\HarmonyPatchWrapper.cs" />
-    <Compile Include="Vagabond - Various Interventions\VagabondConfig.cs" />
-    <Compile Include="Vagabond - Various Interventions\VagabondMenu.cs" />
-    <Compile Include="Vagabond - Various Interventions\CommandLine.cs" />
-    <Compile Include="Vagabond - Various Interventions\CustomSavesMaster.cs" />
-    <Compile Include="Elegiast - Achievements\ElegiastInterface.cs" />
-    <Compile Include="Elegiast - Achievements\ElegiastEntities.cs" />
-    <Compile Include="Elegiast - Achievements\ElegiastManager.cs" />
-    <Compile Include="Beachcomber - Data Loading\BeachcomberLoader.cs" />
-    <Compile Include="Beachcomber - Data Loading\BeachcomberExamples.cs" />
-    <Compile Include="Beachcomber - Data Loading\BeachcomberImporter.cs" />
-    <Compile Include="Beachcomber - Data Loading\BeachcomberUsurper.cs" />
-    <Compile Include="Birdsong.cs" />
-    <Compile Include="MainHall.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <Reference Include="0Harmony, Version=2.1.1.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="GalaxyCSharp">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\GalaxyCSharp.dll</HintPath>
+      <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\GalaxyCSharp.dll'))</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="NCalc, Version=3.5.0.2, Culture=neutral, processorArchitecture=MSIL">
@@ -89,63 +64,66 @@
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\Newtonsoft.Json.dll</HintPath>
+      <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\Newtonsoft.Json.dll'))</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="OrbCreations">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\OrbCreations.dll</HintPath>
+      <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\OrbCreations.dll'))</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="SecretHistories.Enums">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\SecretHistories.Enums.dll</HintPath>
+      <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\SecretHistories.Enums.dll'))</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="SecretHistories.Interfaces">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\SecretHistories.Interfaces.dll</HintPath>
+      <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\SecretHistories.Interfaces.dll'))</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="SecretHistories.Main">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\SecretHistories.Main.dll</HintPath>
+      <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\SecretHistories.Main.dll'))</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Steamworks">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\Steamworks.dll</HintPath>
+      <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\Steamworks.dll'))</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="Unity.InputSystem">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\Unity.InputSystem.dll</HintPath>
+      <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\Unity.InputSystem.dll'))</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.TextMeshPro">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\Unity.TextMeshPro.dll</HintPath>
+      <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\Unity.TextMeshPro.dll'))</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\UnityEngine.dll'))</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\UnityEngine.CoreModule.dll'))</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.TextRenderingModule">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
+      <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\UnityEngine.TextRenderingModule.dll'))</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.TextCoreFontEngineModule">
+      <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\UnityEngine.TextCoreFontEngineModule.dll'))</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.UI">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.UI.dll</HintPath>
+      <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\UnityEngine.UI.dll'))</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.UIModule">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.UIModule.dll</HintPath>
+      <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\UnityEngine.UIModule.dll'))</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.ParticleSystemModule">
-      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.ParticleSystemModule.dll</HintPath>
+      <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\UnityEngine.ParticleSystemModule.dll'))</HintPath>
     </Reference>
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

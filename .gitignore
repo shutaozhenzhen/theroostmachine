@@ -1,2 +1,4 @@
 TheRoost/obj/
 *.suo
+.idea
+TheRoost.sln.DotSettings.user

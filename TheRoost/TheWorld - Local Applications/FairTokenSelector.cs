@@ -40,7 +40,7 @@ namespace Roost.World
                 tokenThresholds[token] = totalQuantity;
             }
 
-            int selectedNumber = Random.Range(0, totalQuantity);
+            int selectedNumber = UnityEngine.Random.Range(0, totalQuantity);
             foreach (KeyValuePair<Token, int> tokenThreshold in tokenThresholds)
                 if (selectedNumber < tokenThreshold.Value)
                     return tokenThreshold.Key;
@@ -60,7 +60,7 @@ namespace Roost.World
                     tokenThresholds[token] = totalQuantity;
                 }
 
-            int selectedNumber = Random.Range(0, totalQuantity);
+            int selectedNumber = UnityEngine.Random.Range(0, totalQuantity);
             foreach (KeyValuePair<Token, int> tokenThreshold in tokenThresholds)
                 if (selectedNumber < tokenThreshold.Value)
                     return tokenThreshold.Key;
@@ -87,7 +87,7 @@ namespace Roost.World
 
             HashSet<int> selectedNumbers = new HashSet<int>();
             while (selectedNumbers.Count < Limit)
-                selectedNumbers.Add(Random.Range(0, totalQuantity));
+                selectedNumbers.Add(UnityEngine.Random.Range(0, totalQuantity));
 
             List<Token> result = new List<Token>();
             List<int> numbersLeft = new List<int>(selectedNumbers);
