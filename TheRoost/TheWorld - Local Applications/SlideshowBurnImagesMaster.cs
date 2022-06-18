@@ -29,63 +29,80 @@ namespace Roost.World
 
         public enum ImageLayoutConfig { CenterOnToken, LowerLeftCorner }
 
-        Image burnImagePrefab;
-        AnimationCurve burnAlphaCurve;
+        readonly Image burnImageBase;
+        readonly AnimationCurve burnAlphaCurve;
 
         bool slideshowCoroutineRunning = false;
         bool decayCoroutineRunning = false;
-        List<Image> imagePool = new List<Image>();
-        List<BurnImage> activeImages = new List<BurnImage>();
+        readonly List<Image> imagePool = new List<Image>();
+        readonly List<BurnImage> activeImages = new List<BurnImage>();
+
+        static SlideshowBurnImagesMaster _instance;
 
         public static void Enact()
         {
+            Birdsong.Sing("Slideshow Was properly enabled");
             Machine.ClaimProperty<Recipe, List<string>>("burnimages", true);
-            SlideshowBurnImagesMaster obj = new SlideshowBurnImagesMaster();
-            AtTimeOfPower.RecipeExecution.Schedule<Situation>(obj.checkForPresenceOfBurnImages, PatchType.Postfix);
+            AtTimeOfPower.RecipeExecution.Schedule<Situation>(CheckForPresenceOfBurnImages, PatchType.Postfix);
+            var o = new GameObject();
+            _instance = o.AddComponent<SlideshowBurnImagesMaster>();
         }
 
         public SlideshowBurnImagesMaster()
         {
-            burnImagePrefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<>("");
-        }
+            var o = new GameObject();
+            
+            burnImageBase = o.AddComponent<Image>();
+            var shader = Shader.Find("UI-Multiply");
+            burnImageBase.material = new Material(shader);
+            burnImageBase.maskable = true;
 
+            burnAlphaCurve = AnimationCurve.Linear(0.0f, 1f, 2.0f, 0.0f);
+        }
+        /*
         public void Awake()
         {
             new Watchman().Register(this);
-        }
+        }*/
 
-        public void checkForPresenceOfBurnImages(Situation situation)
+        public static void CheckForPresenceOfBurnImages(Situation situation)
         {
+            Birdsong.Sing("Checking for presence of burn images...");
             List<string> burnImages = situation.Recipe.RetrieveProperty<List<string>>("burnimages");
             if (burnImages == null) return;
 
-            // Start a coroutine where you call
-            StartCoroutine(ShowSlideshow(burnImages));
+            // Start a coroutine where we'll regularly display new burn images
+            var spawnTransform = situation.Token.Location.Anchored3DPosition;
+            Birdsong.Sing("Found burnimages. Starting slideshow coroutine...");
+            _instance.StartCoroutine(_instance.ShowSlideshow(spawnTransform, burnImages));
         }
         
-        IEnumerator ShowSlideshow(List<string> burnImages)
+        IEnumerator ShowSlideshow(Vector3 location, List<string> burnImages)
         {
             SoundManager.PlaySfx("FXBurnImage");
             slideshowCoroutineRunning = true;
             int currentImageIndex = 0;
             float timeSinceLastChange = 0;
             string currentSpriteName = burnImages[currentImageIndex];
-            ShowImageBurn(currentSpriteName, new Vector3(), 1000, 1, ImageLayoutConfig.CenterOnToken);
+            Birdsong.Sing("Current sprite is", currentSpriteName);
+            ShowImageBurn(currentSpriteName, location, 20f, 2f, ImageLayoutConfig.CenterOnToken);
             
             while (slideshowCoroutineRunning)
             {
                 timeSinceLastChange += Time.deltaTime;
-                if(timeSinceLastChange > 1000)
+                if(timeSinceLastChange > 5)
                 {
+                    Birdsong.Sing("Enough time elapsed, spawning the next burn image...");
                     timeSinceLastChange = 0;
                     currentImageIndex++;
                     currentSpriteName = burnImages[currentImageIndex];
-                    ShowImageBurn(currentSpriteName, new Vector3(), 1000, 1, ImageLayoutConfig.CenterOnToken);
+                    ShowImageBurn(currentSpriteName, location, 20f, 2f, ImageLayoutConfig.CenterOnToken);
                     yield return null;
                     slideshowCoroutineRunning = currentImageIndex < burnImages.Count - 1;
                 }
                 else yield return null;
             }
+            Birdsong.Sing("Finished the slideshow.");
         }
 
         public void ShowImageBurn(string spriteName, Vector3 atPosition, float duration, float scale, ImageLayoutConfig config)
@@ -169,7 +186,7 @@ namespace Roost.World
 
         Image AddImage()
         {
-            var newImg = Instantiate<Image>(burnImagePrefab, transform) as Image;
+            var newImg = Instantiate<Image>(burnImageBase, transform) as Image;
             imagePool.Add(newImg);
 
             return newImg;
