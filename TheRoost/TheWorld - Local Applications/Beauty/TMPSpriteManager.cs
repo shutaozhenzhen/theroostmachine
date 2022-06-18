@@ -1,3 +1,4 @@
+using System;
 using System.Reflection;
 using SecretHistories.Constants.Modding;
 using SecretHistories.UI;
@@ -5,6 +6,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.TextCore;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace Roost.World.Beauty
@@ -38,27 +40,44 @@ namespace Roost.World.Beauty
         private static (Texture2D spritesheet, List<PaintedSprite> sprites) PaintTexture(List<Sprite> sprites)
         {
             var paints = new List<PaintedSprite>();
-            int x = 0, y = 0, nextY = 0;
+            int x = 0, y = 0, nextY = 0, lastAdvance = 0, yOffset = 0;
             var totalW = 128 * Mathf.CeilToInt(Mathf.Sqrt(sprites.Count));
-            foreach (var s in sprites)
+            foreach (var s in sprites.OrderByDescending(s => s.texture.height))
             {
-                if (x + s.texture.width > totalW)
+                if (s.texture.width <= lastAdvance && y + yOffset + s.texture.height <= nextY)
                 {
-                    x = 0;
-                    y = nextY;
-                    nextY = y;
+                    paints.Add(new PaintedSprite
+                    {
+                        X = x - lastAdvance,
+                        Y = y + yOffset,
+                        W = s.texture.width,
+                        H = s.texture.height,
+                        Sprite = s
+                    });
+                    yOffset += s.texture.height;
                 }
-
-                paints.Add(new PaintedSprite
+                else
                 {
-                    X = x,
-                    Y = y,
-                    W = s.texture.width,
-                    H = s.texture.height,
-                    Sprite = s
-                });
-                nextY = Mathf.Max(nextY, y + s.texture.height);
-                x += s.texture.width;
+                    if (x + s.texture.width > totalW)
+                    {
+                        x = 0;
+                        y = nextY;
+                        nextY = y;
+                    }
+
+                    paints.Add(new PaintedSprite
+                    {
+                        X = x,
+                        Y = y,
+                        W = s.texture.width,
+                        H = s.texture.height,
+                        Sprite = s
+                    });
+                    nextY = Mathf.Max(nextY, y + s.texture.height);
+                    x += s.texture.width;
+                    lastAdvance = s.texture.width;
+                    yOffset = s.texture.height;
+                }
             }
 
             var t = new Texture2D(
