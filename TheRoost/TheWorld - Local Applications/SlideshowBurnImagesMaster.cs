@@ -37,33 +37,41 @@ namespace Roost.World
         readonly List<Image> imagePool = new List<Image>();
         readonly List<BurnImage> activeImages = new List<BurnImage>();
 
+        static GameObject root;
+        static GameObject prefab;
         static SlideshowBurnImagesMaster _instance;
+        static readonly float SLIDE_DURATION = 2f;
 
         public static void Enact()
         {
             Birdsong.Sing("Slideshow Was properly enabled");
             Machine.ClaimProperty<Recipe, List<string>>("burnimages", true);
             AtTimeOfPower.RecipeExecution.Schedule<Situation>(CheckForPresenceOfBurnImages, PatchType.Postfix);
-            var o = new GameObject();
-            _instance = o.AddComponent<SlideshowBurnImagesMaster>();
+            AtTimeOfPower.TabletopSceneInit.Schedule(SetupComponent, PatchType.Postfix);
         }
 
         public SlideshowBurnImagesMaster()
         {
-            var o = new GameObject();
-            
-            burnImageBase = o.AddComponent<Image>();
-            var shader = Shader.Find("UI-Multiply");
+            burnImageBase = prefab.AddComponent<Image>();
+            var shader = Shader.Find("Custom/UI-Multiply");
             burnImageBase.material = new Material(shader);
             burnImageBase.maskable = true;
 
-            burnAlphaCurve = AnimationCurve.Linear(0.0f, 1f, 2.0f, 0.0f);
+            burnAlphaCurve = new AnimationCurve();
+            burnAlphaCurve.AddKey(new Keyframe(0f, 0f, 9.524999618530274f, 9.524999618530274f));
+            burnAlphaCurve.AddKey(new Keyframe(0.25f, 1f, 0f, 0f));
+            burnAlphaCurve.AddKey(new Keyframe(1f, 0f, -3.562192678451538f, -3.562192678451538f));
+            /*
+            UnityEditor.AnimationCurveWrapperJSON:{ "curve":{ "serializedVersion":"2","m_Curve":[{ "serializedVersion":"3","time":0.0,"value":0.0,"inSlope":9.524999618530274,"outSlope":9.524999618530274,"tangentMode":0,"weightedMode":0,"inWeight":0.3333333432674408,"outWeight":0.3333333432674408},{ "serializedVersion":"3","time":0.25354909896850588,"value":0.9913880228996277,"inSlope":0.0,"outSlope":0.0,"tangentMode":0,"weightedMode":0,"inWeight":0.3333333432674408,"outWeight":0.3333333432674408},{ "serializedVersion":"3","time":0.9921259880065918,"value":0.012500107288360596,"inSlope":-3.562192678451538,"outSlope":-3.562192678451538,"tangentMode":0,"weightedMode":0,"inWeight":0.3333333432674408,"outWeight":0.3333333432674408}],"m_PreInfinity":2,"m_PostInfinity":2,"m_RotationOrder":0} }
+            */
         }
-        /*
-        public void Awake()
+
+        public static void SetupComponent()
         {
-            new Watchman().Register(this);
-        }*/
+            root = GameObject.Find("BurnImages");
+            prefab = new GameObject();
+            _instance = root.AddComponent<SlideshowBurnImagesMaster>();
+        }
 
         public static void CheckForPresenceOfBurnImages(Situation situation)
         {
@@ -85,18 +93,18 @@ namespace Roost.World
             float timeSinceLastChange = 0;
             string currentSpriteName = burnImages[currentImageIndex];
             Birdsong.Sing("Current sprite is", currentSpriteName);
-            ShowImageBurn(currentSpriteName, location, 20f, 2f, ImageLayoutConfig.CenterOnToken);
+            ShowImageBurn(currentSpriteName, location, SLIDE_DURATION+1f, 2f, ImageLayoutConfig.CenterOnToken);
             
             while (slideshowCoroutineRunning)
             {
                 timeSinceLastChange += Time.deltaTime;
-                if(timeSinceLastChange > 5)
+                if(timeSinceLastChange > SLIDE_DURATION)
                 {
                     Birdsong.Sing("Enough time elapsed, spawning the next burn image...");
                     timeSinceLastChange = 0;
                     currentImageIndex++;
                     currentSpriteName = burnImages[currentImageIndex];
-                    ShowImageBurn(currentSpriteName, location, 20f, 2f, ImageLayoutConfig.CenterOnToken);
+                    ShowImageBurn(currentSpriteName, location, SLIDE_DURATION+1f, 2f, ImageLayoutConfig.CenterOnToken);
                     yield return null;
                     slideshowCoroutineRunning = currentImageIndex < burnImages.Count - 1;
                 }
@@ -116,6 +124,7 @@ namespace Roost.World
             }
 
             var image = GetUnusedImage();
+            image.canvasRenderer.SetAlpha(0f);
             image.sprite = sprite;
             image.SetNativeSize();
             image.gameObject.SetActive(true);
