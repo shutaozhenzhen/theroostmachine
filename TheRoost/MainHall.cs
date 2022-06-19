@@ -100,7 +100,7 @@ namespace Roost.Enactors
             Roost.World.Beauty.MainMenuStyleMaster.Enact();
             Roost.World.Beauty.TableStyleMaster.Enact();
 
-            Roost.World.SlideshowBurnImagesMaster.Enact();
+            Roost.World.Beauty.SlideshowBurnImagesMaster.Enact();
             Roost.World.Beauty.TMPSpriteManager.Enact();
         }
     }

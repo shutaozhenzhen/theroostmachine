@@ -1,17 +1,31 @@
 ﻿using SecretHistories.Entities;
-using SecretHistories.Services;
-using SecretHistories.UI;
-using System;
+using SecretHistories.Fucine;
+using SecretHistories.Fucine.DataImport;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Roost.World
+
+namespace Roost.World.Beauty
 {
+    class BurnImageData : AbstractEntity<BurnImageData>, IQuickSpecEntity
+    {
+        [FucineValue(DefaultValue=0.3f)] public float Duration { get; set; }
+        [FucineValue(DefaultValue=2f)] public float Overlap { get; set; }
+
+        public void QuickSpec(string value)
+        {
+            this.SetId(value);
+            this.Duration = 0.3f;
+            this.Overlap = 2f;
+        }
+
+        public BurnImageData() { }
+        public BurnImageData(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
+        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
+    }
+
     class SlideshowBurnImagesMaster : MonoBehaviour
     {
         class BurnImage
@@ -40,12 +54,11 @@ namespace Roost.World
         static GameObject root;
         static GameObject prefab;
         static SlideshowBurnImagesMaster _instance;
-        static readonly float SLIDE_DURATION = 2f;
 
         public static void Enact()
         {
             Birdsong.Sing("Slideshow Was properly enabled");
-            Machine.ClaimProperty<Recipe, List<string>>("burnimages", true);
+            Machine.ClaimProperty<Recipe, List<BurnImageData>>("burnimages", true);
             AtTimeOfPower.RecipeExecution.Schedule<Situation>(CheckForPresenceOfBurnImages, PatchType.Postfix);
             AtTimeOfPower.TabletopSceneInit.Schedule(SetupComponent, PatchType.Postfix);
         }
@@ -61,9 +74,6 @@ namespace Roost.World
             burnAlphaCurve.AddKey(new Keyframe(0f, 0f, 9.524999618530274f, 9.524999618530274f));
             burnAlphaCurve.AddKey(new Keyframe(0.25f, 1f, 0f, 0f));
             burnAlphaCurve.AddKey(new Keyframe(1f, 0f, -3.562192678451538f, -3.562192678451538f));
-            /*
-            UnityEditor.AnimationCurveWrapperJSON:{ "curve":{ "serializedVersion":"2","m_Curve":[{ "serializedVersion":"3","time":0.0,"value":0.0,"inSlope":9.524999618530274,"outSlope":9.524999618530274,"tangentMode":0,"weightedMode":0,"inWeight":0.3333333432674408,"outWeight":0.3333333432674408},{ "serializedVersion":"3","time":0.25354909896850588,"value":0.9913880228996277,"inSlope":0.0,"outSlope":0.0,"tangentMode":0,"weightedMode":0,"inWeight":0.3333333432674408,"outWeight":0.3333333432674408},{ "serializedVersion":"3","time":0.9921259880065918,"value":0.012500107288360596,"inSlope":-3.562192678451538,"outSlope":-3.562192678451538,"tangentMode":0,"weightedMode":0,"inWeight":0.3333333432674408,"outWeight":0.3333333432674408}],"m_PreInfinity":2,"m_PostInfinity":2,"m_RotationOrder":0} }
-            */
         }
 
         public static void SetupComponent()
@@ -75,42 +85,43 @@ namespace Roost.World
 
         public static void CheckForPresenceOfBurnImages(Situation situation)
         {
-            Birdsong.Sing("Checking for presence of burn images...");
-            List<string> burnImages = situation.Recipe.RetrieveProperty<List<string>>("burnimages");
+            //Birdsong.Sing("Checking for presence of burn images...");
+            List<BurnImageData> burnImages = situation.Recipe.RetrieveProperty<List<BurnImageData>>("burnimages");
             if (burnImages == null) return;
 
             // Start a coroutine where we'll regularly display new burn images
             var spawnTransform = situation.Token.Location.Anchored3DPosition;
-            Birdsong.Sing("Found burnimages. Starting slideshow coroutine...");
+            //Birdsong.Sing("Found burnimages. Starting slideshow coroutine...");
             _instance.StartCoroutine(_instance.ShowSlideshow(spawnTransform, burnImages));
         }
         
-        IEnumerator ShowSlideshow(Vector3 location, List<string> burnImages)
+        IEnumerator ShowSlideshow(Vector3 location, List<BurnImageData> burnImages)
         {
             SoundManager.PlaySfx("FXBurnImage");
             slideshowCoroutineRunning = true;
             int currentImageIndex = 0;
             float timeSinceLastChange = 0;
-            string currentSpriteName = burnImages[currentImageIndex];
-            Birdsong.Sing("Current sprite is", currentSpriteName);
-            ShowImageBurn(currentSpriteName, location, SLIDE_DURATION+1f, 2f, ImageLayoutConfig.CenterOnToken);
+            BurnImageData currentImageData = burnImages[currentImageIndex];
+            //Birdsong.Sing("Current sprite is", currentImageData.Id, "duration", currentImageData.Duration);
+            ShowImageBurn(currentImageData.Id, location, currentImageData.Duration+currentImageData.Overlap, 2f, ImageLayoutConfig.CenterOnToken);
             
             while (slideshowCoroutineRunning)
             {
                 timeSinceLastChange += Time.deltaTime;
-                if(timeSinceLastChange > SLIDE_DURATION)
+                if(timeSinceLastChange > currentImageData.Duration)
                 {
-                    Birdsong.Sing("Enough time elapsed, spawning the next burn image...");
+                    //Birdsong.Sing("Enough time elapsed, spawning the next burn image...");
                     timeSinceLastChange = 0;
                     currentImageIndex++;
-                    currentSpriteName = burnImages[currentImageIndex];
-                    ShowImageBurn(currentSpriteName, location, SLIDE_DURATION+1f, 2f, ImageLayoutConfig.CenterOnToken);
+                    currentImageData = burnImages[currentImageIndex];
+                    //Birdsong.Sing("Current sprite is", currentImageData.Id, "duration", currentImageData.Duration);
+                    ShowImageBurn(currentImageData.Id, location, currentImageData.Duration+currentImageData.Overlap, 2f, ImageLayoutConfig.CenterOnToken);
                     yield return null;
                     slideshowCoroutineRunning = currentImageIndex < burnImages.Count - 1;
                 }
                 else yield return null;
             }
-            Birdsong.Sing("Finished the slideshow.");
+            //Birdsong.Sing("Finished the slideshow.");
         }
 
         public void ShowImageBurn(string spriteName, Vector3 atPosition, float duration, float scale, ImageLayoutConfig config)
