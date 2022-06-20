@@ -76,27 +76,27 @@ namespace Roost.Twins.Entities
 
         public readonly FucinePath path;
         public readonly FucineExp<bool> filter;
-        public readonly FucineValueGetter target;
+        public readonly FucineNumberGetter valueGetter;
 
         public List<Sphere> targetSpheres { get { return Crossroads.GetSpheresByPath(path); } }
         public List<Token> tokens { get { return Crossroads.GetTokensByPath(path).FilterTokens(filter); } }
-        public float value { get { return target.GetValueFromTokens(this.tokens); } }
+        public float value { get { return valueGetter.GetValueFromTokens(this.tokens); } }
 
         public FucineRef(string referenceData, string referenceId)
         {
             this.idInExpression = referenceId;
-            TwinsParser.ParseFucineRef(referenceData, out path, out filter, out target);
+            TwinsParser.ParseFucineRef(referenceData, out path, out filter, out valueGetter);
         }
 
         public FucineRef(string referenceData)
         {
             idInExpression = null;
-            TwinsParser.ParseFucineRef(referenceData, out path, out filter, out target);
+            TwinsParser.ParseFucineRef(referenceData, out path, out filter, out valueGetter);
         }
 
         public bool Equals(FucineRef otherReference)
         {
-            return otherReference.path == this.path && otherReference.filter.formula == this.filter.formula && otherReference.target.Equals(this.target);
+            return otherReference.path == this.path && otherReference.filter.formula == this.filter.formula && otherReference.valueGetter.Equals(this.valueGetter);
         }
     }
 
@@ -144,44 +144,51 @@ namespace Roost.Twins.Entities
         public override string ToString() { return fullPath; }
     }
 
-    public struct FucineValueGetter
+    public struct FucineNumberGetter
     {
         public readonly ValueArea area;
         public readonly ValueOperation operation;
-        public readonly string target;
+        public readonly string targetId;
 
-        public delegate float GetTokenValue(Token token, string target);
-        public GetTokenValue getTokenValue;
+        public delegate float SingleTokenValue(Token token, string target);
+        public SingleTokenValue GetValue;
 
-        public delegate float GetResultValue(List<Token> tokens, GetTokenValue getTokenValue, string target);
-        GetResultValue getResultValue;
+        public delegate float HandleTokenValues(List<Token> tokens, SingleTokenValue getTokenValue, string target);
+        HandleTokenValues HandleValues;
 
         public float GetValueFromTokens(List<Token> tokens)
         {
             if (tokens == null || tokens.Count == 0)
                 return 0;
 
-            return getResultValue(tokens, getTokenValue, target);
+            return HandleValues(tokens, GetValue, targetId);
         }
 
-        public bool Equals(FucineValueGetter otherValueRef)
+        public bool Equals(FucineNumberGetter otherValueRef)
         {
-            return this.area == otherValueRef.area && this.operation == otherValueRef.operation && this.target == otherValueRef.target;
+            return this.area == otherValueRef.area && this.operation == otherValueRef.operation && this.targetId == otherValueRef.targetId;
         }
 
-        public FucineValueGetter(string target) : this(target, ValueArea.Aspect, ValueOperation.Sum) { }
+        public FucineNumberGetter(string target) : this(target, ValueArea.Aspect, ValueOperation.Sum) { }
 
-        public FucineValueGetter(string target, ValueArea area, ValueOperation operation)
+        public FucineNumberGetter(string target, ValueArea area, ValueOperation operation)
         {
-            this.target = target;
+            this.targetId = target;
             this.area = area;
             this.operation = operation;
 
-            getTokenValue = allAreaGetters[area];
-            getResultValue = allResultGetters[operation];
+            if (target[target.Length - 1] == '*')
+                if (Enum.TryParse(area.ToString() + "Wild", out ValueArea wildArea))
+                {
+                    area = wildArea;
+                    this.targetId = target.Remove(target.Length - 1);
+                }
+
+            GetValue = singleValueGetters[area];
+            HandleValues = valueHandlers[operation];
 
             if (this.area == ValueArea.Aspect || this.operation == ValueOperation.Root)
-                Watchman.Get<Compendium>().SupplyElementIdsForValidation(this.target);
+                Watchman.Get<Compendium>().SupplyElementIdsForValidation(this.targetId);
         }
 
         public enum ValueArea
@@ -190,63 +197,75 @@ namespace Roost.Twins.Entities
             Mutation, //return mutation amount from an element token
             SituationContent, //returns aspect amount from a situation token
             AnySource, //returns aspect amount from any token
-            Verb, Recipe, //retuns verb/recipe amount among the tokens
-            Token, //returns token property
-            Payload, //return token payload property
-            //Entity, //should return token payload entity property, but it's a hassle so not implemented
+            Verb, VerbWild, //retuns a quantity (likely 1) if the token is a verb
+            Recipe, RecipeWild, //retuns a quantity (likely 1) if the token is a verb running a recipe
+            RecipeAspect, //retuns quantity (likely 1) if the token is a verb running a recipe with the defined aspect
+            Token, Payload, Entity, //return token/its payload/payload entity property; incredibly hacky (and probably slow) rn, but work
             NoArea
         };
 
-        private static readonly Dictionary<ValueArea, GetTokenValue> allAreaGetters = new Dictionary<ValueArea, GetTokenValue>()
+        private static readonly Dictionary<ValueArea, SingleTokenValue> singleValueGetters = new Dictionary<ValueArea, SingleTokenValue>()
                 {
-                    { ValueArea.Aspect, AreaOperationsStorage.Aspect },
+                    { ValueArea.Aspect, AreaOperationsStorage.ElementAspect },
                     { ValueArea.Mutation, AreaOperationsStorage.Mutation },
-                    { ValueArea.Verb, AreaOperationsStorage.Verb },
-                    { ValueArea.Recipe, AreaOperationsStorage.Recipe },
-                    { ValueArea.SituationContent, AreaOperationsStorage.SituationAspects },
-                    { ValueArea.AnySource, AreaOperationsStorage.AspectsFromAnySource },
+                    { ValueArea.SituationContent, AreaOperationsStorage.AspectInSituation },
+                    { ValueArea.AnySource, AreaOperationsStorage.AspectOnAnyToken },
+                    { ValueArea.Verb, AreaOperationsStorage.VerbId },
+                    { ValueArea.VerbWild, AreaOperationsStorage.VerbWild },
+                    { ValueArea.Recipe, AreaOperationsStorage.RecipeId },
+                    { ValueArea.RecipeWild, AreaOperationsStorage.RecipeWild },
+                    { ValueArea.RecipeAspect, AreaOperationsStorage.RecipeAspect },
+                    { ValueArea.Token, AreaOperationsStorage.Token },
                     { ValueArea.Payload, AreaOperationsStorage.Payload },
+                    { ValueArea.Entity, AreaOperationsStorage.Entity },
                     { ValueArea.NoArea, null },
                 };
 
         private static class AreaOperationsStorage
         {
-            public static float Aspect(Token token, string target)
+            public static float ElementAspect(Token token, string target)
             {
                 return token.IsValidElementStack() ? token.GetAspects().AspectValue(target) : 0;
             }
 
-            public static float SituationAspects(Token token, string target)
+            public static float Mutation(Token token, string target)
+            {
+                return token.GetCurrentMutations().TryGetValue(target, out int value) ? value : 0;
+            }
+
+            public static float AspectInSituation(Token token, string target)
             {
                 return IsSituation(token.Payload) ? token.GetAspects().AspectValue(target) : 0;
             }
 
-            public static float AspectsFromAnySource(Token token, string target)
+            public static float AspectOnAnyToken(Token token, string target)
             {
                 return token.GetAspects().AspectValue(target);
             }
 
-            public static float Mutation(Token token, string target)
+            public static float VerbId(Token token, string target)
             {
-                return token.IsValidElementStack() ? token.GetCurrentMutations().TryGetValue(target, out int value) ? value : 0 : 0;
+                return (IsSituation(token.Payload) && token.PayloadEntityId == target) ? token.Quantity : 0;
             }
 
-            public static float Verb(Token token, string target)
+            public static float VerbWild(Token token, string target)
             {
                 return (IsSituation(token.Payload) && token.PayloadEntityId.Contains(target)) ? token.Quantity : 0;
             }
 
-            public static float Recipe(Token token, string target)
+            public static float RecipeId(Token token, string target)
             {
-                if (IsSituation(token.Payload))
-                {
-                    Situation situation = token.Payload as Situation;
-                    //if recipe id matches, or any of its aspects match
-                    if (situation.RecipeId == target || situation.Recipe?.Aspects.ContainsKey(target) == true)
-                        return token.Quantity;
-                }
+                return IsSituation(token.Payload) && (token.Payload as Situation).Recipe?.Id == target ? token.Quantity : 0;
+            }
 
-                return 0;
+            public static float RecipeWild(Token token, string target)
+            {
+                return IsSituation(token.Payload) && (token.Payload as Situation).Recipe?.Id.Contains(target) == true ? token.Quantity : 0;
+            }
+
+            public static float RecipeAspect(Token token, string target)
+            {
+                return IsSituation(token.Payload) && (token.Payload as Situation).Recipe?.Aspects.ContainsKey(target) == true ? token.Quantity : 0;
             }
 
             public static float Payload(Token token, string target)
@@ -254,54 +273,54 @@ namespace Roost.Twins.Entities
                 return (float)token.Payload.GetType().GetProperty(target).GetValue(token.Payload);
             }
 
-            /*     case ValueArea.Token:
-                      PropertyInfo targetPropertyInfo = typeof(Token).GetProperty(target, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
-                      MethodInfo propertyReturnCreator = typeof(FucineValueGetter).GetMethod(nameof(CreatePropertyReturner), BindingFlags.Static | BindingFlags.NonPublic).MakeGenericMethod(typeof(Token), targetPropertyInfo.PropertyType);
-
-                      return propertyReturnCreator.Invoke(null, new object[] { targetPropertyInfo.GetGetMethod() }) as Func<Token, float>;
-            static Func<TClass, float> CreatePropertyReturner<TClass, TProperty>(MethodInfo getMethod)
+            public static float Token(Token token, string target)
             {
-                try
+                return (float)typeof(Token).GetProperty(target).GetValue(token);
+            }
+
+            public static float Entity(Token token, string target)
+            {
+                if (token.IsValidElementStack())
                 {
-                    Func<TClass, TProperty> func = getMethod.CreateDelegate(typeof(Func<TClass, TProperty>)) as Func<TClass, TProperty>;
-                    return token => (float)Beachcomber.Panimporter.ConvertValue(func(token), typeof(float));
+                    Element element = Watchman.Get<Compendium>().GetEntityById<Element>(token.PayloadEntityId);
+                    return (float)typeof(Element).GetProperty(target).GetValue(element);
                 }
-                catch (Exception ex)
+                if (IsSituation(token.Payload))
                 {
-                    Birdsong.Tweet(ex.FormatException());
+                    Recipe recipe = Watchman.Get<Compendium>().GetEntityById<Recipe>((token.Payload as Situation).RecipeId);
+                    return (float)typeof(Recipe).GetProperty(target).GetValue(recipe);
                 }
 
-                return null;
-            }*/
+                return 0;
+            }
         }
 
         public enum ValueOperation
         {
             Sum, //sum of values of all tokens
             Num, //value from a token as if it had quantity 1
-            Max, //max value among all tokens
-            Min, //min value among all tokens
-            Rand, //value of a random token
-            Count, //number of tokens
+            Max, Min, //max/min value among all tokens
+            Rand, //single value of a random token
             Root, //value from FucineRoot mutations
-            Executions, //recipe execution count for the current character
+            Executions, //recipe execution count for the current character - NoArea
+            Count, //number of tokens - NoArea and no target
         };
 
-        private static readonly Dictionary<ValueOperation, GetResultValue> allResultGetters = new Dictionary<ValueOperation, GetResultValue>()
+        private static readonly Dictionary<ValueOperation, HandleTokenValues> valueHandlers = new Dictionary<ValueOperation, HandleTokenValues>()
                 {
-                    { ValueOperation.Sum, ValueOperationsStorage.Sum }, //sum of values of all tokens
-                    { ValueOperation.Num, ValueOperationsStorage.Num }, //value from a token as if it had quantity 1
-                    { ValueOperation.Max, ValueOperationsStorage.Max }, //max value among all tokens
-                    { ValueOperation.Min, ValueOperationsStorage.Min }, //min value among all tokens
-                    { ValueOperation.Rand, ValueOperationsStorage.Rand }, //value of a random token
-                    { ValueOperation.Count, ValueOperationsStorage.Count }, //number of tokens
-                    { ValueOperation.Root, ValueOperationsStorage.Root }, //value from FucineRoot mutations
-                    { ValueOperation.Executions, ValueOperationsStorage.Executions }, //recipe execution count for the current character
+                    { ValueOperation.Sum, ValueOperationsStorage.Sum },
+                    { ValueOperation.Num, ValueOperationsStorage.Num },
+                    { ValueOperation.Max, ValueOperationsStorage.Max },
+                    { ValueOperation.Min, ValueOperationsStorage.Min },
+                    { ValueOperation.Rand, ValueOperationsStorage.Rand },
+                    { ValueOperation.Root, ValueOperationsStorage.Root },
+                    { ValueOperation.Executions, ValueOperationsStorage.Executions },
+                    { ValueOperation.Count, ValueOperationsStorage.Count },
                 };
 
         private static class ValueOperationsStorage
         {
-            public static float Sum(List<Token> tokens, GetTokenValue tokenValue, string target)
+            public static float Sum(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
                 float result = 0;
                 foreach (Token token in tokens)
@@ -309,7 +328,7 @@ namespace Roost.Twins.Entities
                 return result;
             }
 
-            public static float Num(List<Token> tokens, GetTokenValue tokenValue, string target)
+            public static float Num(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
                 float result = 0;
                 foreach (Token token in tokens)
@@ -317,7 +336,7 @@ namespace Roost.Twins.Entities
                 return result;
             }
 
-            public static float Max(List<Token> tokens, GetTokenValue tokenValue, string target)
+            public static float Max(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
                 float maxValue = 0; float currentTokenValue;
                 foreach (Token token in tokens)
@@ -329,7 +348,7 @@ namespace Roost.Twins.Entities
                 return maxValue;
             }
 
-            public static float Min(List<Token> tokens, GetTokenValue tokenValue, string target)
+            public static float Min(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
                 float minValue = float.MaxValue; float currentTokenValue;
                 foreach (Token token in tokens)
@@ -342,13 +361,13 @@ namespace Roost.Twins.Entities
                 return minValue == float.MaxValue ? 0 : minValue;
             }
 
-            public static float Rand(List<Token> tokens, GetTokenValue tokenValue, string target)
+            public static float Rand(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
                 int i = UnityEngine.Random.Range(0, tokens.Count - 1);
                 return tokenValue(tokens[i], target);
             }
 
-            public static float Count(List<Token> tokens, GetTokenValue tokenValue, string target)
+            public static float Count(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
                 int result = 0;
                 foreach (Token token in tokens)
@@ -356,12 +375,12 @@ namespace Roost.Twins.Entities
                 return result;
             }
 
-            public static float Root(List<Token> tokens, GetTokenValue tokenValue, string target)
+            public static float Root(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
                 return SecretHistories.Assets.Scripts.Application.Entities.NullEntities.FucineRoot.Get().Mutations.TryGetValue(target, out int result) ? result : 0;
             }
 
-            public static float Executions(List<Token> tokens, GetTokenValue tokenValue, string target)
+            public static float Executions(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
                 return Watchman.Get<Stable>().Protag().GetExecutionsCount(target);
             }
