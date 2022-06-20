@@ -20,11 +20,10 @@ namespace Roost.World
                 original: typeof(TokenDetailsWindow).GetMethodInvariant("SetElementCard"),
                 prefix: typeof(Scribe).GetMethodInvariant(nameof(StoreElementAspects)));
 
+            //not refining element label since it's used in many contexts without the clear access to the stack's mutations
             Machine.Patch(
                 original: typeof(AbstractDetailsWindow).GetMethodInvariant("ShowText"),
                 prefix: typeof(Scribe).GetMethodInvariant(nameof(RefineElementTexts)));
-
-
         }
 
         internal static void SetLeverPast(string lever, string value)
@@ -53,12 +52,6 @@ namespace Roost.World
             textLevers.Add(levers);
         }
 
-        private static readonly List<string> permanentLevers = new List<string>();
-        internal static void MarkPermanentLever(string levers)
-        {
-            permanentLevers.Add(levers);
-        }
-
         private static bool OverrideRecipeRefinement(string stringToRefine, AspectsDictionary ____aspectsInContext, ref string __result)
         {
             __result = RefineString(stringToRefine, ____aspectsInContext);
@@ -84,12 +77,15 @@ namespace Roost.World
         private static string RefineString(string str, AspectsDictionary aspects)
         {
             string[] parts = str.Split('@');
-            Birdsong.Sing(parts.Length);
+
             if ((parts.Length - 1) % 2 == 1)
                 return str + "[Looks like there's a refinement with no @ terminator here]";
 
             //part before any refinements are applied
             string result = parts[0];
+
+            foreach (string lever in textLevers)
+                result = result.Replace(lever, GetLeverPast(lever));
 
             for (int n = 1; n < parts.Length; n += 2)
             {
@@ -101,9 +97,6 @@ namespace Roost.World
                 //and non-refined parts in-between
                 result += parts[n + 1];
             }
-
-            foreach (string lever in textLevers)
-                result = result.Replace(lever, GetLeverPast(lever));
 
             return result;
         }
@@ -150,6 +143,7 @@ namespace Roost.World
 
         private static readonly Dictionary<string, Func<string, AspectsDictionary, string>> specialEffects = new Dictionary<string, Func<string, AspectsDictionary, string>>()
         {
+            { "$id", (aspectId, aspects) => aspectId },
             { "$label", (aspectId, aspects) => Watchman.Get<Compendium>().GetEntityById<Element>(aspectId).Label },
             { "$value", (aspectId, aspects) => aspects.AspectValue(aspectId).ToString() },
             { "$icon", (aspectId, aspects) => "<sprite name=" + aspectId + ">"},
@@ -184,11 +178,6 @@ namespace Roost
         public static void MarkTextLever(string lever)
         {
             Roost.World.Scribe.MarkTextLever(lever);
-        }
-
-        public static void MarkPermanentLever(string lever)
-        {
-            Roost.World.Scribe.MarkPermanentLever(lever);
         }
     }
 }
