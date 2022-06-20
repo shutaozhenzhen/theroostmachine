@@ -186,8 +186,10 @@ namespace Roost.Twins.Entities
 
         public enum ValueArea
         {
-            Aspect, //returns aspect amount from the tokens
-            Mutation, //return mutation amount of the target aspect
+            Aspect, //returns aspect amount from an element token
+            Mutation, //return mutation amount from an element token
+            SituationContent, //returns aspect amount from a situation token
+            AnySource, //returns aspect amount from any token
             Verb, Recipe, //retuns verb/recipe amount among the tokens
             Token, //returns token property
             Payload, //return token payload property
@@ -197,11 +199,13 @@ namespace Roost.Twins.Entities
 
         private static readonly Dictionary<ValueArea, GetTokenValue> allAreaGetters = new Dictionary<ValueArea, GetTokenValue>()
                 {
-                    { ValueArea.Aspect, AreaOperationsStorage.Aspect }, //returns aspect amount from the tokens
-                    { ValueArea.Mutation, AreaOperationsStorage.Aspect },  //return mutation amount of the target aspect
-                    { ValueArea.Verb, AreaOperationsStorage.Verb }, //retuns verb amount among the tokens
-                    { ValueArea.Recipe, AreaOperationsStorage.Recipe }, //retuns recipe amount among the tokens
-                    { ValueArea.Payload, AreaOperationsStorage.Payload }, //return token payload property
+                    { ValueArea.Aspect, AreaOperationsStorage.Aspect },
+                    { ValueArea.Mutation, AreaOperationsStorage.Mutation },
+                    { ValueArea.Verb, AreaOperationsStorage.Verb },
+                    { ValueArea.Recipe, AreaOperationsStorage.Recipe },
+                    { ValueArea.SituationContent, AreaOperationsStorage.SituationAspects },
+                    { ValueArea.AnySource, AreaOperationsStorage.AspectsFromAnySource },
+                    { ValueArea.Payload, AreaOperationsStorage.Payload },
                     { ValueArea.NoArea, null },
                 };
 
@@ -212,6 +216,16 @@ namespace Roost.Twins.Entities
                 return token.IsValidElementStack() ? token.GetAspects().AspectValue(target) : 0;
             }
 
+            public static float SituationAspects(Token token, string target)
+            {
+                return IsSituation(token.Payload) ? token.GetAspects().AspectValue(target) : 0;
+            }
+
+            public static float AspectsFromAnySource(Token token, string target)
+            {
+                return token.GetAspects().AspectValue(target);
+            }
+
             public static float Mutation(Token token, string target)
             {
                 return token.IsValidElementStack() ? token.GetCurrentMutations().TryGetValue(target, out int value) ? value : 0 : 0;
@@ -219,7 +233,7 @@ namespace Roost.Twins.Entities
 
             public static float Verb(Token token, string target)
             {
-                return IsSituation(token.Payload) && token.PayloadEntityId == target ? token.Quantity : 0;
+                return (IsSituation(token.Payload) && token.PayloadEntityId.Contains(target)) ? token.Quantity : 0;
             }
 
             public static float Recipe(Token token, string target)
@@ -228,7 +242,7 @@ namespace Roost.Twins.Entities
                 {
                     Situation situation = token.Payload as Situation;
                     //if recipe id matches, or any of its aspects match
-                    if (situation.RecipeId == target || situation.Recipe.Aspects.ContainsKey(target) == true)
+                    if (situation.RecipeId == target || situation.Recipe?.Aspects.ContainsKey(target) == true)
                         return token.Quantity;
                 }
 

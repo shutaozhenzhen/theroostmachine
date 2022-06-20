@@ -181,8 +181,8 @@ namespace Roost.World.Recipes.Entities
         {
             if (Effects == null)
                 return;
-
-            List<Token> allTokens = sphere.GetElementTokens();
+                
+            List<Token> allTokens = sphere.Tokens;
             foreach (FucineExp<bool> filter in Effects.Keys)
             {
                 int level = Effects[filter].value;
