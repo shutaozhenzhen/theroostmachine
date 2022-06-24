@@ -447,7 +447,7 @@ namespace Roost.World.Recipes.Entities
                     if (MorphEffect == MorphEffectsExtended.Induce)
                     {
                         Induction = LinkedRecipeDetails.AsCurrentRecipe(linkedRecipe); //no other way to construct it normally
-                        Induction.SetProperty("chance", new FucineExp<int>("100")); //xtriggers already have chance
+                        Induction.SetCustomProperty("chance", new FucineExp<int>("100")); //xtriggers already have chance
                         Induction.ToPath = this.ToPath;
                         Induction.Expulsion = this.Expulsion;
                     }

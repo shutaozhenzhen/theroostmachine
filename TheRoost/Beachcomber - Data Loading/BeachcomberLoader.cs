@@ -198,7 +198,7 @@ namespace Roost.Beachcomber
                 Birdsong.Tweet($"Trying to remove property {propertyName} from {entity.GetType().Name} {entity.Id}, but that property isn't set.");
         }
 
-        internal static void SetProperty(IEntityWithId owner, string propertyName, object value)
+        internal static void SetCustomProperty(IEntityWithId owner, string propertyName, object value)
         {
             propertyName = propertyName.ToLower();
             Type ownerType = owner.GetType();
@@ -326,9 +326,9 @@ namespace Roost
             return Beachcomber.Hoard.RetrieveProperty(owner, propertyName);
         }
 
-        public static void SetProperty(this IEntityWithId owner, string propertyName, object value)
+        public static void SetCustomProperty(this IEntityWithId owner, string propertyName, object value)
         {
-            Beachcomber.Hoard.SetProperty(owner, propertyName, value);
+            Beachcomber.Hoard.SetCustomProperty(owner, propertyName, value);
         }
 
         public static void RemoveProperty(this IEntityWithId owner, string propertyName)
