@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
-using UnityEngine;
 using SecretHistories.UI;
+using UnityEngine;
 
 using Roost.Twins.Entities;
 
@@ -11,7 +11,7 @@ namespace Roost.World
         static Context contextCalve = new Context(Context.ActionSource.CalvedStack);
         public static List<Token> FilterTokens(this List<Token> tokens, FucineExp<bool> filter)
         {
-            if (filter.isUndefined)
+            if (filter.isUndefined || tokens.Count == 0)
                 return tokens;
 
             Twins.Crossroads.MarkAllLocalTokens(tokens);
@@ -31,6 +31,11 @@ namespace Roost.World
 
         public static Token SelectSingleToken(this List<Token> fromTokens)
         {
+            if (fromTokens.Count == 0)
+                return null;
+            if (fromTokens.Count == 1)
+                return fromTokens[1];
+
             Dictionary<Token, int> tokenThresholds = new Dictionary<Token, int>();
             int totalQuantity = 0;
 
@@ -40,7 +45,7 @@ namespace Roost.World
                 tokenThresholds[token] = totalQuantity;
             }
 
-            int selectedNumber = UnityEngine.Random.Range(0, totalQuantity);
+            int selectedNumber = Random.Range(0, totalQuantity);
             foreach (KeyValuePair<Token, int> tokenThreshold in tokenThresholds)
                 if (selectedNumber < tokenThreshold.Value)
                     return tokenThreshold.Key;
@@ -60,7 +65,7 @@ namespace Roost.World
                     tokenThresholds[token] = totalQuantity;
                 }
 
-            int selectedNumber = UnityEngine.Random.Range(0, totalQuantity);
+            int selectedNumber = Random.Range(0, totalQuantity);
             foreach (KeyValuePair<Token, int> tokenThreshold in tokenThresholds)
                 if (selectedNumber < tokenThreshold.Value)
                     return tokenThreshold.Key;
@@ -87,7 +92,7 @@ namespace Roost.World
 
             HashSet<int> selectedNumbers = new HashSet<int>();
             while (selectedNumbers.Count < Limit)
-                selectedNumbers.Add(UnityEngine.Random.Range(0, totalQuantity));
+                selectedNumbers.Add(Random.Range(0, totalQuantity));
 
             List<Token> result = new List<Token>();
             List<int> numbersLeft = new List<int>(selectedNumbers);
