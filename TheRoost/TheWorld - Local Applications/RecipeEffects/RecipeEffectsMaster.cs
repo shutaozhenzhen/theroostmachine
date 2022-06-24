@@ -9,7 +9,6 @@ using SecretHistories.UI;
 using SecretHistories.Enums;
 using SecretHistories.Fucine;
 using SecretHistories.Spheres;
-using SecretHistories.Spheres.Angels;
 
 using Roost.Twins;
 using Roost.Twins.Entities;
@@ -24,7 +23,7 @@ namespace Roost.World.Recipes
         const string GRAND_REQS = "grandreqs";
         const string GRAND_EFFECTS = "grandeffects";
 
-        const string GRAB_FILTER = "grabfilter";
+
 
         internal static void Enact()
         {
@@ -57,37 +56,10 @@ namespace Roost.World.Recipes
                 original: typeof(SituationStorageSphere).GetPropertyInvariant("AllowStackMerge").GetGetMethod(),
                 prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(AllowStackMerge)));
 
-            Machine.ClaimProperty<SphereSpec, FucineExp<bool>>(GRAB_FILTER, false, FucineExp<bool>.UNDEFINED);
-            Machine.Patch(
-                original: typeof(GreedyAngel).GetMethodInvariant("TryGrabStack"),
-                prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(TryGrabStackRandom)));
+
         }
 
-        private static bool TryGrabStackRandom(Sphere destinationThresholdSphere)
-        {
-            List<Token> tokens = new List<Token>();
-            SphereSpec slotSpec = destinationThresholdSphere.GoverningSphereSpec;
-            foreach (Sphere sphere in Watchman.Get<HornedAxe>().GetSpheres())
-                if (!sphere.Defunct && sphere.AllowDrag &&
-                    (sphere.SphereCategory == SphereCategory.World || sphere.SphereCategory == SphereCategory.Threshold || sphere.SphereCategory == SphereCategory.Output))
-                    foreach (Token candidateToken in sphere.GetElementTokens())
-                        if (candidateToken.CanBePulled() && slotSpec.CheckPayloadAllowedHere(candidateToken.Payload).MatchType == SlotMatchForAspectsType.Okay)
-                            tokens.Add(candidateToken);
 
-            Token grabToken = tokens.FilterTokens(slotSpec.RetrieveProperty<FucineExp<bool>>(GRAB_FILTER)).SelectSingleToken();
-            if (grabToken == null)
-                return false;
-
-            if (grabToken.CurrentlyBeingDragged())
-                grabToken.ForceEndDrag();
-            if (grabToken.Quantity > 1)
-                grabToken.CalveToken(grabToken.Quantity - 1, new Context(Context.ActionSource.GreedyGrab));
-            TokenTravelItinerary tokenItinerary = destinationThresholdSphere.GetItineraryFor(grabToken).WithDuration(0.3f);
-            grabToken.RequestHomingAngelFromCurrentSphere();
-            tokenItinerary.Depart(grabToken, new Context(Context.ActionSource.GreedyGrab));
-
-            return false;
-        }
 
         public static bool newGameStarted = false;
         private static void CatchNewGame()
@@ -114,7 +86,7 @@ namespace Roost.World.Recipes
 
                 FucineExp<int> draws = recipe.InternalDeck.RetrieveProperty<FucineExp<int>>("draws");
                 if (recipe.HasCustomProperty("deckeffects") == false)
-                    recipe.SetProperty("deckeffects", new Dictionary<string, FucineExp<int>>());
+                    recipe.SetCustomProperty("deckeffects", new Dictionary<string, FucineExp<int>>());
                 recipe.RetrieveProperty<Dictionary<string, FucineExp<int>>>("deckeffects").Add(recipe.InternalDeck.Id, draws);
 
                 recipe.InternalDeck = new DeckSpec();
@@ -133,7 +105,7 @@ namespace Roost.World.Recipes
             {
                 firstPassEffects.SetId(recipe.Id);
                 firstPassEffects.OnPostImport(log, populatedCompendium);
-                recipe.SetProperty(GRAND_EFFECTS, firstPassEffects);
+                recipe.SetCustomProperty(GRAND_EFFECTS, firstPassEffects);
 
                 //to keep the deck preview correct (well, somewhat), we reassign deck effects to the main recipe
                 if (firstPassEffects.DeckEffects != null)
@@ -191,6 +163,31 @@ namespace Roost.World.Recipes
             Twins.Crossroads.ResetCache();
         }
 
+        public static bool CheckGrandReqs(Dictionary<FucineExp<int>, FucineExp<int>> grandreqs)
+        {
+            //Birdsong.Sing($"Checking GrandReqs for {__instance.Id} in {situation.VerbId} verb");
+            foreach (KeyValuePair<FucineExp<int>, FucineExp<int>> req in grandreqs)
+            {
+                int presentValue = req.Key.value;
+                int requiredValue = req.Value.value;
+
+                //Birdsong.Sing($"{req.Key.formula}: {req.Value.formula} --> {presentValue}: {requiredValue}");
+
+                if (requiredValue <= -1)
+                {
+                    if (presentValue >= -requiredValue)
+                        return false;
+                }
+                else
+                {
+                    if (presentValue < requiredValue)
+                        return false;
+                }
+            }
+
+            return true;
+        }
+
         private static bool RefReqs(Recipe __instance, AspectsInContext aspectsinContext)
         {
             Dictionary<FucineExp<int>, FucineExp<int>> grandreqs = __instance.RetrieveProperty(GRAND_REQS) as Dictionary<FucineExp<int>, FucineExp<int>>;
@@ -203,28 +200,9 @@ namespace Roost.World.Recipes
                 if (situation.GetAspects(true).AspectsEqual(aspectsinContext.AspectsInSituation))
                 {
                     Crossroads.MarkLocalSituation(situation);
-
-                    // Birdsong.Sing($"Checking GrandReqs for {__instance.Id} in {situation.VerbId} verb");
-                    foreach (KeyValuePair<FucineExp<int>, FucineExp<int>> req in grandreqs)
-                    {
-                        int presentValue = req.Key.value;
-                        int requiredValue = req.Value.value;
-
-                        //Birdsong.Sing($"{req.Key.formula}: {req.Value.formula} --> {presentValue}: {requiredValue}");
-
-                        if (requiredValue <= -1)
-                        {
-                            if (presentValue >= -requiredValue)
-                                return false;
-                        }
-                        else
-                        {
-                            if (presentValue < requiredValue)
-                                return false;
-                        }
-                    }
-
-                    return true;
+                    bool result = CheckGrandReqs(grandreqs);
+                    Crossroads.ResetCache();
+                    return result;
                 }
             throw Birdsong.Cack($"Something strange happened. Cannot identify a situation for requirements check in the recipe {__instance}.");
         }

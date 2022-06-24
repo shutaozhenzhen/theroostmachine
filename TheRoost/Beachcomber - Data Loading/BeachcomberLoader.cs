@@ -176,6 +176,14 @@ namespace Roost.Beachcomber
             }
         }
 
+        internal static Dictionary<string, object> GetCustomProperties(IEntityWithId entity)
+        {
+            if (loadedData.ContainsKey(entity))
+                return loadedData[entity];
+
+            return null;
+        }
+
         internal static void RemoveProperty(IEntityWithId entity, string propertyName)
         {
             propertyName = propertyName.ToLower();
@@ -331,6 +339,11 @@ namespace Roost
         public static bool HasCustomProperty(this IEntityWithId owner, string propertyName)
         {
             return Beachcomber.Hoard.HasCustomProperty(owner, propertyName);
+        }
+
+        public static Dictionary<string, object> GetCustomProperties(this IEntityWithId owner)
+        {
+            return Beachcomber.Hoard.GetCustomProperties(owner);
         }
 
         public static T GetEntity<T>(string id) where T : AbstractEntity<T>
