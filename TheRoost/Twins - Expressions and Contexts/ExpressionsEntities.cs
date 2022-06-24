@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Reflection;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -171,21 +170,21 @@ namespace Roost.Twins.Entities
 
         public FucineNumberGetter(string target) : this(target, ValueArea.Aspect, ValueOperation.Sum) { }
 
-        public FucineNumberGetter(string target, ValueArea area, ValueOperation operation)
+        public FucineNumberGetter(string target, ValueArea fromArea, ValueOperation withOperation)
         {
             this.targetId = target;
-            this.area = area;
-            this.operation = operation;
+            this.area = fromArea;
+            this.operation = withOperation;
 
             if (target[target.Length - 1] == '*')
-                if (Enum.TryParse(area.ToString() + "Wild", out ValueArea wildArea))
+                if (Enum.TryParse(fromArea.ToString() + "Wild", out ValueArea wildArea))
                 {
-                    area = wildArea;
+                    fromArea = wildArea;
                     this.targetId = target.Remove(target.Length - 1);
                 }
 
-            GetValue = singleValueGetters[area];
-            HandleValues = valueHandlers[operation];
+            GetValue = singleValueGetters[fromArea];
+            HandleValues = valueHandlers[withOperation];
 
             if (this.area == ValueArea.Aspect || this.operation == ValueOperation.Root)
                 Watchman.Get<Compendium>().SupplyElementIdsForValidation(this.targetId);
@@ -196,7 +195,7 @@ namespace Roost.Twins.Entities
             Aspect, //returns aspect amount from an element token
             Mutation, //return mutation amount from an element token
             SituationContent, //returns aspect amount from a situation token
-            AnySource, //returns aspect amount from any token
+            AnySourceAspect, //returns aspect amount from any token
             Verb, VerbWild, //retuns a quantity (likely 1) if the token is a verb
             Recipe, RecipeWild, //retuns a quantity (likely 1) if the token is a verb running a recipe
             RecipeAspect, //retuns quantity (likely 1) if the token is a verb running a recipe with the defined aspect
@@ -209,7 +208,7 @@ namespace Roost.Twins.Entities
                     { ValueArea.Aspect, AreaOperationsStorage.ElementAspect },
                     { ValueArea.Mutation, AreaOperationsStorage.Mutation },
                     { ValueArea.SituationContent, AreaOperationsStorage.AspectInSituation },
-                    { ValueArea.AnySource, AreaOperationsStorage.AspectOnAnyToken },
+                    { ValueArea.AnySourceAspect, AreaOperationsStorage.AspectOnAnyToken },
                     { ValueArea.Verb, AreaOperationsStorage.VerbId },
                     { ValueArea.VerbWild, AreaOperationsStorage.VerbWild },
                     { ValueArea.Recipe, AreaOperationsStorage.RecipeId },
@@ -225,7 +224,7 @@ namespace Roost.Twins.Entities
         {
             public static float ElementAspect(Token token, string target)
             {
-                return token.IsValidElementStack() ? token.GetAspects().AspectValue(target) : 0;
+                return token.IsValidElementStack() ? token.GetAspects(true).AspectValue(target) : 0;
             }
 
             public static float Mutation(Token token, string target)
@@ -235,12 +234,12 @@ namespace Roost.Twins.Entities
 
             public static float AspectInSituation(Token token, string target)
             {
-                return IsSituation(token.Payload) ? token.GetAspects().AspectValue(target) : 0;
+                return IsSituation(token.Payload) ? token.GetAspects(true).AspectValue(target) : 0;
             }
 
             public static float AspectOnAnyToken(Token token, string target)
             {
-                return token.GetAspects().AspectValue(target);
+                return token.GetAspects(true).AspectValue(target);
             }
 
             public static float VerbId(Token token, string target)
