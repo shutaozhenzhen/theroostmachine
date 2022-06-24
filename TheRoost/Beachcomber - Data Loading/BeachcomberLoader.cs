@@ -176,6 +176,14 @@ namespace Roost.Beachcomber
             }
         }
 
+        internal static Dictionary<string, object> GetCustomProperties(IEntityWithId entity)
+        {
+            if (loadedData.ContainsKey(entity))
+                return loadedData[entity];
+
+            return null;
+        }
+
         internal static void RemoveProperty(IEntityWithId entity, string propertyName)
         {
             propertyName = propertyName.ToLower();
@@ -190,7 +198,7 @@ namespace Roost.Beachcomber
                 Birdsong.Tweet($"Trying to remove property {propertyName} from {entity.GetType().Name} {entity.Id}, but that property isn't set.");
         }
 
-        internal static void SetProperty(IEntityWithId owner, string propertyName, object value)
+        internal static void SetCustomProperty(IEntityWithId owner, string propertyName, object value)
         {
             propertyName = propertyName.ToLower();
             Type ownerType = owner.GetType();
@@ -318,9 +326,9 @@ namespace Roost
             return Beachcomber.Hoard.RetrieveProperty(owner, propertyName);
         }
 
-        public static void SetProperty(this IEntityWithId owner, string propertyName, object value)
+        public static void SetCustomProperty(this IEntityWithId owner, string propertyName, object value)
         {
-            Beachcomber.Hoard.SetProperty(owner, propertyName, value);
+            Beachcomber.Hoard.SetCustomProperty(owner, propertyName, value);
         }
 
         public static void RemoveProperty(this IEntityWithId owner, string propertyName)
@@ -331,6 +339,11 @@ namespace Roost
         public static bool HasCustomProperty(this IEntityWithId owner, string propertyName)
         {
             return Beachcomber.Hoard.HasCustomProperty(owner, propertyName);
+        }
+
+        public static Dictionary<string, object> GetCustomProperties(this IEntityWithId owner)
+        {
+            return Beachcomber.Hoard.GetCustomProperties(owner);
         }
 
         public static T GetEntity<T>(string id) where T : AbstractEntity<T>

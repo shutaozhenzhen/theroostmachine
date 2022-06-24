@@ -9,7 +9,6 @@ using SecretHistories.Enums;
 using SecretHistories.Spheres;
 using SecretHistories.Abstract;
 
-
 using HarmonyLib;
 
 namespace Roost.World.Elements
@@ -21,8 +20,6 @@ namespace Roost.World.Elements
         public const string DISPLACE_TO = "displaceTo";
         public const string DISPLACEMENT_VFX = "displacementVFX";
         public const string DISPLACEMENT_REVERSE = "reverseDisplacement";
-
-        public const string PASS_UPWARDS = "passUpwards";
 
         public const string SHROUDED = "shrouded";
         //CardBurn,	CardBlood,	CardBloodSplatter, CardDrown, CardLight, CardLightDramatic,	CardSpend, CardTaken, CardTakenShadow,
@@ -50,11 +47,7 @@ namespace Roost.World.Elements
                 original: typeof(Sphere).GetMethodInvariant(nameof(Sphere.RemoveDuplicates)),
                 prefix: typeof(ElementEffectsMaster).GetMethodInvariant(nameof(ApplyDisplacements)));
 
-            //aspects can add slots
-            Machine.ClaimProperty<SphereSpec, bool>(PASS_UPWARDS);
-            Machine.Patch(
-                original: typeof(Sphere).GetMethodInvariant(nameof(Sphere.GetChildSpheresSpecsToAddIfThisTokenAdded)),
-                prefix: typeof(ElementEffectsMaster).GetMethodInvariant(nameof(GetSlotsForVerb)));
+
 
         }
 
@@ -173,23 +166,6 @@ namespace Roost.World.Elements
                         affectedStack.ChangeTo(displaceTo);
                     }
                 }
-
-            return false;
-        }
-
-        public static bool GetSlotsForVerb(Token t, string verbId, ref List<SphereSpec> __result)
-        {
-            __result = new List<SphereSpec>();
-
-            Compendium compendium = Watchman.Get<Compendium>();
-            foreach (SphereSpec slot in compendium.GetEntityById<Element>(t.PayloadEntityId).Slots)
-                if ((string.IsNullOrWhiteSpace(slot.ActionId) || verbId.Contains(slot.ActionId)))
-                    __result.Add(slot);
-
-            foreach (string aspectId in t.GetAspects().Keys)
-                foreach (SphereSpec slot in compendium.GetEntityById<Element>(aspectId).Slots)
-                    if ((string.IsNullOrWhiteSpace(slot.ActionId) || verbId.Contains(slot.ActionId)) && slot.RetrieveProperty<bool>(PASS_UPWARDS))
-                        __result.Add(slot);
 
             return false;
         }
