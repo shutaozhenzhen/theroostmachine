@@ -65,9 +65,9 @@ namespace Roost.World.Beauty
             legs = GameObject.Find("Legs");
             tableLegsImageComponent = legs.GetComponent<Image>();
 
-            string tabletopImage = Machine.GetLeverPast("currentTabletopImage");
-            string tableLeather = Machine.GetLeverPast("currentTableLeather");
-            string tableLegs = Machine.GetLeverPast("currentTableLegs");
+            string tabletopImage = Machine.GetLeverForCurrentPlaythrough("currentTabletopImage");
+            string tableLeather = Machine.GetLeverForCurrentPlaythrough("currentTableLeather");
+            string tableLegs = Machine.GetLeverForCurrentPlaythrough("currentTableLegs");
 
             if (tabletopImage != null) tabletopImageComponent.sprite = ResourcesManager.GetSpriteForUI(tabletopImage);
             if (tableLeather != null) tableLeatherImageComponent.sprite = ResourcesManager.GetSpriteForUI(tableLeather);
@@ -76,7 +76,7 @@ namespace Roost.World.Beauty
 
         static void fadeLayer(GameObject gameObject, Image imageComponent, string newSpriteName, string storeKey)
         {
-            Machine.SetLeverPast(storeKey, newSpriteName);
+            Machine.GetLeverForCurrentPlaythrough(storeKey, newSpriteName);
             GameObject fadingObject = UnityEngine.Object.Instantiate(gameObject, gameObject.transform.parent);
             imageComponent.sprite = ResourcesManager.GetSpriteForUI(newSpriteName);
             CanvasRendererFading imgf = fadingObject.AddComponent<CanvasRendererFading>();
