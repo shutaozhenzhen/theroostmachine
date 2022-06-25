@@ -36,7 +36,9 @@ namespace Roost.Twins.Entities
             try
             {
                 this.references = TwinsParser.LoadReferencesForExpressin(ref data).ToArray();
-                this.expression = new Expression(Expression.Compile(data, false));
+                this.expression = new Expression(data);
+                if (formula.Contains("Random("))
+                    this.expression.EvaluateFunction += NCalcExtensions.Random;
             }
             catch (Exception ex)
             {
@@ -387,6 +389,32 @@ namespace Roost.Twins.Entities
         private static bool IsSituation(ITokenPayload payload)
         {
             return typeof(Situation).IsAssignableFrom(payload.GetType());
+        }
+    }
+
+    internal static class NCalcExtensions
+    {
+        internal static void Random(string name, FunctionArgs functionArgs)
+        {
+            if (name != "Random")
+                return;
+
+            //faster without?
+            /*if (functionArgs.Parameters.Length == 1)
+            {
+                functionArgs.Result = UnityEngine.Random.Range(0, functionArgs.Parameters[0].Evaluate().ConvertTo<int>());
+                return;
+            }*/
+            if (functionArgs.Parameters.Length == 2)
+            {
+                functionArgs.Result = UnityEngine.Random.Range(functionArgs.Parameters[0].Evaluate().ConvertTo<int>(), functionArgs.Parameters[1].Evaluate().ConvertTo<int>());
+                return;
+            }
+
+            if (functionArgs.Parameters.Length == 1)
+                throw Birdsong.Cack($"Not enough parameters in Random({functionArgs.Parameters.UnpackAsString(exp => (exp as Expression).Evaluate(), ",")})");
+            else
+                throw Birdsong.Cack($"Too many parameters in Random({functionArgs.Parameters.UnpackAsString(exp => (exp as Expression).Evaluate(), ",")})");
         }
     }
 }
