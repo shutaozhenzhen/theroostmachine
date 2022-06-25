@@ -82,9 +82,9 @@ namespace Roost.World.Recipes
 
         private static void StoredManifestationDisplayQuantities()
         {
-            GameObject cardManifestation = Watchman.Get<SecretHistories.Services.PrefabFactory>().GetPrefabObjectFromResources<CardManifestation>().gameObject;
+            GameObject cardManifestation = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<CardManifestation>().gameObject;
             GameObject quantityBadgePrefab = cardManifestation.FindInChildren("StackBadge");
-            GameObject storedManifestation = Watchman.Get<SecretHistories.Services.PrefabFactory>().GetPrefabObjectFromResources<StoredManifestation>().gameObject;
+            GameObject storedManifestation = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<StoredManifestation>().gameObject;
 
             GameObject quantityBadgeForStoredManifestation = GameObject.Instantiate(quantityBadgePrefab);
             GameObject.DestroyImmediate(quantityBadgeForStoredManifestation.GetComponent<ElementStackBadge>());
@@ -267,8 +267,8 @@ namespace Roost.World.Recipes
 
         static void DeckEffectsPreviewInStorageSphere()
         {
-            GameObject situationWindowPrefab = Watchman.Get<SecretHistories.Services.PrefabFactory>().GetPrefabObjectFromResources<SituationWindow>().gameObject;
-            GridLayoutGroup storageSphere = Watchman.Get<SecretHistories.Services.PrefabFactory>().GetPrefabObjectFromResources<SituationStorageSphere>().GetComponent<GridLayoutGroup>();
+            GameObject situationWindowPrefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<SituationWindow>().gameObject;
+            GridLayoutGroup storageSphere = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<SituationStorageSphere>().GetComponent<GridLayoutGroup>();
             //deck effects together with the situation storage
             storageSphere.cellSize = new Vector2(35, rowHeight - 3);
             storageSphere.spacing = new Vector2(10, 3);
