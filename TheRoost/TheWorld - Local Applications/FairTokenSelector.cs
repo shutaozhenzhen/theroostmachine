@@ -34,7 +34,7 @@ namespace Roost.World
             if (fromTokens.Count == 0)
                 return null;
             if (fromTokens.Count == 1)
-                return fromTokens[1];
+                return fromTokens[0];
 
             Dictionary<Token, int> tokenThresholds = new Dictionary<Token, int>();
             int totalQuantity = 0;
