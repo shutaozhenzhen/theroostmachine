@@ -54,8 +54,14 @@ namespace Roost.World.Slots
                 if (!sphere.Defunct && sphere.AllowDrag &&
                     (sphere.SphereCategory == SphereCategory.World || sphere.SphereCategory == SphereCategory.Threshold || sphere.SphereCategory == SphereCategory.Output))
                     foreach (Token candidateToken in sphere.GetElementTokens())
-                        if (candidateToken.CanBePulled() && slotSpec.CheckPayloadAllowedHere(candidateToken.Payload).MatchType == SlotMatchForAspectsType.Okay)
+                        if (candidateToken.CanBePulled())
                             tokens.Add(candidateToken);
+
+            Crossroads.MarkAllLocalTokens(tokens);
+            foreach (Token token in new List<Token>(tokens))
+                if (slotSpec.CheckPayloadAllowedHere(token.Payload).MatchType != SlotMatchForAspectsType.Okay)
+                    tokens.Remove(token);
+            Crossroads.ResetCache();
 
             Token grabToken = tokens.SelectSingleToken();
             if (grabToken == null)
@@ -77,7 +83,10 @@ namespace Roost.World.Slots
             Token token = payload.GetToken();
             Crossroads.MarkLocalToken(token);
             FucineExp<bool> filter = __instance.RetrieveProperty<FucineExp<bool>>(SLOT_ENTRANCE_REQS);
-            if (!filter.isUndefined && filter.value == false)
+            bool filterFailed = !filter.isUndefined && filter.value == false;
+            Crossroads.ResetCache();
+
+            if (filterFailed)
             {
                 __result = new ContainerMatchForStack(new List<string>(), SlotMatchForAspectsType.InvalidToken);
                 return false;
