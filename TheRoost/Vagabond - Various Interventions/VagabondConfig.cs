@@ -40,7 +40,7 @@ namespace Roost.Vagabond
             new ConsoleVerbosity();
         }
 
-        internal static T GetConfigValueSafe<T>(string configId, T valueIfNotDefined)
+        internal static T GetConfigValueSafe<T>(string configId, T valueIfNotDefined) where T : IConvertible
         {
             if (configValues == null)
                 configValues = typeof(Config).GetFieldInvariant("_configValues").GetValue(Watchman.Get<Config>()) as Dictionary<string, string>;
@@ -54,19 +54,19 @@ namespace Roost.Vagabond
                 Watchman.Get<Config>().PersistConfigValue(configId, result.ToString());
             }
 
-            return (T)Roost.Beachcomber.Panimporter.ConvertValue(result, typeof(T));
+            return result.ConvertTo<T>();
         }
     }
 }
 
 namespace Roost.Vagabond.SettingSubscribers
 {
-    internal abstract class ModSettingSubscriber<T> : ISettingSubscriber
+    internal abstract class ModSettingSubscriber<T> : ISettingSubscriber where T : IConvertible
     {
         protected readonly string settingId;
         protected readonly Setting setting;
 
-        protected T settingValue { get { return (T)Roost.Beachcomber.Panimporter.ConvertValue(setting.CurrentValue, typeof(T)); } }
+        protected T settingValue { get { return setting.CurrentValue.ConvertTo<T>(); } }
 
         public ModSettingSubscriber(string settingId)
         {
@@ -182,7 +182,7 @@ namespace Roost
 {
     public static partial class Machine
     {
-        public static T GetConfigValue<T>(string configId, T valueIfNotDefined = default(T))
+        public static T GetConfigValue<T>(string configId, T valueIfNotDefined = default(T)) where T : IConvertible
         {
             return Vagabond.ConfigMask.GetConfigValueSafe<T>(configId, valueIfNotDefined);
         }

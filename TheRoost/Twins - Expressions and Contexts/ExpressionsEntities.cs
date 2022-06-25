@@ -15,7 +15,7 @@ using NCalc;
 
 namespace Roost.Twins.Entities
 {
-    public struct FucineExp<T>
+    public struct FucineExp<T> where T : IConvertible
     {
         readonly Expression expression;
         readonly FucineRef[] references;
@@ -52,8 +52,7 @@ namespace Roost.Twins.Entities
                     expression.Parameters[reference.idInExpression] = reference.value;
 
                 object result = expression.Evaluate();
-
-                return (T)Roost.Beachcomber.Panimporter.ConvertValue(result, typeof(T));
+                return result.ConvertTo<T>();
             }
         }
 

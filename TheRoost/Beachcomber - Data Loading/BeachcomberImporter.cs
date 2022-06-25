@@ -293,30 +293,41 @@ namespace Roost.Beachcomber
             }
         }
 
-        public static object ConvertValue(object data, Type destinationType)
+        public static object ConvertValue(object sourceValue, Type destinationType)
         {
-            Type sourceType = data.GetType();
+            Type sourceType = sourceValue.GetType();
             if (sourceType == destinationType)
-                return data;
+                return sourceValue;
 
             try
             {
                 if (sourceType == typeof(string))
-                    return TypeDescriptor.GetConverter(destinationType).ConvertFromInvariantString((string)data);
+                    return TypeDescriptor.GetConverter(destinationType).ConvertFromInvariantString((string)sourceValue);
                 else if (destinationType == typeof(string))
-                    return TypeDescriptor.GetConverter(sourceType).ConvertToInvariantString(data);
+                    return TypeDescriptor.GetConverter(sourceType).ConvertToInvariantString(sourceValue);
 
                 if (sourceType == typeof(bool))
-                    return System.Convert.ChangeType((bool)data ? 1 : 0, destinationType);
+                    return System.Convert.ChangeType((bool)sourceValue ? 1 : 0, destinationType);
                 if (destinationType == typeof(bool))
-                    return (float)data > 0 ? true : false;
+                    return (float)sourceValue > 0 ? true : false;
 
-                return TypeDescriptor.GetConverter(sourceType).ConvertTo(data, destinationType);
+                return TypeDescriptor.GetConverter(sourceType).ConvertTo(sourceValue, destinationType);
             }
             catch (Exception ex)
             {
-                throw Birdsong.Cack($"UNABLE TO CONVERT {sourceType.Name} '{data}' TO {destinationType.Name}: {ex.FormatException()}");
+                throw Birdsong.Cack($"UNABLE TO CONVERT {sourceType.Name} '{sourceValue}' TO {destinationType.Name}: {ex.FormatException()}");
             }
+        }
+    }
+}
+
+namespace Roost
+{
+    public static partial class Machine
+    {
+        public static T ConvertTo<T>(this object value) where T : IConvertible
+        {
+            return (T)Roost.Beachcomber.Panimporter.ConvertValue(value, typeof(T));
         }
     }
 }
