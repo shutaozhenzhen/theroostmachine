@@ -23,8 +23,6 @@ namespace Roost.World.Recipes
         const string GRAND_REQS = "grandreqs";
         const string GRAND_EFFECTS = "grandeffects";
 
-
-
         internal static void Enact()
         {
             Machine.ClaimProperty<Element, Dictionary<string, List<RefMorphDetails>>>("xtriggers");
@@ -58,7 +56,6 @@ namespace Roost.World.Recipes
 
 
         }
-
 
 
         public static bool newGameStarted = false;
@@ -133,8 +130,6 @@ namespace Roost.World.Recipes
                     Birdsong.Tweet(VerbosityLevel.Essential, message.MessageLevel, $"PROBLEM IN XTRIGGERS FOR ELEMENT '{__instance.Id}' - {message.Description}'");
             }
         }
-
-
 
         private static IEnumerable<CodeInstruction> RunRefEffectsTranspiler(IEnumerable<CodeInstruction> instructions)
         {
