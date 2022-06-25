@@ -25,7 +25,7 @@ namespace Roost.Twins
 
                 List<FucineRef> references = new List<FucineRef>();
 
-                expression = expression.Trim().ToLower();
+                expression = expression.Trim();
                 if (isSingleReferenceExpression(expression))
                     expression = string.Concat(referenceOpening, expression, referenceClosing);
 
@@ -62,7 +62,9 @@ namespace Roost.Twins
 
         static bool isSingleReferenceExpression(string expression)
         {
-            return expression.IndexOf(referenceOpening) == -1 && char.IsDigit(expression[0]) == false && expression.Any(char.IsLetter) == true
+            return expression.IndexOf(referenceOpening) == -1
+                && expression.Any(char.IsLetter) == true
+                && expression.Contains("(") == false && expression.Contains(")") == false
                 && expression.Equals("true", StringComparison.InvariantCultureIgnoreCase) == false
                 && expression.Equals("false", StringComparison.InvariantCultureIgnoreCase) == false;
         }
@@ -70,6 +72,7 @@ namespace Roost.Twins
         public static void ParseFucineRef(string data, out FucinePath targetPath, out FucineExp<bool> filter, out FucineNumberGetter target)
         {
             const char partsSeparator = ':';
+            data = data.ToLower();
 
             GetBordersOfSeparatedArea(data, out int openingPosition, out int closingPosition, filterOpening, filterClosing);
             FucineExp<bool> separatedFilter = default(FucineExp<bool>);
@@ -113,7 +116,7 @@ namespace Roost.Twins
             if (string.IsNullOrEmpty(path))
                 return FucinePath.Current();
 
-            bool pathIsMultiPath = path.Contains('+') || path[path.Length - 1] == referenceClosing;
+            bool pathIsMultiPath = path.Contains("+") || path[path.Length - 1] == referenceClosing;
             if (pathIsMultiPath)
             {
                 ParsePathPlusLimit(ref path, out int amount);
