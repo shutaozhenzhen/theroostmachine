@@ -26,22 +26,22 @@ namespace Roost.World
                 prefix: typeof(Scribe).GetMethodInvariant(nameof(RefineElementTexts)));
         }
 
-        internal static void SetLeverPast(string lever, string value)
+        internal static void SetLeverForCurrentPlaythrough(string lever, string value)
         {
             Watchman.Get<Stable>().Protag().SetOrOverwritePastLegacyEventRecord(lever, value);
         }
 
-        internal static void SetLeverFuture(string lever, string value)
+        internal static void SetLeverForNextPlaythrough(string lever, string value)
         {
             Watchman.Get<Stable>().Protag().SetOrOverwritePastLegacyEventRecord(lever, value);
         }
 
-        internal static string GetLeverPast(string lever)
+        internal static string GetLeverForCurrentPlaythrough(string lever)
         {
             return Watchman.Get<Stable>().Protag().GetPastLegacyEventRecord(lever);
         }
 
-        internal static string GetLeverFuture(string lever)
+        internal static string GetLeverForNextPlaythrough(string lever)
         {
             return Watchman.Get<Stable>().Protag().GetFutureLegacyEventRecord(lever);
         }
@@ -85,7 +85,7 @@ namespace Roost.World
             string result = parts[0];
 
             foreach (string lever in textLevers)
-                result = result.Replace(lever, GetLeverPast(lever));
+                result = result.Replace(lever, GetLeverForCurrentPlaythrough(lever));
 
             for (int n = 1; n < parts.Length; n += 2)
             {
@@ -155,24 +155,24 @@ namespace Roost
 {
     public static partial class Machine
     {
-        public static void SetLeverPast(string lever, string value)
+        public static void SetLeverForCurrentPlaythrough(string lever, string value)
         {
-            Roost.World.Scribe.SetLeverPast(lever, value);
+            Roost.World.Scribe.SetLeverForCurrentPlaythrough(lever, value);
         }
 
-        public static string GetLeverPast(string lever)
+        public static string GetLeverForCurrentPlaythrough(string lever)
         {
-            return Roost.World.Scribe.GetLeverPast(lever);
+            return Roost.World.Scribe.GetLeverForCurrentPlaythrough(lever);
         }
 
-        public static void SetLeverFuture(string lever, string value)
+        public static void SetLeverForNextPlaythrough(string lever, string value)
         {
-            Roost.World.Scribe.SetLeverFuture(lever, value);
+            Roost.World.Scribe.SetLeverForNextPlaythrough(lever, value);
         }
 
-        public static string GetLeverFuture(string lever)
+        public static string GetLeverForNextPlaythrough(string lever)
         {
-            return Roost.World.Scribe.GetLeverFuture(lever);
+            return Roost.World.Scribe.GetLeverForNextPlaythrough(lever);
         }
 
         public static void MarkTextLever(string lever)
