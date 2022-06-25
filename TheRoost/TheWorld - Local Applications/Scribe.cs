@@ -128,7 +128,7 @@ namespace Roost.World
                 return true;
             }
 
-            if (aspects.AspectValue(refinementAspect) >= refinementAmount)
+            if (string.IsNullOrWhiteSpace(refinementAspect) || aspects.AspectValue(refinementAspect) >= refinementAmount)
             {
                 if (specialEffects.ContainsKey(refinementText))
                     result += specialEffects[refinementText](refinementAspect, aspects);
