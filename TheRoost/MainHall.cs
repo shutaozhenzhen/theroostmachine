@@ -86,12 +86,11 @@ namespace Roost.Enactors
         internal static void Enact()
         {
             Roost.World.Optimizations.Enact();
-            Roost.World.Scribe.Enact();
 
             Roost.World.Recipes.SituationWindowMaster.Enact();
 
             Roost.World.Recipes.RecipeEffectsMaster.Enact();
-            Roost.World.Recipes.Legerdemain.Enact();
+
             Roost.World.Recipes.RecipeLinkMaster.Enact();
 
             Roost.World.Elements.ElementEffectsMaster.Enact();

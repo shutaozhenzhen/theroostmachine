@@ -54,7 +54,7 @@ namespace Roost.World.Recipes
                 original: typeof(SituationStorageSphere).GetPropertyInvariant("AllowStackMerge").GetGetMethod(),
                 prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(AllowStackMerge)));
 
-
+            Legerdemain.Enact();
         }
 
 
