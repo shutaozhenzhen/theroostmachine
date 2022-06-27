@@ -50,7 +50,6 @@ namespace Roost.Twins
         public const string currentToken = "~/token";
         public const string currentScope = "~/local";
 
-
         private static readonly List<Sphere> localSingleTokenContainer = new List<Sphere> { new TokenFakeSphere() };
         private static readonly List<Sphere> allLocalTokensContainer = new List<Sphere> { new TokenFakeSphere() };
         public static readonly List<Sphere> defaultSphereContainer = new List<Sphere>();
