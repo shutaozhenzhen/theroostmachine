@@ -4,24 +4,11 @@ using System.Collections.Generic;
 using SecretHistories.UI;
 using SecretHistories.Core;
 using SecretHistories.Entities;
-using SecretHistories.Services;
 
 namespace Roost.World
 {
-    static class Scribe
+    public static class Scribe
     {
-        internal static void Enact()
-        {
-            Machine.Patch(
-                original: typeof(TokenDetailsWindow).GetMethodInvariant("SetElementCard"),
-                prefix: typeof(Scribe).GetMethodInvariant(nameof(StoreElementAspects)));
-
-            //not refining element label since it's used in many contexts without the clear access to the stack's mutations
-            Machine.Patch(
-                original: typeof(AbstractDetailsWindow).GetMethodInvariant("ShowText"),
-                prefix: typeof(Scribe).GetMethodInvariant(nameof(RefineElementTexts)));
-        }
-
         internal static void SetLeverForCurrentPlaythrough(string lever, string value)
         {
             Watchman.Get<Stable>().Protag().SetOrOverwritePastLegacyEventRecord(lever, value);
@@ -48,24 +35,13 @@ namespace Roost.World
             textLevers.Add(levers);
         }
 
-        private static void StoreElementAspects(ElementStack stack, Element element)
+        public static string RefineString(string str, AspectsDictionary aspects)
         {
-            currentAspects.Clear();
-            currentAspects.CombineAspects(element.Aspects);
-            currentAspects.ApplyMutations(stack.Mutations);
-        }
+            if (string.IsNullOrWhiteSpace(str))
+                return str;
+            if (str.Contains("@") == false)
+                return str;
 
-        static readonly AspectsDictionary currentAspects = new AspectsDictionary();
-        private static void RefineElementTexts(ref string desc, AbstractDetailsWindow __instance)
-        {
-            if (!(__instance is TokenDetailsWindow))
-                return;
-
-            desc = RefineString(desc, currentAspects);
-        }
-
-        private static string RefineString(string str, AspectsDictionary aspects)
-        {
             string[] parts = str.Split('@');
 
             if ((parts.Length - 1) % 2 == 1)
@@ -73,10 +49,6 @@ namespace Roost.World
 
             //part before any refinements are applied
             string result = parts[0];
-
-            foreach (string lever in textLevers)
-                result = result.Replace(lever, GetLeverForCurrentPlaythrough(lever));
-
             for (int n = 1; n < parts.Length; n += 2)
             {
                 string[] refinements = parts[n].Split('#');
@@ -88,7 +60,10 @@ namespace Roost.World
                 result += parts[n + 1];
             }
 
-            return result;
+            foreach (string lever in textLevers)
+                result = result.Replace(lever, GetLeverForCurrentPlaythrough(lever));
+
+            return result.Trim();
         }
 
         private static bool TryAddRefinement(ref string result, string refinement, AspectsDictionary aspects)
