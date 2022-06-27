@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-
 using System.Reflection.Emit;
 
 using SecretHistories.Entities;
 using SecretHistories.UI;
+using SecretHistories.Commands;
 using SecretHistories.Commands.SituationCommands;
 using SecretHistories.Core;
 using SecretHistories.Fucine;
@@ -21,6 +21,9 @@ namespace Roost.World.Recipes
         const string CHANCE = "chance";
         const string LIMIT = "limit";
         const string FILTER = "filter";
+        const string PREVIEW = "preview";
+        const string PREVIEW_LABEL = "previewLabel";
+
         internal static void Enact()
         {
             //instant recipes are instant
@@ -54,6 +57,12 @@ namespace Roost.World.Recipes
             Machine.Patch(
                 original: typeof(Situation).GetMethodInvariant("AdditionalRecipeSpawnToken"),
                 transpiler: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(UseNewExpulsion)));
+
+            Machine.ClaimProperty<Recipe, string>(PREVIEW);
+            Machine.ClaimProperty<Recipe, string>(PREVIEW_LABEL);
+            Machine.Patch(
+                original: typeof(Situation).GetMethodInvariant(nameof(Situation.ReactToLatestRecipePrediction)),
+                prefix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(DisplayPreview)));
         }
 
         private static void ProceedWithInstantRecipe(Situation __instance)
@@ -165,7 +174,24 @@ namespace Roost.World.Recipes
             return tokens;
         }
 
+        private static readonly Action<RecipePrediction, string> predictionTitleSet = typeof(RecipePrediction).GetPropertyInvariant(nameof(RecipePrediction.Title)).GetSetMethod(true).
+            CreateDelegate(typeof(Action<RecipePrediction, string>)) as Action<RecipePrediction, string>;
+        private static readonly Action<RecipePrediction, string> predictionDescriptionSet = typeof(RecipePrediction).GetPropertyInvariant(nameof(RecipePrediction.Description)).GetSetMethod(true).
+            CreateDelegate(typeof(Action<RecipePrediction, string>)) as Action<RecipePrediction, string>;
+        private static void DisplayPreview(RecipePrediction newRecipePrediction, Situation __instance)
+        {
+            if (__instance.State.Identifier != SecretHistories.Enums.StateEnum.Unstarted)
+                return;
+            Recipe recipe = Machine.GetEntity<Recipe>(newRecipePrediction.RecipeId);
 
+            string previewLabel = recipe.RetrieveProperty<string>(PREVIEW_LABEL);
+            if (previewLabel != null)
+                predictionTitleSet(newRecipePrediction, previewLabel);
+
+            string previewDescription = recipe.RetrieveProperty<string>(PREVIEW);
+            if (previewDescription != null)
+                predictionDescriptionSet(newRecipePrediction, previewDescription);
+        }
     }
 }
 
