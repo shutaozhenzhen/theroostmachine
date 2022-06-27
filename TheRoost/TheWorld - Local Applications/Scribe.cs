@@ -13,10 +13,6 @@ namespace Roost.World
         internal static void Enact()
         {
             Machine.Patch(
-                original: typeof(TextRefiner).GetMethodInvariant(nameof(TextRefiner.RefineString)),
-                prefix: typeof(Scribe).GetMethodInvariant(nameof(OverrideRecipeRefinement)));
-
-            Machine.Patch(
                 original: typeof(TokenDetailsWindow).GetMethodInvariant("SetElementCard"),
                 prefix: typeof(Scribe).GetMethodInvariant(nameof(StoreElementAspects)));
 
@@ -50,12 +46,6 @@ namespace Roost.World
         internal static void MarkTextLever(string levers)
         {
             textLevers.Add(levers);
-        }
-
-        private static bool OverrideRecipeRefinement(string stringToRefine, AspectsDictionary ____aspectsInContext, ref string __result)
-        {
-            __result = RefineString(stringToRefine, ____aspectsInContext);
-            return false;
         }
 
         private static void StoreElementAspects(ElementStack stack, Element element)

@@ -1,25 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 
+using Assets.Scripts.Application.UI.Situation;
 using SecretHistories.UI;
 using SecretHistories.Manifestations;
 using SecretHistories.Entities;
+using SecretHistories.Abstract;
+using SecretHistories.Constants.Events;
+using SecretHistories.Assets.Scripts.Application.Entities;
+using SecretHistories.Assets.Scripts.Application.Infrastructure.Events;
+using SecretHistories.Spheres;
+using SecretHistories.Services;
+using SecretHistories.Core;
 
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-using SecretHistories.Abstract;
-using SecretHistories.Constants.Events;
-using Assets.Scripts.Application.UI.Situation;
-using SecretHistories.Assets.Scripts.Application.Entities;
-using SecretHistories.Assets.Scripts.Application.Infrastructure.Events;
-using SecretHistories.Spheres;
-using SecretHistories.Services;
-
 namespace Roost.World.Recipes
 {
-    //here we fix (aka steal-pick-peck - geddit? geddit? it was previously a beachcomber's class) the bugs
     internal static class SituationWindowMaster
     {
         internal static void Enact()
@@ -34,6 +33,10 @@ namespace Roost.World.Recipes
             Machine.Patch(
                 original: typeof(CardManifestation).GetMethodInvariant("Initialise"),
                 postfix: typeof(SituationWindowMaster).GetMethodInvariant(nameof(CardWithAspectIconOnTheTable)));
+
+            Machine.Patch(
+                original: typeof(TextRefiner).GetMethodInvariant(nameof(TextRefiner.RefineString)),
+                prefix: typeof(SituationWindowMaster).GetMethodInvariant(nameof(OverrideRecipeRefinement)));
         }
 
         private static SphereContentsChangedEventArgs sphereContentsChangedEventArgs;
@@ -49,6 +52,12 @@ namespace Roost.World.Recipes
         {
             if (Machine.GetEntity<Element>(manifestable.EntityId).IsAspect)
                 ___artwork.sprite = ResourcesManager.GetSpriteForAspect(manifestable.Icon);
+        }
+
+        private static bool OverrideRecipeRefinement(string stringToRefine, AspectsDictionary ____aspectsInContext, ref string __result)
+        {
+            __result = Scribe.RefineString(stringToRefine, ____aspectsInContext);
+            return false;
         }
 
         private static void PutSparklesOnSituationWindow()
@@ -234,7 +243,7 @@ namespace Roost.World.Recipes
             Situation situation = situationStorage.GetContainer() as Situation;
 
             if (situation.Recipe?.Warmup == 0 || !situation.State.IsActiveInThisState(situationStorage))
-                    return;
+                return;
 
             int visibleTokens = situationStorage.Tokens.Count;
 
