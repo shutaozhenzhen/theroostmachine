@@ -70,7 +70,7 @@ namespace Roost.World
             List<CodeInstruction> myCode = new List<CodeInstruction>()
             {
                 new CodeInstruction(OpCodes.Ldloc_2),
-                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Ldarg_0), //method is static, Ldarg_0 isn't instance
                 new CodeInstruction(OpCodes.Call, typeof(Recipes.Legerdemain).GetMethodInvariant(nameof(Recipes.Legerdemain.DeckIsActiveForLegacy))),
             };
 

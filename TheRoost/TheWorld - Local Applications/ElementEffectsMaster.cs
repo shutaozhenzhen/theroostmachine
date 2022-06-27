@@ -46,9 +46,6 @@ namespace Roost.World.Elements
             Machine.Patch(
                 original: typeof(Sphere).GetMethodInvariant(nameof(Sphere.RemoveDuplicates)),
                 prefix: typeof(ElementEffectsMaster).GetMethodInvariant(nameof(ApplyDisplacements)));
-
-
-
         }
 
         //the cleaner solution would be to pass VFX with TokenPayloadChangeArgs
@@ -71,8 +68,9 @@ namespace Roost.World.Elements
 
             //technically I can just pass the appropriate vfx to the original retire method instead of replacing it completely
             //but it's safer to look for the method call
-            Vagabond.CodeInstructionMask retireMask = instruction => instruction.operand as MethodInfo == typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.Retire), typeof(RetirementVFX));
-            instructions = instructions.ReplaceInstruction(retireMask, retireCode);
+            Vagabond.CodeInstructionMask startMask = instruction => instruction.Calls(typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.Retire), new System.Type[] { typeof(RetirementVFX) }));
+            Vagabond.CodeInstructionMask endMask = instruction => instruction.opcode == OpCodes.Pop;
+            instructions = instructions.ReplaceSegment(startMask, endMask, retireCode, true, true, -2);
 
             List<CodeInstruction> changeToCode = new List<CodeInstruction>()
             {
@@ -82,7 +80,6 @@ namespace Roost.World.Elements
             };
 
             instructions = instructions.InsertBeforeMethodCall(typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.ChangeTo)), changeToCode);
-
             return instructions;
         }
 

@@ -145,29 +145,31 @@ namespace Roost.Vagabond
             else if (patchType == PatchType.Postfix)
                 Machine.Patch(methodsToPatch[time], postfix: patchMethod.Method, patchId: patchId);
             else
-                Birdsong.Tweet("Trying to schedule method {0} at Time of Power '{1}' with patch type '{2}' - which is not a valid PatchType (not a prefix, not a postfix). No fooling around with the Times of Power, please.");
+                Birdsong.Tweet($"Trying to schedule method {patchMethod.Method.Name} at Time of Power '{time}' with patch type '{patchType}' - which is not a valid PatchType (not a prefix, not a postfix). No fooling around with the Times of Power, please.");
         }
 
-        internal static IEnumerable<CodeInstruction> TranspilerInsertAtMethod(IEnumerable<CodeInstruction> instructions, MethodInfo insertCodeNearThisMethodCall, List<CodeInstruction> myCode, bool insertBefore, int skipCallsCount)
+        internal static IEnumerable<CodeInstruction> TranspilerInsertAtMethod(IEnumerable<CodeInstruction> instructions, MethodInfo referenceMethodCall, List<CodeInstruction> myCode, bool deleteOriginalMethod, int skipCallsCount)
         {
             List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
-            int lineShift;
-            if (insertBefore)
-                lineShift = -(insertCodeNearThisMethodCall.GetParameters().Length + (insertCodeNearThisMethodCall.IsStatic ? 0 : 1));
-            else
-                lineShift = 1;
+            //will only work for simple parameters, not other method calls
+            int lineShift = -(referenceMethodCall.GetParameters().Length + (referenceMethodCall.IsStatic ? 0 : 1));
 
             int currentMethodCall = 0;
             for (int i = 0; i < codes.Count; i++)
-                if (codes[i].Calls(insertCodeNearThisMethodCall))
+                if (codes[i].Calls(referenceMethodCall))
                 {
                     currentMethodCall++;
                     if (currentMethodCall <= skipCallsCount)
                         continue;
 
                     i += lineShift;
-                    if (insertBefore == false && codes[i].opcode == OpCodes.Pop)
-                        i++;
+
+                    if (deleteOriginalMethod)
+                    {
+                        while (!codes[i].Calls(referenceMethodCall))
+                            codes.RemoveAt(i);
+                        codes.RemoveAt(i);
+                    }
 
                     codes.InsertRange(i, myCode);
                     break;
@@ -176,7 +178,7 @@ namespace Roost.Vagabond
             return codes.AsEnumerable();
         }
 
-        internal static IEnumerable<CodeInstruction> TranspilerReplaceSegment(IEnumerable<CodeInstruction> instructions, CodeInstructionMask startSegmentMask, CodeInstructionMask endSegmentMask, List<CodeInstruction> myCode, bool replaceStart, bool replaceEnd)
+        internal static IEnumerable<CodeInstruction> TranspilerReplaceSegment(IEnumerable<CodeInstruction> instructions, CodeInstructionMask startSegmentMask, CodeInstructionMask endSegmentMask, List<CodeInstruction> myCode, bool removeStart, bool removeEnd, int startShift)
         {
             if (myCode == null || myCode.Count == 0)
             {
@@ -189,13 +191,17 @@ namespace Roost.Vagabond
             {
                 if (startSegmentMask(codes[i]))
                 {
-                    if (!replaceStart)
+                    i += startShift;
+
+                    if (removeStart)
+                        codes.RemoveAt(i);
+                    else
                         i++;
 
                     while (i < (codes.Count - 1) && endSegmentMask(codes[i]) == false)
                         codes.RemoveAt(i);
 
-                    if (replaceEnd)
+                    if (removeEnd)
                         codes.RemoveAt(i);
 
                     codes.InsertRange(i, myCode);
@@ -266,34 +272,44 @@ namespace Roost
             Vagabond.HarmonyMask.Patch(original, prefix, postfix, transpiler, finalizer, patchId);
         }
 
-        public static IEnumerable<CodeInstruction> InsertBeforeMethodCall(this IEnumerable<CodeInstruction> original, MethodInfo nearMethodCall, List<CodeInstruction> myCode, int methodCallNumber = 0)
+        public static IEnumerable<CodeInstruction> InsertBeforeMethodCall(this IEnumerable<CodeInstruction> original, MethodInfo referenceMethod, List<CodeInstruction> myCode, int methodCallNumber = 0)
         {
-            return Vagabond.HarmonyMask.TranspilerInsertAtMethod(original, nearMethodCall, myCode, true, methodCallNumber);
+            return Vagabond.HarmonyMask.TranspilerInsertAtMethod(original, referenceMethod, myCode, false, methodCallNumber);
         }
 
-        public static IEnumerable<CodeInstruction> InsertAfter(this IEnumerable<CodeInstruction> original, Vagabond.CodeInstructionMask mask, List<CodeInstruction> myCode)
+        public static IEnumerable<CodeInstruction> ReplaceMethodCall(this IEnumerable<CodeInstruction> original, MethodInfo referenceMethod, List<CodeInstruction> myCode, int methodCallNumber = 0)
         {
-            return Vagabond.HarmonyMask.TranspilerReplaceSegment(original, mask, code => true, myCode, false, false);
+            return Vagabond.HarmonyMask.TranspilerInsertAtMethod(original, referenceMethod, myCode, true, methodCallNumber);
         }
 
-        public static IEnumerable<CodeInstruction> ReplaceAfterMask(this IEnumerable<CodeInstruction> original, Vagabond.CodeInstructionMask mask, List<CodeInstruction> myCode, bool removeMask)
+        public static IEnumerable<CodeInstruction> InsertBefore(this IEnumerable<CodeInstruction> original, Vagabond.CodeInstructionMask mask, List<CodeInstruction> myCode, int startShift = 0)
         {
-            return Vagabond.HarmonyMask.TranspilerReplaceSegment(original, mask, code => false, myCode, removeMask, true);
+            return Vagabond.HarmonyMask.TranspilerReplaceSegment(original, mask, code => true, myCode, false, false, startShift - 1);
         }
 
-        public static IEnumerable<CodeInstruction> ReplaceBeforeMask(this IEnumerable<CodeInstruction> original, Vagabond.CodeInstructionMask mask, List<CodeInstruction> myCode, bool removeMask)
+        public static IEnumerable<CodeInstruction> InsertAfter(this IEnumerable<CodeInstruction> original, Vagabond.CodeInstructionMask mask, List<CodeInstruction> myCode, int startShift = 0)
         {
-            return Vagabond.HarmonyMask.TranspilerReplaceSegment(original, code => true, mask, myCode, true, removeMask);
+            return Vagabond.HarmonyMask.TranspilerReplaceSegment(original, mask, code => true, myCode, false, false, startShift);
         }
 
-        public static IEnumerable<CodeInstruction> ReplaceInstruction(this IEnumerable<CodeInstruction> original, Vagabond.CodeInstructionMask mask, List<CodeInstruction> myCode)
+        public static IEnumerable<CodeInstruction> ReplaceAfterMask(this IEnumerable<CodeInstruction> original, Vagabond.CodeInstructionMask mask, List<CodeInstruction> myCode, bool removeStart, int startShift = 0)
         {
-            return Vagabond.HarmonyMask.TranspilerReplaceSegment(original, mask, code => true, myCode, true, false);
+            return Vagabond.HarmonyMask.TranspilerReplaceSegment(original, mask, code => false, myCode, removeStart, true, startShift);
         }
 
-        public static IEnumerable<CodeInstruction> ReplaceSegment(this IEnumerable<CodeInstruction> instructions, Vagabond.CodeInstructionMask startSegmentMask, Vagabond.CodeInstructionMask endSegmentMask, List<CodeInstruction> myCode, bool replaceStart, bool replaceEnd)
+        public static IEnumerable<CodeInstruction> ReplaceBeforeMask(this IEnumerable<CodeInstruction> original, Vagabond.CodeInstructionMask mask, List<CodeInstruction> myCode, bool removeMask, int startShift = 0)
         {
-            return Vagabond.HarmonyMask.TranspilerReplaceSegment(instructions, startSegmentMask, endSegmentMask, myCode, replaceStart, replaceEnd);
+            return Vagabond.HarmonyMask.TranspilerReplaceSegment(original, code => true, mask, myCode, true, removeMask, startShift);
+        }
+
+        public static IEnumerable<CodeInstruction> ReplaceInstruction(this IEnumerable<CodeInstruction> original, Vagabond.CodeInstructionMask mask, List<CodeInstruction> myCode, int startShift = 0)
+        {
+            return Vagabond.HarmonyMask.TranspilerReplaceSegment(original, mask, code => true, myCode, true, false, startShift);
+        }
+
+        public static IEnumerable<CodeInstruction> ReplaceSegment(this IEnumerable<CodeInstruction> instructions, Vagabond.CodeInstructionMask startSegmentMask, Vagabond.CodeInstructionMask endSegmentMask, List<CodeInstruction> myCode, bool replaceStart, bool replaceEnd, int startShift = 0)
+        {
+            return Vagabond.HarmonyMask.TranspilerReplaceSegment(instructions, startSegmentMask, endSegmentMask, myCode, replaceStart, replaceEnd, startShift);
         }
 
         public static void LogILCodes(this IEnumerable<CodeInstruction> codes)
