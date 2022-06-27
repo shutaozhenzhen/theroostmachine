@@ -9,7 +9,7 @@ namespace Roost.World.Beauty
 {
     class StartupQuoteMaster
     {
-        public static void Enact()
+        internal static void Enact()
         {
             Machine.ClaimProperty<Legacy, List<string>>("quotes", true);
             AtTimeOfPower.QuoteSceneInit.Schedule(setRandomQuote, PatchType.Postfix);

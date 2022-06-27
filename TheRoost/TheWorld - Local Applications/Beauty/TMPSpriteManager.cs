@@ -120,7 +120,7 @@ namespace Roost.World.Beauty
             DefaultSpriteAsset.SetValue(TMP_Settings.instance, sa);
         }
 
-        public static void Enact()
+        internal static void Enact()
         {
             AtTimeOfPower.CompendiumLoad.Schedule(UpdateSprites, PatchType.Postfix);
         }

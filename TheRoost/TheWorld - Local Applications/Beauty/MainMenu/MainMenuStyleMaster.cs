@@ -178,7 +178,7 @@ namespace Roost.World.Beauty
             catch (Exception err) { Console.WriteLine(err); }
         }
 
-        public static void Enact()
+        internal static void Enact()
         {
             Machine.ClaimProperty<Legacy, LegacyMenuVisualsOverride>("menuVisualsOverride");
             AtTimeOfPower.MenuSceneInit.Schedule(initOnMenuLoading, PatchType.Postfix);

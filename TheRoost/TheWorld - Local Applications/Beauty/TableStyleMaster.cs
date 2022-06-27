@@ -32,7 +32,7 @@ namespace Roost.World.Beauty
         static Image tableLeatherImageComponent = null;
         static Image tableLegsImageComponent = null;
 
-        public static void Enact()
+        internal static void Enact()
         {
             Machine.ClaimProperty<Recipe, string>("tabletopImage");
             Machine.ClaimProperty<Recipe, string>("tableLeather");

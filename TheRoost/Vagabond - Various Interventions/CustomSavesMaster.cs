@@ -35,7 +35,7 @@ namespace Roost.Vagabond
     class CustomSavesMaster
     {
         static string persistentDataPath = null;
-        public static void Enact()
+        internal static void Enact()
         {
             persistentDataPath = Watchman.Get<MetaInfo>().PersistentDataPath;
             Roost.Vagabond.CommandLine.AddCommand("listsaves", ListCustomSaves);

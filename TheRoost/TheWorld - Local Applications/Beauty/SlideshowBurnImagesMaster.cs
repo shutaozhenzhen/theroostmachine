@@ -55,7 +55,7 @@ namespace Roost.World.Beauty
         static GameObject prefab;
         static SlideshowBurnImagesMaster _instance;
 
-        public static void Enact()
+        internal static void Enact()
         {
             Birdsong.Tweet(VerbosityLevel.SystemChatter, 0, "Slideshow Was properly enabled");
             Machine.ClaimProperty<Recipe, List<BurnImageData>>("burnimages", true);
