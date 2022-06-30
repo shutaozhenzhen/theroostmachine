@@ -14,13 +14,13 @@ namespace Roost.World
 {
     /**
      * What this does/patches:
-     * - adds the "callbacks" custom property to LinkedRecipeDetails instances
+     * - adds the "callbacks" custom property to Recipe instances
      * - adds the new "useCallback" custom property to LinkedRecipeDetails instances
      * - patches (prefix) RecipeConductor.GetLinkedRecipe to check for the presence of useCallback and replace them on the fly
-     * - patches (prefix) some method to set the callbacks in the Situation Illumination map
-     * - patches some method to clear the callbacks in the Situation Illumination map
+     * - patches (prefix) some method to set the callbacks in the levers map
+     * - patches (postfix) RecipeConductor.GetLinkedRecipe to check if we need to clear the callbacks (no next recipe selected)
      * - patches to store the original recipe linked array, and one to put it back
-     * Bonus for later: - adds the clearCallbacks custom property to recipes so they can clear callbacks before routing
+     * - adds the clearCallbacks custom property to recipes so they can clear callbacks before routing
      */
     class RecipeCallbackLinksMaster
     {
