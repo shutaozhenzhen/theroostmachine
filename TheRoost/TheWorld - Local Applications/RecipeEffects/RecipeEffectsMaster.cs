@@ -96,6 +96,7 @@ namespace Roost.World.Recipes
                 {
                     atLeastOneEffect = true;
                     cachedProperty.SetViaFastInvoke(firstPassEffects, recipe.RetrieveProperty(cachedProperty.LowerCaseName));
+                    recipe.RemoveProperty(cachedProperty.LowerCaseName);
                 }
 
             if (atLeastOneEffect)
