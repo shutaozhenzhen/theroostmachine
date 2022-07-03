@@ -135,7 +135,7 @@ namespace Roost.Vagabond
  { AtTimeOfPower.OnPostImpostSetting, typeof(Setting).GetMethodInvariant("OnPostImportForSpecificEntity") },
  { AtTimeOfPower.OnPostImportSlot, typeof(SphereSpec).GetMethodInvariant("OnPostImportForSpecificEntity") },
  { AtTimeOfPower.OnPostImportVerb, typeof(Verb).GetMethodInvariant("OnPostImportForSpecificEntity") },
- { AtTimeOfPower.CompendiumLoad , typeof(CompendiumLoader).GetMethodInvariant("PopulateCompendium") }
+ { AtTimeOfPower.CompendiumLoad, typeof(CompendiumLoader).GetMethodInvariant("PopulateCompendium") }
         };
 
         internal static void Unite(AtTimeOfPower time, Delegate patchMethod, PatchType patchType, string patchId)
