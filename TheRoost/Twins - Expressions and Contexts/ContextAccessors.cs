@@ -25,16 +25,15 @@ namespace Roost.Twins
 
             //the game keeps slot and output spheres even when they are unused; to avoid confusion in references, clear them
             Machine.Patch(
-                original: typeof(OngoingState).GetMethodInvariant(nameof(OngoingState.Enter)),
+                original: typeof(UnstartedState).GetMethodInvariant(nameof(UnstartedState.Exit)),
                 postfix: typeof(Crossroads).GetMethodInvariant(nameof(ClearVerbThresholds)));
             Machine.Patch(
                 original: typeof(CompleteState).GetMethodInvariant(nameof(CompleteState.Exit)),
                 postfix: typeof(Crossroads).GetMethodInvariant(nameof(ClearOutput)));
         }
 
-        static readonly string VERB_THRESHOLDS_SPHERE = SituationDominionEnum.VerbThresholds.ToString();
-        static readonly string RECIPE_THRESHOLDS_SPHERE = SituationDominionEnum.RecipeThresholds.ToString();
-        static readonly string OUTPUT_SPHERE = SituationDominionEnum.Output.ToString();
+        private static readonly string VERB_THRESHOLDS_SPHERE = SituationDominionEnum.VerbThresholds.ToString();
+        private static readonly string OUTPUT_SPHERE = SituationDominionEnum.Output.ToString();
         static void ClearVerbThresholds(Situation situation)
         {
             situation.AddCommand(new ClearDominionCommand(VERB_THRESHOLDS_SPHERE, SphereRetirementType.Graceful));
