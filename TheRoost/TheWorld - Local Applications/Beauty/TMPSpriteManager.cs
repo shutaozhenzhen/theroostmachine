@@ -105,14 +105,14 @@ namespace Roost.World.Beauty
             return ((Dictionary<string, Sprite>)LoadedImages.GetValue(Watchman.Get<ModManager>()))
                 .Where(kv => kv.Key.StartsWith(folder)).Select(kv =>
                 {
-                    kv.Value.name = kv.Key.Substring(kv.Key.LastIndexOf('\\') + 1);
+                    kv.Value.name = kv.Key.Replace(folder, "");
                     return kv.Value;
                 }).ToList();
         }
 
         private static void UpdateSprites()
         {
-            var spritesList = GetAllInFolder("images\\ui\\textsprites");
+            var spritesList = GetAllInFolder("images\\textsprites\\");
 
             var (t, sprites) = PaintTexture(spritesList);
             var sa = CreateSpriteAssetFromSelectedObject(t,
