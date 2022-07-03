@@ -20,11 +20,17 @@ namespace Roost.World.Beauty
 {
     static class CardStyleMaster
     {
+
+        const string USE_BIG_PICTURE = "useBigPicture";
+        const string HIDE_LABEL = "hideLabel";
+        const string ALTERNATIVE_TEXT_STYLE = "useAlternativeTextStyle";
+        const string BIG_PICTURE_FOLDER = "elementsbig";
+
         internal static void Enact()
         {
-            Machine.ClaimProperty<Element, string>("useBigPicture");
-            Machine.ClaimProperty<Element, bool>("hideLabel");
-            Machine.ClaimProperty<Element, bool>("useAlternativeTextStyle");
+            Machine.ClaimProperty<Element, bool>(USE_BIG_PICTURE, defaultValue: false);
+            Machine.ClaimProperty<Element, bool>(HIDE_LABEL, defaultValue: false);
+            Machine.ClaimProperty<Element, bool>(ALTERNATIVE_TEXT_STYLE, defaultValue: false);
 
             Machine.Patch(
                     original: typeof(CardManifestation).GetMethodInvariant(nameof(CardManifestation.Initialise), typeof(IManifestable)),
@@ -48,17 +54,17 @@ namespace Roost.World.Beauty
             Element element = Watchman.Get<Compendium>().GetEntityById<Element>(stack.EntityId);
 
             GameObject card = o.FindInChildren("Card", true);
-            ApplyBigPicture(element, card);
+            ApplyBigPicture(element, stack, card);
             ApplyHideLabel(element, card);
             ApplyAlternativeTextStyle(element, card);
         }
 
-        public static void ApplyBigPicture(Element element, GameObject card)
+        public static void ApplyBigPicture(Element element, ElementStack stack, GameObject card)
         {
-            string tableImageName = element.RetrieveProperty<string>("useBigPicture");
-            if (tableImageName == null) return;
+            if (!element.RetrieveProperty<bool>(USE_BIG_PICTURE))
+                return;
 
-            Sprite tableImage = ResourcesManager.GetSpriteForElement(tableImageName);
+            Sprite tableImage = ResourcesManager.GetSprite(BIG_PICTURE_FOLDER, stack.Icon);
 
             card.FindInChildren("TextBG").SetActive(false);
             card.FindInChildren("Artwork").GetComponent<Image>().sprite = tableImage;
@@ -70,16 +76,16 @@ namespace Roost.World.Beauty
 
         public static void ApplyHideLabel(Element element, GameObject card)
         {
-            bool hideLabel = element.RetrieveProperty<bool>("hideLabel");
-            if (!hideLabel) return;
+            if (!element.RetrieveProperty<bool>(HIDE_LABEL))
+                return;
 
             card.FindInChildren("Text").SetActive(false);
         }
 
         public static void ApplyAlternativeTextStyle(Element element, GameObject card)
         {
-            bool useAlternativeTextStyle = element.RetrieveProperty<bool>("useAlternativeTextStyle");
-            if (!useAlternativeTextStyle) return;
+            if (!element.RetrieveProperty<bool>(ALTERNATIVE_TEXT_STYLE))
+                return;
 
             TextMeshProUGUI t = card.FindInChildren("Text").GetComponent<TextMeshProUGUI>();
             t.color = Color.white;
