@@ -9,12 +9,6 @@ namespace Roost.World
 {
     public static class Scribe
     {
-        static readonly Func<object, object> _GetNativeLevers = typeof(Character).GetFieldInvariant("_previousCharacterHistoryRecords").GetValue;
-        static Dictionary<string, string> GetNativeLevers()
-        {
-            return (Dictionary<string, string>)_GetNativeLevers(Watchman.Get<Stable>().Protag());
-        }
-
         internal static void SetLeverForCurrentPlaythrough(string lever, string value)
         {
             Watchman.Get<Stable>().Protag().SetOrOverwritePastLegacyEventRecord(lever, value);
@@ -22,7 +16,7 @@ namespace Roost.World
 
         internal static void SetLeverForNextPlaythrough(string lever, string value)
         {
-            Watchman.Get<Stable>().Protag().SetOrOverwritePastLegacyEventRecord(lever, value);
+            Watchman.Get<Stable>().Protag().SetFutureLegacyEventRecord(lever, value);
         }
 
         internal static string GetLeverForCurrentPlaythrough(string lever)
@@ -30,19 +24,46 @@ namespace Roost.World
             return Watchman.Get<Stable>().Protag().GetPastLegacyEventRecord(lever);
         }
 
-        internal static Dictionary<string, string> GetLeversForCurrentPlaythrough()
-        {
-            return new Dictionary<string, string>(Watchman.Get<Stable>().Protag().PreviousCharacterHistoryRecords);
-        }
-
         internal static string GetLeverForNextPlaythrough(string lever)
         {
             return Watchman.Get<Stable>().Protag().GetFutureLegacyEventRecord(lever);
         }
 
-        internal static void ClearLeverForCurrentPlaythrough(string lever)
+        internal static void RemoveLeverForCurrentPlaythrough(string lever)
         {
-            GetNativeLevers().Remove(lever);
+            GetLeverField(_currentLevers).Remove(lever);
+        }
+
+        internal static void ClearLeversForCurrentPlaythrough()
+        {
+            GetLeverField(_currentLevers).Clear();
+        }
+
+        internal static void RemoveLeverForNextPlaythrough(string lever)
+        {
+            GetLeverField(_futureLevers).Remove(lever);
+        }
+
+        internal static void ClearLeversForNextPlaythrough()
+        {
+            GetLeverField(_futureLevers).Clear();
+        }
+
+        private static readonly Func<object, object> _currentLevers = typeof(Character).GetFieldInvariant("_previousCharacterHistoryRecords").GetValue;
+        private static readonly Func<object, object> _futureLevers = typeof(Character).GetFieldInvariant("_inProgressHistoryRecords").GetValue;
+        private static Dictionary<string, string> GetLeverField(Func<object, object> LeverFieldGetter)
+        {
+            return LeverFieldGetter(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>;
+        }
+
+        internal static Dictionary<string, string> GetLeversForCurrentPlaythrough()
+        {
+            return Watchman.Get<Stable>().Protag().PreviousCharacterHistoryRecords;
+        }
+
+        internal static Dictionary<string, string> GetLeversForNextPlaythrough()
+        {
+            return Watchman.Get<Stable>().Protag().InProgressHistoryRecords;
         }
 
         private static readonly List<string> textLevers = new List<string>();
@@ -141,9 +162,29 @@ namespace Roost
             Roost.World.Scribe.SetLeverForCurrentPlaythrough(lever, value);
         }
 
+        public static void SetLeverForNextPlaythrough(string lever, string value)
+        {
+            Roost.World.Scribe.SetLeverForNextPlaythrough(lever, value);
+        }
+
         public static string GetLeverForCurrentPlaythrough(string lever)
         {
             return Roost.World.Scribe.GetLeverForCurrentPlaythrough(lever);
+        }
+
+        public static string GetLeverForNextPlaythrough(string lever)
+        {
+            return Roost.World.Scribe.GetLeverForNextPlaythrough(lever);
+        }
+
+        public static void RemoveLeverForCurrentPlaythrough(string lever)
+        {
+            Roost.World.Scribe.RemoveLeverForCurrentPlaythrough(lever);
+        }
+
+        public static void RemoveLeverForNextPlaythrough(string lever)
+        {
+            Roost.World.Scribe.RemoveLeverForNextPlaythrough(lever);
         }
 
         public static Dictionary<string, string> GetLeversForCurrentPlaythrough()
@@ -151,19 +192,19 @@ namespace Roost
             return World.Scribe.GetLeversForCurrentPlaythrough();
         }
 
-        public static void ClearLeverForCurrentPlaythrough(string lever)
+        public static Dictionary<string, string> GetLeversForNextPlaythrough()
         {
-            World.Scribe.ClearLeverForCurrentPlaythrough(lever);
+            return World.Scribe.GetLeversForCurrentPlaythrough();
         }
 
-        public static void SetLeverForNextPlaythrough(string lever, string value)
+        public static void ClearLeversForCurrentPlaythrough()
         {
-            Roost.World.Scribe.SetLeverForNextPlaythrough(lever, value);
+            World.Scribe.ClearLeversForCurrentPlaythrough();
         }
 
-        public static string GetLeverForNextPlaythrough(string lever)
+        public static void ClearLeversForNextPlaythrough()
         {
-            return Roost.World.Scribe.GetLeverForNextPlaythrough(lever);
+            World.Scribe.ClearLeversForNextPlaythrough();
         }
 
         public static void MarkTextLever(string lever)

@@ -97,7 +97,7 @@ namespace Roost.Enactors
 
             Roost.World.Slots.SlotEffectsMaster.Enact();
 
-            Roost.World.RecipeCallbackLinksMaster.Enact();
+            Roost.World.RecipeCallbacksMaster.Enact();
 
             Roost.World.Beauty.StartupQuoteMaster.Enact();
             Roost.World.Beauty.MainMenuStyleMaster.Enact();
