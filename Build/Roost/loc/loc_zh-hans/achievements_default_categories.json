@@ -1,0 +1,9 @@
+{"achievements": [
+ { "id": "ACH_CATEGORY_CSVANILLA", "label": "Cultist Simulator" },
+ { "id": "ACH_CATEGORY_DANCER", "label": "舞者" },
+ { "id": "ACH_CATEGORY_PRIEST", "label": "教士" },
+ { "id": "ACH_CATEGORY_GHOUL", "label": "食尸鬼" },
+ { "id": "ACH_CATEGORY_EXILE", "label": "流亡者" },
+ { "id": "ACH_CATEGORY_EVERAFTER", "label": "共度余生" },
+ { "id": "ACH_CATEGORY_MODS", "label": "Steam Workshop" }, 
+]}

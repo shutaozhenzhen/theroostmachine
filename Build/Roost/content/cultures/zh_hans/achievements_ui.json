@@ -1,0 +1,8 @@
+{"cultures": [
+	{ "id": "zh-hans", "$mute": true, "uilabels$add": {
+	"ACH_BUTTON": "成就",
+	"ACH_FANCYPANCY_QUOTE": "",
+	"ACH_HIDDEN_TITLE": "剩余 {0} 项隐藏成就",
+	"ACH_HIDDEN_DESC": "每项成就的详情将在解锁后显示",
+	}},
+]}

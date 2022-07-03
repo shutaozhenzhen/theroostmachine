@@ -1,0 +1,14 @@
+{"achievements": [
+	{ "id": "custom_achievement_sample", "isCategory": false, "hidden": false,
+	  "iconUnlocked": "theroostmachine", "iconLocked": "theroostmachine", "category": "ACH_CATEGORY_MODS",
+ "label": "The Roost Machine",
+ "unlockdesc": "Succesfully installed and enabled <b>The Roost Machine</b>.",
+ "lockdesc": "You will never see this description in the game since this achievement hardcoded to come unlocked, so I'll use the opportunity to leave a few notes here. You can omit 'iconLocked' definition - an icon will be the same for both unlocked and locked states in that case. You can't omit 'lockdesc' for the same effect - a description will be blank in that case. You can omit 'hidden' property altogether if an achievement isn't hidden, and not defining 'unlockmessage' will result in the 'unlockdesc' being displayed.",
+ "unlockmessage": "Again, never to be seen and is here just as an example",
+ },
+
+ { "id": "custom_category_sample", "isCategory": true,
+ "label": "Custom Category",
+ "lockdesc": "For categories, only label is relevant, other properties are unused. Empty categories (that has no achievements) will not be displayed in the menu - this one, for example, won't (unless you - or someone else - will set their custom achievement's 'category' to 'custom_category_sample', which I encourage you not to do).",
+ },
+]}

@@ -1,0 +1,6 @@
+﻿{"elements": [
+  {"id":"elegiastStorageElement", "icon": "temptation.remembrance",
+    "label": "--",
+    "description": "Dear Player! You aren't supposed to see this element, and if you save the game with this present, it will not, almost certainly, load correctly. To fix this, please, open a command line by pressing a ~ (tilde) button, until there's a console in the right (not left) corner. Afterwards, type there the forbidden magic spell '/fixstorage' and press Enter. Thank you in advance."},
+
+]}

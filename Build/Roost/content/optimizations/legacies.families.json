@@ -1,0 +1,15 @@
+{"legacies": [
+  { "id": "exile", "family": [ "exile", "", ], "$mute": true },
+  { "id": "exile.obscurityvictorya", "family": [ "exile", "", ], "$mute": true },
+  { "id": "exile.obscurityvictoryb", "family": [ "exile", "", ], "$mute": true },
+  { "id": "exile.obscurityvictoryc", "family": [ "exile", "", ], "$mute": true },
+  { "id": "exile.obscurityvictoryafoeslain", "family": [ "exile", "", ], "$mute": true },
+  { "id": "exile.obscurityvictorybfoeslain", "family": [ "exile", "", ], "$mute": true },
+  { "id": "exile.obscurityvictorycfoeslain", "family": [ "exile", "", ], "$mute": true },
+  { "id": "exile.foecaughtup", "family": [ "exile", "", ], "$mute": true },
+  { "id": "exile.ascensioncolonel", "family": [ "exile", "", ], "$mute": true },
+  { "id": "exile.ascensionlionsmith", "family": [ "exile", "", ], "$mute": true },
+  { "id": "exile.ascensionwolf", "family": [ "exile", "", ], "$mute": true },
+  { "id": "exile.victoryvelvet", "family": [ "exile", "", ], "$mute": true },
+
+]}

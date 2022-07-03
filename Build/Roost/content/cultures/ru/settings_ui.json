@@ -1,0 +1,19 @@
+﻿{"cultures": [
+	{ "id": "en", "$mute": true, "uilabels$add": {
+	"UI_ROOST_SETTINGS": "ROOST",
+	"UI_ROOST_ENABLE_ACHIEVEMENTS": "Custom Achievements",
+
+	"UI_ROOST_MINIMIZE_PROMO": "Minimize Promo Image",
+
+	"UI_STORAGE_PLACEMENT": "Verb Storage Display",
+	"UI_STORAGEPLACEMENT_HORIZONTAL": "Nostalgic",
+	"UI_STORAGEPLACEMENT_VERTICAL": "Slender",
+	"UI_STORAGEPLACEMENT_OUTSIDE": "Stranger",
+
+ 	"UI_VERBOSITY": "Console Verbosity",
+	"UI_VERBOSITY_ESSENTIAL": "Essential",
+	"UI_VERBOSITY_SIGNIFICANT": "Significant",
+	"UI_VERBOSITY_CHATTER": "Chatter",
+	"UI_TRIVIA": "Trivia",
+	}},
+]}

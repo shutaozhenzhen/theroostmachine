@@ -1,0 +1,8 @@
+{"cultures": [
+	{ "id": "de", "$mute": true, "uilabels$add": {
+	"ACH_BUTTON": "Kollektion",
+	"ACH_FANCYPANCY_QUOTE": "Time takes everything but the truth.",
+	"ACH_HIDDEN_TITLE": "{0} versteckte Errungenschaften verbleibend",
+	"ACH_HIDDEN_DESC": "Details für Errungenschaften werden enthüllt, sobald diese freigeschaltet werden",
+	}},
+]}

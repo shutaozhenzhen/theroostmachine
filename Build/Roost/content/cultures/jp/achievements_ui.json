@@ -1,0 +1,9 @@
+{"cultures": [
+	{ "id": "jp", "$mute": true, "uilabels$add": {
+	"ACH_BUTTON": "コレクション",
+	"ACH_FANCYPANCY_QUOTE": "Time takes everything but the truth.",
+	"ACH_HIDDEN_TITLE": "{0} 個の秘密の実績が残っている",
+	"ACH_HIDDEN_DESC": "各実績の詳細はアンロック時に明らかとなる",
+	"ACH_CATEGORY_CSVANILLA": "Cultist Simulator",
+	}},
+]}

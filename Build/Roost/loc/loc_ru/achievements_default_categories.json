@@ -1,0 +1,9 @@
+{"achievements": [
+ { "id": "ACH_CATEGORY_CSVANILLA", "label": "Симулятор Культиста" },
+ { "id": "ACH_CATEGORY_DANCER", "label": "Симулятор Культиста: Танцовщица" },
+ { "id": "ACH_CATEGORY_PRIEST", "label": "Симулятор Культиста: Жрец" },
+ { "id": "ACH_CATEGORY_GHOUL", "label": "Симулятор Культиста: Упырь" },
+ { "id": "ACH_CATEGORY_EXILE", "label": "Симулятор Культиста: Изгой" },
+ { "id": "ACH_CATEGORY_EVERAFTER", "label": "Долго и счастливо" },
+ { "id": "ACH_CATEGORY_MODS", "label": "Мастерская Steam" }, 
+]}
