@@ -152,7 +152,7 @@ namespace Roost.World.Slots
                 if (slot.ActionId[slot.ActionId.Length - 1] == '*')
                 {
                     string wildString = slot.ActionId.Remove(slot.ActionId.Length - 1);
-                    if (!verbId.Contains(wildString))
+                    if (!verbId.StartsWith(wildString))
                         return false;
                 }
                 else

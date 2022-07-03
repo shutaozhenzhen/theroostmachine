@@ -250,7 +250,7 @@ namespace Roost.Twins.Entities
 
             public static float VerbWild(Token token, string target)
             {
-                return (IsSituation(token.Payload) && token.PayloadEntityId.Contains(target)) ? token.Quantity : 0;
+                return (IsSituation(token.Payload) && token.PayloadEntityId.StartsWith(target)) ? token.Quantity : 0;
             }
 
             public static float RecipeId(Token token, string target)
@@ -260,7 +260,7 @@ namespace Roost.Twins.Entities
 
             public static float RecipeWild(Token token, string target)
             {
-                return IsSituation(token.Payload) && (token.Payload as Situation).Recipe?.Id.Contains(target) == true ? token.Quantity : 0;
+                return IsSituation(token.Payload) && (token.Payload as Situation).Recipe?.Id.StartsWith(target) == true ? token.Quantity : 0;
             }
 
             public static float RecipeAspect(Token token, string target)
