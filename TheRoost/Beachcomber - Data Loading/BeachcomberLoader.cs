@@ -142,6 +142,7 @@ namespace Roost.Beachcomber
             where TEntity : AbstractEntity<TEntity>
         {
             Type entityType = typeof(TEntity);
+            propertyName = propertyName.ToLower(System.Globalization.CultureInfo.InvariantCulture);
 
             if (defaultValue != null
                 && typeof(TProperty).IsValueType == false && typeof(TProperty) != typeof(string))
@@ -151,9 +152,8 @@ namespace Roost.Beachcomber
             }
 
             if (claimedProperties.ContainsKey(entityType) == false)
-                claimedProperties.Add(entityType, new Dictionary<string, CustomProperty>());
+                claimedProperties.Add(entityType, new Dictionary<string, CustomProperty>(StringComparer.InvariantCultureIgnoreCase));
 
-            propertyName = propertyName.ToLower();
             if (claimedProperties[entityType].ContainsKey(propertyName))
                 Birdsong.Tweet($"Trying to add {entityType.Name} property '{propertyName}', but the property of the same name for the same type is already added.");
             else
@@ -162,18 +162,16 @@ namespace Roost.Beachcomber
 
         internal static object RetrieveProperty(IEntityWithId entity, string propertyName)
         {
-            propertyName = propertyName.ToLower();
-
-            if (entity.HasCustomProperty(propertyName))
+            if (HasCustomProperty(entity, propertyName))
                 return loadedData[entity][propertyName];
             else
             {
                 Type entityType = entity.GetType();
                 if (claimedProperties.ContainsKey(entityType) && claimedProperties[entityType].ContainsKey(propertyName))
                     return claimedProperties[entityType][propertyName].defaultValue;
-                else
-                    return null;
             }
+
+            return null;
         }
 
         internal static Dictionary<string, object> GetCustomProperties(IEntityWithId entity)
@@ -186,8 +184,6 @@ namespace Roost.Beachcomber
 
         internal static void RemoveProperty(IEntityWithId entity, string propertyName)
         {
-            propertyName = propertyName.ToLower();
-
             if (entity.HasCustomProperty(propertyName))
             {
                 loadedData[entity].Remove(propertyName);
@@ -200,38 +196,41 @@ namespace Roost.Beachcomber
 
         internal static void SetCustomProperty(IEntityWithId owner, string propertyName, object value)
         {
-            propertyName = propertyName.ToLower();
             Type ownerType = owner.GetType();
 
             if (claimedProperties.ContainsKey(ownerType) == false || claimedProperties[ownerType].ContainsKey(propertyName) == false)
                 Birdsong.Tweet($"Setting an unclaimed property '{propertyName}' for {ownerType.Name} '{owner.Id}'; possible typo.");
 
             if (loadedData.ContainsKey(owner) == false)
-                loadedData[owner] = new Dictionary<string, object>();
+                loadedData[owner] = new Dictionary<string, object>(StringComparer.InvariantCultureIgnoreCase);
 
             loadedData[owner][propertyName] = value;
         }
 
         internal static bool HasCustomProperty(IEntityWithId entity, string propertyName)
         {
-            return loadedData.ContainsKey(entity) && loadedData[entity].ContainsKey(propertyName.ToLower());
+            return loadedData.ContainsKey(entity) && loadedData[entity].ContainsKey(propertyName);
         }
 
         internal static void InterceptClaimedProperties(IEntityWithId entity, EntityData entityData, Type entityType, ContentImportLog log)
         {
             if (claimedProperties.ContainsKey(entityType))
-                foreach (string propertyName in claimedProperties[entityType].Keys)
-                    if (entityData.ValuesTable.ContainsKey(propertyName))
+                foreach (string claimedProperty in claimedProperties[entityType].Keys)
+                {
+                    //need to keep ToLower() here as ValuesTable is case sensitive (and always lowercase)
+                    string propertyLowercaseName = claimedProperty.ToLower(System.Globalization.CultureInfo.InvariantCulture); 
+
+                    if (entityData.ValuesTable.ContainsKey(propertyLowercaseName)) 
                     {
-                        LoadCustomProperty(entity, propertyName, entityData.ValuesTable[propertyName], log);
-                        entityData.ValuesTable.Remove(propertyName);
+                        LoadCustomProperty(entity, propertyLowercaseName, entityData.ValuesTable[propertyLowercaseName], log);
+                        entityData.ValuesTable.Remove(propertyLowercaseName);
                     }
+                }
         }
 
         internal static void LoadCustomProperty(IEntityWithId entity, string propertyName, object data, ContentImportLog log)
         {
             Type entityType = entity.GetType();
-            propertyName = propertyName.ToLower();
 
             if (claimedProperties.ContainsKey(entityType) && claimedProperties[entityType].ContainsKey(propertyName))
             {
@@ -244,10 +243,7 @@ namespace Roost.Beachcomber
                 try
                 {
                     object importedValue = Panimporter.ImportProperty(data, claimedProperties[entityType][propertyName].type, log);
-
-                    if (loadedData.ContainsKey(entity) == false)
-                        loadedData[entity] = new Dictionary<string, object>();
-                    loadedData[entity].Add(propertyName, importedValue);
+                    SetCustomProperty(entity, propertyName, importedValue);
                 }
                 catch (Exception ex)
                 {
