@@ -198,8 +198,8 @@ namespace Roost.Twins.Entities
             SituationContent, //returns aspect amount from a situation token
             AnySourceAspect, //returns aspect amount from any token
             Verb, VerbWild, //retuns a quantity (likely 1) if the token is a verb
-            Recipe, RecipeWild, //retuns a quantity (likely 1) if the token is a verb running a recipe
             RecipeAspect, //retuns quantity (likely 1) if the token is a verb running a recipe with the defined aspect
+            Recipe, RecipeWild, //retuns a quantity (likely 1) if the token is a verb running a recipe
             Token, Payload, Entity, //return token/its payload/payload entity property; incredibly hacky (and probably slow) rn, but work
             NoArea
         };
