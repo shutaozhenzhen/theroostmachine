@@ -26,11 +26,6 @@ namespace Roost.World.Recipes
 
         internal static void Enact()
         {
-            //instant recipes are instant
-            Machine.Patch(
-                original: typeof(Situation).GetMethodInvariant(nameof(Situation.TransitionToState)),
-                postfix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(ProceedWithInstantRecipe)));
-
             //inductions obey reqs and uses explusions
             Machine.Patch(
                 original: typeof(AttemptAspectInductionCommand).GetMethodInvariant("PerformAspectInduction"),
@@ -63,12 +58,6 @@ namespace Roost.World.Recipes
             Machine.Patch(
                 original: typeof(Situation).GetMethodInvariant(nameof(Situation.ReactToLatestRecipePrediction)),
                 prefix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(DisplayPreview)));
-        }
-
-        private static void ProceedWithInstantRecipe(Situation __instance)
-        {
-            if (__instance.TimeRemaining <= 0f && __instance.StateIdentifier != SecretHistories.Enums.StateEnum.Complete)
-                __instance.State.Continue(__instance);
         }
 
         private static bool GetRefRecipeChance(LinkedRecipeDetails __instance, ref int __result)
