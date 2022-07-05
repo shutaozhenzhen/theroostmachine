@@ -10,6 +10,7 @@ using SecretHistories.Entities;
 using SecretHistories.Core;
 using SecretHistories.Spheres;
 using SecretHistories.Assets.Scripts.Application.Entities.NullEntities;
+using SecretHistories.Infrastructure;
 
 using Roost.Twins;
 using Roost.Twins.Entities;
@@ -162,7 +163,17 @@ namespace Roost.World.Recipes.Entities
                 return;
 
             foreach (string deckId in DeckShuffles)
-                Legerdemain.RenewDeck(deckId);
+            {
+                if (deckId[deckId.Length - 1] == '*')
+                {
+                    string wildDeckId = deckId.Remove(deckId.Length - 1);
+                    foreach (DrawPile pile in Watchman.Get<DealersTable>().GetDrawPiles())
+                        if (pile.GetDeckSpecId().StartsWith(wildDeckId))
+                            Legerdemain.RenewDeck(deckId);
+                }
+                else
+                    Legerdemain.RenewDeck(deckId);
+            }
         }
 
         private void RunDeckEffects(Sphere sphere)
@@ -181,7 +192,7 @@ namespace Roost.World.Recipes.Entities
         {
             if (Effects == null)
                 return;
-                
+
             List<Token> allTokens = sphere.Tokens;
             foreach (FucineExp<bool> filter in Effects.Keys)
             {
