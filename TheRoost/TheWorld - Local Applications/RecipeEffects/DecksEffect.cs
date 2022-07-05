@@ -12,18 +12,20 @@ using Roost.Twins.Entities;
 
 namespace Roost.World.Recipes
 {
-    //order: shuffle, forbid, normal draws, normal effects with references, takeout, allow, add, insert
     public static class Legerdemain
     {
         public const string DECK_AUTO_SHUFFLE = "shuffleAfterDraw";
         public const string DECK_IS_HIDDEN = "isHidden";
+        public const string UNIQUE_RESULTS = "uniqueResults";
+
         private static DealersTable dealerstable;
         private static Dealer dealer;
 
         internal static void Enact()
         {
-            Machine.ClaimProperty<DeckSpec, bool>(DECK_AUTO_SHUFFLE);
-            Machine.ClaimProperty<DeckSpec, bool>(DECK_IS_HIDDEN);
+            Machine.ClaimProperty<DeckSpec, bool>(DECK_AUTO_SHUFFLE, defaultValue: false);
+            Machine.ClaimProperty<DeckSpec, bool>(DECK_IS_HIDDEN, defaultValue: false);
+            Machine.ClaimProperty<DeckSpec, bool>(UNIQUE_RESULTS, defaultValue: true);
             //DeckSpec.Draws is only used for recipe internal decks; to allow them to use expressions, this
             Machine.ClaimProperty<DeckSpec, FucineExp<int>>("draws", false, "1");
         }
@@ -64,6 +66,8 @@ namespace Roost.World.Recipes
             if (drawPile.GetTotalStacksCount() == 0) //catching not-so-mysterious bug
                 dealer.Shuffle(deckSpec);
 
+            bool enforceUniqueDraws = deckSpec.RetrieveProperty<bool>(UNIQUE_RESULTS);
+
             Limbo limbo = Watchman.Get<Limbo>();
             for (int i = 0; i < draws; i++)
             {
@@ -71,10 +75,17 @@ namespace Roost.World.Recipes
                     throw Birdsong.Cack($"DECK '{deckId}' IS EMPTY, WON'T SHUFFLE AND HAS NO DEFAULT CARD (AND SOMEHOW PASSED THE PREVIOUS CHECK)");
 
                 Token token = drawPile.GetElementTokens()[drawPile.GetTotalStacksCount() - 1];
-
                 RecipeExecutionBuffer.ScheduleMovement(token, toSphere, SecretHistories.Enums.RetirementVFX.None);
-                token.SetSphere(limbo, RecipeExecutionBuffer.situationEffectContext);
                 //need to exclude the token from the deck sphere right now so the next calculations and operations are correct
+                token.SetSphere(limbo, RecipeExecutionBuffer.situationEffectContext);
+
+                if (enforceUniqueDraws)
+                {
+                    if (!string.IsNullOrEmpty(token.Payload.UniquenessGroup))
+                        dealer.IndicateElementInUniquenessGroupManifested(token.PayloadEntityId, token.Payload.UniquenessGroup);
+                    if (token.Payload.Unique)
+                        dealer.IndicateUniqueElementManifested(token.Payload.EntityId);
+                }
 
                 if (drawPile.GetTotalStacksCount() == 0 && deckSpec.ResetOnExhaustion)
                     dealer.Shuffle(deckSpec);
