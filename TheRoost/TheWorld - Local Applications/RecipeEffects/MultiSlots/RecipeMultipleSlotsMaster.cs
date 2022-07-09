@@ -52,7 +52,7 @@ namespace Roost.World.Recipes.MultiSlots
         {
             newSlot.transform.SetParent(verbManifestationPrefab.transform);
             newSlot.GetComponent<RectTransform>().anchoredPosition = new Vector2(44.25f - (44.25f * i), -42.75002f);
-            var sm = verbManifestationPrefab.gameObject.AddComponent<MiniSlotManager>();
+            var sm = newSlot.AddComponent<MiniSlotManager>();
             sm.SetSlot(newSlot);
             managers.Add(sm);
         }
