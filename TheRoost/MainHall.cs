@@ -92,6 +92,7 @@ namespace Roost.Enactors
             Roost.World.Recipes.RecipeEffectsMaster.Enact();
 
             Roost.World.Recipes.RecipeLinkMaster.Enact();
+            Roost.World.Recipes.RecipeMultipleSlotsMaster.Enact();
 
             Roost.World.Elements.ElementEffectsMaster.Enact();
 
