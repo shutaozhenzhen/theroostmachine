@@ -29,6 +29,7 @@ namespace Roost.World.Recipes.MultiSlots
 
             List<MiniSlotManager> managers = new();
 
+            // We instantiate a MiniSlotManager to handle the existing minislot GameObject, and two more via a loop to handle the two new minislots.
             GameObject originalOngoingSlot = verbManifestationPrefab.transform.Find("OngoingSlot").gameObject;
             InstantiateNthMiniSlotManager(verbManifestationPrefab, managers, 0, originalOngoingSlot);
 
