@@ -22,6 +22,9 @@ namespace Roost.World.Recipes
         public GameObject secondSlot;
         public GameObject thirdSlot;
         
+        /*
+         * Handles the visibility update of all slots based on the amount of spheres. The entire list is provided because if a slot is visible, we need to provide it the proper sphere so it can check if it is greedy or not
+         * */
         public void DisplayStacksInMiniSlots(List<Sphere> spheres)
         {
             if (spheres.Count == 0)
@@ -46,6 +49,9 @@ namespace Roost.World.Recipes
             }
         }
 
+        /*
+         * Handles the visual state of a visible minislot.
+         */
         void FillSlotVisuals(GameObject slot, Sphere sphere)
         {
             var token = sphere.GetElementTokens().SingleOrDefault();
@@ -76,6 +82,9 @@ namespace Roost.World.Recipes
             slotImage.color = Color.white;
         }
 
+        /*
+         * Update the visibility of a minislot based on the amount of spheres and a threshold value
+         */
         void DisplaySlotIfCountAtLeastEquals(GameObject slot, List<Sphere> spheres, int equals)
         {
             Image image = slot.transform.Find("Artwork").GetComponent<Image>();
@@ -107,6 +116,9 @@ namespace Roost.World.Recipes
             DisplaySlotIfCountAtLeastEquals(thirdSlot, spheres, 3);
         }
 
+        /*
+         * Called each time a Manifestable (recipe) wants to be properly reflected on the verb token's visuals. Handles minislots visibility and artwork+greedy icon
+         */
         public void DisplayRecipeThreshold(IManifestable manifestable)
         {
             var recipeThresholdDominion = manifestable.Dominions.SingleOrDefault(d =>
@@ -138,6 +150,9 @@ namespace Roost.World.Recipes
             PatchVerbManifestationPrefab();
         }
 
+        /*
+         * We add two copies of the OngoingSlot object and add a custom component to handle them. We also patch VerbManifestation.DisplayRecipeThreshold so it calls to this component instead of running its own logic
+         */
         private static void PatchVerbManifestationPrefab()
         {
             VerbManifestation verbManifestationPrefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<VerbManifestation>();
@@ -161,12 +176,16 @@ namespace Roost.World.Recipes
             );
         }
 
+        // We move the countdown slightly to the left to match the wider situation window
         private static void PatchCountdownViewInSituationWindowPrefab(SituationWindow situationWindowPrefab)
         {
             GameObject countdown = situationWindowPrefab.transform.Find("RecipeThresholdsDominion/SituationCountdownView").gameObject;
             countdown.GetComponent<RectTransform>().anchoredPosition = new Vector2(-35, 0);
         }
 
+        /*
+         * We patch the ThresholdSphere prefab so it destroys itself immediately when asked to retire
+         */
         private static void PatchThresholdSpherePrefab()
         {
             ThresholdSphere thresholdSpherePrefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<ThresholdSphere>();
@@ -178,6 +197,9 @@ namespace Roost.World.Recipes
                 prefix: typeof(RecipeMultipleSlotsMaster).GetMethodInvariant(nameof(HideImmediately)));
         }
 
+        /*
+         * We patch the Holder game object containing the ThresholdSpheres, adding a HorizontalLayoutGroup to display it properly, and moving it slightly to the lef to match the wider situation window
+         */
         private static void PatchThresholdsHolderInSituationWindowPrefab(GameObject holder)
         {
             var hlg = holder.AddComponent<HorizontalLayoutGroup>();
@@ -192,6 +214,9 @@ namespace Roost.World.Recipes
             holderRect.sizeDelta = new Vector2(270, 120);
         }
 
+        /*
+         * Widen the SituationWindow and set the max spheres allowed to 3. Call the patching of the thresholds holder object.
+         */
         static void PatchSituationWindowPrefab()
         {
             SituationWindow situationWindowPrefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<SituationWindow>();
