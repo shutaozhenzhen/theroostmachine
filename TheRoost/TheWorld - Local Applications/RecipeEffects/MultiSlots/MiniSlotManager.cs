@@ -1,10 +1,6 @@
 ﻿using SecretHistories.Spheres;
 using SecretHistories.UI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,55 +11,42 @@ namespace Roost.World.Recipes.MultiSlots
      */
     public class MiniSlotManager : MonoBehaviour
     {
-        public GameObject slot;
-        public Image slotImage;
-        public GameObject slotGreedyIcon;
+        [SerializeField] private Image slotImage;
+        [SerializeField] private GameObject slotGreedyIcon;
+        [SerializeField] private ParticleSystem appearFX;
 
-        public void SetSlot(GameObject slotToSet)
+        public void Initialise()
         {
-            slot = slotToSet;
-            slotImage = slotToSet.transform.Find("Artwork").GetComponent<Image>();
-            slotGreedyIcon = slotToSet.transform.Find("GreedySlotIcon").gameObject;
-        }
-
-        public void EmptySlot()
-        {
-            slotImage.sprite = null;
-            slotImage.color = Color.black;
+            slotImage = this.transform.Find("Artwork").GetComponent<Image>();
+            slotGreedyIcon = this.transform.Find("GreedySlotIcon").gameObject;
+            appearFX = this.gameObject.GetComponentInChildren<ParticleSystem>();
         }
 
         public void UpdateSlotVisuals(Sphere sphere)
         {
-            var token = sphere.GetElementTokens().SingleOrDefault();
+            var token = sphere.GetElementTokens().Find(x => true);
             if (token == null)
             {
-                EmptySlot();
+                slotImage.sprite = null;
+                slotImage.color = Color.black;
             }
             else
             {
                 ElementStack elementStackLordForgiveMe = token.Payload as ElementStack;
-                slotImage.sprite = ResourcesManager.GetSpriteForElement(elementStackLordForgiveMe?.Icon);
+                slotImage.sprite = ResourcesManager.GetSpriteForElement(elementStackLordForgiveMe.Icon);
                 slotImage.color = Color.white;
             }
         }
 
-        public void DisplaySlotIfCountAtLeastEquals(List<Sphere> spheres, int equals)
+        public void DisplaySlot(bool greedy)
         {
-            if (spheres.Count < equals)
-            {
-                slot.SetActive(false);
-                slotImage.gameObject.SetActive(false);
-                slotGreedyIcon.SetActive(false);
-            }
-            else if (!slotImage.isActiveAndEnabled)
-            {
-                slot.SetActive(true);
-                slotImage.gameObject.SetActive(true);
-                //ongoingSlotAppearFX.Play();
-                if (equals == 1) SoundManager.PlaySfx("SituationTokenShowOngoingSlot");
+            slotGreedyIcon.SetActive(greedy);
 
-                bool isGreedy = spheres[equals - 1].GoverningSphereSpec.Greedy;
-                slotGreedyIcon.SetActive(isGreedy);
+            if (!this.gameObject.activeInHierarchy)
+            {
+                this.gameObject.SetActive(true);
+                SoundManager.PlaySfx("SituationTokenShowOngoingSlot");
+                appearFX.Play();
             }
         }
     }

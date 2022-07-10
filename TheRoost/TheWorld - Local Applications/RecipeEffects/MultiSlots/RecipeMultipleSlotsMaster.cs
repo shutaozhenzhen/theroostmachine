@@ -11,8 +11,6 @@ namespace Roost.World.Recipes.MultiSlots
 {
     class RecipeMultipleSlotsMaster : MonoBehaviour
     {
-        static readonly Action<object, object> MaxSpheresAllowedSetter = typeof(SituationDominion).GetFieldInvariant("MaxSpheresAllowed").SetValue;
-
         public static void Enact()
         {
             PatchSituationWindowPrefab();
@@ -27,16 +25,16 @@ namespace Roost.World.Recipes.MultiSlots
         {
             VerbManifestation verbManifestationPrefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<VerbManifestation>();
 
-            List<MiniSlotManager> managers = new();
+            List<MiniSlotManager> managers = new List<MiniSlotManager>();
 
             // We instantiate a MiniSlotManager to handle the existing minislot GameObject, and two more via a loop to handle the two new minislots.
             GameObject originalOngoingSlot = verbManifestationPrefab.transform.Find("OngoingSlot").gameObject;
-            InstantiateNthMiniSlotManager(verbManifestationPrefab, managers, 0, originalOngoingSlot);
+            InitialiseNthMiniSlot(verbManifestationPrefab, managers, 0, originalOngoingSlot);
 
-            for(int i=1; i<3; i++)
+            for(int n=1; n<3; n++)
             {
                 GameObject newSlot = Instantiate(originalOngoingSlot);
-                InstantiateNthMiniSlotManager(verbManifestationPrefab, managers, i, newSlot);
+                InitialiseNthMiniSlot(verbManifestationPrefab, managers, n, newSlot);
             }
 
             var msm = verbManifestationPrefab.gameObject.AddComponent<MultipleSlotsManager>();
@@ -48,12 +46,12 @@ namespace Roost.World.Recipes.MultiSlots
             );
         }
 
-        private static void InstantiateNthMiniSlotManager(VerbManifestation verbManifestationPrefab, List<MiniSlotManager> managers, int i, GameObject newSlot)
+        private static void InitialiseNthMiniSlot(VerbManifestation verbManifestationPrefab, List<MiniSlotManager> managers, int n, GameObject newSlot)
         {
             newSlot.transform.SetParent(verbManifestationPrefab.transform);
-            newSlot.GetComponent<RectTransform>().anchoredPosition = new Vector2(44.25f - (44.25f * i), -42.75002f);
+            newSlot.GetComponent<RectTransform>().anchoredPosition = new Vector2(44.25f - (44.25f * n), -42.75002f);
             var sm = newSlot.AddComponent<MiniSlotManager>();
-            sm.SetSlot(newSlot);
+            sm.Initialise();
             managers.Add(sm);
         }
 
@@ -106,7 +104,7 @@ namespace Roost.World.Recipes.MultiSlots
             PatchCountdownViewInSituationWindowPrefab(situationWindowPrefab);
 
             SituationDominion thresholdsDominion = situationWindowPrefab.transform.Find("RecipeThresholdsDominion").GetComponent<SituationDominion>();
-            MaxSpheresAllowedSetter(thresholdsDominion, 3);
+            typeof(SituationDominion).GetFieldInvariant("MaxSpheresAllowed").SetValue(thresholdsDominion, 3);
 
             GameObject holder = situationWindowPrefab.transform.Find("RecipeThresholdsDominion/ThresholdHolder").gameObject;
             PatchThresholdsHolderInSituationWindowPrefab(holder);

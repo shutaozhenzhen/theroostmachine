@@ -3,7 +3,6 @@ using SecretHistories.Enums;
 using SecretHistories.Manifestations;
 using SecretHistories.Spheres;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace Roost.World.Recipes.MultiSlots
@@ -14,30 +13,20 @@ namespace Roost.World.Recipes.MultiSlots
     public class MultipleSlotsManager : MonoBehaviour
     {
         public List<MiniSlotManager> miniSlotManagers;
-        
-        /*
-         * Handles the visibility update of all slots based on the amount of spheres. The entire list is provided because if a slot is visible, we need to provide it the proper sphere so it can check if it is greedy or not
-         * */
-        public void DisplayStacksInMiniSlots(List<Sphere> spheres)
-        {
-            if (spheres.Count == 0)
-            {
-                miniSlotManagers.ForEach(slot => slot.EmptySlot());
-                return;
-            }
-            int sphereToGive = spheres.Count-1;
-            for(int i=0; i<spheres.Count; i++, sphereToGive--)
-            {
-                miniSlotManagers[i].UpdateSlotVisuals(spheres[sphereToGive]);
-            }
-        }
 
-        void UpdateSlotsVisibility(List<Sphere> spheres)
+        /*
+         * Handles the visibility update of all slots based on the amount of spheres.          
+         */
+        void UpdateSlots(List<Sphere> spheres)
         {
             for (int i = 0; i < miniSlotManagers.Count; i++)
-            {
-                miniSlotManagers[i].DisplaySlotIfCountAtLeastEquals(spheres, i+1);
-            }
+                if (i < spheres.Count)
+                {
+                    miniSlotManagers[i].DisplaySlot(spheres[i].GoverningSphereSpec.Greedy);
+                    miniSlotManagers[i].UpdateSlotVisuals(spheres[i]);
+                }
+                else
+                    miniSlotManagers[i].gameObject.SetActive(false);
         }
 
         /*
@@ -45,15 +34,15 @@ namespace Roost.World.Recipes.MultiSlots
          */
         public void DisplayRecipeThreshold(IManifestable manifestable)
         {
-            var recipeThresholdDominion = manifestable.Dominions.SingleOrDefault(d =>
+            var recipeThresholdDominion = manifestable.Dominions.Find(d =>
                 d.Identifier == SituationDominionEnum.RecipeThresholds.ToString());
 
             if (recipeThresholdDominion == null)
                 return;
 
-            var recipeThresholdSpheres = recipeThresholdDominion.Spheres;
-            UpdateSlotsVisibility(recipeThresholdSpheres);
-            DisplayStacksInMiniSlots(recipeThresholdSpheres);
+            List<Sphere> spheres = recipeThresholdDominion.Spheres;
+            spheres.Reverse();
+            UpdateSlots(spheres);
         }
 
         public static bool _DisplayRecipeThreshold(IManifestable manifestable, VerbManifestation __instance)
