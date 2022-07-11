@@ -121,7 +121,6 @@ namespace Roost.World
 
         internal static void AddTextLever(string lever, string value)
         {
-            Birdsong.Sing(lever, value);
             _textLevers[lever] = value;
         }
 
@@ -226,7 +225,6 @@ namespace Roost.World.Entities
         public LeverData(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
         {
-            Birdsong.Sing(textLevers);
             foreach (KeyValuePair<string, string> textLever in textLevers)
                 Scribe.AddTextLever(textLever.Key, textLever.Value);
         }
