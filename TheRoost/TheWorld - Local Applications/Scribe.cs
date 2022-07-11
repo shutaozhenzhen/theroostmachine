@@ -4,19 +4,79 @@ using System.Collections.Generic;
 using SecretHistories.UI;
 using SecretHistories.Core;
 using SecretHistories.Entities;
+using SecretHistories.Enums;
+using SecretHistories.Fucine;
+using SecretHistories.Fucine.DataImport;
 
 namespace Roost.World
 {
     public static class Scribe
     {
+        private static readonly Dictionary<string, string> _textLevers = new Dictionary<string, string>();
+        private static readonly Func<object, object> _currentLevers = typeof(Character).GetFieldInvariant("_previousCharacterHistoryRecords").GetValue;
+        private static readonly Func<object, object> _futureLevers = typeof(Character).GetFieldInvariant("_inProgressHistoryRecords").GetValue;
+
+        private const string SET_LEVERS_CURRENT = "setLeversCurrent";
+        private const string SET_LEVERS_FUTURE = "setLeversFuture";
+        internal static void Enact()
+        {
+            Machine.ClaimProperty<Recipe, Dictionary<string, string>>(SET_LEVERS_CURRENT);
+            Machine.ClaimProperty<Recipe, Dictionary<string, string>>(SET_LEVERS_FUTURE);
+
+            AtTimeOfPower.RecipeExecution.Schedule<RecipeCompletionEffectCommand, Situation>(RecipeEffectLevers, PatchType.Postfix);
+            AtTimeOfPower.CompendiumLoad.Schedule(ResetTextLevers, PatchType.Prefix);
+        }
+
+        internal static void RecipeEffectLevers(RecipeCompletionEffectCommand __instance, Situation situation)
+        {
+            AspectsDictionary aspects = situation.GetSingleSphereByCategory(SphereCategory.SituationStorage)?.GetTotalAspects(true);
+
+            Dictionary<string, string> setLeversCurrent = __instance.Recipe.RetrieveProperty(SET_LEVERS_CURRENT) as Dictionary<string, string>;
+            if (setLeversCurrent != null)
+                foreach (string lever in setLeversCurrent.Keys)
+                    if (lever == "")
+                        RemoveLeverForCurrentPlaythrough(lever);
+                    else
+                    {
+                        string refinedString = RefineString(setLeversCurrent[lever], aspects);
+                        SetLeverForCurrentPlaythrough(lever, refinedString);
+                    }
+
+            Dictionary<string, string> setLeversFuture = __instance.Recipe.RetrieveProperty(SET_LEVERS_CURRENT) as Dictionary<string, string>;
+            if (setLeversFuture != null)
+                foreach (string lever in setLeversFuture.Keys)
+                    if (lever == "")
+                        RemoveLeverForNextPlaythrough(lever);
+                    else
+                    {
+                        string refinedString = RefineString(setLeversFuture[lever], aspects);
+                        SetLeverForNextPlaythrough(lever, refinedString);
+                    }
+        }
+
+        internal static void SetLever(Dictionary<string, string> levers, string lever, string value)
+        {
+            levers[lever] = value;
+        }
+
+        internal static void RemoveLever(Dictionary<string, string> levers, string lever)
+        {
+            levers.Remove(lever);
+        }
+
+        internal static void ClearLevers(Dictionary<string, string> levers)
+        {
+            levers.Clear();
+        }
+
         internal static void SetLeverForCurrentPlaythrough(string lever, string value)
         {
-            Watchman.Get<Stable>().Protag().SetOrOverwritePastLegacyEventRecord(lever, value);
+            SetLever(_currentLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>, lever, value);
         }
 
         internal static void SetLeverForNextPlaythrough(string lever, string value)
         {
-            Watchman.Get<Stable>().Protag().SetFutureLegacyEventRecord(lever, value);
+            SetLever(_futureLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>, lever, value);
         }
 
         internal static string GetLeverForCurrentPlaythrough(string lever)
@@ -31,29 +91,22 @@ namespace Roost.World
 
         internal static void RemoveLeverForCurrentPlaythrough(string lever)
         {
-            GetLeverField(_currentLevers).Remove(lever);
-        }
-
-        internal static void ClearLeversForCurrentPlaythrough()
-        {
-            GetLeverField(_currentLevers).Clear();
+            RemoveLever(_currentLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>, lever);
         }
 
         internal static void RemoveLeverForNextPlaythrough(string lever)
         {
-            GetLeverField(_futureLevers).Remove(lever);
+            RemoveLever(_futureLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>, lever);
+        }
+
+        internal static void ClearLeversForCurrentPlaythrough()
+        {
+            ClearLevers(_currentLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>);
         }
 
         internal static void ClearLeversForNextPlaythrough()
         {
-            GetLeverField(_futureLevers).Clear();
-        }
-
-        private static readonly Func<object, object> _currentLevers = typeof(Character).GetFieldInvariant("_previousCharacterHistoryRecords").GetValue;
-        private static readonly Func<object, object> _futureLevers = typeof(Character).GetFieldInvariant("_inProgressHistoryRecords").GetValue;
-        private static Dictionary<string, string> GetLeverField(Func<object, object> LeverFieldGetter)
-        {
-            return LeverFieldGetter(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>;
+            ClearLevers(_futureLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>);
         }
 
         internal static Dictionary<string, string> GetLeversForCurrentPlaythrough()
@@ -66,16 +119,28 @@ namespace Roost.World
             return Watchman.Get<Stable>().Protag().InProgressHistoryRecords;
         }
 
-        private static readonly List<string> textLevers = new List<string>();
-        internal static void MarkTextLever(string levers)
+        internal static void AddTextLever(string lever, string value)
         {
-            textLevers.Add(levers);
+            Birdsong.Sing(lever, value);
+            _textLevers[lever] = value;
+        }
+
+        internal static void ResetTextLevers()
+        {
+            _textLevers.Clear();
         }
 
         public static string RefineString(string str, AspectsDictionary aspects)
         {
             if (string.IsNullOrWhiteSpace(str))
                 return str;
+
+            foreach (string lever in _textLevers.Keys)
+            {
+                string leverdata = GetLeverForCurrentPlaythrough(lever) ?? _textLevers[lever];
+                str = str.Replace(lever, leverdata);
+            }
+
             if (str.Contains("@") == false)
                 return str;
 
@@ -96,9 +161,6 @@ namespace Roost.World
                 //and non-refined parts in-between
                 result += parts[n + 1];
             }
-
-            foreach (string lever in textLevers)
-                result = result.Replace(lever, GetLeverForCurrentPlaythrough(lever));
 
             return result.Trim();
         }
@@ -150,6 +212,24 @@ namespace Roost.World
             { "$value", (aspectId, aspects) => aspects.AspectValue(aspectId).ToString() },
             { "$icon", (aspectId, aspects) => "<sprite name=" + aspectId + ">"},
         };
+    }
+}
+
+namespace Roost.World.Entities
+{
+    [FucineImportable("levers")]
+    public class LeverData : AbstractEntity<LeverData>
+    {
+        [FucineDict] public Dictionary<string, string> textLevers { get; set; }
+        //finally, your entity needs to implement two methods of AbstractEntity<T> - constructor and OnPostImportForSpecificEntity()
+        //both of them can remain empty but the second one is sometimes useful - it's called right after all entities are imported
+        public LeverData(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
+        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
+        {
+            Birdsong.Sing(textLevers);
+            foreach (KeyValuePair<string, string> textLever in textLevers)
+                Scribe.AddTextLever(textLever.Key, textLever.Value);
+        }
     }
 }
 
@@ -205,11 +285,6 @@ namespace Roost
         public static void ClearLeversForNextPlaythrough()
         {
             World.Scribe.ClearLeversForNextPlaythrough();
-        }
-
-        public static void MarkTextLever(string lever)
-        {
-            Roost.World.Scribe.MarkTextLever(lever);
         }
     }
 }
