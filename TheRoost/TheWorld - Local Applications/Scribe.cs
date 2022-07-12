@@ -53,12 +53,12 @@ namespace Roost.World
                     }
         }
 
-        internal static void SetLever(Dictionary<string, string> levers, string lever, string value)
+        private static void SetLever(Dictionary<string, string> levers, string lever, string value)
         {
             levers[lever] = value;
         }
 
-        internal static string GetLever(Dictionary<string, string> levers, string lever)
+        private static string GetLever(Dictionary<string, string> levers, string lever)
         {
             if (!levers.TryGetValue(lever, out string result))
                 _defaultValues.TryGetValue(lever, out result);
@@ -66,12 +66,12 @@ namespace Roost.World
             return result;
         }
 
-        internal static void RemoveLever(Dictionary<string, string> levers, string lever)
+        private static void RemoveLever(Dictionary<string, string> levers, string lever)
         {
             levers.Remove(lever);
         }
 
-        internal static void ClearLevers(Dictionary<string, string> levers)
+        private static void ClearLevers(Dictionary<string, string> levers)
         {
             levers.Clear();
         }
