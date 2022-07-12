@@ -126,7 +126,8 @@ namespace Roost.World.Recipes
             movements.Clear();
         }
 
-        public static void ApplyInductions()
+        //applied separately
+        public static void ApplyRecipeInductions()
         {
             foreach (Situation situation in inductions.Keys)
             {
@@ -243,7 +244,7 @@ namespace Roost.World.Recipes
             ScheduleVFX(token, vfx);
         }
 
-        public static void ScheduleInduction(Situation situation, LinkedRecipeDetails link)
+        public static void ScheduleRecipeInduction(Situation situation, LinkedRecipeDetails link)
         {
             if (inductions.ContainsKey(situation) == false)
                 inductions[situation] = new List<LinkedRecipeDetails>();

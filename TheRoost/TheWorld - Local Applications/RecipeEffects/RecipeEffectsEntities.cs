@@ -54,12 +54,17 @@ namespace Roost.World.Recipes.Entities
             {
                 Crossroads.MarkLocalSphere(localSphere);
                 RunXTriggers(null, localSphere, situation, true);
+
+                RecipeExecutionBuffer.ApplyVFX();
+                RecipeExecutionBuffer.ApplyRecipeInductions();
             }
             else
+            {
                 grandEffects.Run(situation, localSphere, true);
 
-            RecipeExecutionBuffer.ApplyVFX();
-            RecipeExecutionBuffer.ApplyInductions();
+                RecipeExecutionBuffer.ApplyVFX();
+                RecipeExecutionBuffer.ApplyRecipeInductions();
+            }
         }
 
         private void Run(Situation situation, Sphere localSphere, bool localXtriggers)
@@ -76,7 +81,7 @@ namespace Roost.World.Recipes.Entities
             RunVerbManipulations();
             RunDistantEffects(situation);
             RunMovements(localSphere);
-            RunInductions(situation);
+            RunRecipeInductions(situation);
         }
 
         private void RunRootEffects()
@@ -286,13 +291,13 @@ namespace Roost.World.Recipes.Entities
             RecipeExecutionBuffer.ApplyMovements();
         }
 
-        private void RunInductions(Situation situation)
+        private void RunRecipeInductions(Situation situation)
         {
             if (Induces == null)
                 return;
 
             foreach (LinkedRecipeDetails link in Induces)
-                RecipeExecutionBuffer.ScheduleInduction(situation, link);
+                RecipeExecutionBuffer.ScheduleRecipeInduction(situation, link);
         }
 
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
@@ -544,7 +549,7 @@ namespace Roost.World.Recipes.Entities
                         RecipeExecutionBuffer.ScheduleMutation(targetToken, targetElementId, -targetElementAmount, true, RetirementVFX.None);
                     break;
                 case MorphEffectsExtended.Induce:
-                    RecipeExecutionBuffer.ScheduleInduction(situation, Induction);
+                    RecipeExecutionBuffer.ScheduleRecipeInduction(situation, Induction);
                     break;
                 case MorphEffectsExtended.Link:
                     Machine.PushTemporaryRecipeLink(this.Id, Level.value);
