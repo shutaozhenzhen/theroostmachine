@@ -12,7 +12,6 @@ namespace Roost.World
 {
     public static class Scribe
     {
-        private static readonly Dictionary<string, string> _textLevers = new Dictionary<string, string>();
         private static readonly Func<object, object> _currentLevers = typeof(Character).GetFieldInvariant("_previousCharacterHistoryRecords").GetValue;
         private static readonly Func<object, object> _futureLevers = typeof(Character).GetFieldInvariant("_inProgressHistoryRecords").GetValue;
 
@@ -24,7 +23,7 @@ namespace Roost.World
             Machine.ClaimProperty<Recipe, Dictionary<string, string>>(SET_LEVERS_FUTURE);
 
             AtTimeOfPower.RecipeExecution.Schedule<RecipeCompletionEffectCommand, Situation>(RecipeEffectLevers, PatchType.Postfix);
-            AtTimeOfPower.CompendiumLoad.Schedule(ResetTextLevers, PatchType.Prefix);
+            AtTimeOfPower.CompendiumLoad.Schedule(ResetGlobalLeversData, PatchType.Prefix);
         }
 
         internal static void RecipeEffectLevers(RecipeCompletionEffectCommand __instance, Situation situation)
@@ -59,6 +58,14 @@ namespace Roost.World
             levers[lever] = value;
         }
 
+        internal static string GetLever(Dictionary<string, string> levers, string lever)
+        {
+            if (!levers.TryGetValue(lever, out string result))
+                _defaultValues.TryGetValue(lever, out result);
+
+            return result;
+        }
+
         internal static void RemoveLever(Dictionary<string, string> levers, string lever)
         {
             levers.Remove(lever);
@@ -81,12 +88,12 @@ namespace Roost.World
 
         internal static string GetLeverForCurrentPlaythrough(string lever)
         {
-            return Watchman.Get<Stable>().Protag().GetPastLegacyEventRecord(lever);
+            return GetLever(_currentLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>, lever);
         }
 
         internal static string GetLeverForNextPlaythrough(string lever)
         {
-            return Watchman.Get<Stable>().Protag().GetFutureLegacyEventRecord(lever);
+            return GetLever(_futureLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>, lever);
         }
 
         internal static void RemoveLeverForCurrentPlaythrough(string lever)
@@ -119,13 +126,21 @@ namespace Roost.World
             return Watchman.Get<Stable>().Protag().InProgressHistoryRecords;
         }
 
-        internal static void AddTextLever(string lever, string value)
+        private static readonly List<string> _textLevers = new List<string>();
+        private static readonly Dictionary<string, string> _defaultValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        internal static void AddTextLever(string lever)
         {
-            _textLevers[lever] = value;
+            _textLevers.Add(lever);
         }
 
-        internal static void ResetTextLevers()
+        internal static void AddLeverDefaultValue(string lever, string value)
         {
+            _defaultValues.Add(lever, value);
+        }
+
+        internal static void ResetGlobalLeversData()
+        {
+            _defaultValues.Clear();
             _textLevers.Clear();
         }
 
@@ -134,9 +149,9 @@ namespace Roost.World
             if (string.IsNullOrWhiteSpace(str))
                 return str;
 
-            foreach (string lever in _textLevers.Keys)
+            foreach (string lever in _textLevers)
             {
-                string leverdata = GetLeverForCurrentPlaythrough(lever) ?? _textLevers[lever];
+                string leverdata = GetLeverForCurrentPlaythrough(lever) ?? _defaultValues[lever];
                 str = str.Replace(lever, leverdata);
             }
 
@@ -219,14 +234,18 @@ namespace Roost.World.Entities
     [FucineImportable("levers")]
     public class LeverData : AbstractEntity<LeverData>
     {
-        [FucineDict] public Dictionary<string, string> textLevers { get; set; }
+        [FucineDict] public Dictionary<string, string> defaultValues { get; set; }
+        [FucineList] public List<string> textLevers { get; set; }
         //finally, your entity needs to implement two methods of AbstractEntity<T> - constructor and OnPostImportForSpecificEntity()
         //both of them can remain empty but the second one is sometimes useful - it's called right after all entities are imported
         public LeverData(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
         {
-            foreach (KeyValuePair<string, string> textLever in textLevers)
-                Scribe.AddTextLever(textLever.Key, textLever.Value);
+            foreach (KeyValuePair<string, string> leverWithDefaultValue in defaultValues)
+                Scribe.AddLeverDefaultValue(leverWithDefaultValue.Key.ToUpper(), leverWithDefaultValue.Value);
+
+            foreach (string textLever in textLevers)
+                Scribe.AddTextLever(textLever);
         }
     }
 }
