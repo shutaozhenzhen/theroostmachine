@@ -16,7 +16,7 @@ namespace Roost.Twins
         const char filterOpening = '{';
         const char filterClosing = '}';
 
-        public static List<FucineRef> LoadReferencesForExpressin(ref string expression)
+        public static List<FucineRef> LoadReferencesForExpression(ref string expression)
         {
             try
             {
