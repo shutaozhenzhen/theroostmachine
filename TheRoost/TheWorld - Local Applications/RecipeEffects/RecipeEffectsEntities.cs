@@ -88,9 +88,11 @@ namespace Roost.World.Recipes.Entities
 
             foreach (string elementId in RootEffects.Keys)
                 scheduledMutations.Add(elementId, RootEffects[elementId].value);
-
+            FucineRoot root = FucineRoot.Get();
             foreach (string elementId in RootEffects.Keys)
-                FucineRoot.Get().SetMutation(elementId, scheduledMutations[elementId], true);
+                RecipeExecutionBuffer.ScheduleMutation(root, null, elementId, scheduledMutations[elementId], true, RetirementVFX.None);
+
+            RecipeExecutionBuffer.ApplyMutations();
         }
 
         private void RunMutations(Sphere sphere)

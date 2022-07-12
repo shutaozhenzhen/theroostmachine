@@ -4,13 +4,15 @@ using SecretHistories.Entities;
 using SecretHistories.UI;
 using SecretHistories.Spheres;
 using SecretHistories.Enums;
+using Assets.Scripts.Application.Abstract;
+using SecretHistories.Abstract;
 
 namespace Roost.World.Recipes
 {
     public static class RecipeExecutionBuffer
     {
         private static readonly HashSet<Token> retirements = new HashSet<Token>();
-        private static readonly Dictionary<ScheduledMutation, List<Token>> mutations = new Dictionary<ScheduledMutation, List<Token>>();
+        private static readonly Dictionary<ScheduledMutation, List<IHasAspects>> mutations = new Dictionary<ScheduledMutation, List<IHasAspects>>();
         private static readonly Dictionary<ElementStack, string> transformations = new Dictionary<ElementStack, string>();
         private static readonly Dictionary<Sphere, List<ScheduledCreation>> creations = new Dictionary<Sphere, List<ScheduledCreation>>();
         //private static readonly Dictionary<Token, int> quantityChanges = new Dictionary<Token, int>();
@@ -73,10 +75,12 @@ namespace Roost.World.Recipes
         public static void ApplyMutations()
         {
             foreach (ScheduledMutation mutation in mutations.Keys)
-                foreach (Token token in mutations[mutation])
+                foreach (IHasAspects payload in mutations[mutation])
                 {
-                    mutation.Apply(token);
-                    token.Sphere.MarkAsDirty();
+                    mutation.Apply(payload);
+                    IManifestable manifestablePayload = payload as IManifestable;
+                    if (manifestablePayload != null)
+                        manifestablePayload?.GetToken().Sphere.MarkAsDirty();
                 }
             mutations.Clear();
         }
@@ -171,25 +175,33 @@ namespace Roost.World.Recipes
             deckRenews.Add(deckId);
         }
 
-        public static void ScheduleMutation(Token token, string mutate, int level, bool additive, RetirementVFX vfx)
+        public static void ScheduleMutation(IHasAspects payload, Token token, string mutate, int level, bool additive, RetirementVFX vfx)
         {
             ScheduledMutation futureMutation = new ScheduledMutation(mutate, level, additive);
             if (mutations.ContainsKey(futureMutation) == false)
-                mutations[futureMutation] = new List<Token>();
-            mutations[futureMutation].Add(token);
+                mutations[futureMutation] = new List<IHasAspects>();
+            mutations[futureMutation].Add(payload);
 
-            ScheduleVFX(token, vfx);
+            if (token != null)
+                ScheduleVFX(token, vfx);
+        }
+
+        public static void ScheduleMutation(Token token, string mutate, int level, bool additive, RetirementVFX vfx)
+        {
+            ScheduleMutation(token.Payload, token, mutate, level, additive, vfx);
         }
 
         public static void ScheduleMutation(List<Token> tokens, string mutate, int level, bool additive, RetirementVFX vfx)
         {
             ScheduledMutation futureMutation = new ScheduledMutation(mutate, level, additive);
             if (mutations.ContainsKey(futureMutation) == false)
-                mutations[futureMutation] = new List<Token>();
-            mutations[futureMutation].AddRange(tokens);
+                mutations[futureMutation] = new List<IHasAspects>();
 
             foreach (Token token in tokens)
+            {
+                mutations[futureMutation].Add(token.Payload);
                 ScheduleVFX(token, vfx);
+            }
         }
 
         public static void ScheduleTransformation(Token token, string transformTo, RetirementVFX vfx)
@@ -254,9 +266,9 @@ namespace Roost.World.Recipes
             public ScheduledMutation(string mutate, int level, bool additive)
             { this.mutate = mutate; this.level = level; this.additive = additive; }
 
-            public void Apply(Token onToken)
+            public void Apply(IHasAspects payload)
             {
-                onToken.Payload.SetMutation(mutate, level, additive);
+                payload.SetMutation(mutate, level, additive);
             }
         }
 
