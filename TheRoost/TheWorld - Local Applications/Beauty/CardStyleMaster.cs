@@ -164,7 +164,7 @@ namespace Roost.World.Beauty
 
         private static void IsElementRefined(SecretHistories.Fucine.DataImport.EntityData entityData)
         {
-            if (entityData.ContainsKey(DYNAMIC_ICON) || entityData.ContainsKey(DYNAMIC_LABEL) || (entityData[DYNAMIC_DESCRIPTION] as string)?.Contains("@") == true)
+            if (entityData.ContainsKey(DYNAMIC_ICON) || entityData.ContainsKey(DYNAMIC_LABEL) || (entityData[DYNAMIC_DESCRIPTION] as string)?.Contains("#") == true)
                 entityData[REFINED] = true;
         }
 
