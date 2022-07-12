@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Reflection;
-using System.Reflection.Emit;
 using System.Linq;
 using System.Collections.Generic;
 
+using SecretHistories.UI;
 using SecretHistories.Core;
 using SecretHistories.Entities;
 using SecretHistories.Infrastructure;
@@ -112,6 +112,8 @@ namespace Roost.Vagabond
  { AtTimeOfPower.QuoteSceneInit, typeof(SplashScreen).GetMethodInvariant("Start") },
  { AtTimeOfPower.MenuSceneInit, typeof(MenuScreenController).GetMethodInvariant("InitialiseServices") },
  { AtTimeOfPower.TabletopSceneInit, typeof(GameGateway).GetMethodInvariant("PopulateEnvironment") },
+ { AtTimeOfPower.GameOverSceneInit, typeof(GameOverScreenController).GetMethodInvariant("OnEnable") },
+ { AtTimeOfPower.NewGameSceneInit, typeof(NewGameScreenController).GetMethodInvariant("Start") },
 
  { AtTimeOfPower.NewGame, typeof(MenuScreenController).GetMethodInvariant(nameof(MenuScreenController.BeginNewSaveWithSpecifiedLegacy)) },
 
@@ -322,7 +324,7 @@ namespace Roost
     public enum AtTimeOfPower
     {
 
-        QuoteSceneInit, MenuSceneInit, NewGame, TabletopSceneInit,
+        QuoteSceneInit, MenuSceneInit, NewGame, TabletopSceneInit, GameOverSceneInit, NewGameSceneInit,
         RecipeRequirementsCheck, RecipeExecution,
         RecipePortals, RecipeVFX,
         OnPostImportCulture, OnPostImportDeck, OnPostImportElement, OnPostImportEnding, OnPostImportExpulsion, OnPostImportLegacy, OnPostImportLink,

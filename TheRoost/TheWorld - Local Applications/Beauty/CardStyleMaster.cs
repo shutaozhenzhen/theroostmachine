@@ -158,6 +158,8 @@ namespace Roost.World.Beauty
             Machine.Patch(
                 original: typeof(ElementStackSimple).GetMethodInvariant(nameof(ElementStackSimple.Populate)),
                 postfix: typeof(ElementStackRefiner).GetMethodInvariant(nameof(SetIconAndLabelForMagnifyingGlass)));
+
+            AtTimeOfPower.NewGameSceneInit.Schedule(ResetIconAndLabelForElementStackSimple, PatchType.Prefix);
         }
 
         private static void IsElementRefined(SecretHistories.Fucine.DataImport.EntityData entityData)
@@ -344,8 +346,8 @@ namespace Roost.World.Beauty
             return instructions.ReplaceSegment(start, end, myCode, true, true); ;
         }
 
-        static Sprite currentSprite;
-        static string currentLabel;
+        static Sprite currentSprite = null;
+        static string currentLabel = null;
         private static void StoreIconAndLabelForMagnifyingGlass(Image ___artwork, TextMeshProUGUI ___text)
         {
             currentSprite = ___artwork.sprite;
@@ -354,8 +356,19 @@ namespace Roost.World.Beauty
 
         private static void SetIconAndLabelForMagnifyingGlass(Image ___artwork, TextMeshProUGUI ___text)
         {
-            ___artwork.sprite = currentSprite;
-            ___text.text = currentLabel;
+            //ElementStackSimple, as it turns out, is shared between the Meniscate and the legacy startin items preview;
+            //we don't want to modify that last one, so we set it to null once we reach 
+            if (currentSprite != null)
+            {
+                ___text.text = currentLabel;
+                ___artwork.sprite = currentSprite;
+            }
+        }
+
+        private static void ResetIconAndLabelForElementStackSimple()
+        {
+            currentSprite = null;
+            currentLabel = null;
         }
     }
 }
