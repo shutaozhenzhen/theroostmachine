@@ -16,6 +16,8 @@ using UnityEngine.UI;
 
 using HarmonyLib;
 
+using Roost.Elegiast;
+
 namespace Roost.World.Beauty
 {
     static class CardStyleMaster

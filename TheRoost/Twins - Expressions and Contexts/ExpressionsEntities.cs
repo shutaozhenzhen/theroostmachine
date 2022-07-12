@@ -58,6 +58,9 @@ namespace Roost.Twins.Entities
             }
         }
 
+        public string targetElement { get { return references[0].valueGetter.target; } }
+        public Sphere targetSphere { get { return references[0].targetSpheres.SingleOrDefault(); } }
+
         public static implicit operator FucineExp<T>(string formula) { return new FucineExp<T>(formula); }
 
         public bool isUndefined { get { return this.expression == null; } }
@@ -166,7 +169,9 @@ namespace Roost.Twins.Entities
     {
         public readonly ValueArea area;
         public readonly ValueOperation operation;
+        public readonly bool lever;
         public readonly string targetId;
+        public string target { get { return lever ? Elegiast.Scribe.GetLeverForCurrentPlaythrough(targetId) : targetId; } }
 
         public delegate float SingleTokenValue(Token token, string target);
         public SingleTokenValue GetValue;
@@ -179,7 +184,7 @@ namespace Roost.Twins.Entities
             if (tokens == null || tokens.Count == 0)
                 return 0;
 
-            return HandleValues(tokens, GetValue, targetId);
+            return HandleValues(tokens, GetValue, target);
         }
 
         public bool Equals(FucineNumberGetter otherValueRef)
@@ -196,16 +201,30 @@ namespace Roost.Twins.Entities
             this.operation = withOperation;
 
             if (target[target.Length - 1] == '*')
+            {
                 if (Enum.TryParse(fromArea.ToString() + "Wild", out ValueArea wildArea))
                 {
-                    fromArea = wildArea;
+                    this.area = wildArea;
                     this.targetId = target.Remove(target.Length - 1);
                 }
+                else
+                    Birdsong.Tweet(VerbosityLevel.Essential, 1, $"{fromArea}{withOperation}/{target} - '*' is used, but {fromArea} doesn't support wildcards");
+            }
 
-            GetValue = singleValueGetters[fromArea];
-            HandleValues = valueHandlers[withOperation];
+            const string leverMark = "lever_";
+            if (targetId.StartsWith(leverMark))
+            {
+                lever = true;
+                targetId = targetId.Substring(leverMark.Length);
+            }
+            else
+                lever = false;
 
-            if (this.area == ValueArea.Aspect || this.operation == ValueOperation.Root)
+            GetValue = singleValueGetters[this.area];
+            HandleValues = valueHandlers[this.operation];
+
+            if (lever == false &&
+                (this.area == ValueArea.Aspect || this.operation == ValueOperation.Root))
                 Watchman.Get<Compendium>().SupplyElementIdsForValidation(this.targetId);
         }
 

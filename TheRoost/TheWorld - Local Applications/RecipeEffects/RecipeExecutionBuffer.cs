@@ -177,6 +177,8 @@ namespace Roost.World.Recipes
 
         public static void ScheduleMutation(IHasAspects payload, Token token, string mutate, int level, bool additive, RetirementVFX vfx)
         {
+            TryReplaceWithLever(ref mutate);
+
             ScheduledMutation futureMutation = new ScheduledMutation(mutate, level, additive);
             if (mutations.ContainsKey(futureMutation) == false)
                 mutations[futureMutation] = new List<IHasAspects>();
@@ -193,6 +195,8 @@ namespace Roost.World.Recipes
 
         public static void ScheduleMutation(List<Token> tokens, string mutate, int level, bool additive, RetirementVFX vfx)
         {
+            TryReplaceWithLever(ref mutate);
+
             ScheduledMutation futureMutation = new ScheduledMutation(mutate, level, additive);
             if (mutations.ContainsKey(futureMutation) == false)
                 mutations[futureMutation] = new List<IHasAspects>();
@@ -206,12 +210,16 @@ namespace Roost.World.Recipes
 
         public static void ScheduleTransformation(Token token, string transformTo, RetirementVFX vfx)
         {
+            TryReplaceWithLever(ref transformTo);
+
             transformations[token.Payload as ElementStack] = transformTo;
             ScheduleVFX(token, vfx);
         }
 
         public static void ScheduleCreation(Sphere sphere, string elementId, int amount, RetirementVFX vfx, bool shrouded)
         {
+            TryReplaceWithLever(ref elementId);
+
             if (creations.ContainsKey(sphere) == false)
                 creations[sphere] = new List<ScheduledCreation>();
 
@@ -304,6 +312,16 @@ namespace Roost.World.Recipes
         private static bool SupportsVFX(this Sphere sphere)
         {
             return sphere.SphereCategory == SphereCategory.World || sphere.SphereCategory == SphereCategory.Threshold;
+        }
+
+        private static void TryReplaceWithLever(ref string value)
+        {
+            const string lever = "lever_";
+            if (value.StartsWith(lever))
+            {
+                value = value.Substring(lever.Length);
+                value = Elegiast.Scribe.GetLeverForCurrentPlaythrough(value);
+            }
         }
     }
 }

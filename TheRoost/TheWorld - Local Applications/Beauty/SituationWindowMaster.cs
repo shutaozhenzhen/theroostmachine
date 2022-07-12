@@ -56,7 +56,7 @@ namespace Roost.World.Recipes
 
         private static bool OverrideRecipeRefinement(string stringToRefine, AspectsDictionary ____aspectsInContext, ref string __result)
         {
-            __result = Scribe.RefineString(stringToRefine, ____aspectsInContext);
+            __result = Elegiast.Scribe.RefineString(stringToRefine, ____aspectsInContext);
             return false;
         }
 

@@ -85,7 +85,7 @@ namespace Roost.Enactors
     {
         internal static void Enact()
         {
-            Roost.World.Scribe.Enact();
+            Roost.World.RoostChronicler.Enact();
             Roost.World.Optimizations.Enact();
 
             Roost.World.Recipes.SituationWindowMaster.Enact();

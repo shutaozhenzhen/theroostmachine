@@ -8,50 +8,34 @@ using SecretHistories.Enums;
 using SecretHistories.Fucine;
 using SecretHistories.Fucine.DataImport;
 
-namespace Roost.World
+namespace Roost.Elegiast
 {
     public static class Scribe
     {
+
+        private static readonly HashSet<string> _textLevers = new HashSet<string>();
+        private static readonly Dictionary<string, string> _defaultValues = new Dictionary<string, string>();
+        internal static void AddTextLever(string lever)
+        {
+            _textLevers.Add(lever);
+            if (_defaultValues.ContainsKey(lever) == false)
+                _defaultValues[lever] = lever;
+        }
+
+        internal static void AddLeverDefaultValue(string lever, string value)
+        {
+            _defaultValues.Remove(lever);
+            _defaultValues.Add(lever, value);
+        }
+
+        internal static void ResetRegisteredLevers()
+        {
+            _defaultValues.Clear();
+            _textLevers.Clear();
+        }
+
         private static readonly Func<object, object> _currentLevers = typeof(Character).GetFieldInvariant("_previousCharacterHistoryRecords").GetValue;
         private static readonly Func<object, object> _futureLevers = typeof(Character).GetFieldInvariant("_inProgressHistoryRecords").GetValue;
-
-        private const string SET_LEVERS_CURRENT = "setLeversCurrent";
-        private const string SET_LEVERS_FUTURE = "setLeversFuture";
-        internal static void Enact()
-        {
-            Machine.ClaimProperty<Recipe, Dictionary<string, string>>(SET_LEVERS_CURRENT);
-            Machine.ClaimProperty<Recipe, Dictionary<string, string>>(SET_LEVERS_FUTURE);
-
-            AtTimeOfPower.RecipeExecution.Schedule<RecipeCompletionEffectCommand, Situation>(RecipeEffectLevers, PatchType.Postfix);
-            AtTimeOfPower.CompendiumLoad.Schedule(ResetGlobalLeversData, PatchType.Prefix);
-        }
-
-        internal static void RecipeEffectLevers(RecipeCompletionEffectCommand __instance, Situation situation)
-        {
-            AspectsDictionary aspects = situation.GetSingleSphereByCategory(SphereCategory.SituationStorage)?.GetTotalAspects(true);
-
-            Dictionary<string, string> setLeversCurrent = __instance.Recipe.RetrieveProperty(SET_LEVERS_CURRENT) as Dictionary<string, string>;
-            if (setLeversCurrent != null)
-                foreach (string lever in setLeversCurrent.Keys)
-                    if (lever == "")
-                        RemoveLeverForCurrentPlaythrough(lever);
-                    else
-                    {
-                        string refinedString = RefineString(setLeversCurrent[lever], aspects);
-                        SetLeverForCurrentPlaythrough(lever, refinedString);
-                    }
-
-            Dictionary<string, string> setLeversFuture = __instance.Recipe.RetrieveProperty(SET_LEVERS_CURRENT) as Dictionary<string, string>;
-            if (setLeversFuture != null)
-                foreach (string lever in setLeversFuture.Keys)
-                    if (lever == "")
-                        RemoveLeverForNextPlaythrough(lever);
-                    else
-                    {
-                        string refinedString = RefineString(setLeversFuture[lever], aspects);
-                        SetLeverForNextPlaythrough(lever, refinedString);
-                    }
-        }
 
         private static void SetLever(Dictionary<string, string> levers, string lever, string value)
         {
@@ -60,7 +44,7 @@ namespace Roost.World
 
         private static string GetLever(Dictionary<string, string> levers, string lever)
         {
-            if (!levers.TryGetValue(lever, out string result))
+            if (levers.TryGetValue(lever, out string result) == false)
                 _defaultValues.TryGetValue(lever, out result);
 
             return result;
@@ -126,24 +110,6 @@ namespace Roost.World
             return Watchman.Get<Stable>().Protag().InProgressHistoryRecords;
         }
 
-        private static readonly List<string> _textLevers = new List<string>();
-        private static readonly Dictionary<string, string> _defaultValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        internal static void AddTextLever(string lever)
-        {
-            _textLevers.Add(lever);
-        }
-
-        internal static void AddLeverDefaultValue(string lever, string value)
-        {
-            _defaultValues.Add(lever, value);
-        }
-
-        internal static void ResetGlobalLeversData()
-        {
-            _defaultValues.Clear();
-            _textLevers.Clear();
-        }
-
         public static string RefineString(string str, AspectsDictionary aspects)
         {
             if (string.IsNullOrWhiteSpace(str))
@@ -151,7 +117,7 @@ namespace Roost.World
 
             foreach (string lever in _textLevers)
             {
-                string leverdata = GetLeverForCurrentPlaythrough(lever) ?? _defaultValues[lever];
+                string leverdata = GetLeverForCurrentPlaythrough(lever);
                 str = str.Replace(lever, leverdata);
             }
 
@@ -229,79 +195,58 @@ namespace Roost.World
     }
 }
 
-namespace Roost.World.Entities
-{
-    [FucineImportable("levers")]
-    public class LeverData : AbstractEntity<LeverData>
-    {
-        [FucineDict] public Dictionary<string, string> defaultValues { get; set; }
-        [FucineList] public List<string> textLevers { get; set; }
-        //finally, your entity needs to implement two methods of AbstractEntity<T> - constructor and OnPostImportForSpecificEntity()
-        //both of them can remain empty but the second one is sometimes useful - it's called right after all entities are imported
-        public LeverData(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
-        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
-        {
-            foreach (KeyValuePair<string, string> leverWithDefaultValue in defaultValues)
-                Scribe.AddLeverDefaultValue(leverWithDefaultValue.Key.ToUpper(), leverWithDefaultValue.Value);
-
-            foreach (string textLever in textLevers)
-                Scribe.AddTextLever(textLever);
-        }
-    }
-}
-
 namespace Roost
 {
     public static partial class Machine
     {
         public static void SetLeverForCurrentPlaythrough(string lever, string value)
         {
-            Roost.World.Scribe.SetLeverForCurrentPlaythrough(lever, value);
+            Roost.Elegiast.Scribe.SetLeverForCurrentPlaythrough(lever, value);
         }
 
         public static void SetLeverForNextPlaythrough(string lever, string value)
         {
-            Roost.World.Scribe.SetLeverForNextPlaythrough(lever, value);
+            Roost.Elegiast.Scribe.SetLeverForNextPlaythrough(lever, value);
         }
 
         public static string GetLeverForCurrentPlaythrough(string lever)
         {
-            return Roost.World.Scribe.GetLeverForCurrentPlaythrough(lever);
+            return Roost.Elegiast.Scribe.GetLeverForCurrentPlaythrough(lever);
         }
 
         public static string GetLeverForNextPlaythrough(string lever)
         {
-            return Roost.World.Scribe.GetLeverForNextPlaythrough(lever);
+            return Roost.Elegiast.Scribe.GetLeverForNextPlaythrough(lever);
         }
 
         public static void RemoveLeverForCurrentPlaythrough(string lever)
         {
-            Roost.World.Scribe.RemoveLeverForCurrentPlaythrough(lever);
+            Roost.Elegiast.Scribe.RemoveLeverForCurrentPlaythrough(lever);
         }
 
         public static void RemoveLeverForNextPlaythrough(string lever)
         {
-            Roost.World.Scribe.RemoveLeverForNextPlaythrough(lever);
+            Roost.Elegiast.Scribe.RemoveLeverForNextPlaythrough(lever);
         }
 
         public static Dictionary<string, string> GetLeversForCurrentPlaythrough()
         {
-            return World.Scribe.GetLeversForCurrentPlaythrough();
+            return Roost.Elegiast.Scribe.GetLeversForCurrentPlaythrough();
         }
 
         public static Dictionary<string, string> GetLeversForNextPlaythrough()
         {
-            return World.Scribe.GetLeversForCurrentPlaythrough();
+            return Roost.Elegiast.Scribe.GetLeversForCurrentPlaythrough();
         }
 
         public static void ClearLeversForCurrentPlaythrough()
         {
-            World.Scribe.ClearLeversForCurrentPlaythrough();
+            Roost.Elegiast.Scribe.ClearLeversForCurrentPlaythrough();
         }
 
         public static void ClearLeversForNextPlaythrough()
         {
-            World.Scribe.ClearLeversForNextPlaythrough();
+            Roost.Elegiast.Scribe.ClearLeversForNextPlaythrough();
         }
     }
 }

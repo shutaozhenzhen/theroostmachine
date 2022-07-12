@@ -196,17 +196,17 @@ namespace Roost.World.Recipes.Entities
                 return;
 
             List<Token> allTokens = sphere.Tokens;
-            foreach (FucineExp<bool> filter in Effects.Keys)
+            foreach (FucineExp<bool> effect in Effects.Keys)
             {
-                int level = Effects[filter].value;
+                int level = Effects[effect].value;
                 if (level < 0)
                 {
-                    List<Token> affectedTokens = allTokens.FilterTokens(filter).SelectRandom(Math.Abs(level));
+                    List<Token> affectedTokens = allTokens.FilterTokens(effect).SelectRandom(Math.Abs(level));
                     foreach (Token token in affectedTokens)
                         RecipeExecutionBuffer.ScheduleRetirement(token, DestroyVFX);
                 }
                 else
-                    RecipeExecutionBuffer.ScheduleCreation(sphere, filter.formula, level, CreateVFX, true);
+                    RecipeExecutionBuffer.ScheduleCreation(sphere, effect.targetElement, level, CreateVFX, true);
             }
 
             RecipeExecutionBuffer.ApplyRetirements();
@@ -357,7 +357,7 @@ namespace Roost.World.Recipes.Entities
             if (Mutate == null)
             {
                 foreach (object key in UnknownProperties.Keys)
-                    if (Watchman.Get<Compendium>().GetEntityById<Element>(key.ToString()) != null)
+                    if (populatedCompendium.GetEntityById<Element>(key.ToString()) != null)
                     {
                         this.Mutate = key.ToString();
                         this.Level = new FucineExp<int>(UnknownProperties[key].ToString());
