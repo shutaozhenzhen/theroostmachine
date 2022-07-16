@@ -32,7 +32,7 @@ namespace Roost.World.Recipes
             Machine.Patch(
                 original: typeof(Situation).GetMethodInvariant(nameof(Situation.GetAspects)),
                 prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(StoreSituationForReqs)));
-            AtTimeOfPower.RecipeRequirementsCheck.Schedule<Recipe, AspectsInContext>(RefReqs);
+            AtTimeOfPower.RecipeRequirementsCheck.Schedule<Recipe, AspectsInContext>(CheckGrandReqsForSituation);
 
             Machine.ClaimProperty<Recipe, GrandEffects>(GRAND_EFFECTS);
             Dictionary<string, Type> allRecipeEffectsProperties = new Dictionary<string, Type>();
@@ -165,6 +165,10 @@ namespace Roost.World.Recipes
 
         public static bool CheckGrandReqs(Dictionary<FucineExp<int>, FucineExp<int>> grandreqs)
         {
+            //grand reqs usually require the calling context to be marked as "local" for the Crossroads;
+            //ie MarkCurrentSituation, MarkCurrentSphere, MarkCurrentToken
+            //so don't forget to do that
+
             //Birdsong.Sing($"Checking GrandReqs for {__instance.Id} in {situation.VerbId} verb");
             foreach (KeyValuePair<FucineExp<int>, FucineExp<int>> req in grandreqs)
             {
@@ -198,13 +202,12 @@ namespace Roost.World.Recipes
         {
             currentSituation = __instance;
         }
-        private static bool RefReqs(Recipe __instance, AspectsInContext aspectsinContext)
+        private static bool CheckGrandReqsForSituation(Recipe __instance, AspectsInContext aspectsinContext)
         {
             Dictionary<FucineExp<int>, FucineExp<int>> grandreqs = __instance.RetrieveProperty(GRAND_REQS) as Dictionary<FucineExp<int>, FucineExp<int>>;
             if (grandreqs == null || grandreqs.Count == 0)
                 return true;
 
-            Birdsong.Sing(currentSituation.Id);
             Crossroads.MarkLocalSituation(currentSituation);
             bool result = CheckGrandReqs(grandreqs);
             Crossroads.ResetCache();

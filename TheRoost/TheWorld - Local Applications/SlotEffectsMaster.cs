@@ -8,6 +8,8 @@ using SecretHistories.UI;
 using SecretHistories.Core;
 using SecretHistories.Abstract;
 using SecretHistories.Fucine;
+using SecretHistories.States;
+using SecretHistories.Commands.SituationCommands;
 
 using Roost.Twins;
 using Roost.Twins.Entities;
@@ -44,6 +46,33 @@ namespace Roost.World.Slots
             Machine.Patch(
                 original: typeof(SphereSpec).GetMethodInvariant(nameof(SphereSpec.CheckPayloadAllowedHere)),
                 prefix: typeof(SlotEffectsMaster).GetMethodInvariant(nameof(SlotFilterSatisfied)));
+
+            Machine.Patch(
+                original: typeof(OngoingState).GetMethodInvariant("PopulateRecipeSlots"),
+                prefix: typeof(SlotEffectsMaster).GetMethodInvariant(nameof(PopulateRecipeSlots)));
+        }
+
+
+        private static bool PopulateRecipeSlots(Situation situation)
+        {
+            List<SphereSpec> slots = new List<SphereSpec>();
+
+            Crossroads.MarkLocalSituation(situation);
+            foreach (SphereSpec sphere in situation.Recipe.Slots)
+                if (sphere.SuitsVerbAndSatisfiedReqs(situation.VerbId))
+                    slots.Add(sphere);
+            Crossroads.ResetCache();
+
+            if (slots.Count == 0)
+            {
+                ClearDominionCommand command2 = new ClearDominionCommand(SituationDominionEnum.RecipeThresholds.ToString(), SphereRetirementType.Graceful);
+                situation.AddCommand(command2);
+                return false;
+            }
+
+            PopulateDominionCommand command = new PopulateDominionCommand(SituationDominionEnum.RecipeThresholds.ToString(), slots);
+            situation.AddCommand(command);
+            return false;
         }
 
         private static bool TryGrabStackTrulyRandom(Sphere destinationThresholdSphere)
@@ -103,10 +132,12 @@ namespace Roost.World.Slots
             Situation situation = __instance.GetContainer() as Situation;
             if (situation != null)
                 Crossroads.MarkLocalSituation(situation);
+            else //shouldn't happen; but just in case 
+                Crossroads.MarkLocalSphere(t.Sphere);
             Crossroads.MarkLocalToken(t);
 
             foreach (SphereSpec slot in compendium.GetEntityById<Element>(t.PayloadEntityId).Slots)
-                if (slot.SuitsVerb(verbId))
+                if (slot.SuitsVerbAndSatisfiedReqs(verbId))
                     __result.Add(slot);
 
             AspectsDictionary aspects = t.GetAspects(false);
@@ -118,7 +149,7 @@ namespace Roost.World.Slots
                     continue;
 
                 foreach (SphereSpec slot in slots)
-                    if (slot.SuitsVerb(verbId))
+                    if (slot.SuitsVerbAndSatisfiedReqs(verbId))
                     {
                         __result.Add(slot);
 
@@ -145,7 +176,7 @@ namespace Roost.World.Slots
             return copy;
         }
 
-        private static bool SuitsVerb(this SphereSpec slot, string verbId)
+        private static bool SuitsVerbAndSatisfiedReqs(this SphereSpec slot, string verbId)
         {
             if (!string.IsNullOrWhiteSpace(slot.ActionId))
             {
