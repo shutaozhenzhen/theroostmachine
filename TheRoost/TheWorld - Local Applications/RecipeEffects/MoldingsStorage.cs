@@ -1,44 +1,86 @@
 ﻿using System;
 using System.Collections;
+using System.Linq;
 using System.Collections.Generic;
-
+using OrbCreationExtensions;
 using SecretHistories.Fucine;
 using SecretHistories.Fucine.DataImport;
 
 
 namespace Roost.World.Recipes.Entities
-{    
+{
     internal static class MoldingsStorage
     {
-        internal static void ConvertLegacyMutations(EntityData entityData)
+
+        internal static void ConvertLegacyMutations(EntityData recipeEntityData)
         {
+            const string FILTER = "filter";
+            const string LIMIT = "limit";
+            const string MUTATIONS = "mutations";
+
             try
             {
-                if (entityData.ValuesTable.ContainsKey("mutations") && entityData.ValuesTable["mutations"] is ArrayList)
+                if (recipeEntityData.ValuesTable.ContainsKey(MUTATIONS))
                 {
-                    ArrayList oldMutations = entityData.ValuesTable["mutations"] as ArrayList;
-                    EntityData newMutations = new EntityData();
-
-                    foreach (EntityData mutation in oldMutations)
+                    if (recipeEntityData.ValuesTable[MUTATIONS] is ArrayList)
                     {
-                        object filter;
-                        if (mutation.ContainsKey("limit"))
+                        ArrayList oldMutations = recipeEntityData.ValuesTable[MUTATIONS] as ArrayList;
+                        EntityData newMutations = new EntityData();
+                        recipeEntityData.ValuesTable[MUTATIONS] = newMutations;
+
+                        foreach (EntityData mutation in oldMutations)
                         {
-                            filter = new EntityData();
-                            (filter as EntityData).ValuesTable.Add("filter", mutation.ValuesTable["filter"]);
-                            (filter as EntityData).ValuesTable.Add("limit", mutation.ValuesTable["limit"]);
+                            object filter;
+                            if (mutation.ContainsKey(LIMIT))
+                            {
+                                filter = new EntityData();
+                                (filter as EntityData).ValuesTable.Add(FILTER, mutation.ValuesTable[FILTER]);
+                                (filter as EntityData).ValuesTable.Add(LIMIT, mutation.ValuesTable[LIMIT]);
+                            }
+                            else
+                                filter = mutation.ValuesTable[FILTER].ToString();
+
+                            mutation.ValuesTable.Remove(FILTER);
+                            mutation.ValuesTable.Remove(LIMIT);
+
+                            if (newMutations.ContainsKey(filter) == false)
+                                newMutations.ValuesTable[filter] = new ArrayList();
+
+                            (newMutations.ValuesTable[filter] as ArrayList).Add(mutation);
                         }
-                        else
-                            filter = mutation.ValuesTable["filter"].ToString();
-
-                        if (newMutations.ContainsKey(filter) == false)
-                            newMutations.ValuesTable[filter] = new ArrayList();
-
-                        (newMutations.ValuesTable[filter] as ArrayList).Add(mutation);
-                        mutation.ValuesTable.Remove("filter");
                     }
+                    else if (recipeEntityData.ValuesTable[MUTATIONS] is EntityData)
+                    {
+                        EntityData mutations = recipeEntityData.ValuesTable[MUTATIONS] as EntityData;
+                        foreach (object filter in new Hashtable(mutations.ValuesTable).Keys)
+                        {
+                            ArrayList mutationsInFilter = mutations.GetArrayListFromEntityData(filter);
+                            mutations[filter] = mutationsInFilter;
 
-                    entityData.ValuesTable["mutations"] = newMutations;
+                            foreach (object mutation in new ArrayList(mutationsInFilter))
+                            {
+                                EntityData mutationData = mutation as EntityData;
+
+                                if (mutationData == null)
+                                    continue;
+
+                                if (!mutationData.ContainsKey(LIMIT))
+                                    continue;
+
+                                //each limit requires new filter
+                                EntityData filterData = new EntityData();
+                                filterData[FILTER] = filter;
+                                filterData[LIMIT] = mutationData[LIMIT];
+
+                                mutationData.ValuesTable.Remove(LIMIT);
+                                mutationsInFilter.Remove(mutation);
+                                mutations.ValuesTable.Add(filterData, mutationData);
+                            }
+
+                            if (mutationsInFilter.Count == 0)
+                                mutations.ValuesTable.Remove(filter);
+                        }
+                    }
                 }
             }
             catch (Exception ex)
@@ -47,11 +89,18 @@ namespace Roost.World.Recipes.Entities
             }
         }
 
+        internal static ArrayList GetArrayListFromEntityData(this EntityData data, object key)
+        {
+            return data.ValuesTable.GetArrayList(key, true) ?? new ArrayList();
+        }
+
         internal static void ConvertExpulsionFilters(EntityData data)
         {
+            const string FILTER = "filter";
+
             try
             {
-                EntityData filters = data.GetEntityDataFromEntityData("filter");
+                EntityData filters = data.GetEntityDataFromEntityData(FILTER);
                 if (filters != null)
                 {
                     string singleFilter = string.Empty;
@@ -59,7 +108,7 @@ namespace Roost.World.Recipes.Entities
                         singleFilter += $"{AsExpression(filter.Key)}>={AsExpression(filter.Value)}||";
 
                     singleFilter = singleFilter.Remove(singleFilter.Length - 2);
-                    data["filter"] = singleFilter;
+                    data[FILTER] = singleFilter;
                 }
             }
             catch (Exception ex)
