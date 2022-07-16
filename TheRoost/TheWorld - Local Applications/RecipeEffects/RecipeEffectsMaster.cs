@@ -47,12 +47,12 @@ namespace Roost.World.Recipes
                 original: typeof(RecipeCompletionEffectCommand).GetMethodInvariant(nameof(RecipeCompletionEffectCommand.Execute), typeof(Situation)),
                 transpiler: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(RunRefEffectsTranspiler)));
 
+            Machine.Patch(
+                original: typeof(Token).GetMethodInvariant(nameof(Token.CalveToken)),
+                postfix: typeof(RecipeExecutionBuffer).GetMethodInvariant(nameof(RecipeExecutionBuffer.OnTokenCalved)));
+
             AtTimeOfPower.NewGame.Schedule(CatchNewGame, PatchType.Prefix);
             AtTimeOfPower.TabletopSceneInit.Schedule(TabletopEnter, PatchType.Postfix);
-
-            Machine.Patch(
-                original: typeof(SituationStorageSphere).GetPropertyInvariant("AllowStackMerge").GetGetMethod(),
-                prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(AllowStackMerge)));
 
             Legerdemain.Enact();
         }
@@ -249,13 +249,6 @@ namespace Roost.World.Recipes
                         tokens[n].Payload.SetQuantity(tokens[n].Quantity + tokens[m].Quantity, RecipeExecutionBuffer.situationEffectContext);
                         tokens[m].Retire();
                     }
-        }
-
-        //Allowing stack merge for SituationStorage
-        private static bool AllowStackMerge(ref bool __result)
-        {
-            __result = false;
-            return false;
         }
     }
 }

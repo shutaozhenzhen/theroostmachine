@@ -12,7 +12,7 @@ namespace Roost.World.Recipes
     public static class RecipeExecutionBuffer
     {
         private static readonly HashSet<Token> retirements = new HashSet<Token>();
-        private static readonly Dictionary<ScheduledMutation, List<IHasAspects>> mutations = new Dictionary<ScheduledMutation, List<IHasAspects>>();
+        private static readonly Dictionary<ScheduledMutation, HashSet<IHasAspects>> mutations = new Dictionary<ScheduledMutation, HashSet<IHasAspects>>();
         private static readonly Dictionary<ElementStack, string> transformations = new Dictionary<ElementStack, string>();
         private static readonly Dictionary<Sphere, List<ScheduledCreation>> creations = new Dictionary<Sphere, List<ScheduledCreation>>();
         //private static readonly Dictionary<Token, int> quantityChanges = new Dictionary<Token, int>();
@@ -181,8 +181,7 @@ namespace Roost.World.Recipes
             TryReplaceWithLever(ref mutate);
 
             ScheduledMutation futureMutation = new ScheduledMutation(mutate, level, additive);
-            if (mutations.ContainsKey(futureMutation) == false)
-                mutations[futureMutation] = new List<IHasAspects>();
+            mutations[futureMutation] = new HashSet<IHasAspects>();
             mutations[futureMutation].Add(payload);
 
             if (token != null)
@@ -199,8 +198,7 @@ namespace Roost.World.Recipes
             TryReplaceWithLever(ref mutate);
 
             ScheduledMutation futureMutation = new ScheduledMutation(mutate, level, additive);
-            if (mutations.ContainsKey(futureMutation) == false)
-                mutations[futureMutation] = new List<IHasAspects>();
+            mutations[futureMutation] = new HashSet<IHasAspects>();
 
             foreach (Token token in tokens)
             {
@@ -323,6 +321,27 @@ namespace Roost.World.Recipes
                 value = value.Substring(lever.Length);
                 value = Elegiast.Scribe.GetLeverForCurrentPlaythrough(value);
             }
+        }
+
+        internal static void OnTokenCalved(Token __instance, Token __result)
+        {
+            Token original = __instance;
+            Token calved = __result;
+
+            if (retirements.Contains(original))
+                retirements.Add(calved);
+
+            foreach (ScheduledMutation mutation in mutations.Keys)
+                if (mutations[mutation].Contains(original.Payload))
+                    mutations[mutation].Add(calved.Payload);
+
+            ElementStack originalStack = original.Payload as ElementStack;
+            if (transformations.ContainsKey(originalStack))
+                transformations.Add(calved.Payload as ElementStack, transformations[originalStack]);
+
+            if (movements.ContainsKey(original))
+                movements.Add(calved, movements[original]);
+
         }
     }
 }
