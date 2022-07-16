@@ -28,6 +28,10 @@ namespace Roost.World.Recipes
             Machine.ClaimProperty<Element, Dictionary<string, List<RefMorphDetails>>>("xtriggers");
 
             Machine.ClaimProperty<Recipe, Dictionary<FucineExp<int>, FucineExp<int>>>(GRAND_REQS);
+
+            Machine.Patch(
+                original: typeof(Situation).GetMethodInvariant(nameof(Situation.GetAspects)),
+                prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(StoreSituationForReqs)));
             AtTimeOfPower.RecipeRequirementsCheck.Schedule<Recipe, AspectsInContext>(RefReqs);
 
             Machine.ClaimProperty<Recipe, GrandEffects>(GRAND_EFFECTS);
@@ -153,10 +157,10 @@ namespace Roost.World.Recipes
             //Birdsong.Sing(VerbosityLevel.SystemChatter, 0, $"EXECUTING: {command.Recipe.Id}");
 
             situation.Recipe = command.Recipe;
-            Twins.Crossroads.MarkLocalSituation(situation);
+            Crossroads.MarkLocalSituation(situation);
             GrandEffects.RunGrandEffects(situation.Recipe.RetrieveProperty<GrandEffects>(GRAND_EFFECTS), situation, situation.GetSingleSphereByCategory(SphereCategory.SituationStorage));
             ManageDirtySpheres();
-            Twins.Crossroads.ResetCache();
+            Crossroads.ResetCache();
         }
 
         public static bool CheckGrandReqs(Dictionary<FucineExp<int>, FucineExp<int>> grandreqs)
@@ -184,23 +188,27 @@ namespace Roost.World.Recipes
             return true;
         }
 
+
+
+        //normal reqs don't know for what Situation they are working now; but for grandreqs it's a vital info
+        //thus, we need to store and retrieve the Situation; but reqs are called from an inconvenietly many places
+        //so we store it on Situation.GetAspects(), which preceeds every req check anyway
+        private static Situation currentSituation;
+        private static void StoreSituationForReqs(Situation __instance)
+        {
+            currentSituation = __instance;
+        }
         private static bool RefReqs(Recipe __instance, AspectsInContext aspectsinContext)
         {
             Dictionary<FucineExp<int>, FucineExp<int>> grandreqs = __instance.RetrieveProperty(GRAND_REQS) as Dictionary<FucineExp<int>, FucineExp<int>>;
             if (grandreqs == null || grandreqs.Count == 0)
                 return true;
 
-            //what I am about to do here should be illegal (and will be at some point of time in the bright future of humankind)
-            //but I really need to know a *situation* instead of just aspects; and there is no easier way to go about it
-            foreach (Situation situation in Watchman.Get<HornedAxe>().GetRegisteredSituations())
-                if (situation.GetAspects(true).AspectsEqual(aspectsinContext.AspectsInSituation))
-                {
-                    Crossroads.MarkLocalSituation(situation);
-                    bool result = CheckGrandReqs(grandreqs);
-                    Crossroads.ResetCache();
-                    return result;
-                }
-            throw Birdsong.Cack($"Something strange happened. Cannot identify a situation for requirements check in the recipe {__instance}.");
+            Birdsong.Sing(currentSituation.Id);
+            Crossroads.MarkLocalSituation(currentSituation);
+            bool result = CheckGrandReqs(grandreqs);
+            Crossroads.ResetCache();
+            return result;
         }
 
         private static bool AspectsEqual(this AspectsDictionary dictionary1, AspectsDictionary dictionary2)
@@ -232,23 +240,7 @@ namespace Roost.World.Recipes
         private static void ManageDirtySphere(Sphere sphere)
         {
             if (sphere.SphereCategory == SphereCategory.SituationStorage)
-            {
-                StackAllTokens(sphere);
                 SituationWindowMaster.UpdateSituationWindowDisplay(sphere);
-            }
-        }
-
-        private static void StackAllTokens(Sphere sphere)
-        {
-            List<Token> tokens = sphere.Tokens;
-
-            for (int n = tokens.Count - 1; n >= 0; n--)
-                for (int m = n - 1; m >= 0; m--)
-                    if (tokens[n].CanMergeWithToken(tokens[m]) && tokens[n].Shrouded() == tokens[m].Shrouded())
-                    {
-                        tokens[n].Payload.SetQuantity(tokens[n].Quantity + tokens[m].Quantity, RecipeExecutionBuffer.situationEffectContext);
-                        tokens[m].Retire();
-                    }
         }
     }
 }
