@@ -43,6 +43,7 @@ namespace Roost.World.Recipes
             Machine.ClaimProperties<Recipe>(allRecipeEffectsProperties);
 
             Machine.AddImportMolding<Recipe>(MoldingsStorage.ConvertLegacyMutations);
+            Machine.AddImportMolding<GrandEffects>(MoldingsStorage.ConvertLegacyMutations);
 
             AtTimeOfPower.OnPostImportRecipe.Schedule<Recipe, ContentImportLog, Compendium>(WrapAndFlushFirstPassEffects, PatchType.Prefix);
             AtTimeOfPower.OnPostImportElement.Schedule<Element, ContentImportLog, Compendium>(PostImportForTheNewXtriggers, PatchType.Postfix);

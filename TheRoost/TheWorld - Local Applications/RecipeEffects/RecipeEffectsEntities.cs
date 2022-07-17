@@ -331,7 +331,7 @@ namespace Roost.World.Recipes.Entities
             int i = 0;
             foreach (GrandEffects distantEffect in DistantEffects)
             {
-                distantEffect.SetId(this.Id + "_distant_" + i++);
+                distantEffect.SetId(this.Id + " distant effect #" + i++);
                 distantEffect.OnPostImport(log, populatedCompendium);
             }
 
