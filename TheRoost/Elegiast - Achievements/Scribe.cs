@@ -175,9 +175,22 @@ namespace Roost.Elegiast
             if (string.IsNullOrWhiteSpace(refinementAspect) || aspects.AspectValue(refinementAspect) >= refinementAmount)
             {
                 if (specialEffects.ContainsKey(refinementText))
+                {
                     result += specialEffects[refinementText](refinementAspect, aspects);
-                else
-                    result += refinementText;
+                    return true;
+                }
+
+                if (refinementText.Contains(":"))
+                {
+                    string[] refWithArgs = refinementText.Split(':');
+                    if (specialEffectsWithArgs.ContainsKey(refWithArgs[0]))
+                    {
+                        result += specialEffectsWithArgs[refWithArgs[0]](refWithArgs, aspects, refinementAspect);
+                        return true;
+                    }
+                }
+
+                result += refinementText;
 
                 return true;
             }
@@ -185,12 +198,26 @@ namespace Roost.Elegiast
             return false;
         }
 
-        private static readonly Dictionary<string, Func<string, AspectsDictionary, string>> specialEffects = new Dictionary<string, Func<string, AspectsDictionary, string>>()
+        private static readonly Dictionary<string, Func<string, AspectsDictionary, string>> specialEffects =
+            new Dictionary<string, Func<string, AspectsDictionary, string>>(StringComparer.InvariantCultureIgnoreCase)
         {
             { "$id", (aspectId, aspects) => aspectId },
             { "$label", (aspectId, aspects) => Watchman.Get<Compendium>().GetEntityById<Element>(aspectId).Label },
+            { "$description", (aspectId, aspects) => Watchman.Get<Compendium>().GetEntityById<Element>(aspectId).Description },
+            { "$icon", (aspectId, aspects) => Watchman.Get<Compendium>().GetEntityById<Element>(aspectId).Icon },
+            { "$sprite", (aspectId, aspects) => "<sprite name =" + Watchman.Get<Compendium>().GetEntityById<Element>(aspectId).Icon + ">" },
             { "$value", (aspectId, aspects) => aspects.AspectValue(aspectId).ToString() },
-            { "$icon", (aspectId, aspects) => "<sprite name=" + aspectId + ">"},
+
+        };
+        private static readonly Dictionary<string, Func<string[], AspectsDictionary, string, string>> specialEffectsWithArgs =
+            new Dictionary<string, Func<string[], AspectsDictionary, string, string>>(StringComparer.InvariantCultureIgnoreCase)
+        {
+                //args[0] is the name of the effect 
+            { "$labelOf", (args, aspects, fromRefinementAspect) => Watchman.Get<Compendium>().GetEntityById<Element>(args[1]).Label },
+            { "$descriptionOf", (args, aspects, fromRefinementAspect) => Watchman.Get<Compendium>().GetEntityById<Element>(args[1]).Description },
+            { "$iconOf", (args, aspects, fromRefinementAspect) => Watchman.Get<Compendium>().GetEntityById<Element>(args[1]).Icon },
+            { "$sprite", (args, aspects, fromRefinementAspect)=> "<sprite name =" + Watchman.Get<Compendium>().GetEntityById<Element>(args[1]).Icon + ">" },
+            { "$valueOf", (args, aspects, fromRefinementAspect) => aspects.AspectValue(args[1]).ToString() },
         };
     }
 }
