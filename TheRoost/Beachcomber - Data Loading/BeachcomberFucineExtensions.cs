@@ -107,7 +107,7 @@ namespace SecretHistories.Fucine
         public override object Import(object pathData, Type type, ContentImportLog log) { return Panimporter.ImportFucinePath(pathData, type, log); }
         protected override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty, ContentImportLog log)
         {
-            return Roost.Twins.TwinsParser.ParseSpherePath(cachedFucineProperty.FucineAttribute.DefaultValue as string);
+            return Roost.Twins.TwinsParser.ParseSpherePath(cachedFucineProperty.FucineAttribute.DefaultValue?.ToString());
         }
     }
 

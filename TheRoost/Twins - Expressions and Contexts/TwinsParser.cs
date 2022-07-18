@@ -111,11 +111,10 @@ namespace Roost.Twins
                 filter = separatedFilter;
         }
 
-        static readonly FucinePath local = new FucinePath("~/local");
         public static FucinePath ParseSpherePath(string path)
         {
             if (string.IsNullOrEmpty(path))
-                return local;
+                return FucinePath.Current();
 
             bool pathIsMultiPath = path.Contains("+") || path[path.Length - 1] == referenceClosing;
             if (pathIsMultiPath)

@@ -19,7 +19,7 @@ namespace Roost.World.Recipes.Entities
 {
     public class GrandEffects : AbstractEntity<GrandEffects>
     {
-        [FucinePathValue] public FucinePath Target { get; set; }
+        [FucinePathValue(defaultValue: "~/local")] public FucinePath Target { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> RootEffects { get; set; }
         [FucineDict] public Dictionary<TokenFilterSpec, List<RefMutationEffect>> Mutations { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> Aspects { get; set; }
@@ -404,7 +404,7 @@ namespace Roost.World.Recipes.Entities
         [FucineValue(false)] public bool IgnoreCatalystAmount { get; set; }
 
         private LinkedRecipeDetails Induction { get; set; }
-        [FucinePathValue("")] public FucinePath ToPath { get; set; }
+        [FucinePathValue] public FucinePath ToPath { get; set; }
         [FucineSubEntity(typeof(Expulsion))] public Expulsion Expulsion { get; set; }
 
         public void QuickSpec(string value)
