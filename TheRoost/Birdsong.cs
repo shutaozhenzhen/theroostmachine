@@ -24,6 +24,12 @@ namespace Roost
             }
         }
 
+        //this one reserved for operative debug logs; separated in its own method so I can easily find all the calls and won't accidentally left one in the release version
+        public static void Sing(object data, params object[] furtherData)
+        {
+            Birdsong.Tweet(0, 1, data, furtherData);
+        }
+
         public static void Tweet(object data, params object[] furtherData)
         {
             Birdsong.Tweet(0, 1, data, furtherData);
@@ -36,12 +42,6 @@ namespace Roost
 
             string message = FormatMessage(data, furtherData);
             NoonUtility.Log(message, messageLevel, verbosity);
-        }
-
-        //this one reserved for operative debug logs; separated in its own method so I can easily find all the calls and won't accidentally left one in the release version
-        public static void Sing(object data, params object[] furtherData)
-        {
-            Birdsong.Tweet(0, 1, data, furtherData);
         }
 
         //finally, an optimal name for error throwing

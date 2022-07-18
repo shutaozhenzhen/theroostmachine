@@ -127,7 +127,7 @@ namespace Roost.Elegiast
             string[] parts = str.Split('@');
 
             if ((parts.Length - 1) % 2 == 1)
-                return str + "[Looks like there's a refinement with no @ terminator here]";
+                return str + " [Looks like there's a refinement with no @ terminator here] ";
 
             //part before any refinements are applied
             string result = parts[0];
@@ -160,7 +160,7 @@ namespace Roost.Elegiast
             {
                 if (int.TryParse(arguments[1], out refinementAmount) == false)
                 {
-                    result += $"[Incorrect value for refinement {refinementAspect}";
+                    result += $" [Incorrect value for a refinement {refinementAspect}] ";
                     return true;
                 }
 
@@ -168,7 +168,7 @@ namespace Roost.Elegiast
             }
             else
             {
-                result += "[Incorrect amount of arguments in refinement]";
+                result += " [Incorrect amount of arguments in a refinement] ";
                 return true;
             }
 
@@ -191,7 +191,6 @@ namespace Roost.Elegiast
                 }
 
                 result += refinementText;
-
                 return true;
             }
 
