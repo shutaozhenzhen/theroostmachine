@@ -126,42 +126,43 @@ namespace Roost.World.Recipes.Entities
                 foreach (KeyValuePair<string, FucineExp<int>> catalyst in Aspects)
                     allCatalystsInSphere[catalyst.Key] = catalyst.Value.value;
             if (catalystFromElements)
-                allCatalystsInSphere.ApplyMutations(sphere.GetTotalAspects());
+                allCatalystsInSphere.ApplyMutations(sphere.GetTotalAspects(true));
 
             if (allCatalystsInSphere.Count == 0)
                 return;
 
-            Dictionary<string, List<RefMorphDetails>> xtriggers;
-            Compendium compendium = Watchman.Get<Compendium>();
             foreach (Token token in sphere.GetElementTokens())
-            {
-                if (token.IsValidElementStack() == false)
-                    continue;
-
-                xtriggers = compendium.GetEntityById<Element>(token.PayloadEntityId).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
-                if (xtriggers != null)
-                    foreach (KeyValuePair<string, int> catalyst in allCatalystsInSphere)
-                        if (xtriggers.ContainsKey(catalyst.Key))
-                            foreach (RefMorphDetails morphDetails in xtriggers[catalyst.Key])
-                                morphDetails.Execute(situation, token, token.PayloadEntityId, token.Quantity, catalyst.Value, true);
-
-                AspectsDictionary tokenAspects = new AspectsDictionary(Machine.GetEntity<Element>(token.PayloadEntityId).Aspects);
-                tokenAspects.ApplyMutations(token.GetCurrentMutations());
-
-                foreach (KeyValuePair<string, int> aspect in tokenAspects)
-                {
-                    xtriggers = compendium.GetEntityById<Element>(aspect.Key).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
-                    if (xtriggers != null)
-                        foreach (KeyValuePair<string, int> catalyst in allCatalystsInSphere)
-                            if (xtriggers.ContainsKey(catalyst.Key))
-                                foreach (RefMorphDetails morphDetails in xtriggers[catalyst.Key])
-                                    morphDetails.Execute(situation, token, aspect.Key, aspect.Value, catalyst.Value, false);
-                }
-            }
+                RunXTriggersOnToken(token, situation, allCatalystsInSphere);
 
             allCatalystsInSphere.Clear();
             Crossroads.UnmarkLocalToken();
             RecipeExecutionBuffer.ApplyAllEffects();
+        }
+
+        public static void RunXTriggersOnToken(Token token, Situation situation, Dictionary<string, int> catalysts)
+        {
+            if (token.IsValidElementStack() == false)
+                return;
+
+            Compendium compendium = Watchman.Get<Compendium>();
+            Dictionary<string, List<RefMorphDetails>> xtriggers = Machine.GetEntity<Element>(token.PayloadEntityId).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
+
+            if (xtriggers != null)
+                foreach (KeyValuePair<string, int> catalyst in catalysts)
+                    if (xtriggers.ContainsKey(catalyst.Key))
+                        foreach (RefMorphDetails morphDetails in xtriggers[catalyst.Key])
+                            morphDetails.Execute(situation, token, token.PayloadEntityId, token.Quantity, catalyst.Value, true);
+
+            AspectsDictionary tokenAspects = token.GetAspects(false);
+            foreach (KeyValuePair<string, int> aspect in tokenAspects)
+            {
+                xtriggers = compendium.GetEntityById<Element>(aspect.Key).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
+                if (xtriggers != null)
+                    foreach (KeyValuePair<string, int> catalyst in catalysts)
+                        if (xtriggers.ContainsKey(catalyst.Key))
+                            foreach (RefMorphDetails morphDetails in xtriggers[catalyst.Key])
+                                morphDetails.Execute(situation, token, aspect.Key, aspect.Value, catalyst.Value, false);
+            }
         }
 
         private void RunDeckShuffles()

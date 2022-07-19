@@ -15,7 +15,6 @@ namespace Roost.Elegiast.Entities
         DateTime unlockDate { get; }
     }
 
-    [FucineImportable("achievements")]
     public class CustomAchievement : AbstractEntity<CustomAchievement>, IFucineAchievement
     {
         [FucineEverValue(false)]
@@ -62,7 +61,6 @@ namespace Roost.Elegiast.Entities
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
     }
 
-    [FucineImportable("vachievements")]
     public class VanillaAchievement : AbstractEntity<VanillaAchievement>, IFucineAchievement
     {
         [FucineEverValue(DefaultValue = "", Localise = true)]

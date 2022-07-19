@@ -24,7 +24,7 @@ public static class TheRoostMachine
 
                 Roost.Enactors.Beachcomber.Enact();
                 Roost.Enactors.Vagabond.Enact();
-                Roost.Enactors.Elegiast.Enact();
+                //Roost.Enactors.Elegiast.Enact();
                 Roost.Enactors.Twins.Enact();
                 Roost.Enactors.World.Enact();
 
