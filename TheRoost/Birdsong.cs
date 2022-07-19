@@ -67,11 +67,14 @@ namespace Roost
                 return String.Format(wrapMessageMaybe.ToString(), furtherData);
             }
             else
-                return String.Concat(wrapMessageMaybe.ToString(), " ", furtherData.UnpackAsString());
+                return String.Concat(wrapMessageMaybe.ToString(), " ", furtherData.LogCollection());
         }
 
-        public static string UnpackAsString(this IEnumerable collection, string separator = " ")
+        public static string LogCollection(this IEnumerable collection, string separator = " ")
         {
+            if (collection == null)
+                return "null";
+
             string result = string.Empty;
             foreach (object obj in collection)
                 result += (obj == null ? "null" : obj.ToString()) + separator;

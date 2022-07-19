@@ -217,7 +217,7 @@ namespace Roost.Beachcomber
                     }
 
 
-                    throw Birdsong.Cack($"NO MATCHING CONSTRUCTOR FOUND FOR {type.Name} FOR PARAMETER NAMES '{namedParametersData.ValuesTable.Keys.UnpackAsString()}'");
+                    throw Birdsong.Cack($"NO MATCHING CONSTRUCTOR FOUND FOR {type.Name} FOR PARAMETER NAMES '{namedParametersData.ValuesTable.Keys.LogCollection()}'");
                 }
 
                 ArrayList parametersList = parametersData as ArrayList;
@@ -254,7 +254,7 @@ namespace Roost.Beachcomber
                     }
                 }
 
-                throw Birdsong.Cack($"NO MATCHING CONSTRUCTOR FOUND FOR {type.Name} WITH PARAMETER TYPES '{parameterTypes.UnpackAsString()}'");
+                throw Birdsong.Cack($"NO MATCHING CONSTRUCTOR FOUND FOR {type.Name} WITH PARAMETER TYPES '{parameterTypes.LogCollection()}'");
             }
             catch (Exception ex)
             {

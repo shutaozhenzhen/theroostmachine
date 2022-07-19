@@ -78,7 +78,7 @@ namespace Roost.Vagabond
             }
             catch (Exception ex)
             {
-                throw Birdsong.Cack($"Failed to find method '{name}' with parameters '{args.UnpackAsString()}' in '{definingClass.Name}', reason: {ex.FormatException()}");
+                throw Birdsong.Cack($"Failed to find method '{name}' with parameters '{args.LogCollection()}' in '{definingClass.Name}', reason: {ex.FormatException()}");
             }
         }
 
@@ -219,7 +219,7 @@ namespace Roost.Vagabond
         {
             Birdsong.Tweet("IL CODE:");
             foreach (CodeInstruction instruction in instructions)
-                Birdsong.Tweet($"{instruction.opcode} {(instruction.operand == null ? string.Empty : $": {instruction.operand} ({instruction.operand.GetType().Name})")} {instruction.labels.UnpackAsString()}");
+                Birdsong.Tweet($"{instruction.opcode} {(instruction.operand == null ? string.Empty : $": {instruction.operand} ({instruction.operand.GetType().Name})")} {instruction.labels.LogCollection()}");
         }
     }
 }
