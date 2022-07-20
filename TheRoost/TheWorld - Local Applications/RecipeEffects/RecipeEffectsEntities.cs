@@ -524,7 +524,7 @@ namespace Roost.World.Recipes.Entities
                         RecipeExecutionBuffer.ScheduleTransformation(targetToken, this.Id, VFX);
                     else
                     {
-                        RecipeExecutionBuffer.ScheduleMutation(targetToken, targetElementId, targetElementAmount, true, RetirementVFX.None);
+                        RecipeExecutionBuffer.ScheduleMutation(targetToken, this.Id, targetElementAmount, true, RetirementVFX.None);
                         RecipeExecutionBuffer.ScheduleMutation(targetToken, targetElementId, -targetElementAmount, true, VFX);
                     }
                     break;
