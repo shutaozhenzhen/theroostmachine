@@ -196,7 +196,7 @@ namespace Roost
         public static void PushTemporaryRecipeLink(string recipeId, int priority = 0)
         {
             Recipe recipe = Machine.GetEntity<Recipe>(recipeId);
-            if (recipeId == null)
+            if (recipe.IsNullEntity())
                 Birdsong.Tweet(VerbosityLevel.Essential, 1, $"Trying to push non-existed recipe link '{recipeId}'");
             else
                 PushTemporaryRecipeLink(recipe, priority);

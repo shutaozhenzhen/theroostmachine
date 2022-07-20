@@ -70,22 +70,18 @@ namespace Roost
                 return String.Concat(wrapMessageMaybe.ToString(), " ", furtherData.LogCollection());
         }
 
-        public static string LogCollection(this IEnumerable collection, string separator = " ")
+        public static string LogCollection(this IEnumerable collection, Func<object, object> handler = null, string separator = " ")
         {
             if (collection == null)
                 return "null";
 
-            string result = string.Empty;
-            foreach (object obj in collection)
-                result += (obj == null ? "null" : obj.ToString()) + separator;
-            return result;
-        }
+            if (handler == null)
+                handler = entry => entry;
 
-        public static string UnpackAsString(this IEnumerable collection, Func<object, object> selector, string separator = " ")
-        {
             string result = string.Empty;
             foreach (object obj in collection)
-                result += (obj == null ? "null" : selector(obj)?.ToString()) + separator;
+                result += (obj == null ? "null" : handler(obj)?.ToString()) + separator;
+
             return result;
         }
 

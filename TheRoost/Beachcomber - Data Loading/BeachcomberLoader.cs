@@ -347,6 +347,16 @@ namespace Roost
             return SecretHistories.UI.Watchman.Get<Compendium>().GetEntityById<T>(id);
         }
 
+        public static bool IsNullEntity(this SecretHistories.Entities.Element element)
+        {
+            return element.Id == SecretHistories.Entities.NullElement.NULL_ELEMENT_ID;
+        }
+
+        public static bool IsNullEntity(this SecretHistories.Entities.Recipe recipe)
+        {
+            return recipe == SecretHistories.Entities.NullRecipe.Create();
+        }
+
         public static void AddImportMolding<T>(Action<EntityData> moldingForType)
         {
             Beachcomber.Usurper.AddMolding<T>(moldingForType);
