@@ -544,10 +544,7 @@ namespace Roost.World.Recipes.Entities
                     RecipeExecutionBuffer.ScheduleDeckRenew(this.Id);
                     break;
                 case MorphEffectsExtended.Destroy:
-                    if (onToken)
-                        RecipeExecutionBuffer.ScheduleRetirement(targetToken, VFX);
-                    else
-                        RecipeExecutionBuffer.ScheduleMutation(targetToken, targetElementId, -targetElementAmount, true, RetirementVFX.None);
+                    RecipeExecutionBuffer.ScheduleRetirement(targetToken, VFX);
                     break;
                 case MorphEffectsExtended.Induce:
                     RecipeExecutionBuffer.ScheduleRecipeInduction(situation, Induction);
