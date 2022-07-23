@@ -44,8 +44,8 @@ namespace Roost.World.Elements
             Machine.ClaimProperty<Element, bool>(DISPLACEMENT_REVERSE, false, false);
 
             Machine.Patch(
-                original: typeof(Sphere).GetMethodInvariant(nameof(Sphere.RemoveDuplicates)),
-                prefix: typeof(ElementEffectsMaster).GetMethodInvariant(nameof(ApplyDisplacements)));
+                original: typeof(Sphere).GetMethodInvariant(nameof(Sphere.EnforceUniquenessForIncomingStack)),
+                transpiler: typeof(ElementEffectsMaster).GetMethodInvariant(nameof(TryDisplaceDuplicate)));
         }
 
         //the cleaner solution would be to pass VFX with TokenPayloadChangeArgs
@@ -118,51 +118,62 @@ namespace Roost.World.Elements
             token.Remanifest(VFXforCurrentTransformation);
         }
 
-        public static bool ApplyDisplacements(ITokenPayload incomingStack, Sphere __instance)
+        private static IEnumerable<CodeInstruction> TryDisplaceDuplicate(IEnumerable<CodeInstruction> instructions)
         {
-            Sphere sphere = __instance;
-            if (!incomingStack.Unique)
-                return false;
+            List<CodeInstruction> myCode = new List<CodeInstruction>()
+            {
+              new CodeInstruction(OpCodes.Ldarg_1),
+              new CodeInstruction(OpCodes.Ldloc_2),
+              new CodeInstruction(OpCodes.Call, typeof(ElementEffectsMaster).GetMethodInvariant(nameof(DisplaceStack))),
+            };
 
-            bool hasUQ = !string.IsNullOrEmpty(incomingStack.UniquenessGroup);
-            foreach (ElementStack tokenPayload in new List<ElementStack>(sphere.GetElementStacks()))
-                if (tokenPayload != incomingStack &&
-                    ((hasUQ && tokenPayload.UniquenessGroup == incomingStack.UniquenessGroup)
-                    || tokenPayload.EntityId == incomingStack.EntityId))
+            //do it twice for two calls
+            MethodInfo retireMethod = typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.Retire), new System.Type[] { typeof(RetirementVFX) });
+            instructions = instructions.ReplaceMethodCall(retireMethod, myCode);
+            instructions = instructions.ReplaceMethodCall(retireMethod, myCode);
+
+            return instructions;
+        }
+
+
+        public static bool DisplaceStack(ITokenPayload incomingStack, ElementStack affectedStack)
+        {
+            Element element = Machine.GetEntity<Element>(affectedStack.EntityId);
+
+            if (element.RetrieveProperty<bool>(DISPLACEMENT_REVERSE) == true)
+            {
+                affectedStack = incomingStack as ElementStack;
+                element = Machine.GetEntity<Element>(affectedStack.EntityId);
+            }
+
+            string displaceTo = element.RetrieveProperty<string>(DISPLACE_TO);
+            RetirementVFX vfx = element.RetrieveProperty<RetirementVFX>(DISPLACEMENT_VFX);
+
+            element = Machine.GetEntity<Element>(displaceTo);
+
+            //if ugroup is involved, element we're displacing into can have it too, thus creating chain of displacements;
+            //we need to perform them all at once, otherwise there'll be two tokens with the same group
+            if (string.IsNullOrEmpty(affectedStack.UniquenessGroup) == false)
+                while (!string.IsNullOrWhiteSpace(displaceTo) && element.UniquenessGroup == affectedStack.UniquenessGroup)
                 {
-                    ElementStack affectedStack = tokenPayload;
-                    Element element = Machine.GetEntity<Element>(tokenPayload.EntityId);
-
-                    if (element == null)
-                    {
-                        affectedStack.Retire(RetirementVFX.CardHide);
-                        return false;
-                    }
-
-                    if (element.RetrieveProperty<bool>(DISPLACEMENT_REVERSE) == true)
-                    {
-                        affectedStack = incomingStack as ElementStack;
-                        element = Machine.GetEntity<Element>(incomingStack.EntityId);
-                    }
-
-                    string displaceTo = element.RetrieveProperty<string>(DISPLACE_TO);
-                    RetirementVFX vfx = element.RetrieveProperty<RetirementVFX>(DISPLACEMENT_VFX);
-
+                    displaceTo = element.RetrieveProperty<string>(DISPLACE_TO);
                     element = Machine.GetEntity<Element>(displaceTo);
-                    while (string.IsNullOrWhiteSpace(displaceTo) == false && element?.UniquenessGroup == incomingStack.UniquenessGroup)
-                    {
-                        displaceTo = element.RetrieveProperty<string>(DISPLACE_TO);
-                        element = Machine.GetEntity<Element>(displaceTo);
-                    }
-
-                    if (string.IsNullOrWhiteSpace(displaceTo))
-                        affectedStack.Retire(vfx);
-                    else
-                    {
-                        StoreVFXForCurrentTransformation(vfx);
-                        affectedStack.ChangeTo(displaceTo);
-                    }
                 }
+
+            if (element.Id == NullElement.NULL_ELEMENT_ID)
+            {
+                Birdsong.Sing($"Trying to displace {affectedStack.EntityId} into non-existent element {displaceTo}");
+                affectedStack.Retire(RetirementVFX.CardHide);
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(displaceTo))
+                affectedStack.Retire(vfx);
+            else
+            {
+                StoreVFXForCurrentTransformation(vfx);
+                affectedStack.ChangeTo(displaceTo);
+            }
 
             return false;
         }
