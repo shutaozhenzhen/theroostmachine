@@ -82,9 +82,9 @@ namespace Roost.World.Recipes
                 if (enforceUniqueDraws)
                 {
                     if (!string.IsNullOrEmpty(token.Payload.UniquenessGroup))
-                        dealer.IndicateElementInUniquenessGroupManifested(token.PayloadEntityId, token.Payload.UniquenessGroup);
+                        Dealer.IndicateElementInUniquenessGroupManifested(token.PayloadEntityId);
                     if (token.Payload.Unique)
-                        dealer.IndicateUniqueElementManifested(token.Payload.EntityId);
+                        Dealer.IndicateUniqueElementManifested(token.Payload.EntityId, dealerstable);
                 }
 
                 if (drawPile.GetTotalStacksCount() == 0 && deckSpec.ResetOnExhaustion)
