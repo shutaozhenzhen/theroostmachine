@@ -47,23 +47,28 @@ namespace Roost.World.Elements
                 transpiler: typeof(ElementEffectsMaster).GetMethodInvariant(nameof(TryDisplaceDuplicate)));
 
             //shroud override
-            Machine.ClaimProperty<Element, bool>(SHROUDED);
+            Machine.ClaimProperty<Element, bool>(SHROUDED, false, true);
 
             Machine.Patch(
                 original: typeof(SituationStorageSphere).GetMethodInvariant(nameof(Sphere.AcceptToken)),
-                prefix: typeof(ElementEffectsMaster).GetMethodInvariant(nameof(ShroudOverride)));
+                prefix: typeof(ElementEffectsMaster).GetMethodInvariant(nameof(StorageShroudOverride)));
+            Machine.Patch(
+                original: typeof(OutputSphere).GetMethodInvariant(nameof(Sphere.AcceptToken)),
+                prefix: typeof(ElementEffectsMaster).GetMethodInvariant(nameof(OutputShroudOverride)));
         }
 
-        private static void ShroudOverride(Token token, ref Context context)
+        private static void StorageShroudOverride(Token token, ref Context context)
         {
-            if (token.Payload is ElementStack)
-            {
-                bool noShroud = Watchman.Get<Compendium>().GetEntityById<Element>(token.PayloadEntityId).RetrieveProperty<bool>(SHROUDED);
-                if (noShroud && context.actionSource == Context.ActionSource.SituationEffect)
-                    context.actionSource = Context.ActionSource.Unknown;
-            }
+            bool shroud = Watchman.Get<Compendium>().GetEntityById<Element>(token.PayloadEntityId).RetrieveProperty<bool>(SHROUDED);
+            if (!shroud && context.actionSource == Context.ActionSource.SituationEffect)
+                context.actionSource = Context.ActionSource.Unknown;
         }
 
+        private static void OutputShroudOverride(Token token)
+        {
+            if (token.Shrouded() && !Watchman.Get<Compendium>().GetEntityById<Element>(token.PayloadEntityId).RetrieveProperty<bool>(SHROUDED))
+                token.Unshroud();
+        }
 
         //the cleaner solution would be to pass VFX with TokenPayloadChangeArgs
         //but the code has compiled in an absolutely atrocious way and transpiling is effectively rewriting it
