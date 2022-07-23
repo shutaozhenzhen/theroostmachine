@@ -1,20 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 
+using SecretHistories.Spheres;
 using SecretHistories.Enums;
 using SecretHistories.UI;
 using SecretHistories.Entities;
-using SecretHistories.Spheres;
+using SecretHistories.Services;
+using SecretHistories.Spheres.Angels;
 
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
+
 using Roost;
 using Roost.World.Recipes;
 using Roost.World.Recipes.Entities;
-
-using SecretHistories.Spheres.Angels;
 using Roost.Twins;
-using TMPro;
 
 
 namespace Roost.World.Slots
@@ -22,6 +23,7 @@ namespace Roost.World.Slots
     public static class XAngelMaster
     {
         const string SLOT_X = "xtrigger";
+        private static Sprite defaultConsumeSprite;
         internal static void Enact()
         {
             Machine.ClaimProperty<SphereSpec, string>(SLOT_X);
@@ -32,6 +34,9 @@ namespace Roost.World.Slots
             Machine.Patch(
                 original: typeof(SlotDetailsWindow).GetMethodInvariant("SetSlot"),
                 postfix: typeof(XAngelMaster).GetMethodInvariant(nameof(SetXAngelInfo)));
+
+            Transform thresholdSphere = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<ThresholdSphere>().transform;
+            defaultConsumeSprite = thresholdSphere.Find("Icon-Slots").GetChild(0).GetChild(0).GetComponent<Image>().sprite;
         }
 
         private static void MakeXAngel(Sphere inSphere, SphereSpec __instance, List<IAngel> __result)
@@ -52,6 +57,7 @@ namespace Roost.World.Slots
         private static void SetXAngelInfo(SphereSpec slotSpec, TextMeshProUGUI ___consumesInfo, Image ___consumesIcon)
         {
             string xtrigger = slotSpec.RetrieveProperty<string>(SLOT_X);
+            Birdsong.Sing(xtrigger);
             if (xtrigger != null)
             {
                 ___consumesInfo.gameObject.SetActive(true);
@@ -67,7 +73,7 @@ namespace Roost.World.Slots
             else if (slotSpec.Consumes)
             {
                 ___consumesInfo.GetComponent<Babelfish>().SetValuesForCurrentCulture();
-                /*___consumesIcon.sprite = ??*/
+                ___consumesIcon.sprite = defaultConsumeSprite;
             }
         }
 

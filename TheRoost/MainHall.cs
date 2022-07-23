@@ -97,6 +97,7 @@ namespace Roost.Enactors
 
             Roost.World.Elements.ElementEffectsMaster.Enact();
 
+            Roost.World.Slots.XAngelMaster.Enact();
             Roost.World.Slots.SlotEffectsMaster.Enact();
 
             Roost.World.RecipeCallbacksMaster.Enact();
