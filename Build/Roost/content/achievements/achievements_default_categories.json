@@ -1,9 +1,0 @@
-{"achievements": [
- { "id": "ACH_CATEGORY_CSVANILLA", "label": "Cultist Simulator", "isCategory": true, },
- { "id": "ACH_CATEGORY_DANCER", "label": "Cultist Simulator: The Dancer", "isCategory": true, },
- { "id": "ACH_CATEGORY_PRIEST", "label": "Cultist Simulator: The Priest", "isCategory": true, },
- { "id": "ACH_CATEGORY_GHOUL", "label": "Cultist Simulator: The Ghoul", "isCategory": true, },
- { "id": "ACH_CATEGORY_EXILE", "label": "Cultist Simulator: The Exile", "isCategory": true, },
- { "id": "ACH_CATEGORY_EVERAFTER", "label": "Ever After", "isCategory": true, },
- { "id": "ACH_CATEGORY_MODS", "label": "Mod Content", "isCategory": true, }, 
-]}

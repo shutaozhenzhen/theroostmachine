@@ -1,9 +1,0 @@
-{"achievements": [
- { "id": "ACH_CATEGORY_CSVANILLA", "label": "Cultist Simulator" },
- { "id": "ACH_CATEGORY_DANCER", "label": "踊り子" },
- { "id": "ACH_CATEGORY_PRIEST", "label": "祭司" },
- { "id": "ACH_CATEGORY_GHOUL", "label": "グール" },
- { "id": "ACH_CATEGORY_EXILE", "label": "無法者" },
- { "id": "ACH_CATEGORY_EVERAFTER", "label": "いつまでも幸せに" },
- { "id": "ACH_CATEGORY_MODS", "label": "Steam Workshop" }, 
-]}

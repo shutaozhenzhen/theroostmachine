@@ -1,9 +1,0 @@
-{"achievements": [
- { "id": "ACH_CATEGORY_CSVANILLA", "label": "Cultist Simulator" },
- { "id": "ACH_CATEGORY_DANCER", "label": "Der Tänzer" },
- { "id": "ACH_CATEGORY_PRIEST", "label": "Der Priester" },
- { "id": "ACH_CATEGORY_GHOUL", "label": "Der Ghul" },
- { "id": "ACH_CATEGORY_EXILE", "label": "Das Exil" },
- { "id": "ACH_CATEGORY_EVERAFTER", "label": "Ewiges Glück" },
- { "id": "ACH_CATEGORY_MODS", "label": "Steam Workshop" }, 
-]}

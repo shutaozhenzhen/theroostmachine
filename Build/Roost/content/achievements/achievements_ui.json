@@ -1,8 +1,0 @@
-﻿{"cultures": [
-	{ "id": "en", "$mute": true, "uilabels$add": {
-	"ACH_BUTTON": "Collection",
-	"ACH_FANCYPANCY_QUOTE": "Time takes everything but the truth.",
-	"ACH_HIDDEN_TITLE": "{0} hidden achievements remaining",
-	"ACH_HIDDEN_DESC": "Details for each achievement will be revealed once unlocked.",
-	}},
-]}
