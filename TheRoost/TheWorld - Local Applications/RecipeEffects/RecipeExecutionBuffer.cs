@@ -215,25 +215,21 @@ namespace Roost.World.Recipes
             ScheduleVFX(token, vfx);
         }
 
-        public static void ScheduleCreation(Sphere sphere, string elementId, int amount, RetirementVFX vfx, bool shrouded)
+        public static void ScheduleCreation(Sphere sphere, string elementId, int amount, RetirementVFX vfx)
         {
             TryReplaceWithLever(ref elementId);
 
             if (creations.ContainsKey(sphere) == false)
                 creations[sphere] = new List<ScheduledCreation>();
 
-            Element element = Machine.GetEntity<Element>(elementId);
-            if (element.HasCustomProperty(Elements.ElementEffectsMaster.SHROUDED))
-                shrouded = element.RetrieveProperty<bool>(Elements.ElementEffectsMaster.SHROUDED);
-
             for (int i = 0; i < creations[sphere].Count; i++)
-                if (creations[sphere][i].IsSameEffect(elementId, vfx, shrouded))
+                if (creations[sphere][i].IsSameEffect(elementId, vfx))
                 {
                     creations[sphere][i] = creations[sphere][i].IncreaseAmount(amount);
                     return;
                 }
 
-            creations[sphere].Add(new ScheduledCreation(elementId, amount, vfx, shrouded));
+            creations[sphere].Add(new ScheduledCreation(elementId, amount, vfx));
         }
 
         public static void ScheduleMovement(Token token, Sphere toSphere, RetirementVFX vfx)
@@ -281,15 +277,13 @@ namespace Roost.World.Recipes
 
         private struct ScheduledCreation
         {
-            string elementId; int amount; RetirementVFX vfx; bool shrouded;
-            public ScheduledCreation(string element, int amount, RetirementVFX vfx, bool shrouded)
-            { this.elementId = element; this.amount = amount; this.vfx = vfx; this.shrouded = shrouded; }
+            string elementId; int amount; RetirementVFX vfx;
+            public ScheduledCreation(string element, int amount, RetirementVFX vfx)
+            { this.elementId = element; this.amount = amount; this.vfx = vfx; }
 
             public void ApplyWithoutVFX(Sphere onSphere)
             {
                 Token token = onSphere.ProvisionElementToken(elementId, amount);
-                if (shrouded)
-                    token.Shroud(true);
             }
 
             public void ApplyWithVFX(Sphere onSphere)
@@ -299,7 +293,7 @@ namespace Roost.World.Recipes
                 token.Remanifest(vfx);
             }
 
-            public bool IsSameEffect(string element, RetirementVFX vfx, bool shrouded) { return (element == this.elementId && vfx == this.vfx && this.shrouded == shrouded); }
+            public bool IsSameEffect(string element, RetirementVFX vfx) { return element == this.elementId && vfx == this.vfx; }
             public ScheduledCreation IncreaseAmount(int add)
             {
                 ScheduledCreation increasedAmount = this;

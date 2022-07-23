@@ -212,7 +212,7 @@ namespace Roost.World.Recipes.Entities
                         RecipeExecutionBuffer.ScheduleRetirement(token, DestroyVFX);
                 }
                 else
-                    RecipeExecutionBuffer.ScheduleCreation(sphere, effect.targetElement, level, CreateVFX, true);
+                    RecipeExecutionBuffer.ScheduleCreation(sphere, effect.targetElement, level, CreateVFX);
             }
 
             RecipeExecutionBuffer.ApplyRetirements();
@@ -529,7 +529,7 @@ namespace Roost.World.Recipes.Entities
                     }
                     break;
                 case MorphEffectsExtended.Spawn:
-                    RecipeExecutionBuffer.ScheduleCreation(targetToken.Sphere, this.Id, targetElementAmount * Level.value * catalystAmount, VFX, false);
+                    RecipeExecutionBuffer.ScheduleCreation(targetToken.Sphere, this.Id, targetElementAmount * Level.value * catalystAmount, VFX);
                     break;
                 case MorphEffectsExtended.SetMutation:
                     RecipeExecutionBuffer.ScheduleMutation(targetToken, this.Id, Level.value * catalystAmount * targetElementAmount, false, VFX);

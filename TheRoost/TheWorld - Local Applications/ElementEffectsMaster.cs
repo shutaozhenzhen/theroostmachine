@@ -26,10 +26,9 @@ namespace Roost.World.Elements
         //CardTakenShadowSlow, CardTransformWhite, CardHide, Default, None
         internal static void Enact()
         {
-            Machine.ClaimProperty<Element, RetirementVFX>(DECAY_VFX, false, RetirementVFX.CardBurn);
-            Machine.ClaimProperty<Element, bool>(SHROUDED);
-
             //vfx for decay retirements and transformation
+            Machine.ClaimProperty<Element, RetirementVFX>(DECAY_VFX, false, RetirementVFX.CardBurn);
+
             Machine.Patch(
                 original: typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.ExecuteHeartbeat)),
                 transpiler: typeof(ElementEffectsMaster).GetMethodInvariant(nameof(DecayElementStackWithVFX)));
@@ -46,7 +45,25 @@ namespace Roost.World.Elements
             Machine.Patch(
                 original: typeof(Sphere).GetMethodInvariant(nameof(Sphere.EnforceUniquenessForIncomingStack)),
                 transpiler: typeof(ElementEffectsMaster).GetMethodInvariant(nameof(TryDisplaceDuplicate)));
+
+            //shroud override
+            Machine.ClaimProperty<Element, bool>(SHROUDED);
+
+            Machine.Patch(
+                original: typeof(SituationStorageSphere).GetMethodInvariant(nameof(Sphere.AcceptToken)),
+                prefix: typeof(ElementEffectsMaster).GetMethodInvariant(nameof(ShroudOverride)));
         }
+
+        private static void ShroudOverride(Token token, ref Context context)
+        {
+            if (token.Payload is ElementStack)
+            {
+                bool noShroud = Watchman.Get<Compendium>().GetEntityById<Element>(token.PayloadEntityId).RetrieveProperty<bool>(SHROUDED);
+                if (noShroud && context.actionSource == Context.ActionSource.SituationEffect)
+                    context.actionSource = Context.ActionSource.Unknown;
+            }
+        }
+
 
         //the cleaner solution would be to pass VFX with TokenPayloadChangeArgs
         //but the code has compiled in an absolutely atrocious way and transpiling is effectively rewriting it
