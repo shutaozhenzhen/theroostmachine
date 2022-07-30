@@ -80,7 +80,14 @@ namespace Roost
 
             string result = string.Empty;
             foreach (object obj in collection)
-                result += (obj == null ? "null" : handler(obj)?.ToString()) + separator;
+                try
+                {
+                    result += (obj == null ? "null" : handler(obj)?.ToString()) + separator;
+                }
+                catch (Exception ex)
+                {
+                    Birdsong.Tweet(VerbosityLevel.Essential, 1, $"Collection Song caused an exception: {ex.FormatException()}\nLog so far: {result}");
+                }
 
             return result;
         }

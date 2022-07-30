@@ -15,6 +15,7 @@ namespace Roost.World.Elements
 {
     public static class ElementEffectsMaster
     {
+
         public const string DECAY_VFX = "decayvfx";
 
         public const string DISPLACE_TO = "displaceTo";
@@ -184,7 +185,7 @@ namespace Roost.World.Elements
 
             if (element.Id == NullElement.NULL_ELEMENT_ID)
             {
-                Birdsong.Sing($"Trying to displace {affectedStack.EntityId} into non-existent element {displaceTo}");
+                Birdsong.Tweet(VerbosityLevel.Essential, 1, $"Trying to displace {affectedStack.EntityId} into non-existent element {displaceTo}");
                 affectedStack.Retire(RetirementVFX.CardHide);
                 return false;
             }

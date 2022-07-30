@@ -57,7 +57,7 @@ namespace Roost.World.Slots
         private static void SetXAngelInfo(SphereSpec slotSpec, TextMeshProUGUI ___consumesInfo, Image ___consumesIcon)
         {
             string xtrigger = slotSpec.RetrieveProperty<string>(SLOT_X);
-            Birdsong.Sing(xtrigger);
+
             if (xtrigger != null)
             {
                 ___consumesInfo.gameObject.SetActive(true);
