@@ -103,12 +103,24 @@ namespace Roost.World.Recipes.Entities
                 EntityData filters = data.GetEntityDataFromEntityData(FILTER);
                 if (filters != null)
                 {
-                    string singleFilter = string.Empty;
-                    foreach (DictionaryEntry filter in filters.ValuesTable)
-                        singleFilter += $"{AsExpression(filter.Key)}>={AsExpression(filter.Value)}||";
+                    string positiveORFilters = string.Empty;
+                    string negativeANDFilters = string.Empty;
 
-                    singleFilter = singleFilter.Remove(singleFilter.Length - 2);
-                    data[FILTER] = singleFilter;
+                    foreach (DictionaryEntry filter in filters.ValuesTable)
+                    {
+                        if (filter.Value.ToString()[0] == '-')
+                            //if starts with '-', negative requirement; must be "less than abs()"; but instead of abs() we just remove '-' - same result
+                            negativeANDFilters += $"{AsExpression(filter.Key)}<{AsExpression(filter.Value).Substring(1)}&&";
+                        else
+                            positiveORFilters += $"{AsExpression(filter.Key)}>={AsExpression(filter.Value)}||";
+                    }
+
+                    if (positiveORFilters.Length > 0)
+                        positiveORFilters = positiveORFilters.Remove(positiveORFilters.Length - 2);
+                    if (negativeANDFilters.Length > 0)
+                        negativeANDFilters = negativeANDFilters.Remove(negativeANDFilters.Length - 2);
+
+                    data[FILTER] = $"({positiveORFilters})&&({negativeANDFilters})";
                 }
             }
             catch (Exception ex)

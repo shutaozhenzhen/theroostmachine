@@ -8,6 +8,8 @@ using SecretHistories.Commands;
 using SecretHistories.Commands.SituationCommands;
 using SecretHistories.Core;
 using SecretHistories.Fucine;
+using Assets.Logic;
+
 using Roost.Twins.Entities;
 
 using HarmonyLib;
@@ -126,7 +128,6 @@ namespace Roost.World.Recipes
         internal static void PushTemporaryRecipeLink(Recipe recipe, int priority)
         {
             temporaryLinks.Add(priority, recipe);
-
         }
 
         private static IEnumerable<CodeInstruction> UseNewExpulsion(IEnumerable<CodeInstruction> instructions)
@@ -136,13 +137,12 @@ namespace Roost.World.Recipes
                 new CodeInstruction(OpCodes.Ldarg_0),
                 new CodeInstruction(OpCodes.Ldarg_2),
                 new CodeInstruction(OpCodes.Call, typeof(RecipeLinkMaster).GetMethodInvariant(nameof(RecipeLinkMaster.FilterTokensWithExpulsion))),
-                new CodeInstruction(OpCodes.Stloc_2), //for some reason the code doesn't want me to load the data directly into the loc_0
-                new CodeInstruction(OpCodes.Ldloc_2),
-                new CodeInstruction(OpCodes.Stloc_0),
             };
 
-            Vagabond.CodeInstructionMask mask = instruction => instruction.opcode == OpCodes.Bgt_S;
-            return instructions.ReplaceBeforeMask(mask, myCode, true);
+            Vagabond.CodeInstructionMask startMask = instruction => instruction.opcode == OpCodes.Ldnull;
+            Vagabond.CodeInstructionMask endMask = instruction => instruction.Calls(typeof(TokenSelector).GetMethodInvariant(nameof(TokenSelector.FilterElementStacks)));
+
+            return instructions.ReplaceSegment(startMask, endMask, myCode, true, true);
         }
 
         private static List<Token> FilterTokensWithExpulsion(Situation situation, Expulsion expulsion)
