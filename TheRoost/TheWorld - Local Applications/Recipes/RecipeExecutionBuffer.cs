@@ -6,6 +6,7 @@ using SecretHistories.Spheres;
 using SecretHistories.Enums;
 using Assets.Scripts.Application.Abstract;
 using SecretHistories.Abstract;
+using SecretHistories.Commands;
 
 namespace Roost.World.Recipes
 {
@@ -23,7 +24,6 @@ namespace Roost.World.Recipes
         private static readonly Dictionary<Token, RetirementVFX> vfxs = new Dictionary<Token, RetirementVFX>();
 
         private static readonly HashSet<Sphere> dirtySpheres = new HashSet<Sphere>();
-        public static readonly Context situationEffectContext = new Context(Context.ActionSource.SituationEffect);
 
         public static void ApplyAllEffects()
         {
@@ -117,9 +117,9 @@ namespace Roost.World.Recipes
             {
                 Sphere sphere = movements[token];
                 if (sphere.SupportsVFX())
-                    sphere.GetItineraryFor(token).WithDuration(0.3f).Depart(token, situationEffectContext);
+                    sphere.GetItineraryFor(token).WithDuration(0.3f).Depart(token, new Context(Context.ActionSource.SituationEffect));
                 else
-                    sphere.AcceptToken(token, situationEffectContext);
+                    sphere.AcceptToken(token, new Context(Context.ActionSource.SituationEffect));
 
                 sphere.MarkAsDirty();
             }
@@ -286,19 +286,19 @@ namespace Roost.World.Recipes
 
         private struct ScheduledCreation
         {
-            string elementId; int amount; RetirementVFX vfx;
-            public ScheduledCreation(string element, int amount, RetirementVFX vfx)
-            { this.elementId = element; this.amount = amount; this.vfx = vfx; }
+            string elementId; int quantity; RetirementVFX vfx;
+            public ScheduledCreation(string element, int quantity, RetirementVFX vfx)
+            { this.elementId = element; this.quantity = quantity; this.vfx = vfx; }
 
             public void ApplyWithoutVFX(Sphere onSphere)
             {
-                Token token = onSphere.ProvisionElementToken(elementId, amount);
+                new TokenCreationCommand().WithElementStack(elementId, quantity).Execute(new Context(Context.ActionSource.SituationEffect), onSphere);
             }
 
             public void ApplyWithVFX(Sphere onSphere)
             {
-                Token token = Watchman.Get<Limbo>().ProvisionElementToken(elementId, amount);
-                onSphere.GetItineraryFor(token).WithDuration(0.3f).Depart(token, RecipeExecutionBuffer.situationEffectContext);
+                Token token = new TokenCreationCommand().WithElementStack(elementId, quantity).Execute(new Context(Context.ActionSource.SituationEffect), onSphere);
+                onSphere.GetItineraryFor(token).WithDuration(0.3f).Depart(token, new Context(Context.ActionSource.SituationEffect));
                 token.Remanifest(vfx);
             }
 
@@ -306,7 +306,7 @@ namespace Roost.World.Recipes
             public ScheduledCreation IncreaseAmount(int add)
             {
                 ScheduledCreation increasedAmount = this;
-                increasedAmount.amount += add;
+                increasedAmount.quantity += add;
                 return increasedAmount;
             }
         }

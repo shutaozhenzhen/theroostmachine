@@ -77,7 +77,7 @@ namespace Roost.World.Recipes
                 Token token = drawPile.GetElementTokens()[drawPile.GetTotalStacksCount() - 1];
                 RecipeExecutionBuffer.ScheduleMovement(token, toSphere, SecretHistories.Enums.RetirementVFX.None);
                 //need to exclude the token from the deck sphere right now so the next calculations and operations are correct
-                token.SetSphere(limbo, RecipeExecutionBuffer.situationEffectContext);
+                token.SetSphere(limbo, new Context(Context.ActionSource.SituationEffect));
 
                 if (enforceUniqueDraws)
                 {
