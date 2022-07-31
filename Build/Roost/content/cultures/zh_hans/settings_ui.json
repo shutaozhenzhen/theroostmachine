@@ -1,7 +1,6 @@
 ﻿{"cultures": [
-	{ "id": "en", "$mute": true, "uilabels$add": {
+	{ "id": "zh-hans", "$mute": true, "uilabels$add": {
 	"UI_ROOST_SETTINGS": "ROOST",
-	"UI_ROOST_ENABLE_ACHIEVEMENTS": "Custom Achievements",
 
 	"UI_ROOST_MINIMIZE_PROMO": "Minimize Promo Image",
 

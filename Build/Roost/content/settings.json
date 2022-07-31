@@ -1,8 +1,4 @@
 ﻿{"settings": [
-	{   "id": "ElegiastEnabled", "tabid": "UI_ROOST_SETTINGS", "hint": "UI_ROOST_ENABLE_ACHIEVEMENTS",
-	    "datatype": "Int32", "minvalue": 0, "maxvalue": 1, "defaultValue": 1,
-		"valuelabels": { "0": "UI_OFF", "1": "UI_ON" }
-	},
 	{   "id": "MinimizePromo", "tabid": "UI_ROOST_SETTINGS", "hint": "UI_ROOST_MINIMIZE_PROMO",
 	    "datatype": "Int32", "minvalue": 0, "maxvalue": 1, "defaultValue": 0,
 		"valuelabels": { "0": "UI_OFF", "1": "UI_ON" }
