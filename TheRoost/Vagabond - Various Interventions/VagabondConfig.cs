@@ -35,7 +35,6 @@ namespace Roost.Vagabond
         private static void ApplyConfigs()
         {
             new MinimizePromo(minimizePromo);
-            new EnableAchievements(Enactors.Elegiast.enabledSettingId, Enactors.Elegiast.patchId, Roost.Elegiast.CustomAchievementsManager.Enact);
             new StorageSphereDisplay(storageSpherePlacement);
             new ConsoleVerbosity();
         }
@@ -155,25 +154,6 @@ namespace Roost.Vagabond.SettingSubscribers
             }
             else if (Vagabond.HarmonyMask.HasAnyPatches(modulePatchId) == true)
                 Vagabond.HarmonyMask.Unpatch(modulePatchId);
-        }
-    }
-
-    internal class EnableAchievements : PatchSwitcher
-    {
-        public EnableAchievements(string settingId, string modulePatchId, Action enact) : base(settingId, modulePatchId, enact) { }
-
-        public override void WhenSettingUpdated(object value)
-        {
-            base.WhenSettingUpdated(value);
-
-            GameObject menu = GameObject.Find("CanvasMenu");
-            if (menu != null)
-            {
-                if (menu.FindInChildren("AchievementsBtn", true) != null)
-                    menu.FindInChildren("AchievementsBtn", true).SetActive(settingValue == 1);
-                else if (settingValue == 1)
-                    Watchman.Get<SecretHistories.Services.StageHand>().MenuScreen();
-            }
         }
     }
 }
