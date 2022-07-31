@@ -5,7 +5,7 @@ using SecretHistories.Spheres;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Roost.World.Recipes.MultiSlots
+namespace Roost.World.Slots
 {
     /*
      * Component added to the VerbManifestation, acting as an alternative entrypoint to handle all minislot management (the actual logic of the minislots is handled by the MiniSlotManager components it knows about

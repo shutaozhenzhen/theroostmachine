@@ -4,7 +4,7 @@ using SecretHistories.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Roost.World.Recipes.MultiSlots
+namespace Roost.World.Slots
 {
     /*
      * Handles the visual behaviour of one minislot GameObject

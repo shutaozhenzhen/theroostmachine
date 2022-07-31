@@ -8,9 +8,7 @@ using SecretHistories.Enums;
 using SecretHistories.Fucine;
 using SecretHistories.Fucine.DataImport;
 
-using Roost.Elegiast;
-
-namespace Roost.World
+namespace Roost.Elegiast
 {
     public static class RoostChronicler
     {
@@ -124,10 +122,10 @@ namespace Roost.World.Entities
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
         {
             foreach (KeyValuePair<string, string> leverWithDefaultValue in defaultValues)
-                Scribe.AddLeverDefaultValue(leverWithDefaultValue.Key.ToUpper(), leverWithDefaultValue.Value);
+                Elegiast.Scribe.AddLeverDefaultValue(leverWithDefaultValue.Key.ToUpper(), leverWithDefaultValue.Value);
 
             foreach (string textLever in textLevers)
-                Scribe.AddTextLever(textLever);
+                Elegiast.Scribe.AddTextLever(textLever);
         }
     }
 }

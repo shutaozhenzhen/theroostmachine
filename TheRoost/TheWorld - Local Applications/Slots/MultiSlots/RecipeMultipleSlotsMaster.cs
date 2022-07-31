@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Roost.World.Recipes.MultiSlots
+namespace Roost.World.Slots
 {
     class RecipeMultipleSlotsMaster : MonoBehaviour
     {

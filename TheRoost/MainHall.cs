@@ -85,20 +85,18 @@ namespace Roost.Enactors
     {
         internal static void Enact()
         {
-            Roost.World.RoostChronicler.Enact();
+            Roost.Elegiast.RoostChronicler.Enact();
             Roost.World.Optimizations.Enact();
 
             Roost.World.Recipes.SituationWindowMaster.Enact();
-
             Roost.World.Recipes.RecipeEffectsMaster.Enact();
-
             Roost.World.Recipes.RecipeLinkMaster.Enact();
-            Roost.World.Recipes.MultiSlots.RecipeMultipleSlotsMaster.Enact();
 
             Roost.World.Elements.ElementEffectsMaster.Enact();
 
             Roost.World.Slots.XAngelMaster.Enact();
             Roost.World.Slots.SlotEffectsMaster.Enact();
+            Roost.World.Slots.RecipeMultipleSlotsMaster.Enact();
 
             Roost.World.RecipeCallbacksMaster.Enact();
 
