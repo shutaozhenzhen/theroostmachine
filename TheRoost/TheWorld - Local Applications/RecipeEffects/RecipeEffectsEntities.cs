@@ -95,7 +95,7 @@ namespace Roost.World.Recipes.Entities
                 scheduledMutations.Add(elementId, RootEffects[elementId].value);
             FucineRoot root = FucineRoot.Get();
             foreach (string elementId in RootEffects.Keys)
-                RecipeExecutionBuffer.ScheduleMutation(root, null, elementId, scheduledMutations[elementId], true, RetirementVFX.None);
+                RecipeExecutionBuffer.ScheduleMutation(root, elementId, scheduledMutations[elementId], true);
 
             RecipeExecutionBuffer.ApplyMutations();
         }
@@ -401,8 +401,8 @@ namespace Roost.World.Recipes.Entities
         [FucineConstruct("100")] public FucineExp<int> Chance { get; set; }
 
         [FucineEverValue(DefaultValue = RetirementVFX.CardTransformWhite)] public RetirementVFX VFX { get; set; }
-        [FucineValue(false)] public bool IgnoreAmount { get; set; }
-        [FucineValue(false)] public bool IgnoreCatalystAmount { get; set; }
+        [FucineValue(false)] public bool IgnoreTargetQuantity { get; set; }
+        [FucineValue(false)] public bool IgnoreCatalystQuantity { get; set; }
 
         private LinkedRecipeDetails Induction { get; set; }
         [FucinePathValue] public FucinePath ToPath { get; set; }
@@ -414,8 +414,8 @@ namespace Roost.World.Recipes.Entities
             Chance = new FucineExp<int>("100");
             MorphEffect = MorphEffectsExtended.Transform;
             Level = new FucineExp<int>("1");
-            IgnoreAmount = false;
-            IgnoreCatalystAmount = false;
+            IgnoreTargetQuantity = false;
+            IgnoreCatalystQuantity = false;
             Expulsion = null;
             VFX = RetirementVFX.CardTransformWhite;
         }
@@ -505,16 +505,16 @@ namespace Roost.World.Recipes.Entities
             ToPath = null;
         }
 
-        public void Execute(Situation situation, Token targetToken, string targetElementId, int targetElementAmount, int catalystAmount, bool onToken)
+        public void Execute(Situation situation, Token targetToken, string targetElementId, int targetQuantity, int catalystAmount, bool onToken)
         {
             Crossroads.MarkLocalToken(targetToken);
 
             if (UnityEngine.Random.Range(1, 101) > Chance.value)
                 return;
 
-            if (IgnoreAmount)
-                targetElementAmount = 1;
-            if (IgnoreCatalystAmount)
+            if (IgnoreTargetQuantity)
+                targetQuantity = 1;
+            if (IgnoreCatalystQuantity)
                 catalystAmount = 1;
 
             switch (MorphEffect)
@@ -524,21 +524,24 @@ namespace Roost.World.Recipes.Entities
                         RecipeExecutionBuffer.ScheduleTransformation(targetToken, this.Id, VFX);
                     else
                     {
-                        RecipeExecutionBuffer.ScheduleMutation(targetToken, this.Id, targetElementAmount, true, RetirementVFX.None);
-                        RecipeExecutionBuffer.ScheduleMutation(targetToken, targetElementId, -targetElementAmount, true, VFX);
+                        //if there are several chanced transforms on a single aspect, we don't want mutations to happen several times
+                        //(it is TRANSFORM, previous aspect must end up being a single thing, not multiply into several different things)
+                        //thus we're making use of "mutation groups" - if one transform did trigger and registered a mutation, then other won't happen
+                        RecipeExecutionBuffer.ScheduleMutation(targetToken, targetElementId, -targetQuantity, true, RetirementVFX.None, "-" + targetToken.PayloadEntityId + targetElementId);
+                        RecipeExecutionBuffer.ScheduleMutation(targetToken, this.Id, targetQuantity, true, VFX, targetToken.PayloadEntityId + targetElementId);
                     }
                     break;
                 case MorphEffectsExtended.Spawn:
-                    RecipeExecutionBuffer.ScheduleCreation(targetToken.Sphere, this.Id, targetElementAmount * Level.value * catalystAmount, VFX);
+                    RecipeExecutionBuffer.ScheduleCreation(targetToken.Sphere, this.Id, targetQuantity * Level.value * catalystAmount, VFX);
                     break;
                 case MorphEffectsExtended.SetMutation:
-                    RecipeExecutionBuffer.ScheduleMutation(targetToken, this.Id, Level.value * catalystAmount * targetElementAmount, false, VFX);
+                    RecipeExecutionBuffer.ScheduleMutation(targetToken, this.Id, Level.value * catalystAmount * targetQuantity, false, VFX);
                     break;
                 case MorphEffectsExtended.Mutate:
-                    RecipeExecutionBuffer.ScheduleMutation(targetToken, this.Id, Level.value * catalystAmount * targetElementAmount, true, VFX);
+                    RecipeExecutionBuffer.ScheduleMutation(targetToken, this.Id, Level.value * catalystAmount * targetQuantity, true, VFX);
                     break;
                 case MorphEffectsExtended.DeckDraw:
-                    Legerdemain.Deal(this.Id, targetToken.Sphere, Level.value * catalystAmount * targetElementAmount);
+                    Legerdemain.Deal(this.Id, targetToken.Sphere, Level.value * catalystAmount * targetQuantity);
                     break;
                 case MorphEffectsExtended.DeckShuffle:
                     RecipeExecutionBuffer.ScheduleDeckRenew(this.Id);

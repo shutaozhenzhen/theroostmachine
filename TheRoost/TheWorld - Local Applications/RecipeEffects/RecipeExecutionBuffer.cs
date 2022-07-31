@@ -176,28 +176,37 @@ namespace Roost.World.Recipes
             deckRenews.Add(deckId);
         }
 
-        public static void ScheduleMutation(IHasAspects payload, Token token, string mutate, int level, bool additive, RetirementVFX vfx)
+        public static void ScheduleMutation(Token token, string mutate, int level, bool additive, RetirementVFX vfx, string groupId = "")
         {
+            ScheduleMutation(token.Payload, mutate, level, additive, groupId);
+            ScheduleVFX(token, vfx);
+        }
+
+        public static void ScheduleMutation(IHasAspects payload, string mutate, int level, bool additive, string groupId = "")
+        {
+            if (!string.IsNullOrWhiteSpace(groupId))
+                foreach (ScheduledMutation mutation in mutations.Keys)
+                    if (mutation.uniqueGroupId == groupId)
+                        return;
+
             TryReplaceWithLever(ref mutate);
 
-            ScheduledMutation futureMutation = new ScheduledMutation(mutate, level, additive);
+            ScheduledMutation futureMutation = new ScheduledMutation(mutate, level, additive, groupId);
+
             mutations[futureMutation] = new HashSet<IHasAspects>();
             mutations[futureMutation].Add(payload);
-
-            if (token != null)
-                ScheduleVFX(token, vfx);
         }
 
-        public static void ScheduleMutation(Token token, string mutate, int level, bool additive, RetirementVFX vfx)
+        public static void ScheduleMutation(List<Token> tokens, string mutate, int level, bool additive, RetirementVFX vfx, string groupId = "")
         {
-            ScheduleMutation(token.Payload, token, mutate, level, additive, vfx);
-        }
+            if (!string.IsNullOrWhiteSpace(groupId))
+                foreach (ScheduledMutation mutation in mutations.Keys)
+                    if (mutation.uniqueGroupId == groupId)
+                        return;
 
-        public static void ScheduleMutation(List<Token> tokens, string mutate, int level, bool additive, RetirementVFX vfx)
-        {
             TryReplaceWithLever(ref mutate);
 
-            ScheduledMutation futureMutation = new ScheduledMutation(mutate, level, additive);
+            ScheduledMutation futureMutation = new ScheduledMutation(mutate, level, additive, groupId);
             mutations[futureMutation] = new HashSet<IHasAspects>();
 
             foreach (Token token in tokens)
@@ -247,7 +256,7 @@ namespace Roost.World.Recipes
 
         public static void ScheduleVFX(Token token, RetirementVFX vfx)
         {
-            if (vfx != RetirementVFX.None && vfx != RetirementVFX.Default && retirements.Contains(token) == false)
+            if (vfx != RetirementVFX.None && vfx != RetirementVFX.Default && !retirements.Contains(token))
                 vfxs[token] = vfx;
         }
 
@@ -265,9 +274,9 @@ namespace Roost.World.Recipes
 
         private struct ScheduledMutation
         {
-            string mutate; int level; bool additive;
-            public ScheduledMutation(string mutate, int level, bool additive)
-            { this.mutate = mutate; this.level = level; this.additive = additive; }
+            string mutate; int level; bool additive; public string uniqueGroupId;
+            public ScheduledMutation(string mutate, int level, bool additive, string uniqueGroupId)
+            { this.mutate = mutate; this.level = level; this.additive = additive; this.uniqueGroupId = uniqueGroupId; }
 
             public void Apply(IHasAspects payload)
             {
