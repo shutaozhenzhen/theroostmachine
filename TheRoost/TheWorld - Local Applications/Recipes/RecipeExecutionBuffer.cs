@@ -176,19 +176,25 @@ namespace Roost.World.Recipes
             deckRenews.Add(deckId);
         }
 
-        public static void ScheduleMutation(Token token, string mutate, int level, bool additive, RetirementVFX vfx, string groupId = "")
-        {
-            ScheduleMutation(token.Payload, mutate, level, additive, groupId);
-            ScheduleVFX(token, vfx);
-        }
-
-        public static void ScheduleMutation(IHasAspects payload, string mutate, int level, bool additive, string groupId = "")
+        public static void ScheduleUniqueMutation(Token token, string mutate, int level, bool additive, RetirementVFX vfx, string groupId)
         {
             if (!string.IsNullOrWhiteSpace(groupId))
                 foreach (ScheduledMutation mutation in mutations.Keys)
                     if (mutation.uniqueGroupId == groupId)
                         return;
 
+            ScheduleMutation(token.Payload, mutate, level, additive, groupId);
+            ScheduleVFX(token, vfx);
+        }
+
+        public static void ScheduleMutation(Token token, string mutate, int level, bool additive, RetirementVFX vfx)
+        {
+            ScheduleMutation(token.Payload, mutate, level, additive);
+            ScheduleVFX(token, vfx);
+        }
+
+        public static void ScheduleMutation(IHasAspects payload, string mutate, int level, bool additive, string groupId = "")
+        {
             TryReplaceWithLever(ref mutate);
 
             ScheduledMutation futureMutation = new ScheduledMutation(mutate, level, additive, groupId);
@@ -197,16 +203,11 @@ namespace Roost.World.Recipes
             mutations[futureMutation].Add(payload);
         }
 
-        public static void ScheduleMutation(List<Token> tokens, string mutate, int level, bool additive, RetirementVFX vfx, string groupId = "")
+        public static void ScheduleMutation(List<Token> tokens, string mutate, int level, bool additive, RetirementVFX vfx)
         {
-            if (!string.IsNullOrWhiteSpace(groupId))
-                foreach (ScheduledMutation mutation in mutations.Keys)
-                    if (mutation.uniqueGroupId == groupId)
-                        return;
-
             TryReplaceWithLever(ref mutate);
 
-            ScheduledMutation futureMutation = new ScheduledMutation(mutate, level, additive, groupId);
+            ScheduledMutation futureMutation = new ScheduledMutation(mutate, level, additive, "");
             mutations[futureMutation] = new HashSet<IHasAspects>();
 
             foreach (Token token in tokens)
