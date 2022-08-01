@@ -120,7 +120,10 @@ namespace Roost.World.Recipes.Entities
                     if (negativeANDFilters.Length > 0)
                         negativeANDFilters = negativeANDFilters.Remove(negativeANDFilters.Length - 2);
 
-                    data[FILTER] = $"({positiveORFilters})&&({negativeANDFilters})";
+                    if (positiveORFilters.Length > 0 && negativeANDFilters.Length > 0)
+                        data[FILTER] = $"({positiveORFilters})&&({negativeANDFilters})";
+                    else
+                        data[FILTER] = positiveORFilters.Length > 0 ? positiveORFilters : negativeANDFilters;
                 }
             }
             catch (Exception ex)
