@@ -83,8 +83,8 @@ namespace Roost.World.Recipes
                 {
                     if (!string.IsNullOrEmpty(token.Payload.UniquenessGroup))
                         Dealer.IndicateElementInUniquenessGroupManifested(token.PayloadEntityId);
-                    if (token.Payload.Unique)
-                        Dealer.IndicateUniqueElementManifested(token.Payload.EntityId, dealerstable);
+                    else if (token.Payload.Unique)
+                        Dealer.DisallowDrawOf(token.Payload.EntityId, dealerstable, null);
                 }
 
                 if (drawPile.GetTotalStacksCount() == 0 && deckSpec.ResetOnExhaustion)

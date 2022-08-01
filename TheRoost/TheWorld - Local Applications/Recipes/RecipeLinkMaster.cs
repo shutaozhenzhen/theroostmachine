@@ -8,7 +8,7 @@ using SecretHistories.Commands;
 using SecretHistories.Commands.SituationCommands;
 using SecretHistories.Core;
 using SecretHistories.Fucine;
-using Assets.Logic;
+using SecretHistories.Logic;
 
 using Roost.Twins.Entities;
 
