@@ -23,11 +23,11 @@ namespace Roost.Twins
                 if (string.IsNullOrWhiteSpace(expression))
                     throw Birdsong.Cack("Expression is empty");
 
-                List<FucineRef> references = new List<FucineRef>();
-
                 expression = expression.Trim();
                 if (isSingleReferenceExpression(expression))
                     expression = string.Concat(referenceOpening, expression, referenceClosing);
+
+                List<FucineRef> references = new List<FucineRef>();
 
                 int openingPosition, closingPosition;
                 string referenceData = GetBordersOfSeparatedArea(expression, out openingPosition, out closingPosition, referenceOpening, referenceClosing);
@@ -72,7 +72,7 @@ namespace Roost.Twins
         public static void ParseFucineRef(string data, out FucinePath targetPath, out FucineExp<bool> filter, out FucineNumberGetter target)
         {
             const char partsSeparator = ':';
-            data = data.ToLower();
+            data = data.Trim().ToLower();
 
             GetBordersOfSeparatedArea(data, out int openingPosition, out int closingPosition, filterOpening, filterClosing);
             FucineExp<bool> separatedFilter = default(FucineExp<bool>);
@@ -80,6 +80,7 @@ namespace Roost.Twins
             {
                 string filterData = data.Substring(openingPosition + 1, closingPosition - openingPosition - 1);
                 data = data.Remove(openingPosition, closingPosition - openingPosition + 2);
+                data = data.Remove(data.IndexOf(partsSeparator), 1); //removing a single ':' for the removed filter
                 separatedFilter = new FucineExp<bool>(filterData);
             }
 
@@ -116,6 +117,7 @@ namespace Roost.Twins
             if (string.IsNullOrEmpty(path))
                 return FucinePath.Current();
 
+            path = path.Trim();
             bool pathIsMultiPath = path.Contains("+") || path[path.Length - 1] == referenceClosing;
             if (pathIsMultiPath)
             {

@@ -32,7 +32,7 @@ namespace Roost.Twins.Entities
                 return;
             }
 
-            this.formula = data;
+            this.formula = data.Trim();
             try
             {
                 this.references = TwinsParser.LoadReferencesForExpression(ref data).ToArray();
