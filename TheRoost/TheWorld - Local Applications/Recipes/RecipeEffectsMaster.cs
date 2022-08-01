@@ -114,8 +114,8 @@ namespace Roost.World.Recipes
                 if (firstPassEffects.DeckEffects != null)
                     foreach (string deckId in firstPassEffects.DeckEffects.Keys)
                         recipe.DeckEffects.Add(deckId, 1);
+
                 //to keep the inductions from recipe aspects correct, we reassign aspects to the main
-                //(it's also used in TokenValueRef's ValueArea.Recipe)
                 if (firstPassEffects.Aspects != null)
                     foreach (string aspectId in firstPassEffects.Aspects.Keys)
                         recipe.Aspects.Add(aspectId, 1);

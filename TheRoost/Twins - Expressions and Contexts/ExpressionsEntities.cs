@@ -302,7 +302,10 @@ namespace Roost.Twins.Entities
 
             public static float RecipeAspect(Token token, string target)
             {
-                return IsSituation(token.Payload) && (token.Payload as Situation).Recipe?.Aspects.ContainsKey(target) == true ? token.Quantity : 0;
+                if (!IsSituation(token.Payload))
+                    return 0;
+
+                return (token.Payload as Situation).Recipe.Aspects.AspectValue(target);
             }
 
             public static float Payload(Token token, string target)
