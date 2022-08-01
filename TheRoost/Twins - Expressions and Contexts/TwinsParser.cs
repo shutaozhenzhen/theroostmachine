@@ -74,12 +74,13 @@ namespace Roost.Twins
             const char partsSeparator = ':';
             data = data.Trim().ToLower();
 
+
             GetBordersOfSeparatedArea(data, out int openingPosition, out int closingPosition, filterOpening, filterClosing);
             FucineExp<bool> separatedFilter = default(FucineExp<bool>);
             if (openingPosition > -1)
             {
                 string filterData = data.Substring(openingPosition + 1, closingPosition - openingPosition - 1);
-                data = data.Remove(openingPosition, closingPosition - openingPosition + 2);
+                data = data.Remove(openingPosition, closingPosition - openingPosition + 1);
                 data = data.Remove(data.IndexOf(partsSeparator), 1); //removing a single ':' for the removed filter
                 separatedFilter = new FucineExp<bool>(filterData);
             }
