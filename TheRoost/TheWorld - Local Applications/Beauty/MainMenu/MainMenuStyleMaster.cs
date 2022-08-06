@@ -62,6 +62,7 @@ namespace Roost.World.Beauty
             //Birdsong.Sing("#####################");
             gameObject.GetComponent<ParticleSystemRenderer>().transform.position = new Vector3(position.x, position.y, 90);
             gameObject.GetComponent<ParticleSystem>().Clear();
+            gameObject.GetComponent<ParticleSystem>().Simulate(3000, true);
         }
 
         public static void setSpritesBasedOnLegacyVisualOverrides(string legacyId, LegacyMenuVisualsOverride vo)
