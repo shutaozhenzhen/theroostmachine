@@ -40,8 +40,10 @@ namespace Roost.World.Shelves
         [FucineValue(DefaultValue = 1)] public int Rows { get; set; }
         [FucineValue(DefaultValue = 1)] public int Columns { get; set; }
         [FucineValue(DefaultValue = "")] public string Background { get; set; }
-        [FucineEverValue] public FucineExp<bool> Expression { get; set; }
-        [FucineList(DefaultValue = FucineExp<bool>.UNDEFINED)] public List<ShelfArea> Areas {get; set;}
+        [FucineEverValue(DefaultValue = FucineExp<bool>.UNDEFINED)] public FucineExp<bool> Expression { get; set; }
+        [FucineList] public List<ShelfArea> Areas {get; set;}
+
+        [FucineValue(DefaultValue = false)] public bool NoOutline { get; set; }
 
         public Shelf(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) {}
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) {}

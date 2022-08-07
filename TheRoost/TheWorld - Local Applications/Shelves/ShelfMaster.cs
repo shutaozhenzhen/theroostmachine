@@ -22,7 +22,6 @@ namespace Roost.World.Shelves
 
         public static void Enact()
         {
-            AtTimeOfPower.TabletopSceneInit.Schedule(SpawnDummyShelf, PatchType.Postfix);
             Machine.Patch(
                 original: typeof(PrefabFactory).GetMethodInvariant(nameof(PrefabFactory.CreateManifestationPrefab)),
                 prefix: typeof(ShelfMaster).GetMethodInvariant(nameof(HandleZoneManifestationPrefab))
@@ -38,6 +37,8 @@ namespace Roost.World.Shelves
                 original: typeof(TabletopChoreographer).GetMethodInvariant(nameof(TabletopChoreographer.GroupAllStacks)),
                 postfix: typeof(ShelfMaster).GetMethodInvariant(nameof(MoveStacksToShelves))
             );
+
+            Roost.Vagabond.CommandLine.AddCommand("spawnshelf", SpawnShelf);
         }
 
         public static Sphere GetTabletopSphere()
@@ -46,13 +47,21 @@ namespace Roost.World.Shelves
             return Watchman.Get<HornedAxe>().GetSphereByAbsolutePath(tabletopSpherePath);
         }
 
-        public static void SpawnDummyShelf()
+        public static void SpawnShelf(string[] args)
         {
+            if(args.Length == 0)
+            {
+                Birdsong.Sing(Birdsong.Incr(), "Usage: /spawnshelf [id of shelf]");
+                return;
+            }
+
+            string shelfId = args[0];
+
             Sphere tabletopSphere = GetTabletopSphere();
             var quickDuration = Watchman.Get<Compendium>().GetSingleEntity<Dictum>().DefaultQuickTravelDuration;
 
             var zoneLocation = new TokenLocation(new Vector3(0, 0, 0), tabletopSphere.GetAbsolutePath());
-            var zoneCreationCommand = new ShelfCreationCommand("statshelf"); // entityId
+            var zoneCreationCommand = new ShelfCreationCommand(shelfId); // entityId
             var zoneTokenCreationCommand = new TokenCreationCommand(zoneCreationCommand, zoneLocation).WithDestination(zoneLocation, quickDuration);
             zoneTokenCreationCommand.Execute(Context.Unknown(), tabletopSphere);
             //Birdsong.Sing("Spawned a Zone! Sphere path:", tabletopSpherePath);
@@ -87,10 +96,12 @@ namespace Roost.World.Shelves
              */
             Sphere tabletopSphere = GetTabletopSphere();
             List<Token> stacksToMove = tabletopSphere.GetElementTokens();
+            Birdsong.Sing(Birdsong.Incr(), "Will now try to move cards to shelves. Count of cards to maybe move:", stacksToMove.Count);
             foreach(ShelfManifestation sm in RegisteredShelfManifestations)
             {
+                Birdsong.Sing(Birdsong.Incr(), "Checking shelf ", sm.entity.Id);
                 // For each area, is it full? If not, filter more and assign one by one
-                foreach(ShelfArea area in sm.entity.Areas)
+                foreach (ShelfArea area in sm.entity.Areas)
                 {
                     // Get the filtered list of valid tokens
                     // We recompute this list for each area and not outside of the loop, because the previous one may have shrunk the stackTokens original list.
@@ -99,14 +110,15 @@ namespace Roost.World.Shelves
                     {
                         validStacksForShelf = validStacksForShelf.FilterTokens(sm.entity.Expression);
                     }
+                    Birdsong.Sing(Birdsong.Incr(), $"Checking new area: {area.Id}");
 
                     // If at any point the generally valid list for the entire shelf is empty, stop trying to fill its areas
-                    if (validStacksForShelf.Count == 0) break;
-
+                    if (validStacksForShelf.Count == 0)
+                    {
+                        Birdsong.Sing(Birdsong.Incr(), "No token matches the shelf general expression anymore anyway. Stopping there...");
+                        break;
+                    }
                     Token dummyCard = validStacksForShelf[0];
-
-                    // if the area is full, don't try to fill it.
-                    if (sm.NextAvailablePosition(area, dummyCard) == Vector2.negativeInfinity) continue;
 
                     // If the area has an expression to filter things too, restrict the final list even more
                     List<Token> validStacksForArea = validStacksForShelf;
@@ -114,8 +126,21 @@ namespace Roost.World.Shelves
                     {
                         validStacksForArea = validStacksForArea.FilterTokens(area.Expression);
                     }
-
-                    sm.FillArea(area, validStacksForArea, stacksToMove);
+                    if (validStacksForArea.Count == 0)
+                    {
+                        Birdsong.Sing(Birdsong.Incr(), "No token matches the area expression. Moving on...");
+                        continue;
+                    }
+                    // if the area is full, don't try to fill it.
+                    /*f (sm.NextAvailablePosition(area, dummyCard).Equals(Vector2.negativeInfinity))
+                    {
+                        Birdsong.Sing(Birdsong.Incr(), $"Area {area.Id} is full...");
+                        continue;
+                    }
+                    else
+                    {*/
+                        sm.FillArea(area, validStacksForArea, stacksToMove);
+                    //}
                 }
             }
         }
