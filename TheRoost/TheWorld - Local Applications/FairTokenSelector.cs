@@ -6,7 +6,7 @@ using Roost.Twins.Entities;
 
 namespace Roost.World
 {
-    static class FairTokenSelector
+    public static class FairTokenSelector
     {
         static Context contextCalve = new Context(Context.ActionSource.CalvedStack);
         public static List<Token> FilterTokens(this List<Token> tokens, FucineExp<bool> filter)
