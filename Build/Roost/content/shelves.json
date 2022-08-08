@@ -1,0 +1,126 @@
+{
+    "shelves": [
+        {
+            "id": "stats",
+            "rows": 2,
+            "columns": 3,
+            "areas": [
+                {
+                    "id": "health",
+                    "background": "statshelf_health",
+                    "expression": "health"
+                },
+                {
+                    "id": "reason",
+                    "x": 2,
+                    "background": "statshelf_reason",
+                    "expression": "reason"
+                },
+                {
+                    "id": "passion",
+                    "x": 3,
+                    "background": "statshelf_passion",
+                    "expression": "passion"
+                },
+                {
+                    "id": "fatigue",
+                    "y": 2,
+                    "background": "statshelf_health_exhausted",
+                    "expression": "fatigue"
+                },
+                {
+                    "id": "reasonexhausted",
+                    "x": 2,
+                    "y": 2,
+                    "background": "statshelf_reason_exhausted",
+                    "expression": "concentration"
+                },
+                {
+                    "id": "passionexhausted",
+                    "x": 3,
+                    "y": 2,
+                    "background": "statshelf_passion_exhausted",
+                    "expression": "passionexhausted"
+                }
+            ]
+        },
+        {
+            "id": "commissions",
+            "rows": 4,
+            "columns": 3,
+            "areas": [
+                {
+                    "expression": "[aladim] || [aladimaway] || [aladimready]",
+                    "background": "commissionsshelf_aladim"
+                },
+                {
+                    "x": 2,
+                    "expression": "[commissionarticlelantern] || [commissionarticlelanternb] || [commissionarticlelanternc] || [commissionarticlesecrethistories] || [commissionarticlesecrethistoriesb] || [commissionarticlesecrethistoriesc]"
+                },
+                {
+                    "x": 3,
+                    "expression": "[article] && ([lantern] || [secrethistories])"
+                },
+                {
+                    "y": 2,
+                    "expression": "[bechet] || [bechetaway] || [bechetready]",
+                    "background": "commissionsshelf_bechet"
+                },
+                {
+                    "x": 2,
+                    "y": 2,
+                    "expression": "[commissionarticleforge] || [commissionarticleforgeb] || [commissionarticleforgec] || [commissionarticlegrail] || [commissionarticlegrailb] || [commissionarticlegrailc] || [commissionarticlemoth] || [commissionarticlemothb] || [commissionarticlemothc]"
+                },
+                {
+                    "x": 3,
+                    "y": 2,
+                    "expression": "[article] && ([forge] || [grail] || [moth])"
+                },
+                {
+                    "y": 3,
+                    "expression": "[jannings] || [janningsaway] || [janningsready]",
+                    "background": "commissionsshelf_jannings"
+                },
+                {
+                    "x": 2,
+                    "y": 3,
+                    "expression": "[commissionarticleedge] || [commissionarticleedgeb] || [commissionarticleedgec] || [commissionarticleheart] || [commissionarticleheartb] || [commissionarticleheartc]"
+                },
+                {
+                    "x": 3,
+                    "y": 3,
+                    "expression": "[article] && ([edge] || [heart])"
+                },
+                {
+                    "y": 4,
+                    "expression": "[poppycommission] || [poppyaway] || [poppycommissionready]",
+                    "background": "commissionsshelf_poppy"
+                },
+                {
+                    "x": 2,
+                    "y": 4,
+                    "expression": "[commissionarticleknock] || [commissionarticleknockb] || [commissionarticleknockc] || [commissionarticlewinter] || [commissionarticlewinterb] || [commissionarticlewinterc]"
+                },
+                {
+                    "x": 3,
+                    "y": 4,
+                    "expression": "[article] && ([knock] || [winter])"
+                }
+            ]
+        },
+        {
+            "id": "tools",
+            "rows": 1,
+            "columns": 8,
+            "expression": "tool",
+            "background": "toolsshelf_bg",
+            "style": "aligncenter",
+            "areas": [
+                {
+                    "id": "tools_area",
+                    "columns": 8
+                }
+            ]
+        }
+    ]
+}
