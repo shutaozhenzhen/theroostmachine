@@ -12,6 +12,7 @@ using UnityEngine;
 
 namespace Roost.World.Shelves
 {
+    // AreaStyle values: stretch, aligncenter, repeat
     class ShelfArea : AbstractEntity<ShelfArea>
     {
         [FucineValue(DefaultValue = 1)] public int X { get; set; }
@@ -19,6 +20,7 @@ namespace Roost.World.Shelves
         [FucineValue(DefaultValue = 1)] public int Rows { get; set; }
         [FucineValue(DefaultValue = 1)] public int Columns { get; set; }
         [FucineValue(DefaultValue = "")] public string Background { get; set; }
+        [FucineEverValue(DefaultValue = "stretch")] public string Style { get; set; }
         [FucineEverValue(DefaultValue = FucineExp<bool>.UNDEFINED)] public FucineExp<bool> Expression { get; set; }
 
         public ShelfArea(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) {
@@ -40,6 +42,7 @@ namespace Roost.World.Shelves
         [FucineValue(DefaultValue = 1)] public int Rows { get; set; }
         [FucineValue(DefaultValue = 1)] public int Columns { get; set; }
         [FucineValue(DefaultValue = "")] public string Background { get; set; }
+        [FucineEverValue(DefaultValue = "stretch")] public string Style { get; set; }
         [FucineEverValue(DefaultValue = FucineExp<bool>.UNDEFINED)] public FucineExp<bool> Expression { get; set; }
         [FucineList] public List<ShelfArea> Areas {get; set;}
 

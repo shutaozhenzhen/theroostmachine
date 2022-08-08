@@ -22,10 +22,6 @@ namespace Roost.World.Shelves
     [RequireComponent(typeof(RectTransform))]
     class ShelfManifestation : BasicManifestation, IManifestation, IPointerClickHandler, IPointerEnterHandler
     {
-        // Currently hardcoded, should probably use a delegate to go take it from the tabletopchoreographer
-        int GRID_WIDTH = 75;
-        int GRID_HEIGHT = 115;//140?
-
         public static float CELL_WIDTH = 75;
         public static float CELL_HEIGHT = 115;
         public static float H = 0;
@@ -52,7 +48,6 @@ namespace Roost.World.Shelves
 
         public void Initialise(IManifestable manifestable)
         {
-            //tc = Watchman.Get<TabletopChoreographer>();
             tc = ShelfMaster.GetTabletopSphere().gameObject.GetComponent<TabletopChoreographer>();
             
             // Here we build the actual visual representation of the zone, based on the ZoneData we receive in arg
@@ -95,32 +90,46 @@ namespace Roost.World.Shelves
             RectTransform.sizeDelta = new Vector2(ShelfWidth, ShelfHeight);
             gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
 
-/*            BuildBackgroundImage(
+            AddBackgroundImageComponent(
                 gameObject.transform,
-                entity.Background != "" ? entity.Background : "zone_bg",
+                entity.Background != "" ? entity.Background : "empty_bg",
                 ShelfWidth,
                 ShelfHeight,
-                true,
-                new Color32(3, 252, 236, 160)
-            );*/
+                entity.Style,
+                new Color32(255, 255, 255, 50)//new Color32(3, 252, 236, 160)
+            );
         }
 
-        void BuildBackgroundImage(Transform parent, string bg, float width, float height, bool tiled, Color32 color)
+        void AddBackgroundImageComponent(Transform parent, string bg, float width, float height, string style, Color32 color)
         {
-            GameObject goi = new GameObject("bg");
+            Sprite sprite = ResourcesManager.GetSpriteForUI(bg);
+            if (sprite == null) return;
+
+            GameObject goi = new GameObject("background");
             goi.transform.SetParent(parent);
 
             Image i = goi.AddComponent<Image>();
-            i.sprite = ResourcesManager.GetSpriteForUI(bg);// entity.Background != "" ? entity.Background : "zone_bg");
-            if (tiled)
+            var rt = goi.GetComponent<RectTransform>();
+
+            i.sprite = sprite;
+            i.color = color;
+
+            rt.anchoredPosition = new Vector2((width / 2) - (CELL_WIDTH / 2), (height / 2) - (CELL_HEIGHT / 2));
+            rt.sizeDelta = new Vector2(width, height);
+
+            if (style == "repeat")
             {
                 i.type = Image.Type.Tiled;
                 i.pixelsPerUnitMultiplier = 2.5f;
             }
-            i.color = color;
-            var rt = goi.GetComponent<RectTransform>();
-            rt.anchoredPosition = new Vector2((width / 2) - (CELL_WIDTH / 2), (height / 2) - (CELL_HEIGHT / 2));
-            rt.sizeDelta = new Vector2(width, height);
+            else if(style == "aligncenter")
+            {
+                i.preserveAspect = true;
+            }
+            else if(style == "stretch")
+            {
+                rt.sizeDelta = new Vector2(width, height);
+            }
         }
 
         void BuildArea(ShelfArea area, int index)
@@ -133,15 +142,18 @@ namespace Roost.World.Shelves
                 (area.X-1) * CELL_WIDTH, 
                 ((entity.Rows - area.Y)) * CELL_HEIGHT
             );
-            
-            BuildBackgroundImage(
-                areaObj.transform, 
-                area.Background != "" ? area.Background : "zone_bg", 
-                area.Columns * CELL_WIDTH, 
-                area.Rows * CELL_HEIGHT,
-                area.Background == "",
-                new Color32(255, 255, 255, 50)
-            );
+
+            if (area.Background != "")
+            {
+                AddBackgroundImageComponent(
+                    areaObj.transform,
+                    area.Background,
+                    area.Columns * CELL_WIDTH,
+                    area.Rows * CELL_HEIGHT,
+                    area.Style,
+                    new Color32(255, 255, 255, 50)
+                );
+            }
         }
 
         void BuildOutline()
@@ -150,45 +162,37 @@ namespace Roost.World.Shelves
             lr = gameObject.GetComponent<LineRenderer>();
             SetOutlinePositions();
 
-            lr.positionCount = 5;
+            lr.positionCount = 8;
             lr.material = new Material(Shader.Find("UI/Default"));
-            lr.material.color = new Color32(138, 255, 247, 100);
-            lr.startWidth = 2f;
+            lr.material.color = new Color32(255, 255, 255, 100);//new Color32(138, 255, 247, 100);
+            lr.startWidth = 1.5f;
             lr.sortingOrder = 1;
             lr.alignment = LineAlignment.TransformZ;
+            lr.loop = true;
         }
 
         void SetOutlinePositions()
         {
-            lr.SetPosition(0, new Vector3(
-                transform.position.x + COL_OFFSET - 2,
-                transform.position.y + ROW_OFFSET - 1,
-                H)
-            );
+            Vector2 origin = new Vector2(transform.position.x + COL_OFFSET -2f, transform.position.y + ROW_OFFSET);
+            float angleSize = 2;
 
-            lr.SetPosition(1, new Vector3(
-                transform.position.x + COL_OFFSET + ShelfWidth-2,
-                transform.position.y + ROW_OFFSET - 1,
-                H
-            ));
+            // Starts right after the bottom-left corner
+            lr.SetPosition(0, new Vector3(origin.x + angleSize, origin.y, H));
 
-            lr.SetPosition(2, new Vector3(
-                transform.position.x + COL_OFFSET + ShelfWidth - 2,
-                transform.position.y + ROW_OFFSET + ShelfHeight + 1,
-                H
-            ));
+            // Bottom-right angle
+            lr.SetPosition(1, new Vector3(origin.x + ShelfWidth - angleSize, origin.y, H));
+            lr.SetPosition(2, new Vector3(origin.x + ShelfWidth, origin.y + angleSize, H));
 
-            lr.SetPosition(3, new Vector3(
-                transform.position.x + COL_OFFSET - 1,
-                transform.position.y + ROW_OFFSET + ShelfHeight + 1,
-                H
-            ));
+            // Upper-right angle
+            lr.SetPosition(3, new Vector3(origin.x + ShelfWidth, origin.y + ShelfHeight - angleSize, H));
 
-            lr.SetPosition(4, new Vector3(
-                transform.position.x + COL_OFFSET - 1,
-                transform.position.y + ROW_OFFSET - 1,
-                H)
-            );
+            lr.SetPosition(4, new Vector3(origin.x + ShelfWidth - angleSize, origin.y + ShelfHeight, H));
+
+            // Upper-left angle
+            lr.SetPosition(5, new Vector3(origin.x + angleSize, origin.y + ShelfHeight, H));
+            lr.SetPosition(6, new Vector3(origin.x, origin.y + ShelfHeight - angleSize, H));
+
+            lr.SetPosition(7, new Vector3(origin.x, origin.y + angleSize, H));
         }
 
         protected Rect GetSphereRect()
@@ -196,38 +200,15 @@ namespace Roost.World.Shelves
             return tc.Sphere.GetRect();
         }
 
-        Vector2 GetPosClampedToTable(Vector2 pos)
-        {
-            const float padding = .2f;
-
-            var tableMinX = GetSphereRect().x + padding;
-            var tableMaxX = GetSphereRect().x + GetSphereRect().width - padding;
-            var tableMinY = GetSphereRect().y + padding;
-            var tableMaxY = GetSphereRect().y + GetSphereRect().height - padding;
-            pos.x = Mathf.Clamp(pos.x, tableMinX, tableMaxX);
-            pos.y = Mathf.Clamp(pos.y, tableMinY, tableMaxY);
-            return pos;
-        }
-
         public Rect GetRectForToken(Token token)
         {
             Vector2 tokenPosition = token.gameObject.transform.position;
-            return new Rect(
-                    tokenPosition.x,
-                    tokenPosition.y,
-                    75,
-                    115
-                );
+            return GetRectFromPosition(tokenPosition);
         }
 
         public Rect GetRectFromPosition(Vector2 position)
         {
-            return new Rect(
-                    position.x,
-                    position.y,
-                    75,
-                    115
-                );
+            return new Rect(position.x, position.y, 75, 115);
         }
 
         public LegalPositionCheckResult IsLegalPlacement(Rect candidateRect, Token placingToken)
@@ -241,7 +222,7 @@ namespace Roost.World.Shelves
             foreach (var otherToken in tc.Sphere.Tokens.Where(t => t != placingToken && t.OccupiesSameSpaceAs(placingToken) && !CanTokenBeIgnored(t)))
             {
                 otherTokenOverlapRect = GetRectForToken(otherToken);
-                Birdsong.Sing(Birdsong.Incr(), $"IsLegal=>Testing overlap between {placingToken.PayloadEntityId} ({candidateRect}) and {otherToken.PayloadEntityId} ({otherTokenOverlapRect}). overlap? {otherTokenOverlapRect.Overlaps(candidateRect)}");
+                //Birdsong.Sing(Birdsong.Incr(), $"IsLegal=>Testing overlap between {placingToken.PayloadEntityId} ({candidateRect}) and {otherToken.PayloadEntityId} ({otherTokenOverlapRect}). overlap? {otherTokenOverlapRect.Overlaps(candidateRect)}");
                 if (otherTokenOverlapRect.Overlaps(candidateRect))
                     return LegalPositionCheckResult.Blocked(otherToken.name, otherTokenOverlapRect);
             }
@@ -249,26 +230,15 @@ namespace Roost.World.Shelves
         }
         public virtual bool CanTokenBeIgnored(Token token)
         {
-
-            if (token.Defunct)
-                return true;
-            if (token.NoPush)
-                return true;
-
-            return false;
+            return (token.Defunct || token.NoPush);
         }
 
         public bool IsPositionAvailable(Token token, Vector2 position)
         {
             Rect cell = GetRectFromPosition(position);
-            //Birdsong.Sing(Birdsong.Incr(), "rough pos=", position);
-            //Vector2 intendedPosClampedToTable = GetPosClampedToTable(position);
-            //Vector2 intendedPosOnGrid = tc.SnapToGrid(intendedPosClampedToTable, null, GRID_WIDTH, GRID_HEIGHT);
-            //Birdsong.Sing(Birdsong.Incr(), "Intended pos=", intendedPosOnGrid);
-            //var targetRect = GetRectFromPosition(intendedPosOnGrid);
-            Birdsong.Sing(Birdsong.Incr(), $"Position={position}, Rect={cell}");
+            //Birdsong.Sing(Birdsong.Incr(), $"Position={position}, Rect={cell}");
             var legalPositionCheckResult = IsLegalPlacement(cell, token);
-            Birdsong.Sing(Birdsong.Incr(), entity.Id, "=> Position", cell, "is it legal? ", legalPositionCheckResult.IsLegal);
+            //Birdsong.Sing(Birdsong.Incr(), entity.Id, "=> Position", cell, "is it legal? ", legalPositionCheckResult.IsLegal);
             return legalPositionCheckResult.IsLegal;
         }
 
@@ -286,7 +256,6 @@ namespace Roost.World.Shelves
             {
                 for(var x=0; x < area.Columns; x++)
                 {
-                    //Birdsong.Sing(Birdsong.Incr(), entity.Id, "=> Checking relative position [", x, ";", y, "]...");
                     //Compute position on the board, based on shelf + area positions
                     Vector2 coordinateOfCell = ComputeCoordinateOfCell(area, x, y);
                     // Is legal? If so, return. If not, continue
@@ -322,6 +291,7 @@ namespace Roost.World.Shelves
                 Birdsong.Sing(Birdsong.Incr(), $"Will try to move {token.PayloadEntityId} in there. But first, let's check, maybe it's already there...");
                 Birdsong.Sing(Birdsong.Incr(), $"GO pos={gameObject.transform.position}, rows-y={entity.Rows - area.Y}");
                 Birdsong.Sing(Birdsong.Incr(), $"Area Rect {areaRect}, token rect {tokenRect}");
+                
                 if(areaRect.Overlaps(tokenRect))
                 {
                     Birdsong.Sing(Birdsong.Incr(), $"Token {token.PayloadEntityId} is already in the area, let's not try to move it");
@@ -361,6 +331,7 @@ namespace Roost.World.Shelves
 
         public void UpdateVisuals(IManifestable manifestable, Sphere sphere)
         {
+            // Important, to never be on top of a card after being dropped, just like dropzones.
             base.gameObject.transform.parent.SetAsFirstSibling();
         }
 
@@ -375,8 +346,8 @@ namespace Roost.World.Shelves
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            ExecuteEvents.Execute<IPointerEnterHandler>(transform.parent.gameObject, eventData,
-                (parentToken, y) => parentToken.OnPointerEnter(eventData));
+            /*ExecuteEvents.Execute<IPointerEnterHandler>(transform.parent.gameObject, eventData,
+                (parentToken, y) => parentToken.OnPointerEnter(eventData));*/
         }
     }
 }
