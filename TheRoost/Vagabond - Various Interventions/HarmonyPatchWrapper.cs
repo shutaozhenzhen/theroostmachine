@@ -57,7 +57,7 @@ namespace Roost.Vagabond
                 MethodInfo method = definingClass.GetMethod(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic);
 
                 if (method == null)
-                    Birdsong.Tweet($"Method not found");
+                    throw Birdsong.Cack("Method not found");
 
                 return method;
             }
@@ -67,18 +67,38 @@ namespace Roost.Vagabond
             }
         }
 
-        internal static MethodInfo GetMethodInvariant(Type definingClass, string name, params Type[] args)
+        internal static MethodInfo GetMethodInvariant(Type definingClass, string name, params Type[] argTypes)
         {
             try
             {
-                MethodInfo method = definingClass.GetMethod(name, args);
-                if (method == null)
-                    throw Birdsong.Cack("Method not found");
-                return method;
+                MethodInfo simplyFoundMethod = definingClass.GetMethod(name, argTypes);
+                if (simplyFoundMethod != null)
+                    return simplyFoundMethod;
+
+                var allMethods = definingClass.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic);
+
+                foreach (MethodInfo method in allMethods)
+                    if (method.Name == name)
+                    {
+                        bool success = true;
+
+                        ParameterInfo[] methodParameters = method.GetParameters();
+                        for (int n = 0; n < methodParameters.Length; n++)
+                            if (methodParameters[n].ParameterType != argTypes[n])
+                            {
+                                success = false;
+                                break;
+                            }
+
+                        if (success)
+                            return method; 
+                    }
+             
+                throw Birdsong.Cack("Method not found");
             }
             catch (Exception ex)
             {
-                throw Birdsong.Cack($"Failed to find method '{name}' with parameters '{args.LogCollection()}' in '{definingClass.Name}', reason: {ex.FormatException()}");
+                throw Birdsong.Cack($"Failed to find method '{name}' with parameters '{argTypes.LogCollection()}' in '{definingClass.Name}', reason: {ex.FormatException()}");
             }
         }
 

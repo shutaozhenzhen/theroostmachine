@@ -87,7 +87,7 @@ namespace Roost
                 }
                 catch (Exception ex)
                 {
-                    Birdsong.Tweet(VerbosityLevel.Essential, 1, $"Collection Song caused an exception: {ex.FormatException()}\nLog so far: {result}");
+                    Birdsong.Tweet(VerbosityLevel.Essential, 1, $"Collection caused an exception: {ex.FormatException()}\nLog so far: {result}");
                 }
 
             return result;
