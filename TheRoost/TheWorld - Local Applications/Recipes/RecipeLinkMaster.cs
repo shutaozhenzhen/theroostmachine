@@ -5,10 +5,9 @@ using System.Reflection.Emit;
 using SecretHistories.Entities;
 using SecretHistories.UI;
 using SecretHistories.Commands;
-using SecretHistories.Commands.SituationCommands;
-using SecretHistories.Core;
-using SecretHistories.Fucine;
 using SecretHistories.Logic;
+using SecretHistories.States;
+using SecretHistories.Fucine;
 
 using Roost.Twins.Entities;
 
@@ -18,7 +17,6 @@ namespace Roost.World.Recipes
 {
     public static class RecipeLinkMaster
     {
-        private readonly static Action<Situation, Recipe, Expulsion, FucinePath> SpawnSituation = Delegate.CreateDelegate(typeof(Action<Situation, Recipe, Expulsion, FucinePath>), typeof(Situation).GetMethodInvariant("AdditionalRecipeSpawnToken")) as Action<Situation, Recipe, Expulsion, FucinePath>;
 
         const string CHANCE = "chance";
         const string LIMIT = "limit";
@@ -28,14 +26,9 @@ namespace Roost.World.Recipes
 
         internal static void Enact()
         {
-            //inductions obey reqs and uses explusions
-            Machine.Patch(
-                original: typeof(AttemptAspectInductionCommand).GetMethodInvariant("PerformAspectInduction"),
-                prefix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(PerformAspectInduction)));
-
             //there are xtrigger links
             Machine.Patch(
-                original: typeof(RecipeConductor).GetMethodInvariant(nameof(RecipeConductor.GetLinkedRecipe)),
+                original: typeof(RequiresExecutionState).GetMethodInvariant(nameof(RequiresExecutionState.GetNextValidLink)),
                 prefix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(EvaluateTempLinks)));
 
             //chance is an expression
@@ -52,14 +45,14 @@ namespace Roost.World.Recipes
             Machine.ClaimProperty<Expulsion, FucineExp<int>>(LIMIT, false);
             Machine.AddImportMolding<Expulsion>(Entities.MoldingsStorage.ConvertExpulsionFilters);
             Machine.Patch(
-                original: typeof(Situation).GetMethodInvariant("AdditionalRecipeSpawnToken"),
+                original: typeof(Situation).GetMethodInvariant("AdditionalRecipeSpawnToken", new Type[] { typeof(Recipe), typeof(Expulsion), typeof(FucinePath) }),
                 transpiler: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(UseNewExpulsion)));
 
             Machine.ClaimProperty<Recipe, string>(PREVIEW);
             Machine.ClaimProperty<Recipe, string>(PREVIEW_LABEL);
             Machine.Patch(
-                original: typeof(Situation).GetMethodInvariant(nameof(Situation.ReactToLatestRecipePrediction)),
-                prefix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(DisplayPreview)));
+                original: typeof(RecipeNote).GetMethodInvariant(nameof(RecipeNote.StartDescription)),
+                postfix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(DisplayPreview)));
         }
 
         private static bool GetRefRecipeChance(LinkedRecipeDetails __instance, ref int __result)
@@ -77,26 +70,6 @@ namespace Roost.World.Recipes
             return false;
         }
 
-        //AttemptAspectInductionCommand.PerformAspectInduction()
-        private static bool PerformAspectInduction(Element aspectElement, Situation situation)
-        {
-            AspectsInContext aspectsInContext = Watchman.Get<HornedAxe>().GetAspectsInContext(situation.GetAspects(true), null);
-
-            foreach (LinkedRecipeDetails linkedRecipeDetails in aspectElement.Induces)
-                TrySpawnSituation(situation, linkedRecipeDetails, aspectsInContext);
-
-            return false;
-        }
-
-        public static void TrySpawnSituation(Situation situation, LinkedRecipeDetails linkedRecipeDetails, AspectsInContext aspectsInContext)
-        {
-            if (linkedRecipeDetails.ShouldAlwaysSucceed() || UnityEngine.Random.Range(1, 101) <= linkedRecipeDetails.Chance)
-            {
-                Recipe recipe = Watchman.Get<Compendium>().GetEntityById<Recipe>(linkedRecipeDetails.Id);
-                if (recipe.RequirementsSatisfiedBy(aspectsInContext))
-                    SpawnSituation(situation, recipe, linkedRecipeDetails.Expulsion, FucinePath.Current());
-            }
-        }
 
         public static readonly SortedList<int, Recipe> temporaryLinks = new SortedList<int, Recipe>(new DuplicateKeyComparer<int>());
         private class DuplicateKeyComparer<TKey> : IComparer<TKey> where TKey : IComparable
@@ -112,10 +85,11 @@ namespace Roost.World.Recipes
             }
         }
         //RecipeConductor.GetLinkedRecipe() prefix
-        private static bool EvaluateTempLinks(ref Recipe __result, AspectsInContext ____aspectsInContext)
+        private static bool EvaluateTempLinks(ref Recipe __result, Situation situation)
         {
+            AspectsInContext aspectsInContext = situation.GetAspectsInContext(true);
             foreach (Recipe recipe in temporaryLinks.Values)
-                if (recipe.RequirementsSatisfiedBy(____aspectsInContext))
+                if (recipe.RequirementsSatisfiedBy(aspectsInContext))
                 {
                     __result = recipe;
                     break;
@@ -163,23 +137,22 @@ namespace Roost.World.Recipes
             return tokens;
         }
 
-        private static readonly Action<RecipePrediction, string> predictionTitleSet = typeof(RecipePrediction).GetPropertyInvariant(nameof(RecipePrediction.Title)).GetSetMethod(true).
-            CreateDelegate(typeof(Action<RecipePrediction, string>)) as Action<RecipePrediction, string>;
-        private static readonly Action<RecipePrediction, string> predictionDescriptionSet = typeof(RecipePrediction).GetPropertyInvariant(nameof(RecipePrediction.Description)).GetSetMethod(true).
-            CreateDelegate(typeof(Action<RecipePrediction, string>)) as Action<RecipePrediction, string>;
-        private static void DisplayPreview(RecipePrediction newRecipePrediction, Situation __instance)
+        private static readonly Action<RecipeNote, string> predictionTitleSet = typeof(RecipeNote).GetPropertyInvariant(nameof(RecipeNote.Title)).GetSetMethod(true).
+            CreateDelegate(typeof(Action<RecipeNote, string>)) as Action<RecipeNote, string>;
+        private static readonly Action<RecipeNote, string> predictionDescriptionSet = typeof(RecipeNote).GetPropertyInvariant(nameof(RecipeNote.Description)).GetSetMethod(true).
+            CreateDelegate(typeof(Action<RecipeNote, string>)) as Action<RecipeNote, string>;
+        private static void DisplayPreview(Recipe recipe, Situation situation, bool additive, ref RecipeNote __result)
         {
-            if (__instance.State.Identifier != SecretHistories.Enums.StateEnum.Unstarted)
+            if (situation.State.Identifier != SecretHistories.Enums.StateEnum.Unstarted)
                 return;
-            Recipe recipe = Machine.GetEntity<Recipe>(newRecipePrediction.RecipeId);
 
             string previewLabel = recipe.RetrieveProperty<string>(PREVIEW_LABEL);
             if (previewLabel != null)
-                predictionTitleSet(newRecipePrediction, previewLabel);
+                predictionTitleSet(__result, previewLabel);
 
             string previewDescription = recipe.RetrieveProperty<string>(PREVIEW);
             if (previewDescription != null)
-                predictionDescriptionSet(newRecipePrediction, previewDescription);
+                predictionDescriptionSet(__result, previewDescription);
         }
     }
 }

@@ -129,11 +129,15 @@ namespace Roost.World.Recipes
         //applied separately
         public static void ApplyRecipeInductions()
         {
+            Character protag = Watchman.Get<Stable>().Protag();
+
             foreach (Situation situation in inductions.Keys)
             {
                 AspectsInContext aspectsInContext = Watchman.Get<HornedAxe>().GetAspectsInContext(situation.GetAspects(true), null);
+
                 foreach (LinkedRecipeDetails link in inductions[situation])
-                    RecipeLinkMaster.TrySpawnSituation(situation, link, aspectsInContext);
+                    if (link.CanExecuteInContext(aspectsInContext, protag))
+                        situation.AdditionalRecipeSpawnToken(link);
             }
             inductions.Clear();
         }

@@ -144,23 +144,19 @@ namespace Roost.World.Recipes
             ///all other native transmutations are skipped
             List<CodeInstruction> myCode = new List<CodeInstruction>()
             {
-                new CodeInstruction(OpCodes.Ldarg_0),
                 new CodeInstruction(OpCodes.Ldarg_1),
                 new CodeInstruction(OpCodes.Call, typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(RecipeEffectsMaster.RefEffects))),
-
             };
+
             Vagabond.CodeInstructionMask mask = instruction => instruction.operand as System.Reflection.MethodInfo == typeof(RecipeCompletionEffectCommand).GetMethodInvariant("RunVerbManipulations");
             return instructions.ReplaceBeforeMask(mask, myCode, true);
         }
 
-        private static void RefEffects(RecipeCompletionEffectCommand command, Situation situation)
+        private static void RefEffects(Situation situation)
         {
             //Birdsong.Sing(VerbosityLevel.SystemChatter, 0, $"EXECUTING: {command.Recipe.Id}");
-
-            situation.Recipe = command.Recipe;
             Crossroads.MarkLocalSituation(situation);
-            GrandEffects.RunGrandEffects(situation.Recipe.RetrieveProperty<GrandEffects>(GRAND_EFFECTS), situation, situation.GetSingleSphereByCategory(SphereCategory.SituationStorage));
-            ManageDirtySpheres();
+            GrandEffects.RunGrandEffects(situation.CurrentRecipe.RetrieveProperty<GrandEffects>(GRAND_EFFECTS), situation, situation.GetSingleSphereByCategory(SphereCategory.SituationStorage));
             Crossroads.ResetCache();
         }
 
@@ -203,7 +199,7 @@ namespace Roost.World.Recipes
         {
             currentSituation = __instance;
         }
-        private static bool CheckGrandReqsForSituation(Recipe __instance, AspectsInContext aspectsinContext)
+        private static bool CheckGrandReqsForSituation(Recipe __instance, AspectsInContext aspectsInContext)
         {
             Dictionary<FucineExp<int>, FucineExp<int>> grandreqs = __instance.RetrieveProperty(GRAND_REQS) as Dictionary<FucineExp<int>, FucineExp<int>>;
             if (grandreqs == null || grandreqs.Count == 0)
@@ -231,20 +227,6 @@ namespace Roost.World.Recipes
         public static GrandEffects GetGrandEffects(this Recipe recipe)
         {
             return recipe.RetrieveProperty<GrandEffects>(GRAND_EFFECTS);
-        }
-
-        private static void ManageDirtySpheres()
-        {
-            HashSet<Sphere> affectedSpheres = RecipeExecutionBuffer.FlushDirtySpheres();
-            foreach (Sphere sphere in affectedSpheres)
-                ManageDirtySphere(sphere);
-        }
-
-        //separating into its own method for possible future patching
-        private static void ManageDirtySphere(Sphere sphere)
-        {
-            if (sphere.SphereCategory == SphereCategory.SituationStorage)
-                SituationWindowMaster.UpdateSituationWindowDisplay(sphere);
         }
     }
 }

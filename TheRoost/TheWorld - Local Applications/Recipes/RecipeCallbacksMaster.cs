@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
+using System.Linq;
 using System.Collections.Generic;
+using SecretHistories.UI;
 
 using SecretHistories.Core;
 using SecretHistories.Entities;
@@ -42,12 +44,16 @@ namespace Roost.World
 
             // Patch: evaluate alts and set their Ids to callback values (if set)
             Machine.Patch(
-                original: typeof(RecipeConductor).GetMethodInvariant(nameof(RecipeConductor.GetAlternateRecipes)),
+                original: typeof(StartingState).GetMethodInvariant(nameof(StartingState.UpdateRecipePrediction)),
+                prefix: typeof(RecipeCallbacksMaster).GetMethodInvariant(nameof(EvaluateCallbacksForAlts)));
+
+            Machine.Patch(
+                original: typeof(OngoingState).GetMethodInvariant(nameof(OngoingState.UpdateRecipePrediction)),
                 prefix: typeof(RecipeCallbacksMaster).GetMethodInvariant(nameof(EvaluateCallbacksForAlts)));
 
             // Patch: evaluate links and set their Ids to callback values (if set)
             Machine.Patch(
-                original: typeof(RecipeConductor).GetMethodInvariant(nameof(RecipeConductor.GetLinkedRecipe)),
+                original: typeof(RequiresExecutionState).GetMethodInvariant(nameof(RequiresExecutionState.GetNextValidLink)),
                 prefix: typeof(RecipeCallbacksMaster).GetMethodInvariant(nameof(EvaluateCallbacksForLinks)));
 
             // Patch: clear callbacks when recipe chain ends
@@ -71,7 +77,7 @@ namespace Roost.World
 
         private static void EvaluateCallbacks(List<LinkedRecipeDetails> links)
         {
-            foreach (LinkedRecipeDetails linkDetails in links)
+            foreach (LinkedRecipeDetails linkDetails in links.Where(link=>!link.Additional))
             {
                 string callbackId = linkDetails.RetrieveProperty<string>(USE_CALLBACK);
 
@@ -86,19 +92,22 @@ namespace Roost.World
 
                 //if the recipe id is wrong - or null, in case callback isn't set - default logger will display a message
                 linkDetails.SetId(callbackRecipeId);
+                linkDetails.Recipe = Watchman.Get<Compendium>().GetEntityById<Recipe>(linkDetails.Id);
+                if (!linkDetails.Recipe.IsValid())
+                    Birdsong.Tweet(VerbosityLevel.Essential, 1, $"Wrong callback link '{linkDetails.Id}'");
             }
         }
 
         //RecipeConductor.GetLinkedRecipe() prefix
-        private static void EvaluateCallbacksForLinks(Recipe currentRecipe)
+        private static void EvaluateCallbacksForLinks(Situation situation)
         {
-            EvaluateCallbacks(currentRecipe.Linked);
+            EvaluateCallbacks(situation.CurrentRecipe.Linked);
         }
 
         //RecipeConductor.GetAlternateRecipes() prefix
-        private static void EvaluateCallbacksForAlts(Recipe recipe)
+        private static void EvaluateCallbacksForAlts(Situation situation)
         {
-            EvaluateCallbacks(recipe.Alt);
+            EvaluateCallbacks(situation.CurrentRecipe.Linked);
         }
 
         public static void ClearAllCallbacksForSituation(Situation situation)
@@ -115,7 +124,7 @@ namespace Roost.World
 
         private static void RecipeCallbackOperations(Situation situation)
         {
-            var callbacksToSet = situation.Recipe.RetrieveProperty<Dictionary<string, string>>(ADD_CALLBACKS);
+            var callbacksToSet = situation.CurrentRecipe.RetrieveProperty<Dictionary<string, string>>(ADD_CALLBACKS);
             if (callbacksToSet != null)
             {
                 foreach (KeyValuePair<string, string> callback in callbacksToSet)
@@ -125,7 +134,7 @@ namespace Roost.World
                 }
             }
 
-            var callbacksToClear = situation.Recipe.RetrieveProperty<List<string>>(CLEAR_CALLBACKS);
+            var callbacksToClear = situation.CurrentRecipe.RetrieveProperty<List<string>>(CLEAR_CALLBACKS);
             if (callbacksToClear != null)
             {
                 foreach (string callbackId in callbacksToClear)
@@ -135,7 +144,7 @@ namespace Roost.World
                 }
             }
 
-            if (situation.Recipe.RetrieveProperty<bool>(RESET_CALLBACKS))
+            if (situation.CurrentRecipe.RetrieveProperty<bool>(RESET_CALLBACKS))
                 ClearAllCallbacksForSituation(situation);
         }
     }

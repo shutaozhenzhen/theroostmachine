@@ -48,7 +48,7 @@ namespace Roost.World.Slots
                 prefix: typeof(SlotEffectsMaster).GetMethodInvariant(nameof(SlotFilterSatisfied)));
 
             Machine.Patch(
-                original: typeof(OngoingState).GetMethodInvariant("PopulateRecipeSlots"),
+                original: typeof(StartingState).GetMethodInvariant("PopulateRecipeSlots"),
                 prefix: typeof(SlotEffectsMaster).GetMethodInvariant(nameof(PopulateRecipeSlots)));
         }
 
@@ -58,7 +58,7 @@ namespace Roost.World.Slots
             List<SphereSpec> slots = new List<SphereSpec>();
 
             Crossroads.MarkLocalSituation(situation);
-            foreach (SphereSpec sphere in situation.Recipe.Slots)
+            foreach (SphereSpec sphere in situation.FallbackRecipe.Slots)
                 if (sphere.SuitsVerbAndSatisfiedReqs(situation.VerbId))
                     slots.Add(sphere);
             Crossroads.ResetCache();

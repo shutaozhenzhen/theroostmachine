@@ -25,7 +25,7 @@ namespace Roost.Twins
 
             //the game keeps slot and output spheres even when they are unused; to avoid confusion in references, clear them
             Machine.Patch(
-                original: typeof(OngoingState).GetMethodInvariant(nameof(OngoingState.Enter)),
+                original: typeof(StartingState).GetMethodInvariant(nameof(StartingState.Enter)),
                 postfix: typeof(Crossroads).GetMethodInvariant(nameof(ClearVerbThresholds)));
             Machine.Patch(
                 original: typeof(CompleteState).GetMethodInvariant(nameof(CompleteState.Exit)),

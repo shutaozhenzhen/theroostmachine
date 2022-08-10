@@ -86,7 +86,7 @@ namespace Roost.World.Beauty
         public static void CheckForPresenceOfBurnImages(Situation situation)
         {
             //Birdsong.Sing("Checking for presence of burn images...");
-            List<BurnImageData> burnImages = situation.Recipe.RetrieveProperty<List<BurnImageData>>("burnimages");
+            List<BurnImageData> burnImages = situation.CurrentRecipe.RetrieveProperty<List<BurnImageData>>("burnimages");
             if (burnImages == null) return;
 
             // Start a coroutine where we'll regularly display new burn images

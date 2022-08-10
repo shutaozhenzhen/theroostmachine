@@ -85,9 +85,9 @@ namespace Roost.World.Beauty
 
         public static void checkForTableChangeOnRecipeCompletion(Situation situation)
         {
-            string tabletopImage = situation.Recipe.RetrieveProperty<string>("tabletopImage");
-            string tableLeather = situation.Recipe.RetrieveProperty<string>("tableLeather");
-            string tableLegs = situation.Recipe.RetrieveProperty<string>("tableLegs");
+            string tabletopImage = situation.CurrentRecipe.RetrieveProperty<string>("tabletopImage");
+            string tableLeather = situation.CurrentRecipe.RetrieveProperty<string>("tableLeather");
+            string tableLegs = situation.CurrentRecipe.RetrieveProperty<string>("tableLegs");
 
             if (tabletopImage != null) fadeLayer(tabletop, tabletopImageComponent, tabletopImage, "currentTabletopImage");
             if (tableLeather != null) fadeLayer(leather, tableLeatherImageComponent, tableLeather, "currentTableLeather");

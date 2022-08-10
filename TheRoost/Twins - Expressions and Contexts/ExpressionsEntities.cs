@@ -292,12 +292,12 @@ namespace Roost.Twins.Entities
 
             public static float RecipeId(Token token, string target)
             {
-                return IsSituation(token.Payload) && (token.Payload as Situation).Recipe?.Id == target ? token.Quantity : 0;
+                return IsSituation(token.Payload) && (token.Payload as Situation).CurrentRecipe?.Id == target ? token.Quantity : 0;
             }
 
             public static float RecipeWild(Token token, string target)
             {
-                return IsSituation(token.Payload) && (token.Payload as Situation).Recipe?.Id.StartsWith(target) == true ? token.Quantity : 0;
+                return IsSituation(token.Payload) && (token.Payload as Situation).CurrentRecipe?.Id.StartsWith(target) == true ? token.Quantity : 0;
             }
 
             public static float RecipeAspect(Token token, string target)
@@ -305,7 +305,7 @@ namespace Roost.Twins.Entities
                 if (!IsSituation(token.Payload))
                     return 0;
 
-                return (token.Payload as Situation).Recipe.Aspects.AspectValue(target);
+                return (token.Payload as Situation).CurrentRecipe.Aspects.AspectValue(target);
             }
 
             public static float Payload(Token token, string target)

@@ -35,7 +35,6 @@ namespace Roost.Vagabond
         private static void ApplyConfigs()
         {
             new MinimizePromo(minimizePromo);
-            new StorageSphereDisplay(storageSpherePlacement);
             new ConsoleVerbosity();
         }
 
@@ -104,20 +103,6 @@ namespace Roost.Vagabond.SettingSubscribers
                 else
                     promo.transform.localScale = Vector2.one;
             }
-        }
-    }
-
-    internal class StorageSphereDisplay : ModSettingSubscriber<int>
-    {
-        public StorageSphereDisplay(string settingId)
-            : base(settingId)
-        {
-            WhenSettingUpdated(settingValue);
-        }
-
-        public override void WhenSettingUpdated(object newValue)
-        {
-            Roost.World.Recipes.SituationWindowMaster.UpdateDisplaySettingsForSituationWindows((int)newValue);
         }
     }
 
