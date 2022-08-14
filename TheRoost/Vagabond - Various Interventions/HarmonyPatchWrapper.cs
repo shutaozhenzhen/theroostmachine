@@ -141,7 +141,6 @@ namespace Roost.Vagabond
 
  { AtTimeOfPower.RecipeExecution, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("Execute", typeof(Situation)) },
  { AtTimeOfPower.RecipePortals, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("OpenPortals") },
- { AtTimeOfPower.RecipeVFX, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("DoRecipeVfx") },
 
  { AtTimeOfPower.OnPostImportCulture, typeof(Culture).GetMethodInvariant("OnPostImportForSpecificEntity") },
  { AtTimeOfPower.OnPostImportDeck, typeof(DeckSpec).GetMethodInvariant("OnPostImportForSpecificEntity") },
