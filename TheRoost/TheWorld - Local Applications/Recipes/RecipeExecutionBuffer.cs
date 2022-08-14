@@ -116,8 +116,9 @@ namespace Roost.World.Recipes
             foreach (Token token in movements.Keys)
             {
                 Sphere sphere = movements[token];
+
                 if (sphere.SupportsVFX())
-                    sphere.GetItineraryFor(token).WithDuration(0.3f).Depart(token, new Context(Context.ActionSource.SituationEffect));
+                    sphere.ProcessEvictedToken(token, new Context(Context.ActionSource.SituationEffect));
                 else
                     sphere.AcceptToken(token, new Context(Context.ActionSource.SituationEffect));
 
