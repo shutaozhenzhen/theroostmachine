@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
+using System.IO;
 
 using SecretHistories.Abstract;
 using SecretHistories.Entities;
@@ -37,6 +38,10 @@ namespace Roost.World.Beauty
             Machine.Patch(
                     original: typeof(CardManifestation).GetMethodInvariant(nameof(CardManifestation.Initialise), typeof(IManifestable)),
                     postfix: typeof(CardStyleMaster).GetMethodInvariant(nameof(PatchTheCardContainingObject)));
+
+            Machine.Patch(
+                    original: typeof(CardManifestation).GetMethodInvariant(nameof(CardManifestation.Initialise), typeof(IManifestable)),
+                    postfix: typeof(CardStyleMaster).GetMethodInvariant(nameof(UpdateAnimFrames)));
 
             Machine.Patch(
                     original: typeof(CardGhost).GetMethodInvariant(nameof(CardGhost.UpdateVisuals), typeof(IManifestable)),
@@ -93,6 +98,40 @@ namespace Roost.World.Beauty
             t.color = Color.white;
             t.fontMaterial.SetFloat(ShaderUtilities.ID_OutlineWidth, 0.3f);
             t.fontMaterial.SetFloat(ShaderUtilities.ID_FaceDilate, 0.2f);
+        }
+
+        public static void UpdateAnimFrames(CardManifestation __instance, IManifestable manifestable, List<Sprite> ___frames)
+        {
+            ElementStack stack = manifestable as ElementStack;
+
+            if (stack == null)
+                return;
+            if (!Watchman.Get<Compendium>().GetEntityById<Element>(stack.EntityId).RetrieveProperty<bool>(USE_BIG_PICTURE))
+                return;
+
+            ___frames.Clear();
+            ___frames.AddRange(GetAnimFramesForBigPicture(stack.Icon));
+        }
+
+        public static List<Sprite> GetAnimFramesForBigPicture(string iconId)
+        {
+            string animFolder = Path.Combine(BIG_PICTURE_FOLDER, "anim");
+            List<Sprite> frames = new List<Sprite>();
+
+            int i = 0;
+
+            while (true)
+            {
+                Sprite frame = ResourcesManager.GetSprite(animFolder, iconId + "_" + i, false);
+
+                if (frame == null)
+                    break;
+
+                frames.Add(frame);
+                i++;
+            }
+
+            return frames;
         }
     }
 
