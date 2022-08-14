@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using SecretHistories.Entities;
 using SecretHistories.UI;
@@ -43,34 +44,21 @@ namespace Roost.Twins
             situation.AddCommand(new ClearDominionCommand(OUTPUT_SPHERE, SphereRetirementType.Graceful));
         }
 
-        public const string currentSituation = "~/situation";
-        public const string currentSphere = "~/sphere";
-        public const string currentTokens = "~/tokens";
-        public const string currentToken = "~/token";
-        public const string currentScope = "~/local";
-
-        private static readonly List<Sphere> localSingleTokenContainer = new List<Sphere> { new TokenFakeSphere() };
-        private static readonly List<Sphere> allLocalTokensContainer = new List<Sphere> { new TokenFakeSphere() };
-        public static readonly List<Sphere> defaultSphereContainer = new List<Sphere>();
-
-        private static readonly Dictionary<string, List<Sphere>> cachedSpheres = new Dictionary<string, List<Sphere>>()
-        {
-            { currentSituation, null },
-            { currentSphere, defaultSphereContainer },
-            { currentTokens, allLocalTokensContainer },
-            { currentToken, localSingleTokenContainer },
-            { currentScope, defaultSphereContainer }
-        };
-
         public static List<Sphere> GetSpheresByPath(FucinePath fucinePath)
         {
             string fullPath = fucinePath.ToString();
             if (cachedSpheres.ContainsKey(fullPath))
                 return cachedSpheres[fullPath];
 
-            List<Sphere> result = new List<Sphere>();
-            if (fucinePath is FucinePathPlus)
+            List<Sphere> result;
+            if (specialSpheres.ContainsKey(fullPath))
             {
+                result = specialSpheres[fullPath]();
+                NoonUtility.LogWarning(result, result.Count);
+            }
+            else if (fucinePath is FucinePathPlus)
+            {
+                result = new List<Sphere>();
                 FucinePathPlus pathPlus = fucinePath as FucinePathPlus;
 
                 string sphereMask = pathPlus.sphereMask;
@@ -89,6 +77,7 @@ namespace Roost.Twins
             }
             else
             {
+                result = new List<Sphere>();
                 Sphere sphere = Watchman.Get<HornedAxe>().GetSphereByAbsolutePath(fucinePath);
                 //the game (unhelpfully) returns the default (tabletop) sphere when no sphere is found; gotta recheck that the sphere is correct
                 //also I find this ironic that the Twins here require an assistance from the Horned Axe
@@ -157,6 +146,26 @@ namespace Roost.Twins
             MarkLocalScope(cachedSpheres[currentSphere]);
         }
 
+
+
+        public const string currentSituation = "~/situation";
+        public const string currentSphere = "~/sphere";
+        public const string currentTokens = "~/tokens";
+        public const string currentToken = "~/token";
+        public const string currentScope = "~/local";
+
+        private static readonly List<Sphere> localSingleTokenContainer = new List<Sphere> { new TokenFakeSphere() };
+        private static readonly List<Sphere> allLocalTokensContainer = new List<Sphere> { new TokenFakeSphere() };
+        public static readonly List<Sphere> defaultSphereContainer = new List<Sphere>();
+
+        private static readonly Dictionary<string, List<Sphere>> cachedSpheres = new Dictionary<string, List<Sphere>>()
+        {
+            { currentSituation, null },
+            { currentSphere, defaultSphereContainer },
+            { currentTokens, allLocalTokensContainer },
+            { currentToken, localSingleTokenContainer },
+            { currentScope, defaultSphereContainer },
+        };
         public static void ResetCache()
         {
             cachedSpheres.Clear();
@@ -165,6 +174,15 @@ namespace Roost.Twins
             cachedSpheres[currentSphere] = defaultSphereContainer;
             cachedSpheres[currentScope] = defaultSphereContainer;
         }
+
+        private static readonly Dictionary<string, Func<List<Sphere>>> specialSpheres = new Dictionary<string, Func<List<Sphere>>>
+        {
+            { "~/extant",
+                () => new List<Sphere>(Watchman.Get<HornedAxe>().GetSpheres().Where(sphere => !sphere.IsCategory(SphereCategory.Dormant | SphereCategory.Notes))) },
+
+            { "~/exterior",
+                () => new List<Sphere>(Watchman.Get<HornedAxe>().GetExteriorSpheres()) },
+        };
     }
 
     public class TokenFakeSphere : Sphere
