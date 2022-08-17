@@ -292,12 +292,34 @@ namespace Roost.Twins.Entities
 
             public static float RecipeId(Token token, string target)
             {
-                return IsSituation(token.Payload) && (token.Payload as Situation).CurrentRecipe?.Id == target ? token.Quantity : 0;
+                Situation situation = token.Payload as Situation;
+
+                if (situation == null)
+                    return 0;
+
+                if (situation.StateIdentifier == StateEnum.Unstarted)
+                    return 0;
+
+                if (situation.CurrentRecipe.Id == target)
+                    return token.Quantity;
+
+                return 0;
             }
 
             public static float RecipeWild(Token token, string target)
             {
-                return IsSituation(token.Payload) && (token.Payload as Situation).CurrentRecipe?.Id.StartsWith(target) == true ? token.Quantity : 0;
+                Situation situation = token.Payload as Situation;
+
+                if (situation == null)
+                    return 0;
+
+                if (situation.StateIdentifier == StateEnum.Unstarted)
+                    return 0;
+
+                if (situation.CurrentRecipe.Id.StartsWith(target))
+                    return token.Quantity;
+
+                return 0;
             }
 
             public static float RecipeAspect(Token token, string target)
