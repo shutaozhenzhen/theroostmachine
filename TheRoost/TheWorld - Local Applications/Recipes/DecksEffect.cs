@@ -123,18 +123,5 @@ namespace Roost.World.Recipes
         {
             return pile.GetElementTokens().Find(token => token.PayloadEntityId == elementId);
         }
-
-        private static readonly List<string> defaultDeckGroups = new List<string>() { "" };
-        public static bool DeckIsActiveForLegacy(DeckSpec deck, Legacy legacy)
-        {
-            List<string> usedDecks = legacy.RetrieveProperty<List<string>>(nameof(Legacy.Family)) ?? defaultDeckGroups;
-            List<string> deckGroups = deck.RetrieveProperty<List<string>>(nameof(DeckSpec.ForLegacyFamily)) ?? defaultDeckGroups;
-
-            foreach (string group in deckGroups)
-                if (usedDecks.Contains(group))
-                    return true;
-
-            return false;
-        }
     }
 }
