@@ -268,7 +268,7 @@ namespace Roost.World.Recipes
 
         public static void MarkAsDirty(this Sphere sphere)
         {
-            dirtySpheres.Add(sphere);
+            //dirtySpheres.Add(sphere);
         }
 
         public static HashSet<Sphere> FlushDirtySpheres()

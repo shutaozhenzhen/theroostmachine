@@ -71,7 +71,6 @@ namespace Roost.World.Recipes
         private static void TabletopEnter()
         {
             Crossroads.defaultSphereContainer.Add(Watchman.Get<HornedAxe>().GetDefaultSphere(OccupiesSpaceAs.Intangible));
-            Legerdemain.InitNewGame();
             newGameStarted = false;
         }
 
