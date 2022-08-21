@@ -56,22 +56,14 @@ namespace Roost.World.Recipes
                 original: typeof(Token).GetMethodInvariant(nameof(Token.CalveToken)),
                 postfix: typeof(RecipeExecutionBuffer).GetMethodInvariant(nameof(RecipeExecutionBuffer.OnTokenCalved)));
 
-            AtTimeOfPower.NewGame.Schedule(CatchNewGame, PatchType.Prefix);
             AtTimeOfPower.TabletopSceneInit.Schedule(TabletopEnter, PatchType.Postfix);
 
             Legerdemain.Enact();
         }
 
-
-        public static bool newGameStarted = false;
-        private static void CatchNewGame()
-        {
-            newGameStarted = true;
-        }
         private static void TabletopEnter()
         {
-            Crossroads.defaultSphereContainer.Add(Watchman.Get<HornedAxe>().GetDefaultSphere(OccupiesSpaceAs.Intangible));
-            newGameStarted = false;
+            Crossroads.ResetCache();
         }
 
         //Recipe.OnPostImportForSpecificEntity()

@@ -146,8 +146,6 @@ namespace Roost.Twins
             MarkLocalScope(cachedSpheres[currentSphere]);
         }
 
-
-
         public const string currentSituation = "~/situation";
         public const string currentSphere = "~/sphere";
         public const string currentTokens = "~/tokens";
@@ -156,23 +154,20 @@ namespace Roost.Twins
 
         private static readonly List<Sphere> localSingleTokenContainer = new List<Sphere> { new TokenFakeSphere() };
         private static readonly List<Sphere> allLocalTokensContainer = new List<Sphere> { new TokenFakeSphere() };
-        public static readonly List<Sphere> defaultSphereContainer = new List<Sphere>();
+        private static readonly List<Sphere> nullContainer = new List<Sphere>();
 
-        private static readonly Dictionary<string, List<Sphere>> cachedSpheres = new Dictionary<string, List<Sphere>>()
-        {
-            { currentSituation, null },
-            { currentSphere, defaultSphereContainer },
-            { currentTokens, allLocalTokensContainer },
-            { currentToken, localSingleTokenContainer },
-            { currentScope, defaultSphereContainer },
-        };
+        private static readonly Dictionary<string, List<Sphere>> cachedSpheres = new Dictionary<string, List<Sphere>>(); 
         public static void ResetCache()
         {
             cachedSpheres.Clear();
+            nullContainer.Clear();
+            nullContainer.Add(Assets.Scripts.Application.Entities.NullEntities.NullSphere.Create());
+
+            cachedSpheres[currentSituation] = nullContainer; 
             cachedSpheres[currentTokens] = allLocalTokensContainer;
             cachedSpheres[currentToken] = localSingleTokenContainer;
-            cachedSpheres[currentSphere] = defaultSphereContainer;
-            cachedSpheres[currentScope] = defaultSphereContainer;
+            cachedSpheres[currentSphere] = specialSpheres["~/default"]();
+            cachedSpheres[currentScope] = cachedSpheres[currentSphere];
         }
 
         private static readonly Dictionary<string, Func<List<Sphere>>> specialSpheres = new Dictionary<string, Func<List<Sphere>>>
@@ -182,6 +177,9 @@ namespace Roost.Twins
 
             { "~/exterior",
                 () => new List<Sphere>(Watchman.Get<HornedAxe>().GetExteriorSpheres()) },
+
+            { "~/default",
+                () => new List<Sphere> { Watchman.Get<HornedAxe>().GetDefaultSphere(OccupiesSpaceAs.Intangible) } },
         };
     }
 
