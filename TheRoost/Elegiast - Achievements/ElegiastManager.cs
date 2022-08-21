@@ -4,115 +4,70 @@ using System.Collections.Generic;
 using System.IO;
 
 using Steamworks;
-using Galaxy.Api;
 
 using SecretHistories.UI;
 using SecretHistories.Services;
 using SecretHistories.Constants;
-using SecretHistories.Core;
 
 using UnityEngine;
-using Roost.Elegiast.Entities;
 
 namespace Roost.Elegiast
 {
     public static class CustomAchievementsManager
     {
-        //Dictionary<achievement id, unlock time>
-        private static Dictionary<string, string> unlocks;
-
-        const string UNLOCK_PROPERTY = "elegiastUnlock";
         const string ACHIEVEMENTS_FILE = "customachievements.json";
-
         static string localFile { get { return Application.persistentDataPath + "\\" + ACHIEVEMENTS_FILE; } }
-        const string achievementDataFormat = "\"{0}\": \"{1}\",\n";
-
-        private static bool propertiesClaimed = false;
 
         internal static void Enact()
         {
-            AtTimeOfPower.MenuSceneInit.Schedule(CustomAchievementInterface.CreateInterface, PatchType.Prefix, Enactors.Elegiast.patchId);
-            AtTimeOfPower.RecipeExecution.Schedule<RecipeCompletionEffectCommand>(UnlockAchievements, PatchType.Prefix, Enactors.Elegiast.patchId);
-
-            LoadAllUnlocks();
-
-            //in case player disables/enables the module several times, so it won't clog the log with "already claimed" messages
-            if (propertiesClaimed == false)
-            {
-                Machine.ClaimProperty<SecretHistories.Entities.Recipe, List<string>>(UNLOCK_PROPERTY);
-                Roost.Vagabond.CommandLine.AddCommand("achievements", AchievementsDebug);
-                propertiesClaimed = true;
-            }
-
-            //will I ever implement this
-            if (Watchman.Get<SecretHistories.Services.StorefrontServicesProvider>().IsAvailable(StoreClient.Gog))
-            {
-                //cachedGogStats = GalaxyInstance.Stats();
-                //cachedGogStats.RequestUserStatsAndAchievements();
-            }
+            ConvertLegacyAchievements();
         }
 
-        private static void UnlockAchievements(RecipeCompletionEffectCommand __instance)
+        public static void ConvertLegacyAchievements()
         {
-            List<string> ids = __instance.Recipe.RetrieveProperty<List<string>>(UNLOCK_PROPERTY);
-            if (ids == null)
-                return;
+            var chronicler = Watchman.Get<AchievementsChronicler>();
+            Dictionary<string, string> unlocks = typeof(AchievementsChronicler).GetFieldInvariant("_unlocks").GetValue(chronicler)
+                as Dictionary<string, string>;
+            bool needUpdate = false;
 
-            bool atLeastOneUnlock = false;
-            for (var i = ids.Count - 1; i >= 0; i--)
-                atLeastOneUnlock = UnlockAchievement(ids[i], i) || atLeastOneUnlock;
+            string[] cloudData = GetCloudLegacyData();
+            if (cloudData.Length > 0)
+            {
+                Dictionary<string, string> legacyUnlocks = LoadUnlocks(cloudData);
+                foreach (string achievement in legacyUnlocks.Keys)
+                    if (achievement != "custom_achievement_sample")
+                        if (unlocks.ContainsKey(achievement) == false)
+                        {
+                            unlocks.Add(achievement, legacyUnlocks[achievement]);
+                            needUpdate = true;
+                        }
 
-            if (atLeastOneUnlock)
-                TrySyncAchievementStorages();
+                Birdsong.Tweet("Cloud legacy achievements were converted. Removing the old file.");
+                SteamRemoteStorage.FileDelete(ACHIEVEMENTS_FILE);
+            }
+
+
+            string[] localData = GetLocalLegacyData();
+            if (localData.Length > 0)
+            {
+                Dictionary<string, string> legacyUnlocks = LoadUnlocks(localData);
+                foreach (string achievement in legacyUnlocks.Keys)
+                    if (achievement != "custom_achievement_sample")
+                        if (unlocks.ContainsKey(achievement) == false)
+                        {
+                            unlocks.Add(achievement, legacyUnlocks[achievement]);
+                            needUpdate = true;
+                        }
+
+                Birdsong.Tweet("Local legacy achievements were converted. Removing the old file.");
+                //File.Delete(localFile);
+            }
+
+            if (needUpdate)
+                typeof(AchievementsChronicler).GetMethodInvariant("TryUpdateCloudStorage").Invoke(chronicler, new Type[0]);
         }
 
-        private static bool UnlockAchievement(string id, int messageOrder = -999) //-1 for no message (if not inside the game scene currently, for example)
-        {
-            CustomAchievement achievement = Machine.GetEntity<CustomAchievement>(id);
-            if (achievement == null)
-            {
-                Birdsong.Tweet(VerbosityLevel.Significants, 0, "Attempt to unlock achievement '{0}' - no such achievement exists", id);
-                return false;
-            }
-            else if (isUnlocked(achievement))
-            {
-                Birdsong.Tweet(VerbosityLevel.Significants, 0, "Attempt to unlock achievement '{0}' - but it is already unlocked", id);
-                return false;
-            }
-
-            unlocks.Add(id, DateInvariant(DateTime.Now));
-
-            if (messageOrder >= 0)
-            {
-                string message = achievement.unlockMessage == string.Empty ? achievement.unlockdesc : achievement.unlockMessage;
-                Watchman.Get<Notifier>().ShowNotificationWindow(achievement.label, message, achievement.sprite, (messageOrder + 2) * 2, false);
-            }
-
-            return true;
-        }
-
-        private static void LoadAllUnlocks()
-        {
-            string[] cloudData = GetCloudData();
-            string[] localData = GetLocalData();
-            unlocks = LoadUnlocks(cloudData);
-            Dictionary<string, string> localUnlocks = LoadUnlocks(localData);
-
-            foreach (string achievement in localUnlocks.Keys)
-                if (unlocks.ContainsKey(achievement) == false)
-                    unlocks.Add(achievement, localUnlocks[achievement]);
-
-            if (unlocks.ContainsKey("custom_achievement_sample") == false)
-            {
-                unlocks.Add("custom_achievement_sample", DateInvariant(DateTime.Now));
-                TrySyncAchievementStorages();
-            }
-            else if (string.Concat(cloudData) != string.Concat(localData))
-                TrySyncAchievementStorages();
-
-        }
-
-        private static string[] GetLocalData()
+        private static string[] GetLocalLegacyData()
         {
             if (File.Exists(localFile) == false)
                 return new string[0];
@@ -120,7 +75,7 @@ namespace Roost.Elegiast
             return File.ReadAllLines(localFile);
         }
 
-        private static string[] GetCloudData()
+        private static string[] GetCloudLegacyData()
         {
             StorefrontServicesProvider storefront = Watchman.Get<StorefrontServicesProvider>();
             if (storefront.IsAvailable(StoreClient.Steam) && SteamRemoteStorage.FileExists(ACHIEVEMENTS_FILE))
@@ -129,10 +84,6 @@ namespace Roost.Elegiast
                 byte[] bytes = new byte[size];
                 SteamRemoteStorage.FileRead(ACHIEVEMENTS_FILE, bytes, size);
                 return System.Text.Encoding.UTF8.GetString(bytes).Split('\n');
-            }
-            else if (storefront.IsAvailable(StoreClient.Gog))
-            {
-                ///TODO GOG (MAYBEY)
             }
 
             return new string[0];
@@ -152,63 +103,10 @@ namespace Roost.Elegiast
                 }
                 catch
                 {
-                    Birdsong.Tweet("Malformed achievement in {0}, deleting", ACHIEVEMENTS_FILE);
+                    Birdsong.Tweet($"Malformed achievement in {ACHIEVEMENTS_FILE}, deleting.");
                 }
 
             return dictionary;
-        }
-
-        private static void SaveCurrentUnlocksLocally()
-        {
-            File.WriteAllText(localFile, Encode(unlocks));
-        }
-
-        private static void TrySyncAchievementStorages()
-        {
-            //player can write swear words and other nonsense to Gabe in the file by hand
-            //to avoid pushing it on the server, we should ALWAYS do the local save (to rewrite the file) before that
-            SaveCurrentUnlocksLocally();
-
-            StorefrontServicesProvider storefront = Watchman.Get<StorefrontServicesProvider>();
-            if (storefront.IsAvailable(StoreClient.Steam))
-            {
-                byte[] bytes = File.ReadAllBytes(localFile);
-                if (bytes.Length == 0)
-                    SteamRemoteStorage.FileDelete(ACHIEVEMENTS_FILE);
-                else
-                    SteamRemoteStorage.FileWrite(ACHIEVEMENTS_FILE, bytes, bytes.Length);
-                Birdsong.Tweet(VerbosityLevel.SystemChatter, 0, "Succesfully pushed achievement info on the cloud storage");
-
-            }
-            else if (storefront.IsAvailable(StoreClient.Gog))
-            {
-                ///TODO GOG (MAYBEY)
-            }
-        }
-
-        private static string Encode(Dictionary<string, string> unlockDictionary)
-        {
-            string result = string.Empty;
-            foreach (KeyValuePair<string, string> entry in unlockDictionary)
-                result += Encode(entry.Key, entry.Value);
-
-            return result;
-        }
-
-        private static string Encode(string id, string date)
-        {
-            string unlockData = String.Format(achievementDataFormat, id, date);
-            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(unlockData);
-            return System.Convert.ToBase64String(bytes) + "\n";
-        }
-
-        private static string Decode(string[] dataToDecode)
-        {
-            string data = string.Empty;
-            foreach (string encoded in dataToDecode)
-                data += Decode(encoded);
-
-            return data;
         }
 
         private static string Decode(string dataToDecode)
@@ -218,7 +116,7 @@ namespace Roost.Elegiast
 
             try
             {
-                byte[] bytes = System.Convert.FromBase64String(dataToDecode);
+                byte[] bytes = Convert.FromBase64String(dataToDecode);
                 string result = System.Text.Encoding.UTF8.GetString(bytes);
                 return result;
             }
@@ -227,109 +125,6 @@ namespace Roost.Elegiast
                 Birdsong.Tweet("Malformed entry in {0}, deleting", ACHIEVEMENTS_FILE);
                 return string.Empty;
             }
-        }
-
-        private static IStats cachedGogStats;
-        public static void CheckVanillaAchievement(VanillaAchievement achievement, out bool unlocked, out bool legit, out bool hidden, out uint unlockTime)
-        {
-            unlocked = false;
-            hidden = false;
-            legit = false;
-            unlockTime = 0;
-
-            if (Watchman.Get<StorefrontServicesProvider>().IsAvailable(StoreClient.Steam))
-            {
-                legit = (SteamUserStats.GetAchievementAndUnlockTime(achievement.Id, out unlocked, out unlockTime) == true);
-                hidden = (SteamUserStats.GetAchievementDisplayAttribute(achievement.Id, "hidden") == "1");
-            }
-            else if (cachedGogStats != null)
-            {
-                cachedGogStats.GetAchievement(achievement.Id, ref unlocked, ref unlockTime);
-                hidden = cachedGogStats.IsAchievementVisibleWhileLocked(achievement.Id);
-                legit = cachedGogStats.IsAchievementVisible(achievement.Id);
-            }
-        }
-
-        private static string DateInvariant(DateTime date)
-        {
-            return DateTime.Now.ToString(new System.Globalization.CultureInfo("en-GB"));
-        }
-
-        public static DateTime GetUnlockTime(string id)
-        {
-            if (unlocks.ContainsKey(id))
-                return DateTime.Parse(unlocks[id], new System.Globalization.CultureInfo("en-GB"));
-            else
-                return DateTime.MinValue;
-        }
-
-        public static bool isUnlocked(CustomAchievement achievement)
-        {
-            return unlocks.ContainsKey(achievement.Id);
-        }
-
-        public static void AchievementsDebug(string[] command)
-        {
-            try
-            {
-                string data = string.Empty;
-                switch (command[0])
-                {
-                    case "reset": CustomAchievementsManager.ClearAchievement(command[1]); return;
-                    case "cloud": data = CustomAchievementsManager.ReadableCloudData(); break;
-                    case "local": data = CustomAchievementsManager.ReadableLocalData(); break;
-                    case "all": data = CustomAchievementsManager.ReadableAll(); break;
-                }
-
-                if (command.Length == 1)
-                    Birdsong.Tweet(data);
-                else
-                    Birdsong.Tweet("Checking achievement '{0}' presence: {1}", command[1], data.Contains("\"" + command[1] + "\"") ? "unlocked" : "locked");
-            }
-            catch (Exception ex)
-            {
-                Birdsong.Tweet(ex);
-            }
-        }
-
-        public static void ClearAchievement(string achievement)
-        {
-            if (achievement == "all")
-            {
-                unlocks.Clear();
-                Birdsong.Tweet("a l l  c u s t o m  a c h i e v e m e n t s  w e r e  r e s e t", achievement);
-                TrySyncAchievementStorages();
-                return;
-            }
-
-            if (unlocks.ContainsKey(achievement) == false)
-            {
-                Birdsong.Tweet("Trying to reset achievement '{0}', but it's not unlocked, try checking 'achievements.cloud' and 'achievements.local' commands", achievement);
-                return;
-            }
-
-            unlocks.Remove(achievement);
-            Birdsong.Tweet("Deleted achievement '{0}' from the local storage", achievement);
-            TrySyncAchievementStorages();
-        }
-
-        public static string ReadableCloudData()
-        {
-            return Decode(GetCloudData());
-        }
-
-        public static string ReadableLocalData()
-        {
-            return Decode(GetLocalData());
-        }
-
-        public static string ReadableAll()
-        {
-            string result = string.Empty;
-            foreach (KeyValuePair<string, string> entry in unlocks)
-                result += String.Format(achievementDataFormat, entry.Key, entry.Value);
-
-            return result;
         }
     }
 }

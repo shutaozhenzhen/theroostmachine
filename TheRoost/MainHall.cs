@@ -24,7 +24,7 @@ public static class TheRoostMachine
 
                 Roost.Enactors.Beachcomber.Enact();
                 Roost.Enactors.Vagabond.Enact();
-                //Roost.Enactors.Elegiast.Enact();
+                Roost.Enactors.Elegiast.Enact();
                 Roost.Enactors.Twins.Enact();
                 Roost.Enactors.World.Enact();
 
@@ -63,13 +63,10 @@ namespace Roost.Enactors
 
     internal static class Elegiast
     {
-        public const string enabledSettingId = "ElegiastEnabled";
-        public const string patchId = "theroostmachine.elegiast";
-
         internal static void Enact()
         {
-            if (Machine.GetConfigValue<int>(enabledSettingId, 1) == 1)
-                Roost.Elegiast.CustomAchievementsManager.Enact();
+            Roost.Elegiast.CustomAchievementsManager.Enact();
+            Roost.Elegiast.RoostChronicler.Enact();
         }
     }
 
@@ -85,7 +82,6 @@ namespace Roost.Enactors
     {
         internal static void Enact()
         {
-            Roost.Elegiast.RoostChronicler.Enact();
             Roost.World.Optimizations.Enact();
 
             Roost.World.Recipes.SituationWindowMaster.Enact();
