@@ -190,7 +190,7 @@ namespace Roost.World.Recipes.Entities
                 return;
 
             foreach (string deckId in DeckEffects.Keys)
-                Legerdemain.Deal(deckId, sphere, DeckEffects[deckId].value);
+                Legerdemain.Deal(deckId, sphere, DeckEffects[deckId].value, DeckEffectsVFX);
 
             RecipeExecutionBuffer.ApplyMovements();
             RecipeExecutionBuffer.ApplyRenews();
@@ -541,7 +541,7 @@ namespace Roost.World.Recipes.Entities
                     RecipeExecutionBuffer.ScheduleMutation(targetToken, this.Id, Level.value * catalystAmount * targetQuantity, true, VFX);
                     break;
                 case MorphEffectsExtended.DeckDraw:
-                    Legerdemain.Deal(this.Id, targetToken.Sphere, Level.value * catalystAmount * targetQuantity);
+                    Legerdemain.Deal(this.Id, targetToken.Sphere, Level.value * catalystAmount * targetQuantity, VFX);
                     break;
                 case MorphEffectsExtended.DeckShuffle:
                     RecipeExecutionBuffer.ScheduleDeckRenew(this.Id);

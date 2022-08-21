@@ -55,51 +55,21 @@ namespace Roost.World.Recipes
                 }*/
         }
 
-        public static void Deal(string deckId, Sphere toSphere, int draws = 1)
+        public static void Deal(string deckId, Sphere toSphere, int draws, SecretHistories.Enums.RetirementVFX vfx)
         {
+            Dealer dealer = new Dealer(Watchman.Get<DealersTable>());
             DeckSpec deckSpec = Machine.GetEntity<DeckSpec>(deckId);
             if (deckSpec == null)
                 throw Birdsong.Cack($"TRYING TO DRAW FROM NON-EXISTENT DECK '{deckId}'");
 
-            IHasElementTokens drawPile = dealerstable.GetDrawPile(deckId);
-
-            if (drawPile.GetTotalStacksCount() == 0) //catching not-so-mysterious bug
-                dealer.Shuffle(deckSpec);
-
-            bool enforceUniqueDraws = deckSpec.RetrieveProperty<bool>(UNIQUE_RESULTS);
-
             Limbo limbo = Watchman.Get<Limbo>();
             for (int i = 0; i < draws; i++)
             {
-                if (drawPile.GetTotalStacksCount() == 0)//catching a mysterious bug
-                    throw Birdsong.Cack($"DECK '{deckId}' IS EMPTY, WON'T SHUFFLE AND HAS NO DEFAULT CARD (AND SOMEHOW PASSED THE PREVIOUS CHECK)");
+                Token token  = dealer.Deal(deckSpec);
 
-                Token token = drawPile.GetElementTokens()[drawPile.GetTotalStacksCount() - 1];
-                RecipeExecutionBuffer.ScheduleMovement(token, toSphere, SecretHistories.Enums.RetirementVFX.None);
                 //need to exclude the token from the deck sphere right now so the next calculations and operations are correct
                 token.SetSphere(limbo, new Context(Context.ActionSource.SituationEffect));
-
-                if (enforceUniqueDraws)
-                {
-                    if (!string.IsNullOrEmpty(token.Payload.UniquenessGroup))
-                        Dealer.IndicateElementInUniquenessGroupManifested(token.PayloadEntityId);
-                    else if (token.Payload.Unique)
-                        Dealer.DisallowDrawOf(token.Payload.EntityId, dealerstable, null);
-                }
-
-                if (drawPile.GetTotalStacksCount() == 0 && deckSpec.ResetOnExhaustion)
-                    dealer.Shuffle(deckSpec);
-                //we've shuffled the deck, but it's still empty, add default card; (if it's not defined it'll be a blank card, so better don't draw it!)
-                if (drawPile.GetTotalStacksCount() == 0)
-                {
-                    if (String.IsNullOrEmpty(deckSpec.DefaultCard))
-                        throw Birdsong.Cack($"DECK '{deckId}' IS EMPTY, WON'T SHUFFLE AND HAS NO DEFAULT CARD");
-
-                    drawPile.ProvisionElementToken(deckSpec.DefaultCard, 1);
-                }
-
-                if (deckSpec.DrawMessages.ContainsKey(token.PayloadEntityId))
-                    token.Payload.SetIllumination("mansusjournal", deckSpec.DrawMessages[token.PayloadEntityId]);
+                RecipeExecutionBuffer.ScheduleMovement(token, toSphere, vfx);
             }
 
             if (deckSpec.RetrieveProperty<bool>(DECK_AUTO_SHUFFLE) == true)
