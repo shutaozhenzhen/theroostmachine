@@ -56,7 +56,7 @@ namespace Roost.World.Recipes
                 original: typeof(Token).GetMethodInvariant(nameof(Token.CalveToken)),
                 postfix: typeof(RecipeExecutionBuffer).GetMethodInvariant(nameof(RecipeExecutionBuffer.OnTokenCalved)));
 
-            AtTimeOfPower.TabletopSceneInit.Schedule(TabletopEnter, PatchType.Postfix);
+            AtTimeOfPower.TabletopSceneInit.Schedule(TabletopEnter, PatchType.Prefix);
 
             Legerdemain.Enact();
         }
