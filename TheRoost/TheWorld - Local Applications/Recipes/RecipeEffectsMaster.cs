@@ -104,7 +104,7 @@ namespace Roost.World.Recipes
                 //to keep the deck preview correct (well, somewhat), we reassign deck effects to the main recipe
                 if (firstPassEffects.DeckEffects != null)
                     foreach (string deckId in firstPassEffects.DeckEffects.Keys)
-                        recipe.DeckEffects.Add(deckId, 1);
+                        recipe.DeckEffects.Add(deckId, "1");
 
                 //to keep the inductions from recipe aspects correct, we reassign aspects to the main
                 if (firstPassEffects.Aspects != null)
