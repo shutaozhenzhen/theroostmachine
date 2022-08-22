@@ -34,9 +34,6 @@ namespace Roost.World.Recipes.Entities
         [FucineCustomDict(KeyImporter: typeof(FucinePathPanImporter), ValueImporter: typeof(ListPanImporter))]
         public Dictionary<FucinePath, List<TokenFilterSpec>> Movements { get; set; }
 
-        [FucineDict] public List<LinkedRecipeDetails> Induces { get; set; }
-
-
         [FucineValue(DefaultValue = RetirementVFX.None)] public RetirementVFX DeckEffectsVFX { get; set; }
         [FucineValue(DefaultValue = RetirementVFX.CardTransformWhite)] public RetirementVFX CreateVFX { get; set; }
         [FucineValue(DefaultValue = RetirementVFX.CardBurn)] public RetirementVFX DestroyVFX { get; set; }
@@ -81,7 +78,6 @@ namespace Roost.World.Recipes.Entities
             RunVerbManipulations();
             RunDistantEffects(situation);
             RunMovements(localSphere);
-            RunRecipeInductions(situation);
         }
 
         private void RunRootEffects()
@@ -292,15 +288,6 @@ namespace Roost.World.Recipes.Entities
             RecipeExecutionBuffer.ApplyMovements();
         }
 
-        private void RunRecipeInductions(Situation situation)
-        {
-            if (Induces == null)
-                return;
-
-            foreach (LinkedRecipeDetails link in Induces)
-                RecipeExecutionBuffer.ScheduleRecipeInduction(situation, link);
-        }
-
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
         {
             ContentImportLog subLog = new ContentImportLog();
@@ -335,9 +322,6 @@ namespace Roost.World.Recipes.Entities
                 distantEffect.SetId(this.Id + " distant effect #" + i++);
                 distantEffect.OnPostImport(log, populatedCompendium);
             }
-
-            foreach (LinkedRecipeDetails link in Induces)
-                link.OnPostImport(log, populatedCompendium);
 
             //reducing amount of entities
             foreach (CachedFucineProperty<GrandEffects> property in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
