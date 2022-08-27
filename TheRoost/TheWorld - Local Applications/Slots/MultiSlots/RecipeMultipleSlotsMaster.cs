@@ -18,6 +18,7 @@ namespace Roost.World.Slots
             PatchVerbManifestationPrefab();
         }
 
+
         /*
          * We add two copies of the OngoingSlot object and add a custom component to handle them. We also patch VerbManifestation.DisplayRecipeThreshold so it calls to this component instead of running its own logic
          */
@@ -42,7 +43,7 @@ namespace Roost.World.Slots
 
             Machine.Patch(
                 original: typeof(VerbManifestation).GetMethodInvariant("DisplayRecipeThreshold"),
-                prefix: typeof(MultipleSlotsManager).GetMethodInvariant("_DisplayRecipeThreshold")
+                prefix: typeof(MultipleSlotsManager).GetMethodInvariant(nameof(MultipleSlotsManager._DisplayRecipeThreshold))
             );
         }
 
@@ -55,12 +56,6 @@ namespace Roost.World.Slots
             managers.Add(sm);
         }
 
-        // We move the countdown slightly to the left to match the wider situation window
-        private static void PatchCountdownViewInSituationWindowPrefab(SituationWindow situationWindowPrefab)
-        {
-            GameObject countdown = situationWindowPrefab.transform.Find("RecipeThresholdsDominion/SituationCountdownView").gameObject;
-            countdown.GetComponent<RectTransform>().anchoredPosition = new Vector2(-35, 0);
-        }
 
         /*
          * We patch the ThresholdSphere prefab so it destroys itself immediately when asked to retire
@@ -74,6 +69,31 @@ namespace Roost.World.Slots
             Machine.Patch(
                 original: typeof(RecipeSlotViz).GetMethodInvariant("TriggerHideAnim"),
                 prefix: typeof(RecipeMultipleSlotsMaster).GetMethodInvariant(nameof(HideImmediately)));
+        }
+
+        public static void HideImmediately(Action<SphereRetirementType> onRetirementComplete, ThresholdSphere __instance)
+        {
+            onRetirementComplete(SphereRetirementType.Graceful);
+            Destroy(__instance);
+        }
+
+        /*
+         * Set the max threshold spheres allowed to 3 and move the . Call the patching of the thresholds holder object.
+         */
+        static void PatchSituationWindowPrefab()
+        {
+            SituationWindow situationWindowPrefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<SituationWindow>();
+
+            SituationDominion thresholdsDominion = situationWindowPrefab.transform.Find("RecipeThresholdsDominion").GetComponent<SituationDominion>();
+            thresholdsDominion.transform.position = thresholdsDominion.transform.position + new Vector3(27, 0, 0);
+            typeof(SituationDominion).GetFieldInvariant("MaxSpheresAllowed").SetValue(thresholdsDominion, 3);
+
+            // We move the countdown slightly to the left to match the new thresholds dominion position
+            GameObject countdown = situationWindowPrefab.transform.Find("RecipeThresholdsDominion/SituationCountdownView").gameObject;
+            countdown.GetComponent<RectTransform>().anchoredPosition = new Vector2(-35, 0);
+
+            GameObject holder = situationWindowPrefab.transform.Find("RecipeThresholdsDominion/ThresholdHolder").gameObject;
+            PatchThresholdsHolderInSituationWindowPrefab(holder);
         }
 
         /*
@@ -91,29 +111,6 @@ namespace Roost.World.Slots
             var holderRect = holder.GetComponent<RectTransform>();
             holderRect.anchoredPosition = new Vector2(-170, 60);
             holderRect.sizeDelta = new Vector2(270, 120);
-        }
-
-        /*
-         * Widen the SituationWindow and set the max spheres allowed to 3. Call the patching of the thresholds holder object.
-         */
-        static void PatchSituationWindowPrefab()
-        {
-            SituationWindow situationWindowPrefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<SituationWindow>();
-            RectTransform rt = situationWindowPrefab.GetComponent<RectTransform>();
-            rt.sizeDelta = new Vector2(750, 420);
-            PatchCountdownViewInSituationWindowPrefab(situationWindowPrefab);
-
-            SituationDominion thresholdsDominion = situationWindowPrefab.transform.Find("RecipeThresholdsDominion").GetComponent<SituationDominion>();
-            typeof(SituationDominion).GetFieldInvariant("MaxSpheresAllowed").SetValue(thresholdsDominion, 3);
-
-            GameObject holder = situationWindowPrefab.transform.Find("RecipeThresholdsDominion/ThresholdHolder").gameObject;
-            PatchThresholdsHolderInSituationWindowPrefab(holder);
-        }
-
-        public static void HideImmediately(Action<SphereRetirementType> onRetirementComplete, ThresholdSphere __instance)
-        {
-            onRetirementComplete(SphereRetirementType.Graceful);
-            Destroy(__instance);
         }
     }
 }
