@@ -181,7 +181,6 @@ namespace Roost.World.Recipes
         }
 
 
-
         //normal reqs don't know for what Situation they are working now; but for grandreqs it's a vital info
         //thus, we need to store and retrieve the Situation; but reqs are called from an inconvenietly many places
         //so we store it on Situation.GetAspects(), which preceeds every req check anyway
@@ -200,24 +199,6 @@ namespace Roost.World.Recipes
             bool result = CheckGrandReqs(grandreqs);
             Crossroads.ResetCache();
             return result;
-        }
-
-        private static bool AspectsEqual(this AspectsDictionary dictionary1, AspectsDictionary dictionary2)
-        {
-            if (dictionary1 == dictionary2) return true;
-            if ((dictionary1 == null) || (dictionary2 == null)) return false;
-            if (dictionary1.Count != dictionary2.Count) return false;
-
-            foreach (string key in dictionary2.Keys)
-                if (dictionary1.ContainsKey(key) == false || dictionary1[key] != dictionary2[key])
-                    return false;
-
-            return true;
-        }
-
-        public static GrandEffects GetGrandEffects(this Recipe recipe)
-        {
-            return recipe.RetrieveProperty<GrandEffects>(GRAND_EFFECTS);
         }
     }
 }

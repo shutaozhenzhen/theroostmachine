@@ -53,26 +53,6 @@ namespace Roost.World
             return null;
         }
 
-        public static Token SelectSingleTokenWeighted(this List<Token> fromTokens, Dictionary<string, int> weights)
-        {
-            Dictionary<Token, int> tokenThresholds = new Dictionary<Token, int>();
-            int totalQuantity = 0;
-
-            foreach (Token token in fromTokens)
-                if (weights.ContainsKey(token.PayloadEntityId))
-                {
-                    totalQuantity = totalQuantity + (token.Quantity * weights[token.PayloadEntityId]);
-                    tokenThresholds[token] = totalQuantity;
-                }
-
-            int selectedNumber = Random.Range(0, totalQuantity);
-            foreach (KeyValuePair<Token, int> tokenThreshold in tokenThresholds)
-                if (selectedNumber < tokenThreshold.Value)
-                    return tokenThreshold.Key;
-
-            return null;
-        }
-
         public static List<Token> SelectRandom(this List<Token> fromTokens, int Limit)
         {
             if (Limit <= 0)
