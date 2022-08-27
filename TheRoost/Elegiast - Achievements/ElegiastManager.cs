@@ -18,6 +18,8 @@ namespace Roost.Elegiast
         const string ACHIEVEMENTS_FILE = "customachievements.json";
         static string localFile { get { return Application.persistentDataPath + "\\" + ACHIEVEMENTS_FILE; } }
 
+        const string testAchievementName = "custom_achievement_sample";
+
         internal static void Enact()
         {
             ConvertLegacyAchievements();
@@ -35,14 +37,14 @@ namespace Roost.Elegiast
             {
                 Dictionary<string, string> legacyUnlocks = LoadUnlocks(cloudData);
                 foreach (string achievement in legacyUnlocks.Keys)
-                    if (achievement != "custom_achievement_sample")
+                    if (achievement != testAchievementName)
                         if (unlocks.ContainsKey(achievement) == false)
                         {
                             unlocks.Add(achievement, legacyUnlocks[achievement]);
                             needUpdate = true;
                         }
 
-                Birdsong.Tweet("Cloud legacy achievements were converted. Removing the old file.");
+                Birdsong.Tweet($"Legacy achievements from {ACHIEVEMENTS_FILE} were converted. Removing the old file from the cloud.");
                 SteamRemoteStorage.FileDelete(ACHIEVEMENTS_FILE);
             }
 
@@ -52,15 +54,15 @@ namespace Roost.Elegiast
             {
                 Dictionary<string, string> legacyUnlocks = LoadUnlocks(localData);
                 foreach (string achievement in legacyUnlocks.Keys)
-                    if (achievement != "custom_achievement_sample")
+                    if (achievement != testAchievementName)
                         if (unlocks.ContainsKey(achievement) == false)
                         {
                             unlocks.Add(achievement, legacyUnlocks[achievement]);
                             needUpdate = true;
                         }
 
-                Birdsong.Tweet("Local legacy achievements were converted. Removing the old file.");
-                //File.Delete(localFile);
+                Birdsong.Tweet($"Legacy achievements from {ACHIEVEMENTS_FILE} were converted. Removing the old file from the disk.");
+                File.Delete(localFile);
             }
 
             if (needUpdate)
@@ -122,7 +124,7 @@ namespace Roost.Elegiast
             }
             catch
             {
-                Birdsong.Tweet("Malformed entry in {0}, deleting", ACHIEVEMENTS_FILE);
+                Birdsong.Tweet($"Malformed entry in {ACHIEVEMENTS_FILE}, deleting");
                 return string.Empty;
             }
         }
