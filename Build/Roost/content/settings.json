@@ -3,10 +3,6 @@
 	    "datatype": "Int32", "minvalue": 0, "maxvalue": 1, "defaultValue": 0,
 		"valuelabels": { "0": "UI_OFF", "1": "UI_ON" }
 	},
-	{   "id": "StorageSpherePlacement", "tabid": "UI_ROOST_SETTINGS", "hint": "UI_STORAGE_PLACEMENT",
-	    "datatype": "Int32", "minvalue": 0, "maxvalue": 2, "defaultValue": 0,
-			"valuelabels": { "0": "UI_STORAGEPLACEMENT_HORIZONTAL", "1": "UI_STORAGEPLACEMENT_VERTICAL", "2": "UI_STORAGEPLACEMENT_OUTSIDE" }
-	},
 
 	{   "id": "verbosity", "tabid": "UI_ROOST_SETTINGS", "hint": "UI_VERBOSITY",
 			"datatype": "Int32", "minvalue": 0, "maxvalue": 3, "defaultValue": 1,
