@@ -4,9 +4,6 @@ using System.Collections.Generic;
 using SecretHistories.UI;
 using SecretHistories.Core;
 using SecretHistories.Entities;
-using SecretHistories.Enums;
-using SecretHistories.Fucine;
-using SecretHistories.Fucine.DataImport;
 
 namespace Roost.Elegiast
 {
@@ -215,7 +212,7 @@ namespace Roost.Elegiast
             { "$labelOf", (args, aspects, fromRefinementAspect) => Watchman.Get<Compendium>().GetEntityById<Element>(args[1]).Label },
             { "$descriptionOf", (args, aspects, fromRefinementAspect) => Watchman.Get<Compendium>().GetEntityById<Element>(args[1]).Description },
             { "$iconOf", (args, aspects, fromRefinementAspect) => Watchman.Get<Compendium>().GetEntityById<Element>(args[1]).Icon },
-            { "$sprite", (args, aspects, fromRefinementAspect)=> "<sprite name =" + Watchman.Get<Compendium>().GetEntityById<Element>(args[1]).Icon + ">" },
+            { "$sprite", (args, aspects, fromRefinementAspect) => "<sprite name =" + Watchman.Get<Compendium>().GetEntityById<Element>(args[1]).Icon + ">" },
             { "$valueOf", (args, aspects, fromRefinementAspect) => aspects.AspectValue(args[1]).ToString() },
         };
     }

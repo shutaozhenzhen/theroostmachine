@@ -322,6 +322,20 @@ namespace Roost
             return Beachcomber.Hoard.RetrieveProperty(owner, propertyName);
         }
 
+        public static bool TryRetrieveProperty<T>(this IEntityWithId owner, string propertyName, out T result)
+        {
+            object property = Beachcomber.Hoard.RetrieveProperty(owner, propertyName);
+
+            if (property == null)
+            {
+                result = default(T);
+                return false;
+            }
+
+            result = (T)property;
+            return true;
+        }
+
         public static void SetCustomProperty(this IEntityWithId owner, string propertyName, object value)
         {
             Beachcomber.Hoard.SetCustomProperty(owner, propertyName, value);
