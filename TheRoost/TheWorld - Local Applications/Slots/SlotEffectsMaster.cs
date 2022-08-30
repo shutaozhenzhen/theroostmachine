@@ -10,6 +10,7 @@ using SecretHistories.Abstract;
 using SecretHistories.Fucine;
 using SecretHistories.States;
 using SecretHistories.Commands.SituationCommands;
+using SecretHistories.Assets.Scripts.Application.Tokens.TravelItineraries;
 
 using Roost.Twins;
 using Roost.Twins.Entities;
@@ -79,30 +80,28 @@ namespace Roost.World.Slots
         {
             List<Token> tokens = new List<Token>();
             SphereSpec slotSpec = destinationThresholdSphere.GoverningSphereSpec;
-            foreach (Sphere sphere in Watchman.Get<HornedAxe>().GetSpheres())
-                if (!sphere.Defunct && sphere.AllowDrag &&
-                    (sphere.SphereCategory == SphereCategory.World || sphere.SphereCategory == SphereCategory.Threshold || sphere.SphereCategory == SphereCategory.Output))
-                    foreach (Token candidateToken in sphere.GetElementTokens())
-                        if (candidateToken.CanBePulled())
-                            tokens.Add(candidateToken);
+
+            foreach (Sphere exteriorSphere in Watchman.Get<HornedAxe>().GetExteriorSpheres())
+                foreach (Token candidateToken in exteriorSphere.GetElementTokens())
+                    if (candidateToken.CanBePulled())
+                        tokens.Add(candidateToken);
 
             Crossroads.MarkAllLocalTokens(tokens);
-            foreach (Token token in new List<Token>(tokens))
-                if (slotSpec.CheckPayloadAllowedHere(token.Payload).MatchType != SlotMatchForAspectsType.Okay)
-                    tokens.Remove(token);
+            foreach (Token candidateToken in new List<Token>(tokens))
+                if (slotSpec.CheckPayloadAllowedHere(candidateToken.Payload).MatchType != SlotMatchForAspectsType.Okay)
+                    tokens.Remove(candidateToken);
             Crossroads.ResetCache();
 
-            Token grabToken = tokens.SelectSingleToken();
-            if (grabToken == null)
+            Token token = tokens.SelectSingleToken();
+            if (token == null)
                 return false;
 
-            if (grabToken.CurrentlyBeingDragged())
-                grabToken.ForceEndDrag();
-            if (grabToken.Quantity > 1)
-                grabToken.CalveToken(grabToken.Quantity - 1, new Context(Context.ActionSource.GreedyGrab));
-            TokenTravelItinerary tokenItinerary = destinationThresholdSphere.GetItineraryFor(grabToken).WithDuration(0.3f);
-            grabToken.RequestHomingAngelFromCurrentSphere();
-            tokenItinerary.Depart(grabToken, new Context(Context.ActionSource.GreedyGrab));
+            if (token.Quantity > 1)
+                token = token.CalveToken(1, new Context(Context.ActionSource.GreedyGrab));
+
+            TokenItinerary tokenItinerary = destinationThresholdSphere.GetItineraryFor(token).WithDuration(0.3f);
+            token.RequestHomeLocationFromCurrentSphere();
+            tokenItinerary.Depart(token, new Context(Context.ActionSource.GreedyGrab));
 
             return false;
         }

@@ -114,7 +114,9 @@ namespace Roost.World.Recipes
             };
 
             Vagabond.CodeInstructionMask startMask = instruction => instruction.opcode == OpCodes.Ldnull;
-            Vagabond.CodeInstructionMask endMask = instruction => instruction.Calls(typeof(TokenSelector).GetMethodInvariant(nameof(TokenSelector.FilterElementStacks)));
+            Vagabond.CodeInstructionMask endMask = instruction => instruction.Calls(typeof(TokenSelector).GetMethodInvariant(nameof(TokenSelector.SelectRandomTokens)));
+
+            instructions.ReplaceSegment(startMask, endMask, myCode, true, true).LogILCodes();
 
             return instructions.ReplaceSegment(startMask, endMask, myCode, true, true);
         }
