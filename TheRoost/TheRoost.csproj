@@ -77,7 +77,6 @@
       <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\Steamworks.dll'))</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="System" />
     <Reference Include="Unity.InputSystem">
       <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\Unity.InputSystem.dll'))</HintPath>
       <Private>False</Private>
