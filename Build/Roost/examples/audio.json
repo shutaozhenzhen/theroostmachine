@@ -1,0 +1,27 @@
+{"recipes": [
+  {
+		"id": "soundRecipe",
+		"playAudioTrack": "Track01.mp3", "comments": "plays a track when the recipe ends - once, then returns to the current bg tracklist",
+		"setBGMusic": [ "Track01.mp3", "Track02.ogg" ], "comments": "sets current tracklist - ie will play random tracks from the list indefinitely"
+	}
+]},
+
+{"endings": [
+  {
+		"id": "endingWithACustomMusic",
+		"BGmusic": "MyEndingMusic01.ogg", "comments": "will play the specified track on the ending screen"
+	}
+]},
+
+{"legacies": [
+  {
+		"id": "customMusicLegacy",
+		"BGmusic": [ "Track01.mp3", "Track02.ogg" ],
+		"comments": "adds listed tracks to the playlist. note: *adds*, so vanilla music will still play from time to time. if you don't want that, see below",
+
+		"overrideBGMusic": true,
+		"comments": "removes vanilla tracks from the playlist. only tracks explicitly listed in this Legacy's will play",
+	}
+]},
+
+"comments": "The audio is loaded from [modfolder]/audio. All track names should include file extension.",
