@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.IO;
@@ -12,64 +13,133 @@ using SecretHistories.Constants.Modding;
 using UnityEngine;
 using UnityEngine.Networking;
 
-using Roost;
-
 namespace Roost.World.Audio
 {
-    internal static class Nightingale
+    internal class TrumpetLily
     {
         internal const string AUDIO = "audio";
 
-        internal const string MUSIC = "music";
-        internal const string OVERRIDE_TRACKS = "overrideMusic";
+        internal const string MUSIC = "BGmusic";
+        internal const string OVERRIDE_MUSIC = "overrideBGMusic";
+
+        const string START_SFX = "startSFX";
+        const string END_SFX = "endSFX";
+
+        const string PLAY_MUSIC = "playAudioTrack";
+        const string SET_BG_MUSIC = "setBGMusic";
 
         internal static void Enact()
         {
             Machine.Patch(typeof(ModManager).GetMethodInvariant(nameof(ModManager.TryLoadImagesForEnabledMods)),
-                postfix: typeof(Nightingale).GetMethodInvariant(nameof(TryLoadAudioForEnabledMods)));
+                postfix: typeof(TrumpetLily).GetMethodInvariant(nameof(TryLoadAudioForEnabledMods)));
 
             Machine.ClaimProperty<Legacy, List<string>>(MUSIC);
-            Machine.ClaimProperty<Legacy, bool>(OVERRIDE_TRACKS);
+            Machine.ClaimProperty<Legacy, bool>(OVERRIDE_MUSIC);
             AtTimeOfPower.TabletopSceneInit.Schedule(HandleTabletopBGMusic, PatchType.Postfix);
+
+            Machine.ClaimProperty<Recipe, List<string>>(START_SFX);
+            Machine.ClaimProperty<Recipe, List<string>>(END_SFX);
+            Machine.ClaimProperty<Recipe, List<string>>(SET_BG_MUSIC);
+            Machine.ClaimProperty<Recipe, string>(PLAY_MUSIC);
+            AtTimeOfPower.RecipeExecution.Schedule<Situation>(SingRecipeEffects, PatchType.Prefix);
 
             Machine.ClaimProperty<Ending, string>(MUSIC);
             Machine.Patch(typeof(GameOverScreenController).GetMethodInvariant(nameof(PlayEndingMusic)),
-                postfix: typeof(Nightingale).GetMethodInvariant(nameof(PlayEndingMusic)));
+                postfix: typeof(TrumpetLily).GetMethodInvariant(nameof(PlayEndingMusic)));
 
             Vagabond.CommandLine.AddCommand("music", MusicPlay);
             Vagabond.CommandLine.AddCommand("sfx", SFXPlay);
         }
 
         static List<AudioClip> tabletopBGMusic;
+        static List<AudioClip> legacyDefaultBGMusic;
+        static AudioSource tabletopMusicAudioSource;
+        static AudioClip emptyClip = AudioClip.Create("", 1, 1, 1, false);
         private static void HandleTabletopBGMusic()
         {
             var bgMusField = typeof(BackgroundMusic).GetFieldInvariant("backgroundMusic");
             tabletopBGMusic = (bgMusField.GetValue(Watchman.Get<BackgroundMusic>()) as IEnumerable<AudioClip>).ToList();
             bgMusField.SetValue(Watchman.Get<BackgroundMusic>(), tabletopBGMusic);
 
+            tabletopMusicAudioSource = typeof(BackgroundMusic).GetFieldInvariant("audioSource").GetValue(Watchman.Get<BackgroundMusic>()) as AudioSource;
+
             List<string> trackList;
-            if (Watchman.Get<Stable>().Protag().ActiveLegacy.RetrieveProperty<bool>(OVERRIDE_TRACKS))
+            if (Watchman.Get<Stable>().Protag().ActiveLegacy.RetrieveProperty<bool>(OVERRIDE_MUSIC))
                 tabletopBGMusic.Clear();
 
             if (Watchman.Get<Stable>().Protag().ActiveLegacy.TryRetrieveProperty(MUSIC, out trackList))
                 foreach (string trackName in trackList)
                 {
-                    AudioClip clip = GetCustomClip(trackName);
-
-                    if (clip == null)
+                    if (TryGetCustomClip(trackName, out AudioClip clip))
                         continue;
 
                     tabletopBGMusic.Add(clip);
                 }
+
+            legacyDefaultBGMusic = tabletopBGMusic;
         }
+
+        private static void SingRecipeEffects(Situation situation)
+        {
+            Recipe recipe = situation.CurrentRecipe;
+
+            if (recipe.TryRetrieveProperty(SET_BG_MUSIC, out List<string> trackNames))
+            {
+                List<AudioClip> trackList;
+
+                if (trackNames == null || trackNames.Count == 0)
+                    trackList = legacyDefaultBGMusic;
+                else
+                {
+                    trackList = new List<AudioClip>();
+
+                    foreach (string trackName in trackNames)
+                        if (TryGetCustomClip(trackName, out AudioClip track))
+                            trackList.Add(track);
+                }
+
+
+                tabletopBGMusic.Clear();
+                tabletopBGMusic.Add(emptyClip);
+                tabletopBGMusic.AddRange(trackList);
+
+                if (trackList.Count > 0)
+                {
+                    AudioClip track = trackList[UnityEngine.Random.Range(0, trackList.Count)];
+                    FadeToTrack(track, 3);
+                }
+            }
+
+            if (recipe.TryRetrieveProperty(PLAY_MUSIC, out string playTrack))
+            {
+                if (TryGetCustomClip(playTrack, out AudioClip track))
+                    FadeToTrack(track, 3);
+            }
+        }
+
+        public static void FadeToTrack(AudioClip track, float duration)
+        {
+            Watchman.Get<BackgroundMusic>().StartCoroutine(Transit());
+
+            IEnumerator Transit()
+            {
+                float startingVolume = tabletopMusicAudioSource.volume;
+
+                Watchman.Get<BackgroundMusic>().FadeToSilence(duration-0.1f);
+                yield return new WaitForSeconds(duration);
+
+                tabletopMusicAudioSource.volume = startingVolume;
+                tabletopMusicAudioSource.Stop();
+                tabletopMusicAudioSource.PlayOneShot(track);
+            }
+        }
+
 
         private static void PlayEndingMusic(Ending ending, AudioSource ___audioSource)
         {
             if (ending.TryRetrieveProperty(MUSIC, out string trackName))
             {
-                AudioClip clip = GetCustomClip(trackName);
-
-                if (clip == null)
+                if (TryGetCustomClip(trackName, out AudioClip clip))
                     return;
 
                 ___audioSource.Stop();
@@ -78,21 +148,23 @@ namespace Roost.World.Audio
             }
         }
 
+        private static void TryLoadAudioForEnabledMods(ContentImportLog log)
+        {
+            audioClips = AudioLoader.TryLoadAudioForEnabledMods(log);
+        }
+
         static Dictionary<string, AudioClip> audioClips;
-        public static AudioClip GetCustomClip(string name)
+        public static bool TryGetCustomClip(string name, out AudioClip clip)
         {
             if (!audioClips.ContainsKey(name))
             {
                 Birdsong.Sing($"Trying to get audio clip '{name}', but it's not loaded");
-                return null;
+                clip = null;
+                return false;
             }
 
-            return audioClips[name];
-        }
-
-        private static void TryLoadAudioForEnabledMods(ContentImportLog log)
-        {
-            audioClips = AudioLoader.TryLoadAudioForEnabledMods(log);
+            clip = audioClips[name];
+            return true;
         }
 
         public static void MusicPlay(params string[] command)
@@ -139,7 +211,7 @@ namespace Roost.World.Audio
 
             foreach (Mod mod in Watchman.Get<ModManager>().GetEnabledModsInLoadOrder())
             {
-                string musicFolder = Path.Combine(mod.ModRootFolder, Nightingale.AUDIO).SlashInvariant();
+                string musicFolder = Path.Combine(mod.ModRootFolder, TrumpetLily.AUDIO).SlashInvariant();
 
                 foreach (string audioFilePath in GetFilesRecursive(musicFolder, ""))
                     LoadClip(audioFilePath, log);

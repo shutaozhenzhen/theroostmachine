@@ -90,6 +90,10 @@
       <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\UnityEngine.dll'))</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.AudioModule">
+      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\UnityEngine.CoreModule.dll'))</HintPath>
       <Private>False</Private>
@@ -114,10 +118,17 @@
       <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\UnityEngine.ParticleSystemModule.dll'))</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="UnityEngine.UnityWebRequestAudioModule">
+      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.UnityWebRequestAudioModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UnityWebRequestModule">
+      <HintPath>..\..\..\Games\Steam\steamapps\common\Cultist Simulator\cultistsimulator_Data\Managed\UnityEngine.UnityWebRequestModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="2.2.1" />
-    <PackageReference Include="NCalcSync" Version="3.5.0" />
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.

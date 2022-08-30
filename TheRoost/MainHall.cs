@@ -104,7 +104,7 @@ namespace Roost.Enactors
             Roost.World.Beauty.TMPSpriteManager.Enact();
             Roost.World.Beauty.CardStyleMaster.Enact();
 
-            Roost.World.Audio.Nightingale.Enact();
+            Roost.World.Audio.TrumpetLily.Enact();
         }
     }
 }
