@@ -90,7 +90,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.AudioModule">
-      <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\UnityEngine.AudioModule.dll</HintPath>
+      <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\UnityEngine.AudioModule.dll'))</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
@@ -118,11 +118,11 @@
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.UnityWebRequestAudioModule">
-      <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\UnityEngine.UnityWebRequestAudioModule.dll</HintPath>
+      <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\UnityEngine.UnityWebRequestAudioModule.dll'))</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.UnityWebRequestModule">
-      <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\UnityEngine.UnityWebRequestModule.dll</HintPath>
+      <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\UnityEngine.UnityWebRequestModule.dll'))</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>
