@@ -217,7 +217,7 @@ namespace Roost.Vagabond
                 }
 
                 if ((value as IEnumerable) != null)
-                    value = (value as IEnumerable).LogCollection();
+                    value = (value as IEnumerable).UnpackCollection();
 
                 CommandLine.Log("{0} of {1} '{2}': {3}", propertyName, entityType.Name, entity.Id, value);
             }

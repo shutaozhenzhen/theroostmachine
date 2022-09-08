@@ -68,29 +68,7 @@ namespace Roost
                 return String.Format(wrapMessageMaybe.ToString(), furtherData);
             }
             else
-                return String.Concat(wrapMessageMaybe.ToString(), " ", furtherData.LogCollection());
-        }
-
-        public static string LogCollection(this IEnumerable collection, Func<object, object> handler = null, string separator = " ")
-        {
-            if (collection == null)
-                return "null";
-
-            if (handler == null)
-                handler = entry => entry;
-
-            string result = string.Empty;
-            foreach (object obj in collection)
-                try
-                {
-                    result += (obj == null ? "null" : handler(obj)?.ToString()) + separator;
-                }
-                catch (Exception ex)
-                {
-                    Birdsong.Tweet(VerbosityLevel.Essential, 1, $"Collection caused an exception: {ex.FormatException()}\nLog so far: {result}");
-                }
-
-            return result;
+                return String.Concat(wrapMessageMaybe.ToString(), " ", furtherData.UnpackCollection());
         }
 
         public static string FormatException(this Exception ex)
