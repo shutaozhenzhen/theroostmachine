@@ -50,7 +50,7 @@ namespace Roost.World.Recipes.Entities
             if (grandEffects == null)
             {
                 Crossroads.MarkLocalSphere(localSphere);
-                RunXTriggers(null, localSphere, situation, true);
+                RunElementXTriggers(localSphere, situation);
 
                 RecipeExecutionBuffer.ApplyVFX();
                 RecipeExecutionBuffer.ApplyRecipeInductions();
@@ -70,7 +70,11 @@ namespace Roost.World.Recipes.Entities
 
             RunRootEffects();
             RunMutations(localSphere);
-            RunXTriggers(Aspects, localSphere, situation, localXtriggers);
+
+            RunRecipeXTriggers(Aspects, localSphere, situation);
+            if (localXtriggers)
+                RunElementXTriggers(localSphere, situation);
+
             RunDeckShuffles();
             RunDeckEffects(localSphere);
             RunEffects(localSphere);
@@ -115,22 +119,46 @@ namespace Roost.World.Recipes.Entities
             RecipeExecutionBuffer.ApplyMutations();
         }
 
-        private static readonly AspectsDictionary allCatalystsInSphere = new AspectsDictionary();
-        public static void RunXTriggers(Dictionary<string, FucineExp<int>> Aspects, Sphere sphere, Situation situation, bool catalystFromElements)
+        private static readonly AspectsDictionary allCatalysts = new AspectsDictionary();
+        public static void RunRecipeXTriggers(Dictionary<string, FucineExp<int>> Aspects, Sphere sphere, Situation situation)
         {
-            if (Aspects != null)
-                foreach (KeyValuePair<string, FucineExp<int>> catalyst in Aspects)
-                    allCatalystsInSphere[catalyst.Key] = catalyst.Value.value;
-            if (catalystFromElements)
-                allCatalystsInSphere.ApplyMutations(sphere.GetTotalAspects(true));
-
-            if (allCatalystsInSphere.Count == 0)
+            if (Aspects == null || Aspects.Count == 0)
                 return;
 
-            foreach (Token token in sphere.GetElementTokens())
-                RunXTriggersOnToken(token, situation, allCatalystsInSphere);
+            List<Token> tokens = sphere.GetElementTokens();
 
-            allCatalystsInSphere.Clear();
+            if (tokens.Count == 0)
+                return;
+
+            allCatalysts.Clear();
+            foreach (KeyValuePair<string, FucineExp<int>> catalyst in Aspects)
+                allCatalysts.ApplyMutation(catalyst.Key, catalyst.Value.value);
+
+            if (allCatalysts.Count == 0)
+                return;
+
+            RunXTriggers(allCatalysts, tokens, situation, sphere);
+        }
+
+
+        public static void RunElementXTriggers(Sphere sphere, Situation situation)
+        {
+            List<Token> tokens = sphere.GetElementTokens();
+            if (tokens.Count == 0)
+                return;
+
+            allCatalysts.Clear();
+            foreach (Token token in tokens)
+                allCatalysts.CombineAspects(token.GetAspects(true));
+
+            RunXTriggers(allCatalysts, tokens, situation, sphere);
+        }
+
+        private static void RunXTriggers(AspectsDictionary catalysts, List<Token> tokens, Situation situation, Sphere coreSphere)
+        {
+            foreach (Token token in tokens)
+                RunXTriggersOnToken(token, situation, catalysts);
+
             Crossroads.UnmarkLocalToken();
             RecipeExecutionBuffer.ApplyAllEffects();
         }
@@ -141,6 +169,7 @@ namespace Roost.World.Recipes.Entities
                 return;
 
             Compendium compendium = Watchman.Get<Compendium>();
+
             Dictionary<string, List<RefMorphDetails>> xtriggers = Machine.GetEntity<Element>(token.PayloadEntityId).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
 
             if (xtriggers != null)
@@ -235,23 +264,23 @@ namespace Roost.World.Recipes.Entities
             if (HaltVerb != null)
             {
                 foreach (KeyValuePair<string, FucineExp<int>> haltVerbEffect in HaltVerb)
-                    allCatalystsInSphere.Add(haltVerbEffect.Key, haltVerbEffect.Value.value);
+                    allCatalysts.Add(haltVerbEffect.Key, haltVerbEffect.Value.value);
 
-                foreach (KeyValuePair<string, int> haltVerbEffect in allCatalystsInSphere)
+                foreach (KeyValuePair<string, int> haltVerbEffect in allCatalysts)
                     Watchman.Get<HornedAxe>().HaltSituation(haltVerbEffect.Key, haltVerbEffect.Value);
 
-                allCatalystsInSphere.Clear();
+                allCatalysts.Clear();
             }
 
             if (DeleteVerb != null)
             {
                 foreach (KeyValuePair<string, FucineExp<int>> deleteVerbEffect in DeleteVerb)
-                    allCatalystsInSphere.Add(deleteVerbEffect.Key, deleteVerbEffect.Value.value);
+                    allCatalysts.Add(deleteVerbEffect.Key, deleteVerbEffect.Value.value);
 
-                foreach (KeyValuePair<string, int> deleteVerbEffect in allCatalystsInSphere)
+                foreach (KeyValuePair<string, int> deleteVerbEffect in allCatalysts)
                     Watchman.Get<HornedAxe>().HaltSituation(deleteVerbEffect.Key, deleteVerbEffect.Value);
 
-                allCatalystsInSphere.Clear();
+                allCatalysts.Clear();
             }
         }
 
@@ -496,6 +525,8 @@ namespace Roost.World.Recipes.Entities
             if (UnityEngine.Random.Range(1, 101) > Chance.value)
                 return;
 
+            Sphere coreSphere = targetToken.Sphere;
+
             if (IgnoreTargetQuantity)
                 targetQuantity = 1;
             if (IgnoreCatalystQuantity)
@@ -516,7 +547,7 @@ namespace Roost.World.Recipes.Entities
                     }
                     break;
                 case MorphEffectsExtended.Spawn:
-                    RecipeExecutionBuffer.ScheduleCreation(targetToken.Sphere, this.Id, targetQuantity * Level.value * catalystAmount, VFX);
+                    RecipeExecutionBuffer.ScheduleCreation(coreSphere, this.Id, targetQuantity * Level.value * catalystAmount, VFX);
                     break;
                 case MorphEffectsExtended.SetMutation:
                     RecipeExecutionBuffer.ScheduleMutation(targetToken, this.Id, Level.value * catalystAmount * targetQuantity, false, VFX);
@@ -525,7 +556,7 @@ namespace Roost.World.Recipes.Entities
                     RecipeExecutionBuffer.ScheduleMutation(targetToken, this.Id, Level.value * catalystAmount * targetQuantity, true, VFX);
                     break;
                 case MorphEffectsExtended.DeckDraw:
-                    Legerdemain.Deal(this.Id, targetToken.Sphere, Level.value * catalystAmount * targetQuantity, VFX);
+                    Legerdemain.Deal(this.Id, coreSphere, Level.value * catalystAmount * targetQuantity, VFX);
                     break;
                 case MorphEffectsExtended.DeckShuffle:
                     RecipeExecutionBuffer.ScheduleDeckRenew(this.Id);
