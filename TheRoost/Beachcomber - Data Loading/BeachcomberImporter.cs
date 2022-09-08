@@ -217,7 +217,7 @@ namespace Roost.Beachcomber
                     }
 
 
-                    throw Birdsong.Cack($"NO MATCHING CONSTRUCTOR FOUND FOR {type.Name} FOR PARAMETER NAMES '{namedParametersData.ValuesTable.Keys.UnpackCollection()}'");
+                    throw Birdsong.Cack($"NO MATCHING CONSTRUCTOR FOUND FOR {type.Name} FOR PARAMETER NAMES '{namedParametersData.ValuesTable.Keys.LogCollection()}'");
                 }
 
                 ArrayList parametersList = parametersData as ArrayList;
