@@ -439,7 +439,7 @@ namespace Roost.Twins.Entities
 
             public static float Root(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
-                return SecretHistories.Assets.Scripts.Application.Entities.NullEntities.FucineRoot.Get().Mutations.TryGetValue(target, out int result) ? result : 0;
+                return FucineRoot.Get().Mutations.TryGetValue(target, out int result) ? result : 0;
             }
 
             public static float Executions(List<Token> tokens, SingleTokenValue tokenValue, string target)
