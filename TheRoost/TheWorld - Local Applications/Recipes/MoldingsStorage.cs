@@ -3,6 +3,7 @@ using System.Collections;
 
 using OrbCreationExtensions;
 using SecretHistories.Fucine.DataImport;
+using SecretHistories.Fucine;
 
 
 namespace Roost.World.Recipes.Entities
@@ -12,85 +13,38 @@ namespace Roost.World.Recipes.Entities
 
         internal static void ConvertLegacyMutations(EntityData recipeEntityData)
         {
-            return;
             const string FILTER = "filter";
-            const string LIMIT = "limit";
+            const string MUTATE = "mutate";
             const string MUTATIONS = "mutations";
 
             try
             {
-                if (recipeEntityData.ValuesTable.ContainsKey(MUTATIONS))
+                if (recipeEntityData.ValuesTable.ContainsKey(MUTATIONS)
+                && (recipeEntityData.ValuesTable[MUTATIONS] is EntityData))
                 {
-                    if (recipeEntityData.ValuesTable[MUTATIONS] is ArrayList)
-                    {
-                        ArrayList oldMutations = recipeEntityData.ValuesTable[MUTATIONS] as ArrayList;
-                        EntityData newMutations = new EntityData();
-                        recipeEntityData.ValuesTable[MUTATIONS] = newMutations;
+                    EntityData mutations = recipeEntityData.ValuesTable[MUTATIONS] as EntityData;
+                    ArrayList newMutations = new ArrayList();
+                    recipeEntityData.ValuesTable[MUTATIONS] = newMutations;
 
-                        foreach (EntityData mutation in oldMutations)
+                    foreach (string filter in mutations.ValuesTable.Keys)
+                        foreach (object mutation in mutations.GetArrayListFromEntityData(filter))
                         {
-                            object filter;
-                            if (mutation.ContainsKey(LIMIT))
+                            EntityData mutationEntityData = mutation as EntityData;
+                            if (mutationEntityData == null)
                             {
-                                filter = new EntityData();
-                                (filter as EntityData).ValuesTable.Add(FILTER, mutation.ValuesTable[FILTER]);
-                                (filter as EntityData).ValuesTable.Add(LIMIT, mutation.ValuesTable[LIMIT]);
-                            }
-                            else
-                                filter = mutation.ValuesTable[FILTER].ToString();
-
-                            mutation.ValuesTable.Remove(FILTER);
-                            mutation.ValuesTable.Remove(LIMIT);
-
-                            if (newMutations.ContainsKey(filter) == false)
-                                newMutations.ValuesTable[filter] = new ArrayList();
-
-                            (newMutations.ValuesTable[filter] as ArrayList).Add(mutation);
-                        }
-                    }
-                    else if (recipeEntityData.ValuesTable[MUTATIONS] is EntityData)
-                    {
-                        EntityData mutations = recipeEntityData.ValuesTable[MUTATIONS] as EntityData;
-                        foreach (object filter in new Hashtable(mutations.ValuesTable).Keys)
-                        {
-                            ArrayList mutationsInFilter = mutations.GetArrayListFromEntityData(filter);
-                            mutations[filter] = mutationsInFilter;
-
-                            foreach (object mutation in new ArrayList(mutationsInFilter))
-                            {
-                                EntityData mutationData = mutation as EntityData;
-
-                                if (mutationData == null)
-                                    continue;
-
-                                if (!mutationData.ContainsKey(LIMIT))
-                                    continue;
-
-                                //each limit requires new filter
-                                EntityData filterData = new EntityData();
-                                filterData[FILTER] = filter;
-                                filterData[LIMIT] = mutationData[LIMIT];
-
-                                mutationData.ValuesTable.Remove(LIMIT);
-                                mutationsInFilter.Remove(mutation);
-                                mutations.ValuesTable.Add(filterData, mutationData);
+                                mutationEntityData = new EntityData();
+                                mutationEntityData[MUTATE] = mutation;
                             }
 
-                            if (mutationsInFilter.Count == 0)
-                                mutations.ValuesTable.Remove(filter);
+                            mutationEntityData[FILTER] = filter;
+                            newMutations.Add(mutationEntityData);
                         }
-                    }
                 }
             }
             catch (Exception ex)
             {
                 throw ex;
             }
-        }
-
-        internal static ArrayList GetArrayListFromEntityData(this EntityData data, object key)
-        {
-            return data.ValuesTable.GetArrayList(key, true) ?? new ArrayList();
         }
 
         internal static void ConvertExpulsionFilters(EntityData data)
