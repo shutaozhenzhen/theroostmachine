@@ -20,7 +20,7 @@ namespace Roost.World.Recipes.Entities
     {
         [FucinePathValue(defaultValue: "~/local")] public FucinePath Target { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> RootEffects { get; set; }
-        [FucineDict] public Dictionary<TokenFilterSpec, List<RefMutationEffect>> Mutations { get; set; }
+        [FucineDict] public List<RefMutationEffect> Mutations { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> Aspects { get; set; }
         [FucineList] public List<string> DeckShuffles { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> DeckEffects { get; set; }
@@ -106,16 +106,16 @@ namespace Roost.World.Recipes.Entities
 
             List<Token> tokens = sphere.GetElementTokens();
 
-            foreach (TokenFilterSpec filter in Mutations.Keys)
+            foreach (RefMutationEffect mutationEffect in Mutations)
             {
-                List<Token> targets = filter.GetTokens(tokens);
+                List<Token> targets = mutationEffect.Filter.GetTokens(tokens);
 
                 if (targets.Count > 0)
-                    foreach (RefMutationEffect mutationEffect in Mutations[filter])
-                        RecipeExecutionBuffer.ScheduleMutation(targets, mutationEffect.Mutate, mutationEffect.Level.value, mutationEffect.Additive, mutationEffect.VFX);
+                {
+                    RecipeExecutionBuffer.ScheduleMutation(targets, mutationEffect.Mutate, mutationEffect.Level.value, mutationEffect.Additive, mutationEffect.VFX);
+                    RecipeExecutionBuffer.ApplyMutations();
+                }
             }
-
-            RecipeExecutionBuffer.ApplyMutations();
         }
 
         private static readonly AspectsDictionary allCatalysts = new AspectsDictionary();
@@ -319,11 +319,10 @@ namespace Roost.World.Recipes.Entities
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
         {
             ContentImportLog subLog = new ContentImportLog();
-            foreach (TokenFilterSpec filter in Mutations.Keys)
+            foreach (RefMutationEffect mutation in Mutations)
             {
-                filter.OnPostImport(subLog, populatedCompendium);
-                foreach (RefMutationEffect mutation in Mutations[filter])
-                    mutation.OnPostImport(subLog, populatedCompendium);
+                mutation.OnPostImport(subLog, populatedCompendium);
+                mutation.Filter.OnPostImport(subLog, populatedCompendium);
             }
 
             foreach (string deckId in DeckShuffles)
@@ -363,10 +362,11 @@ namespace Roost.World.Recipes.Entities
 
     public class RefMutationEffect : AbstractEntity<RefMutationEffect>, IQuickSpecEntity
     {
-        [FucineEverValue(DefaultValue = null)] public string Mutate { get; set; }
-        [FucineEverValue("1")] public FucineExp<int> Level { get; set; }
-        [FucineEverValue(false)] public bool Additive { get; set; }
-        [FucineEverValue(DefaultValue = RetirementVFX.CardTransformWhite)] public RetirementVFX VFX { get; set; }
+        [FucineValue(DefaultValue = null)] public string Mutate { get; set; }
+        [FucineConstruct("1")] public FucineExp<int> Level { get; set; }
+        [FucineValue(false)] public bool Additive { get; set; }
+        [FucineValue(DefaultValue = RetirementVFX.CardTransformWhite)] public RetirementVFX VFX { get; set; }
+        [FucineSubEntity(typeof(TokenFilterSpec))] public TokenFilterSpec Filter { get; set; }
 
         public RefMutationEffect() { }
         public RefMutationEffect(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
