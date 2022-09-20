@@ -161,7 +161,7 @@ namespace Roost.Twins
         {
             cachedSpheres.Clear();
             nullContainer.Clear();
-            nullContainer.Add(Assets.Scripts.Application.Entities.NullEntities.NullSphere.Create());
+            nullContainer.Add(SecretHistories.NullEntities.NullSphere.Create());
 
             cachedSpheres[currentSituation] = nullContainer; 
             cachedSpheres[currentTokens] = allLocalTokensContainer;

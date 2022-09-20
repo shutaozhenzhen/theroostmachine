@@ -4,7 +4,6 @@ using SecretHistories.Entities;
 using SecretHistories.UI;
 using SecretHistories.Spheres;
 using SecretHistories.Enums;
-using Assets.Scripts.Application.Abstract;
 using SecretHistories.Abstract;
 using SecretHistories.Commands;
 

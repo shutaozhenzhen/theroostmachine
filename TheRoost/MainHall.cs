@@ -105,6 +105,8 @@ namespace Roost.Enactors
             Roost.World.Beauty.CardStyleMaster.Enact();
 
             Roost.World.Audio.TrumpetLily.Enact();
+
+            //Roost.World.Elements.ElementSlotMaster.Enact();
         }
     }
 }
