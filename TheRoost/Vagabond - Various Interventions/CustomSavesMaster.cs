@@ -1,5 +1,5 @@
 ﻿using Roost;
-using SecretHistories.Assets.Scripts.Application.Entities.NullEntities;
+
 using SecretHistories.Entities;
 using SecretHistories.Fucine;
 using SecretHistories.Infrastructure;
