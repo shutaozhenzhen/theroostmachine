@@ -175,7 +175,7 @@ namespace Roost.World.Recipes.Entities
                 foreach (KeyValuePair<string, int> catalyst in catalysts)
                     if (xtriggers.ContainsKey(catalyst.Key))
                         foreach (RefMorphDetails morphDetails in xtriggers[catalyst.Key])
-                            morphDetails.Execute(situation, token, token.PayloadEntityId, token.Quantity, catalyst.Value, true);
+                            morphDetails.Execute(situation, token, token.PayloadEntityId, token.Quantity, catalyst.Value, false);
 
             AspectsDictionary tokenAspects = token.GetAspects(false);
             foreach (KeyValuePair<string, int> aspect in tokenAspects)
@@ -185,7 +185,7 @@ namespace Roost.World.Recipes.Entities
                     foreach (KeyValuePair<string, int> catalyst in catalysts)
                         if (xtriggers.ContainsKey(catalyst.Key))
                             foreach (RefMorphDetails morphDetails in xtriggers[catalyst.Key])
-                                morphDetails.Execute(situation, token, aspect.Key, aspect.Value, catalyst.Value, false);
+                                morphDetails.Execute(situation, token, aspect.Key, aspect.Value, catalyst.Value, true);
             }
         }
 
@@ -408,6 +408,7 @@ namespace Roost.World.Recipes.Entities
     public enum MorphEffectsExtended { Transform, Spawn, Mutate, SetMutation, DeckDraw, DeckShuffle, Destroy, Decay, Induce, Link }
     public class RefMorphDetails : AbstractEntity<RefMorphDetails>, IQuickSpecEntity
     {
+        public enum TriggerMode { Default, TokenOnly, AspectOnly, Always }
         [FucineValue(DefaultValue = MorphEffectsExtended.Transform)] public MorphEffectsExtended MorphEffect { get; set; }
         [FucineConstruct("1")] public FucineExp<int> Level { get; set; }
         [FucineConstruct("100")] public FucineExp<int> Chance { get; set; }
@@ -517,8 +518,26 @@ namespace Roost.World.Recipes.Entities
             ToPath = null;
         }
 
-        public void Execute(Situation situation, Token targetToken, string targetElementId, int targetQuantity, int catalystAmount, bool onToken)
+        private bool ShouldTriggerInThisMode(TriggerMode mode, bool onAspect, Element element)
         {
+            switch (mode)
+            {
+                case TriggerMode.Always: return true;
+                case TriggerMode.TokenOnly: return !onAspect;
+                case TriggerMode.AspectOnly: return onAspect;
+                default:
+                    return onAspect ? element.IsAspect : true;
+            }
+        }
+
+        public void Execute(Situation situation, Token targetToken, string targetElementId, int targetQuantity, int catalystAmount, bool onAspect)
+        {
+            Element element = Watchman.Get<Compendium>().GetEntityById<Element>(targetElementId);
+            TriggerMode mode = element.RetrieveProperty<TriggerMode>("triggerMode");
+
+            if (!ShouldTriggerInThisMode(mode, onAspect, element))
+                return;
+
             Crossroads.MarkLocalToken(targetToken);
 
             if (UnityEngine.Random.Range(1, 101) > Chance.value)
@@ -534,7 +553,7 @@ namespace Roost.World.Recipes.Entities
             switch (MorphEffect)
             {
                 case MorphEffectsExtended.Transform:
-                    if (onToken)
+                    if (!onAspect)
                         RecipeExecutionBuffer.ScheduleTransformation(targetToken, this.Id, VFX);
                     else
                     {

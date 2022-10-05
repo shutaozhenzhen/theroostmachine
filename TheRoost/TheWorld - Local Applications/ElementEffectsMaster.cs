@@ -9,6 +9,8 @@ using SecretHistories.Enums;
 using SecretHistories.Spheres;
 using SecretHistories.Abstract;
 
+using Roost.World.Recipes.Entities;
+
 using HarmonyLib;
 
 namespace Roost.World.Elements
@@ -21,6 +23,7 @@ namespace Roost.World.Elements
         public const string DISPLACE_TO = "displaceTo";
         public const string DISPLACEMENT_VFX = "displacementVFX";
         public const string DISPLACEMENT_REVERSE = "reverseDisplacement";
+        public const string TRIGGER_MODE = "triggerMode";
 
         public const string SHROUDED = "shrouded";
         //CardBurn,	CardBlood,	CardBloodSplatter, CardDrown, CardLight, CardLightDramatic,	CardSpend, CardTaken, CardTakenShadow,
@@ -36,12 +39,13 @@ namespace Roost.World.Elements
 
             Machine.Patch(
                 original: typeof(Token).GetMethodInvariant("Remanifest"),
-                prefix: typeof(ElementEffectsMaster).GetMethodInvariant(nameof(Boken)));
+                prefix: typeof(ElementEffectsMaster).GetMethodInvariant(nameof(SetVFXForTransformation)));
 
             //vfx for uniquenessgroup's displacements
             Machine.ClaimProperty<Element, string>(DISPLACE_TO);
             Machine.ClaimProperty<Element, RetirementVFX>(DISPLACEMENT_VFX, false, RetirementVFX.CardHide);
             Machine.ClaimProperty<Element, bool>(DISPLACEMENT_REVERSE, false, false);
+            Machine.ClaimProperty<Element, RefMorphDetails.TriggerMode>(TRIGGER_MODE, false, RefMorphDetails.TriggerMode.Default);
 
             Machine.Patch(
                 original: typeof(Sphere).GetMethodInvariant(nameof(Sphere.EnforceUniquenessForIncomingStack)),
@@ -119,7 +123,7 @@ namespace Roost.World.Elements
                 StoreVFXForCurrentTransformation(RetirementVFX.CardTransformWhite);
         }
 
-        private static void Boken(ref RetirementVFX vfx)
+        private static void SetVFXForTransformation(ref RetirementVFX vfx)
         {
             vfx = VFXforCurrentTransformation;
         }
