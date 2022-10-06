@@ -53,6 +53,10 @@ namespace Roost.World.Recipes
             Machine.Patch(
                 original: typeof(RecipeNote).GetMethodInvariant(nameof(RecipeNote.StartDescription)),
                 postfix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(DisplayPreview)));
+
+            Machine.Patch(
+                original: typeof(UnstartedState).GetMethodInvariant(nameof(UnstartedState.Exit)),
+                postfix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(DisplayStartDescription)));
         }
 
         private static bool GetRefRecipeChance(LinkedRecipeDetails __instance, ref int __result)
@@ -137,13 +141,14 @@ namespace Roost.World.Recipes
             return tokens;
         }
 
+        static bool dontDisplayPreview = false;
         private static readonly Action<RecipeNote, string> predictionTitleSet = typeof(RecipeNote).GetPropertyInvariant(nameof(RecipeNote.Title)).GetSetMethod(true).
             CreateDelegate(typeof(Action<RecipeNote, string>)) as Action<RecipeNote, string>;
         private static readonly Action<RecipeNote, string> predictionDescriptionSet = typeof(RecipeNote).GetPropertyInvariant(nameof(RecipeNote.Description)).GetSetMethod(true).
             CreateDelegate(typeof(Action<RecipeNote, string>)) as Action<RecipeNote, string>;
-        private static void DisplayPreview(Recipe recipe, Situation situation, bool additive, ref RecipeNote __result)
+        private static void DisplayPreview(Recipe recipe, Situation situation, ref RecipeNote __result)
         {
-            if (situation.State.Identifier != SecretHistories.Enums.StateEnum.Unstarted)
+            if (dontDisplayPreview || situation.State.Identifier != SecretHistories.Enums.StateEnum.Unstarted)
                 return;
 
             string previewLabel = recipe.RetrieveProperty<string>(PREVIEW_LABEL);
@@ -153,6 +158,18 @@ namespace Roost.World.Recipes
             string previewDescription = recipe.RetrieveProperty<string>(PREVIEW);
             if (previewDescription != null)
                 predictionDescriptionSet(__result, previewDescription);
+        }
+
+        private static void DisplayStartDescription(Situation situation)
+        {
+            Recipe recipe = situation.CurrentRecipe;
+            if (!recipe.HasCustomProperty(PREVIEW) && !recipe.HasCustomProperty(PREVIEW_LABEL))
+                return;
+
+            dontDisplayPreview = true;
+            RecipeNote notification = RecipeNote.StartDescription(recipe, situation, true);
+            situation.ReceiveNote(notification, Context.Metafictional());
+            dontDisplayPreview = false;
         }
     }
 }
