@@ -20,7 +20,7 @@ namespace Roost.World.Recipes.Entities
     {
         [FucinePathValue(defaultValue: "~/local")] public FucinePath Target { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> RootEffects { get; set; }
-        [FucineDict] public List<RefMutationEffect> Mutations { get; set; }
+        [FucineList] public List<RefMutationEffect> Mutations { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> Aspects { get; set; }
         [FucineList] public List<string> DeckShuffles { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> DeckEffects { get; set; }
