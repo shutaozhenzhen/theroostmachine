@@ -43,7 +43,7 @@ namespace Roost.World.Recipes.Entities
             }
             catch (Exception ex)
             {
-                throw ex;
+                throw Birdsong.Cack($"Failed to mold mutations in {recipeEntityData.Id}: {ex.FormatException()}");
             }
         }
 
