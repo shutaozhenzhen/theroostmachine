@@ -21,7 +21,7 @@ namespace Roost.World.Recipes
         const string CHANCE = "chance";
         const string LIMIT = "limit";
         const string FILTER = "filter";
-        const string PREVIEW = "preview";
+        const string PREVIEW = "previewDescription";
         const string PREVIEW_LABEL = "previewLabel";
 
         internal static void Enact()
