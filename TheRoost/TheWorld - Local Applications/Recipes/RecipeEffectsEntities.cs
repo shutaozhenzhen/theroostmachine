@@ -372,6 +372,23 @@ namespace Roost.World.Recipes.Entities
         public RefMutationEffect(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
         {
+            string LIMIT = nameof(Filter.Limit).ToLower();
+
+            if (UnknownProperties.ContainsKey(LIMIT))
+            {
+                try
+                {
+                    Filter.Limit = new FucineExp<int>(UnknownProperties.ToString());
+                }
+                catch (Exception ex)
+                {
+                    log.LogProblem($"Malformed limit {UnknownProperties}: {ex.FormatException()}");
+                }
+
+                UnknownProperties.Remove(LIMIT);
+            }
+
+
             if (Mutate == null)
             {
                 foreach (object key in UnknownProperties.Keys)
@@ -387,8 +404,7 @@ namespace Roost.World.Recipes.Entities
                     log.LogWarning("MUTATION LACKS 'MUTATE' PROPERTY");
                     return;
                 }
-                else
-                    UnknownProperties.Remove(Mutate);
+                UnknownProperties.Remove(Mutate);
             }
 
             this.SetId(Mutate);

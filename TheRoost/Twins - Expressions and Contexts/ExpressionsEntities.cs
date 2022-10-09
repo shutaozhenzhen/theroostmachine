@@ -200,32 +200,37 @@ namespace Roost.Twins.Entities
             this.area = fromArea;
             this.operation = withOperation;
 
-            if (target[target.Length - 1] == '*')
+            if (!string.IsNullOrEmpty(targetId))
             {
-                if (Enum.TryParse(fromArea.ToString() + "Wild", out ValueArea wildArea))
+                if (target[target.Length - 1] == '*')
                 {
-                    this.area = wildArea;
-                    this.targetId = target.Remove(target.Length - 1);
+                    if (Enum.TryParse(fromArea.ToString() + "Wild", out ValueArea wildArea))
+                    {
+                        this.area = wildArea;
+                        this.targetId = target.Remove(target.Length - 1);
+                    }
+                    else
+                        Birdsong.Tweet(VerbosityLevel.Essential, 1, $"{fromArea}{withOperation}/{target} - '*' is used, but {fromArea} doesn't support wildcards");
+                }
+
+                const string leverMark = "lever_";
+                if (targetId.StartsWith(leverMark))
+                {
+                    lever = true;
+                    targetId = targetId.Substring(leverMark.Length);
                 }
                 else
-                    Birdsong.Tweet(VerbosityLevel.Essential, 1, $"{fromArea}{withOperation}/{target} - '*' is used, but {fromArea} doesn't support wildcards");
-            }
+                    lever = false;
 
-            const string leverMark = "lever_";
-            if (targetId.StartsWith(leverMark))
-            {
-                lever = true;
-                targetId = targetId.Substring(leverMark.Length);
+                if (lever == false &&
+                    (this.area == ValueArea.Aspect || this.operation == ValueOperation.Root))
+                    Watchman.Get<Compendium>().SupplyElementIdsForValidation(this.targetId);
             }
             else
                 lever = false;
 
             GetValue = singleValueGetters[this.area];
             HandleValues = valueHandlers[this.operation];
-
-            if (lever == false &&
-                (this.area == ValueArea.Aspect || this.operation == ValueOperation.Root))
-                Watchman.Get<Compendium>().SupplyElementIdsForValidation(this.targetId);
         }
 
         public enum ValueArea
