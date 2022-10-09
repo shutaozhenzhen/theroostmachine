@@ -5,6 +5,7 @@ using System.Linq;
 using SecretHistories.Abstract;
 using SecretHistories.Entities;
 using SecretHistories.UI;
+using SecretHistories.Core;
 using SecretHistories.Enums;
 using SecretHistories.Fucine;
 using SecretHistories.Spheres;
@@ -430,6 +431,7 @@ namespace Roost.Twins.Entities
             Max, Min, //max/min value among all tokens
             Rand, //single value of a random token
             Root, //value from FucineRoot mutations
+            DeckSpecCount, //value from Deck spec
             Executions, //recipe execution count for the current character - NoArea
             Count, //number of tokens - NoArea and no target
         };
@@ -442,6 +444,7 @@ namespace Roost.Twins.Entities
             { ValueOperation.Min, ValueOperationsStorage.Min },
             { ValueOperation.Rand, ValueOperationsStorage.Rand },
             { ValueOperation.Root, ValueOperationsStorage.Root },
+            //{ ValueOperation.DeckSpec, ValueOperationsStorage.DeckSpec },
             { ValueOperation.DeckSpecCount, ValueOperationsStorage.DeckSpecCount },
             { ValueOperation.Executions, ValueOperationsStorage.Executions },
             { ValueOperation.Count, ValueOperationsStorage.Count },
@@ -509,7 +512,39 @@ namespace Roost.Twins.Entities
                 return FucineRoot.Get().Mutations.TryGetValue(target, out int result) ? result : 0;
             }
 
-            public static float Executions(List<Token> tokens, SingleTokenValue tokenValue, string target)
+            public static int DeckSpec(List<Token> tokens, SingleTokenValue tokenValue, string target)
+            {
+                var deck = Watchman.Get<Compendium>().GetEntityById<DeckSpec>(target);
+                if (deck == null)
+                {
+                    NoonUtility.LogWarning($"Trying to access non-existent deck spec {target}");
+                    return 0;
+                }
+
+                AspectsDictionary specAspects = new AspectsDictionary();
+                foreach (string elementId in deck.Spec)
+                {
+                    Element element = Watchman.Get<Compendium>().GetEntityById<Element>(elementId);
+                    if (element.IsValid())
+                        specAspects.CombineAspects(element.Aspects);
+                }
+
+                //how do we pass an element id............
+                return specAspects.AspectValue(target);
+            }
+
+            public static int DeckSpecCount(List<Token> tokens, SingleTokenValue tokenValue, string target)
+            {
+                var deck = Watchman.Get<Compendium>().GetEntityById<DeckSpec>(target);
+                if (deck == null)
+                {
+                    NoonUtility.LogWarning($"Trying to access non-existent deck spec {target}");
+                    return 0;
+                }
+
+                return deck.Spec.Count;
+            }
+
             public static int Executions(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
                 return Watchman.Get<Stable>().Protag().GetExecutionsCount(target);
