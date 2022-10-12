@@ -148,7 +148,7 @@ namespace Roost.World.Beauty
             Machine.ClaimProperty<Element, string>(DYNAMIC_ICON);
             Machine.ClaimProperty<Element, bool>(REFINED, false, false); //set automatically if there are refinements
 
-            Machine.AddImportMolding<Element>(IsElementRefined);
+            Machine.AddImportMolding<Element>(ElementNeedsRefinements);
 
             //refined values are returned from illuminations
             Machine.Patch(
@@ -203,17 +203,35 @@ namespace Roost.World.Beauty
             AtTimeOfPower.NewGameSceneInit.Schedule(ResetIconAndLabelForElementStackSimple, PatchType.Prefix);
         }
 
-        private static void IsElementRefined(SecretHistories.Fucine.DataImport.EntityData entityData)
+        private static void ElementNeedsRefinements(SecretHistories.Fucine.DataImport.EntityData entityData)
         {
-            if (entityData.ContainsKey(DYNAMIC_ICON) || entityData.ContainsKey(DYNAMIC_LABEL)
-                || entityData["label"]?.ToString().Contains("#") == true
-                || entityData[DYNAMIC_DESCRIPTION]?.ToString().Contains("#") == true)
+            if (entityData.ContainsKey(DYNAMIC_LABEL))
+            {
+                entityData["label"] = entityData[DYNAMIC_LABEL];
+                entityData.ValuesTable.Remove(DYNAMIC_LABEL);
+            }
+
+            if (entityData.ContainsKey(DYNAMIC_ICON))
+            {
+                entityData["icon"] = entityData[DYNAMIC_ICON];
+                entityData.ValuesTable.Remove(DYNAMIC_ICON);
+            }
+
+            if (PropertyNeedsRefinement("label") || PropertyNeedsRefinement("description") || PropertyNeedsRefinement("icon"))
                 entityData[REFINED] = true;
+
+            bool PropertyNeedsRefinement(string propertyName)
+            {
+                string value = entityData.ContainsKey(propertyName) ? entityData[propertyName].ToString() : string.Empty;
+                return value.Contains("@") || value.Contains("#");
+            }
         }
 
         private static void UpdateRefinementsForStack(Dictionary<string, string> illuminations, ElementStack stack, Element element)
         {
-            if (element.RetrieveProperty<bool>(REFINED) == false)
+            element.TryRetrieveProperty(REFINED, out bool refined);
+
+            if (!refined)
             {
                 illuminations.Remove(DYNAMIC_LABEL);
                 illuminations.Remove(DYNAMIC_ICON);
@@ -225,34 +243,28 @@ namespace Roost.World.Beauty
             currentAspects.CombineAspects(element.Aspects);
             currentAspects.ApplyMutations(stack.Mutations);
 
-            string stringToRefine; string refinedString;
+            string refinedString;
 
-            stringToRefine = element.RetrieveProperty<string>(DYNAMIC_LABEL);
-            if (!string.IsNullOrEmpty(stringToRefine))
-            {
-                refinedString = Scribe.RefineString(stringToRefine, currentAspects);
+            refinedString = Scribe.RefineString(element.Label, currentAspects);
+            if (refinedString != element.Icon)
                 illuminations[DYNAMIC_LABEL] = refinedString;
-                stack.UpdateRefinedLabel(refinedString);
-            }
-            else
+            else //there's no RemoveIllumination(), can you believe it? 
                 illuminations.Remove(DYNAMIC_LABEL);
-            //there's no RemoveIllumination(), can you believe it? 
+            stack.UpdateRefinedLabel(refinedString);
 
-            stringToRefine = element.RetrieveProperty<string>(DYNAMIC_ICON);
-            if (!string.IsNullOrEmpty(stringToRefine))
-            {
-                refinedString = Scribe.RefineString(stringToRefine, currentAspects);
+            refinedString = Scribe.RefineString(element.Icon, currentAspects);
+            if (refinedString != element.Icon)
                 illuminations[DYNAMIC_ICON] = refinedString;
-                stack.UpdateRefinedIcon(refinedString);
-            }
             else
                 illuminations.Remove(DYNAMIC_ICON);
+            stack.UpdateRefinedIcon(refinedString);
 
             refinedString = Scribe.RefineString(element.Description, currentAspects);
             if (refinedString != element.Description)
                 illuminations[DYNAMIC_DESCRIPTION] = refinedString;
             else
                 illuminations.Remove(DYNAMIC_DESCRIPTION);
+            //description isn't immediately displayed, no need to update
         }
 
         private static bool GetRefinedLabel(ref string __result, ElementStack __instance)
@@ -321,19 +333,18 @@ namespace Roost.World.Beauty
 
         private static void UpdateRefinedLabel(this ElementStack stack, string labelRefined)
         {
-            TextMeshProUGUI label = stack.Token.gameObject.FindInChildren("Text", true)?.GetComponent<TextMeshProUGUI>();
-            if (label == null)
-                return;
-
-            label.text = labelRefined;
+            TextMeshProUGUI label = stack?.Token.gameObject.FindInChildren("Text", true)?.GetComponent<TextMeshProUGUI>();
+            if (label != null)
+                if (label.text != labelRefined)
+                    label.text = labelRefined;
         }
 
         private static void UpdateRefinedIcon(this ElementStack stack, string iconRefined)
         {
             Image artwork = stack.Token.GetComponentInChildren<Image>();
-            if (artwork == null)
-                return;
-            artwork.sprite = ResourcesManager.GetSpriteForElement(iconRefined);
+            if (artwork != null)
+                if (artwork.sprite.name != iconRefined)
+                    artwork.sprite = ResourcesManager.GetSpriteForElement(iconRefined);
         }
 
         private static IEnumerable<CodeInstruction> SetRefinedValuesForTokenDetailsWindow(IEnumerable<CodeInstruction> instructions)

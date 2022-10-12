@@ -112,11 +112,12 @@ namespace Roost.Elegiast
             if (string.IsNullOrWhiteSpace(str))
                 return str;
 
-            foreach (string lever in _textLevers)
-            {
-                string leverdata = GetLeverForCurrentPlaythrough(lever);
-                str = str.Replace(lever, leverdata);
-            }
+            if (str.Contains("#"))
+                foreach (string lever in _textLevers)
+                {
+                    string leverdata = GetLeverForCurrentPlaythrough(lever);
+                    str = str.Replace(lever, leverdata);
+                }
 
             if (str.Contains("@") == false)
                 return str;
