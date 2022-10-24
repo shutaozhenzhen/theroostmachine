@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using SecretHistories.Fucine;
 
 namespace Roost.Beachcomber
@@ -13,8 +14,8 @@ namespace Roost.Beachcomber
 
         public static ImportMethods.ImportFunc GetImportFunc(AbstractImporter importer)
         {
-            return Delegate.CreateDelegate(typeof(ImportMethods.ImportFunc), importer, importer.GetType().GetMethod("Import"))
-                as ImportMethods.ImportFunc;
+            return (ImportMethods.ImportFunc)
+                Delegate.CreateDelegate(typeof(ImportMethods.ImportFunc), importer, importer.GetType().GetMethod("Import", BindingFlags.Instance | BindingFlags.NonPublic));
         }
     }
 
