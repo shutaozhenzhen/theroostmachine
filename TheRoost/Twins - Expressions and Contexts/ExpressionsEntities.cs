@@ -225,7 +225,7 @@ namespace Roost.Twins.Entities
 
                 if (lever == false &&
                     (this.area == ValueArea.Aspect || this.operation == ValueOperation.Root))
-                    Watchman.Get<Compendium>().SupplyElementIdsForValidation(this.targetId);
+                    Watchman.Get<Compendium>().SupplyIdForValidation(typeof(Element), this.targetId);
             }
             else
                 lever = false;
@@ -415,7 +415,7 @@ namespace Roost.Twins.Entities
 
                 try
                 {
-                    return (int)Beachcomber.Panimporter.ConvertValue(value, typeof(int));
+                    return (int)ImportMethods.ConvertValue(value, typeof(int));
                 }
                 catch (Exception ex)
                 {

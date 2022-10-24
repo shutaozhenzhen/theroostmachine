@@ -6,140 +6,44 @@ using Roost;
 
 namespace SecretHistories.Fucine
 {
-    public interface IImporter { object Import(object data, Type type, ContentImportLog log); }
-    public class PropertyPanImporter : AbstractImporter, IImporter
+    public class PropertyPanImporter : AbstractImporter
     {
-        public override bool TryImportProperty<T>(T entity, CachedFucineProperty<T> cachedFucineProperty, EntityData entityData, ContentImportLog log)
+        protected override object Import(object data, Type type)
         {
-            string propertyName = cachedFucineProperty.LowerCaseName;
-            Type propertyType = cachedFucineProperty.ThisPropInfo.PropertyType;
-
-            try
-            {
-                if (entityData.ValuesTable.Contains(propertyName))
-                {
-                    object result = Import(entityData.ValuesTable[propertyName], propertyType, log);
-                    cachedFucineProperty.SetViaFastInvoke(entity, result);
-                    return true;
-                }
-
-                cachedFucineProperty.SetViaFastInvoke(entity, GetDefaultValue(cachedFucineProperty, log));
-                return false;
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-        public virtual object Import(object data, Type type, ContentImportLog log)
-        {
-            return Panimporter.ImportProperty(data, type, log);
+            return Hoard.ImportProperty(data, type);
         }
 
-        protected virtual object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty, ContentImportLog log) where T : AbstractEntity<T>
+        protected override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty)
         {
             Type propertyType = cachedFucineProperty.ThisPropInfo.PropertyType;
 
             if (propertyType.Namespace == "System" || propertyType.IsEnum)
                 return cachedFucineProperty.FucineAttribute.DefaultValue;
             else if (cachedFucineProperty.FucineAttribute.DefaultValue != null)
-                return Panimporter.ConstuctFromParameters(cachedFucineProperty.FucineAttribute.DefaultValue, propertyType, log);
+                return ImportMethods.ConstructFromParameters(cachedFucineProperty.FucineAttribute.DefaultValue, propertyType);
 
             return FactoryInstantiator.CreateObjectWithDefaultConstructor(propertyType);
         }
-    }
 
-    class ListPanImporter : PropertyPanImporter
-    {
-        public static bool CreateImporterInstance(ref AbstractImporter __result) { __result = new ListPanImporter(); return false; }
-        public override object Import(object data, Type type, ContentImportLog log) { return Panimporter.ImportListWithDefaultSubImporter(data, type, log); }
 
-        protected override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty, ContentImportLog log)
-        { return FactoryInstantiator.CreateObjectWithDefaultConstructor(cachedFucineProperty.ThisPropInfo.PropertyType); }
-    }
-
-    class DictPanImporer : PropertyPanImporter
-    {
-        public static bool CreateImporterInstance(ref AbstractImporter __result) { __result = new DictPanImporer(); return false; }
-        public override object Import(object data, Type type, ContentImportLog log) { return Panimporter.ImportDictionaryWithDefaultSubImporters(data, type, log); }
-
-        protected override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty, ContentImportLog log)
-        { return FactoryInstantiator.CreateObjectWithDefaultConstructor(cachedFucineProperty.ThisPropInfo.PropertyType); }
-    }
-
-    class ValuePanImporter : PropertyPanImporter
-    {
-        public static bool CreateImporterInstance(ref AbstractImporter __result) { __result = new ValuePanImporter(); return false; }
-        public override object Import(object data, Type type, ContentImportLog log) { return Panimporter.ImportSimpleValue(data, type, log); }
-
-        protected override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty, ContentImportLog log)
-        { return cachedFucineProperty.FucineAttribute.DefaultValue; }
-    }
-
-    class SubEntityPanImporter : PropertyPanImporter
-    {
-        public static bool CreateImporterInstance(ref AbstractImporter __result) { __result = new SubEntityPanImporter(); return false; }
-        public override object Import(object data, Type type, ContentImportLog log) { return Panimporter.ImportFucineEntity(data, type, log); }
-        protected override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty, ContentImportLog log)
-        {
-            if (cachedFucineProperty.FucineAttribute.DefaultValue != null)
-                return Panimporter.ConstuctFromParameters(cachedFucineProperty.FucineAttribute.DefaultValue, cachedFucineProperty.ThisPropInfo.PropertyType, log);
-            return FactoryInstantiator.CreateObjectWithDefaultConstructor(cachedFucineProperty.ThisPropInfo.PropertyType);
-        }
-    }
-
-    class ConstructorPanImporter : PropertyPanImporter
-    {
-        public static bool CreateImporterInstance(ref AbstractImporter __result) { __result = new ConstructorPanImporter(); return false; }
-        public override object Import(object data, Type type, ContentImportLog log) { return Panimporter.ConstuctFromParameters(data, type, log); }
-        protected override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty, ContentImportLog log)
-        {
-            if (cachedFucineProperty.FucineAttribute.DefaultValue != null)
-                return Panimporter.ConstuctFromParameters(cachedFucineProperty.FucineAttribute.DefaultValue, cachedFucineProperty.ThisPropInfo.PropertyType, log);
-
-            return FactoryInstantiator.CreateObjectWithDefaultConstructor(cachedFucineProperty.ThisPropInfo.PropertyType);
-        }
-    }
-
-    class FucinePathPanImporter : PropertyPanImporter
-    {
-        public static bool CreateImporterInstance(ref AbstractImporter __result) { __result = new FucinePathPanImporter(); return false; }
-        public override object Import(object pathData, Type type, ContentImportLog log) { return Panimporter.ImportFucinePath(pathData, type, log); }
-        protected override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty, ContentImportLog log)
-        {
-            return Roost.Twins.TwinsParser.ParseSpherePath(cachedFucineProperty.FucineAttribute.DefaultValue?.ToString());
-        }
     }
 
     class CustomListPanImporter : AbstractImporter
     {
         public CustomListPanImporter(Type entryImporter)
         {
-            this._entryImporter = Activator.CreateInstance(entryImporter) as IImporter;
+            this._entryImporter = Activator.CreateInstance(entryImporter) as AbstractImporter;
         }
 
-        private IImporter _entryImporter;
-        public override bool TryImportProperty<T>(T entity, CachedFucineProperty<T> cachedFucineProperty, EntityData entityData, ContentImportLog log)
+        private AbstractImporter _entryImporter;
+        protected override object Import(object importData, Type propertyType)
         {
-            string propertyName = cachedFucineProperty.LowerCaseName;
-            Type propertyType = cachedFucineProperty.ThisPropInfo.PropertyType;
+            return ImportMethods.ImportList(importData, propertyType, Pantiment.GetImportFunc(_entryImporter));
+        }
 
-            try
-            {
-                if (entityData.ValuesTable.Contains(propertyName))
-                {
-                    object result = Panimporter.ImportList(entityData.ValuesTable[propertyName], propertyType, log, _entryImporter.Import);
-                    cachedFucineProperty.SetViaFastInvoke(entity, result);
-                    return true;
-                }
-
-                cachedFucineProperty.SetViaFastInvoke(entity, FactoryInstantiator.CreateObjectWithDefaultConstructor(propertyType));
-                return false;
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
+        protected override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty)
+        {
+            return FactoryInstantiator.CreateObjectWithDefaultConstructor(cachedFucineProperty.ThisPropInfo.PropertyType);
         }
     }
 
@@ -147,34 +51,45 @@ namespace SecretHistories.Fucine
     {
         public CustomDictPanImporter(Type KeyImporter, Type ValueImporter)
         {
-            this._keyImporter = Activator.CreateInstance(KeyImporter) as IImporter;
-            this._valueImporter = Activator.CreateInstance(ValueImporter) as IImporter;
+            this._keyImporter = Activator.CreateInstance(KeyImporter) as AbstractImporter;
+            this._valueImporter = Activator.CreateInstance(ValueImporter) as AbstractImporter;
         }
 
-        private IImporter _keyImporter;
-        private IImporter _valueImporter;
+        private AbstractImporter _keyImporter;
+        private AbstractImporter _valueImporter;
 
-        public override bool TryImportProperty<T>(T entity, CachedFucineProperty<T> cachedFucineProperty, EntityData entityData, ContentImportLog log)
+        protected override object Import(object importData, Type propertyType)
         {
-            string propertyName = cachedFucineProperty.LowerCaseName;
-            Type propertyType = cachedFucineProperty.ThisPropInfo.PropertyType;
+            return ImportMethods.ImportDictionary(importData, propertyType, Pantiment.GetImportFunc(_keyImporter), Pantiment.GetImportFunc(_valueImporter));
+        }
 
+        protected override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty)
+        {
+            return FactoryInstantiator.CreateObjectWithDefaultConstructor(cachedFucineProperty.ThisPropInfo.PropertyType);
+        }
+    }
+
+    class ConstructorPanImporter : AbstractImporter
+    {
+        protected override object Import(object importData, Type type)
+        {
+            object result;
             try
             {
-                if (entityData.ValuesTable.Contains(propertyName))
-                {
-                    object result = Panimporter.ImportDictionary(entityData.ValuesTable[propertyName], propertyType, log, _keyImporter.Import, _valueImporter.Import);
-                    cachedFucineProperty.SetViaFastInvoke(entity, result);
-                    return true;
-                }
-
-                cachedFucineProperty.SetViaFastInvoke(entity, FactoryInstantiator.CreateObjectWithDefaultConstructor(propertyType));
-                return false;
+                result = ImportMethods.ConstructFromParameters(importData, type);
             }
             catch (Exception ex)
             {
                 throw ex;
             }
+            return result;
+        }
+        protected override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty)
+        {
+            if (cachedFucineProperty.FucineAttribute.DefaultValue != null)
+                return ImportMethods.ConstructFromParameters(cachedFucineProperty.FucineAttribute.DefaultValue, cachedFucineProperty.ThisPropInfo.PropertyType);
+
+            return FactoryInstantiator.CreateObjectWithDefaultConstructor(cachedFucineProperty.ThisPropInfo.PropertyType);
         }
     }
 

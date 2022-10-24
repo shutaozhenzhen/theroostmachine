@@ -276,7 +276,7 @@ namespace Roost.Vagabond
                 for (var n = 3; n < command.Length; n++)
                     stringValue += " " + command[n];
 
-                object value = Beachcomber.Panimporter.ConvertValue(stringValue, targetProperty.PropertyType);
+                object value = ImportMethods.ConvertValue(stringValue, targetProperty.PropertyType);
                 targetProperty.SetValue(unityObject, value);
             }
             catch (Exception ex)

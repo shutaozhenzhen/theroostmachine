@@ -25,15 +25,6 @@ namespace Roost.Beachcomber
             Machine.Patch(
                 original: typeof(AbstractEntity<Element>).GetConstructors(BindingFlags.NonPublic | BindingFlags.Instance)[0],
                 transpiler: typeof(Usurper).GetMethodInvariant(nameof(AbstractEntityConstructorTranspiler)));
-
-            string nativeMethodName = nameof(Fucine.CreateImporterInstance);
-            Machine.Patch(typeof(FucineList).GetMethodInvariant(nativeMethodName), prefix: typeof(ListPanImporter).GetMethodInvariant(nativeMethodName));
-            Machine.Patch(typeof(FucineDict).GetMethodInvariant(nativeMethodName), prefix: typeof(DictPanImporer).GetMethodInvariant(nativeMethodName));
-            Machine.Patch(typeof(FucineValue).GetMethodInvariant(nativeMethodName), prefix: typeof(ValuePanImporter).GetMethodInvariant(nativeMethodName));
-            Machine.Patch(typeof(FucineSubEntity).GetMethodInvariant(nativeMethodName), prefix: typeof(SubEntityPanImporter).GetMethodInvariant(nativeMethodName));
-            Machine.Patch(typeof(FucinePathValue).GetMethodInvariant(nativeMethodName), prefix: typeof(FucinePathPanImporter).GetMethodInvariant(nativeMethodName));
-            //not touching any specific importers: AspectImporter, IdImporter - they are suitable
-            //need to replace PathImporter only to allow loading of FucinePathPlus
         }
 
         private static IEnumerable<CodeInstruction> AbstractEntityConstructorTranspiler(IEnumerable<CodeInstruction> instructions)
@@ -49,6 +40,8 @@ namespace Roost.Beachcomber
                 new CodeInstruction(OpCodes.Call, typeof(Usurper).GetMethodInvariant(nameof(InvokeGenericImporterForAbstractRootEntity))),
                 new CodeInstruction(OpCodes.Ret)
             };
+
+
 
             Vagabond.CodeInstructionMask mask = instruction => instruction.opcode == OpCodes.Call;
             return instructions.ReplaceAfterMask(mask, myCode, false);
@@ -70,11 +63,18 @@ namespace Roost.Beachcomber
 
         private static void ImportRootEntity<T>(IEntityWithId entity, EntityData importDataForEntity, ContentImportLog log) where T : AbstractEntity<T>
         {
-            //it makes everything a bit more hacky but I want id to be set first for the possible logs
             if (importDataForEntity.ValuesTable.ContainsKey("id"))
             {
                 entity.SetId(importDataForEntity.Id);
                 importDataForEntity.ValuesTable.Remove("id");
+            }
+            else if (!string.IsNullOrWhiteSpace(importDataForEntity.UniqueId))
+            {
+                entity.SetId(importDataForEntity.UniqueId);
+            }
+            else
+            {
+                entity.SetId("id");
             }
 
             if (_moldings.ContainsKey(typeof(T)))
@@ -88,34 +88,20 @@ namespace Roost.Beachcomber
                         log.LogProblem($"Failed to apply molding '{Mold.Method.Name}' to {typeof(T).Name} '{entity.Id}', reason:\n{ex.FormatException()}");
                     }
 
-
-            if (typeof(IMalleable).IsAssignableFrom(typeof(T)))
-                try
-                {
-                    (entity as IMalleable).Mold(importDataForEntity, log);
-                }
-                catch (Exception ex)
-                {
-                    log.LogProblem($"Failed to apply molding to malleable {typeof(T).Name} '{entity.Id}', reason:\n{ex.FormatException()}");
-                }
-
             Hoard.InterceptClaimedProperties(entity, importDataForEntity, typeof(T), log);
+
 
             foreach (CachedFucineProperty<T> cachedFucineProperty in TypeInfoCache<T>.GetCachedFucinePropertiesForType())
             {
-                if (cachedFucineProperty.LowerCaseName == "id")
-                    continue;
-
                 try
                 {
-                    if (!Ostrich.Ignores(typeof(T), cachedFucineProperty.LowerCaseName))
-                        cachedFucineProperty.GetImporterForProperty().TryImportProperty<T>(entity as T, cachedFucineProperty, importDataForEntity, log);
-
+                    cachedFucineProperty.GetImporterForProperty().TryImportProperty(entity as T, cachedFucineProperty, importDataForEntity);
                     importDataForEntity.ValuesTable.Remove(cachedFucineProperty.LowerCaseName);
                 }
                 catch (Exception ex)
                 {
-                    log.LogProblem($"Failed to import property '{cachedFucineProperty.LowerCaseName}' of {typeof(T).Name} '{entity.Id}', reason:\n{ex.FormatException()}");
+                    if (log != null)
+                        log.LogProblem($"Failed to import property '{cachedFucineProperty.LowerCaseName}' of { typeof(T).Name} '{entity}', reason:\n{ex.FormatException()}");
                 }
             }
 
@@ -124,7 +110,9 @@ namespace Roost.Beachcomber
 
             AbstractEntity<T> abstractEntity = entity as AbstractEntity<T>;
             foreach (object key in importDataForEntity.ValuesTable.Keys)
+            {
                 abstractEntity.PushUnknownProperty(key, importDataForEntity.ValuesTable[key]);
+            }
         }
 
         internal static void AddMolding<T>(Action<EntityData> moldingForType)

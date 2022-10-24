@@ -31,7 +31,7 @@ namespace Roost.Beachcomber.Entities
         [FucineValue(DefaultValue = EndingFlavour.Grand)]
         public EndingFlavour MyEnum { get; set; }
 
-        [FucineList(ValidateAsElementId = true)]
+        [FucineList(ValidateAs = typeof(Element))]
         public List<string> ListOfElements { get; set; }
         [FucineDict]
         public Dictionary<int, int> MyDict { get; set; }
@@ -55,10 +55,10 @@ namespace Roost.Beachcomber.Entities
         //Finally, sometimes you need to explicitly specify the importer for collection entries
         //these attributes allow you to do that
         //FucineCustomList: 
-        [FucineCustomList(typeof(FucinePathPanImporter))]
+        [FucineCustomList(typeof(PathImporter))]
         List<FucinePath> Paths { get; set; }
         //and FucineCustomDict:
-        [FucineCustomDict(KeyImporter: typeof(FucinePathPanImporter), ValueImporter: typeof(ConstructorPanImporter))]
+        [FucineCustomDict(KeyImporter: typeof(PathImporter), ValueImporter: typeof(StructImporter))]
         Dictionary<FucinePath, Vector2> PathLocations { get; set; }
 
         //finally, your entity needs to implement two methods of AbstractEntity<T> - constructor and OnPostImportForSpecificEntity()

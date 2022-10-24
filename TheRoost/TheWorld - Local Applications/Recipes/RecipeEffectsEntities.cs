@@ -30,7 +30,7 @@ namespace Roost.World.Recipes.Entities
         [FucineDict] public Dictionary<string, FucineExp<int>> DeleteVerb { get; set; }
         [FucineDict] public List<GrandEffects> DistantEffects { get; set; }
 
-        [FucineCustomDict(KeyImporter: typeof(FucinePathPanImporter), ValueImporter: typeof(ListPanImporter))]
+        [FucineCustomDict(KeyImporter: typeof(PathImporter), ValueImporter: typeof(ListImporter))]
         public Dictionary<FucinePath, List<TokenFilterSpec>> Movements { get; set; }
 
         [FucineValue(DefaultValue = RetirementVFX.None)] public RetirementVFX DeckEffectsVFX { get; set; }
@@ -366,7 +366,7 @@ namespace Roost.World.Recipes.Entities
         [FucineConstruct("1")] public FucineExp<int> Level { get; set; }
         [FucineValue(false)] public bool Additive { get; set; }
         [FucineValue(DefaultValue = RetirementVFX.CardTransformWhite)] public RetirementVFX VFX { get; set; }
-        [FucineSubEntity(typeof(TokenFilterSpec))] public TokenFilterSpec Filter { get; set; }
+        [FucineSubEntity] public TokenFilterSpec Filter { get; set; }
 
         public RefMutationEffect() { }
         public RefMutationEffect(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
@@ -408,7 +408,6 @@ namespace Roost.World.Recipes.Entities
             }
 
             this.SetId(Mutate);
-            populatedCompendium.SupplyElementIdsForValidation(this.Id);
         }
 
         public void QuickSpec(string value)
@@ -435,7 +434,7 @@ namespace Roost.World.Recipes.Entities
 
         private LinkedRecipeDetails Induction { get; set; }
         [FucinePathValue] public FucinePath ToPath { get; set; }
-        [FucineSubEntity(typeof(Expulsion))] public Expulsion Expulsion { get; set; }
+        [FucineSubEntity] public Expulsion Expulsion { get; set; }
 
         public void QuickSpec(string value)
         {
@@ -471,7 +470,6 @@ namespace Roost.World.Recipes.Entities
                     if (Id == null)
                         goto NO_ID;
 
-                    populatedCompendium.SupplyElementIdsForValidation(this.Id);
                     break;
                 case MorphEffectsExtended.Link:
                 case MorphEffectsExtended.Induce:
