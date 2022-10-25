@@ -103,6 +103,7 @@ namespace Roost.Enactors
             Roost.World.Beauty.SlideshowBurnImagesMaster.Enact();
             Roost.World.Beauty.TMPSpriteManager.Enact();
             Roost.World.Beauty.CardStyleMaster.Enact();
+            Roost.World.Beauty.ElementStackRefiner.Enact();
 
             Roost.World.Audio.TrumpetLily.Enact();
 

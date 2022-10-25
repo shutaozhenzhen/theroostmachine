@@ -47,7 +47,7 @@ namespace Roost.World.Beauty
                     original: typeof(CardGhost).GetMethodInvariant(nameof(CardGhost.UpdateVisuals), typeof(IManifestable)),
                     postfix: typeof(CardStyleMaster).GetMethodInvariant(nameof(PatchTheCardContainingObject)));
 
-            ElementStackRefiner.Enact();
+
         }
 
         public static void PatchTheCardContainingObject(MonoBehaviour __instance, IManifestable manifestable)
@@ -142,6 +142,8 @@ namespace Roost.World.Beauty
         const string DYNAMIC_DESCRIPTION = "description";
         const string REFINED = "refined";
 
+
+
         internal static void Enact()
         {
             Machine.ClaimProperty<Element, string>(DYNAMIC_LABEL, true);
@@ -188,8 +190,20 @@ namespace Roost.World.Beauty
 
             //the refined icon is displayed correctly in StoredManifestation
             Machine.Patch(
+                original: typeof(CardManifestation).GetMethodInvariant(nameof(CardManifestation.Initialise)),
+                transpiler: typeof(ElementStackRefiner).GetMethodInvariant(nameof(SetIconFromManifestation)));
+
+            Machine.Patch(
+                original: typeof(CardManifestation).GetMethodInvariant(nameof(CardManifestation.Initialise)),
+                transpiler: typeof(ElementStackRefiner).GetMethodInvariant(nameof(SetAnimFromManifestation)));
+
+            Machine.Patch(
                 original: typeof(StoredManifestation).GetMethodInvariant(nameof(StoredManifestation.UpdateVisuals)),
                 transpiler: typeof(ElementStackRefiner).GetMethodInvariant(nameof(SetRefinedIconForStoredManifestation)));
+
+            Machine.Patch(
+                original: typeof(ResourcesManager).GetMethodInvariant(nameof(ResourcesManager.GetSprite)),
+                prefix: typeof(ElementStackRefiner).GetMethodInvariant(nameof(LastStand)));
 
             //the refined icon and label are displayed correctly for Accessible Card Text
             Machine.Patch(
@@ -418,6 +432,49 @@ namespace Roost.World.Beauty
                 ___artwork.sprite = currentSprite;
             }
         }
+
+        private static IEnumerable<CodeInstruction> SetIconFromManifestation(IEnumerable<CodeInstruction> instructions)
+        {
+            List<CodeInstruction> myCode = new List<CodeInstruction>()
+            {
+                new CodeInstruction(OpCodes.Ldarg_1),
+                new CodeInstruction(OpCodes.Call, typeof(ElementStackRefiner).GetMethodInvariant(nameof(GetElementIcon))),
+            };
+
+            var methodToReplace=  typeof(ResourcesManager).GetMethodInvariant(nameof(ResourcesManager.GetSpriteForElement), new Type[] { typeof(Element) });
+            return instructions.ReplaceMethodCall(methodToReplace,myCode);
+        }
+
+        private static Sprite GetElementIcon(IManifestable manifestable)
+        {
+            if (Watchman.Get<Compendium>().GetEntityById<Element>(manifestable.EntityId).IsAspect)
+                return ResourcesManager.GetSpriteForAspect(manifestable.Icon);
+
+            return ResourcesManager.GetSpriteForElement(manifestable.Icon);
+        }
+
+        private static IEnumerable<CodeInstruction> SetAnimFromManifestation(IEnumerable<CodeInstruction> instructions)
+        {
+            List<CodeInstruction> myCode = new List<CodeInstruction>()
+            {
+                new CodeInstruction(OpCodes.Pop),
+                new CodeInstruction(OpCodes.Ldarg_1),
+                new CodeInstruction(OpCodes.Callvirt, typeof(IManifestable).GetPropertyInvariant(nameof(IManifestable.Icon)).GetGetMethod()),
+                new CodeInstruction(OpCodes.Call, typeof(ResourcesManager).GetMethodInvariant(nameof(ResourcesManager.GetAnimFramesForElement))),
+            };
+
+            var methodToReplace = typeof(ResourcesManager).GetMethodInvariant(nameof(ResourcesManager.GetAnimFramesForElement));
+            return instructions.ReplaceMethodCall(methodToReplace, myCode);
+        }
+
+        //in come context, unrefined icon can leak through all precations and end up in resource manager
+        //in case this happened, do this one refinement again
+        private static void LastStand(ref string file)
+        {
+            if (file.Contains("@"))
+                file = "_x";
+        }
+
 
         private static void ResetIconAndLabelForElementStackSimple()
         {
