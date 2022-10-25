@@ -8,11 +8,12 @@ using SecretHistories.Entities;
 using SecretHistories.UI;
 using SecretHistories.Enums;
 using SecretHistories.Fucine;
-using SecretHistories.Spheres;
 
 using Roost.Twins;
 using Roost.Twins.Entities;
 using Roost.World.Recipes.Entities;
+
+using SecretHistories.Services;
 
 using HarmonyLib;
 
@@ -59,6 +60,11 @@ namespace Roost.World.Recipes
             AtTimeOfPower.TabletopSceneInit.Schedule(TabletopEnter, PatchType.Prefix);
 
             Legerdemain.Enact();
+
+
+            Machine.Patch(
+                original: typeof(TextRefiner).GetMethodInvariant(nameof(TextRefiner.RefineString)),
+                prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(OverrideRecipeRefinement)));
         }
 
         private static void TabletopEnter()
@@ -199,6 +205,14 @@ namespace Roost.World.Recipes
             bool result = CheckGrandReqs(grandreqs);
             Crossroads.ResetCache();
             return result;
+        }
+
+
+
+        private static bool OverrideRecipeRefinement(string stringToRefine, AspectsDictionary ____aspectsInContext, ref string __result)
+        {
+            __result = Elegiast.Scribe.RefineString(stringToRefine, ____aspectsInContext);
+            return false;
         }
     }
 }

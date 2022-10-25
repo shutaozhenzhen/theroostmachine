@@ -84,7 +84,6 @@ namespace Roost.Enactors
         {
             Roost.World.Optimizations.Enact();
 
-            Roost.World.Recipes.SituationWindowMaster.Enact();
             Roost.World.Recipes.RecipeEffectsMaster.Enact();
             Roost.World.Recipes.RecipeLinkMaster.Enact();
 
