@@ -349,16 +349,15 @@ namespace Roost.World.Beauty
         {
             TextMeshProUGUI label = stack?.Token.gameObject.FindInChildren("Text", true)?.GetComponent<TextMeshProUGUI>();
             if (label != null)
-                if (label.text != labelRefined)
-                    label.text = labelRefined;
+                label.text = labelRefined;
         }
 
         private static void UpdateRefinedIcon(this ElementStack stack, string iconRefined)
         {
-            Image artwork = stack.Token.GetComponentInChildren<Image>();
+            Image artwork = stack?.Token.GetComponentInChildren<Image>();
+
             if (artwork != null)
-                if (artwork.sprite.name != iconRefined)
-                    artwork.sprite = ResourcesManager.GetSpriteForElement(iconRefined);
+                artwork.sprite = ResourcesManager.GetSpriteForElement(iconRefined);
         }
 
         private static IEnumerable<CodeInstruction> SetRefinedValuesForTokenDetailsWindow(IEnumerable<CodeInstruction> instructions)
@@ -441,8 +440,8 @@ namespace Roost.World.Beauty
                 new CodeInstruction(OpCodes.Call, typeof(ElementStackRefiner).GetMethodInvariant(nameof(GetElementIcon))),
             };
 
-            var methodToReplace=  typeof(ResourcesManager).GetMethodInvariant(nameof(ResourcesManager.GetSpriteForElement), new Type[] { typeof(Element) });
-            return instructions.ReplaceMethodCall(methodToReplace,myCode);
+            var methodToReplace = typeof(ResourcesManager).GetMethodInvariant(nameof(ResourcesManager.GetSpriteForElement), new Type[] { typeof(Element) });
+            return instructions.ReplaceMethodCall(methodToReplace, myCode);
         }
 
         private static Sprite GetElementIcon(IManifestable manifestable)
