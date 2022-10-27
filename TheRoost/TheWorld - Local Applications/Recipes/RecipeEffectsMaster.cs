@@ -8,6 +8,7 @@ using SecretHistories.Entities;
 using SecretHistories.UI;
 using SecretHistories.Enums;
 using SecretHistories.Fucine;
+using SecretHistories.Constants.Events;
 
 using Roost.Twins;
 using Roost.Twins.Entities;
@@ -65,6 +66,18 @@ namespace Roost.World.Recipes
             Machine.Patch(
                 original: typeof(TextRefiner).GetMethodInvariant(nameof(TextRefiner.RefineString)),
                 prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(OverrideRecipeRefinement)));
+
+
+            Machine.Patch(
+                original: typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.ChangeTo)),
+                postfix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(NotifyOnChangeTo)));
+        }
+
+        private static void NotifyOnChangeTo(Token ____token)
+        {
+            SphereContentsChangedEventArgs sphereContentsChangedEventArgs = new SphereContentsChangedEventArgs(____token.Sphere, new Context(Context.ActionSource.ChangeTo));
+            sphereContentsChangedEventArgs.TokenChanged = ____token;
+            ____token.Sphere.NotifyTokensChangedForSphere(sphereContentsChangedEventArgs);
         }
 
         private static void TabletopEnter()
