@@ -88,6 +88,7 @@ namespace Roost.Enactors
             Roost.World.Recipes.RecipeLinkMaster.Enact();
 
             Roost.World.Elements.ElementEffectsMaster.Enact();
+            Roost.World.Elements.ElementRandomDecay.Enact();
 
             Roost.World.Slots.XAngelMaster.Enact();
             Roost.World.Slots.SlotEffectsMaster.Enact();
