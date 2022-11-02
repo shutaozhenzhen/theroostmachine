@@ -1,17 +1,16 @@
-﻿using SecretHistories.Entities;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using SecretHistories.Entities;
+
+using Random = UnityEngine.Random;
 
 namespace Roost.World.Elements
 {
-    class ElementRandomDecay
+    internal static class ElementRandomDecay
     {
         public static void Enact()
         {
-            Machine.ClaimProperty<Element, List<String>>("decayTo");
+            Machine.ClaimProperty<Element, List<string>>(nameof(Element.DecayTo));
 
             Machine.Patch(
                 original: typeof(Element).GetPropertyInvariant(nameof(Element.DecayTo)).GetGetMethod(),
@@ -19,11 +18,18 @@ namespace Roost.World.Elements
             );
         }
 
-        public static bool GetRandomDecayElement(ref string __result, Element __instance)
+        private static bool GetRandomDecayElement(ref string __result, Element __instance)
         {
-            List<String> ids = Machine.RetrieveProperty<List<String>>(__instance, "decayTo");
-            int randomIndex = UnityEngine.Random.Range(0, ids.Count - 1);
-            __result = ids[randomIndex];
+            List<string> ids = Machine.RetrieveProperty<List<string>>(__instance, nameof(Element.DecayTo));
+
+            if (ids?.Count > 0)
+            {
+                int randomIndex = Random.Range(0, ids.Count);
+                __result = ids[randomIndex];
+            }
+            else
+                __result = string.Empty;
+
             return false;
         }
     }
