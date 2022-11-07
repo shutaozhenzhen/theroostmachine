@@ -1,13 +1,21 @@
-﻿{"cultures": [
-	{ "id": "en", "$mute": true, "uilabels$add": {
-	"UI_ROOST_SETTINGS": "ROOST",
-
-	"UI_ROOST_MINIMIZE_PROMO": "Minimize Promo Image",
-
- 	"UI_VERBOSITY": "Console Verbosity",
-	"UI_VERBOSITY_ESSENTIAL": "Essential",
-	"UI_VERBOSITY_SIGNIFICANT": "Significant",
-	"UI_VERBOSITY_CHATTER": "Chatter",
-	"UI_TRIVIA": "Trivia",
-	}},
-]}
+﻿{
+	"cultures": [
+		{
+			"id": "en",
+			"$mute": true,
+			"uilabels$add": {
+				"UI_ROOST_SETTINGS": "ROOST",
+				"UI_ROOST_MINIMIZE_PROMO": "Minimize Promo Image",
+				"UI_VERBOSITY": "Console Verbosity",
+				"UI_VERBOSITY_ESSENTIAL": "Essential",
+				"UI_VERBOSITY_SIGNIFICANT": "Significant",
+				"UI_VERBOSITY_CHATTER": "Chatter",
+				"UI_TRIVIA": "Trivia",
+				"UI_USE_CHECKPOINTS": "Allow Legacy Checkpoints",
+				"UI_CHECKPOINT_SAVED_LABEL": "Checkpoint reached",
+				"UI_CHECKPOINT_SAVED": "The Elegiast holds safe the memory of the world...",
+				"UI_LOAD_CHECKPOINT": "Reload Checkpoint"
+			}
+		}
+	]
+}
