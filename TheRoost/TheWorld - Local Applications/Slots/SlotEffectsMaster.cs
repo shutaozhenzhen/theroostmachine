@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 using SecretHistories.Entities;
 using SecretHistories.Enums;
@@ -39,7 +40,7 @@ namespace Roost.World.Slots
 
             //greedy slots grab tokens based on even chance
             Machine.Patch(
-                original: typeof(GreedyAngel).GetMethodInvariant("TryGrabStack"),
+                original: typeof(GreedyAngel).GetMethodInvariant("FindStackForSlotSpecificationInSphere"),
                 prefix: typeof(SlotEffectsMaster).GetMethodInvariant(nameof(TryGrabStackTrulyRandom)));
 
             //tokens are checked against an additional expression filter before going in the slot
@@ -76,32 +77,14 @@ namespace Roost.World.Slots
             return false;
         }
 
-        private static bool TryGrabStackTrulyRandom(Sphere destinationThresholdSphere)
+        private static bool TryGrabStackTrulyRandom(SphereSpec slotSpec, Sphere sphereToSearch, Token __result)
         {
-            List<Token> tokens = new List<Token>();
-            SphereSpec slotSpec = destinationThresholdSphere.GoverningSphereSpec;
-
-            foreach (Sphere exteriorSphere in Watchman.Get<HornedAxe>().GetExteriorSpheres())
-                foreach (Token candidateToken in exteriorSphere.GetElementTokens())
-                    if (candidateToken.CanBePulled())
-                        tokens.Add(candidateToken);
-
+            List<Token> tokens = sphereToSearch.GetElementTokens();
             Crossroads.MarkAllLocalTokens(tokens);
-            foreach (Token candidateToken in new List<Token>(tokens))
-                if (slotSpec.CheckPayloadAllowedHere(candidateToken.Payload).MatchType != SlotMatchForAspectsType.Okay)
-                    tokens.Remove(candidateToken);
+            var candidateTokens = tokens.Where(token => token.CanBePulled() && slotSpec.CheckPayloadAllowedHere(token.Payload).MatchType == SlotMatchForAspectsType.Okay);
             Crossroads.ResetCache();
 
-            Token token = tokens.SelectSingleToken();
-            if (token == null)
-                return false;
-
-            if (token.Quantity > 1)
-                token = token.CalveToken(1, new Context(Context.ActionSource.GreedyGrab));
-
-            TokenItinerary tokenItinerary = destinationThresholdSphere.GetItineraryFor(token).WithDuration(0.3f);
-            token.RequestHomeLocationFromCurrentSphere();
-            tokenItinerary.Depart(token, new Context(Context.ActionSource.GreedyGrab));
+            __result = candidateTokens.SelectSingleToken();
 
             return false;
         }

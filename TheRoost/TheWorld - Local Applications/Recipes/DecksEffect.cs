@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using SecretHistories.Entities;
 using SecretHistories.UI;
 using SecretHistories.Infrastructure;
-using Assets.Logic;
+using SecretHistories.Logic;
 using SecretHistories.Abstract;
 using SecretHistories.Spheres;
 
@@ -25,7 +25,6 @@ namespace Roost.World.Recipes
 
         public static void Deal(string deckId, Sphere toSphere, int draws, SecretHistories.Enums.RetirementVFX vfx)
         {
-            Dealer dealer = new Dealer(Watchman.Get<DealersTable>());
             DeckSpec deckSpec = Machine.GetEntity<DeckSpec>(deckId);
             if (deckSpec == null)
                 throw Birdsong.Cack($"TRYING TO DRAW FROM NON-EXISTENT DECK '{deckId}'");
@@ -33,7 +32,7 @@ namespace Roost.World.Recipes
             Limbo limbo = Watchman.Get<Limbo>();
             for (int i = 0; i < draws; i++)
             {
-                Token token  = dealer.Deal(deckSpec);
+                Token token  = Dealer.Deal(deckSpec, Watchman.Get<DealersTable>());
 
                 //need to exclude the token from the deck sphere right now so the next calculations and operations are correct
                 token.SetSphere(limbo, new Context(Context.ActionSource.SituationEffect));
@@ -47,14 +46,13 @@ namespace Roost.World.Recipes
         public static Sphere RenewDeck(string deckId)
         {
             DealersTable dtable = Watchman.Get<DealersTable>();
-            Dealer dealer = new Dealer(dtable);
             IHasElementTokens drawPile = dtable.GetDrawPile(deckId);
             int tokenCount = drawPile.GetTotalStacksCount();
             List<Token> tokens = drawPile.GetElementTokens();
             for (int n = 0; n < tokenCount; n++)
                 tokens[n].Retire();
 
-            dealer.Shuffle(deckId);
+            Dealer.Shuffle(deckId, dtable);
 
             return (Sphere)drawPile;
         }

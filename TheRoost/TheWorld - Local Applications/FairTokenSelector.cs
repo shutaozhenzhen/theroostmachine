@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using SecretHistories.UI;
 using UnityEngine;
 
@@ -29,12 +30,10 @@ namespace Roost.World
             return result;
         }
 
-        public static Token SelectSingleToken(this List<Token> fromTokens)
+        public static Token SelectSingleToken(this IEnumerable<Token> fromTokens)
         {
-            if (fromTokens.Count == 0)
-                return null;
-            if (fromTokens.Count == 1)
-                return fromTokens[0];
+            if (fromTokens.Count() < 2)
+                return fromTokens.FirstOrDefault();               
 
             Dictionary<Token, int> tokenThresholds = new Dictionary<Token, int>();
             int totalQuantity = 0;

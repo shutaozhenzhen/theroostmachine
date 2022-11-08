@@ -8,12 +8,12 @@ namespace SecretHistories.Fucine
 {
     public class PropertyPanImporter : AbstractImporter
     {
-        protected override object Import(object data, Type type)
+        public override object Import(object data, Type type)
         {
             return Hoard.ImportProperty(data, type);
         }
 
-        protected override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty)
+        public override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty)
         {
             Type propertyType = cachedFucineProperty.ThisPropInfo.PropertyType;
 
@@ -36,12 +36,12 @@ namespace SecretHistories.Fucine
         }
 
         private AbstractImporter _entryImporter;
-        protected override object Import(object importData, Type propertyType)
+        public override object Import(object importData, Type propertyType)
         {
             return ImportMethods.ImportList(importData, propertyType, Pantiment.GetImportFunc(_entryImporter));
         }
 
-        protected override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty)
+        public override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty)
         {
             return FactoryInstantiator.CreateObjectWithDefaultConstructor(cachedFucineProperty.ThisPropInfo.PropertyType);
         }
@@ -58,12 +58,12 @@ namespace SecretHistories.Fucine
         private AbstractImporter _keyImporter;
         private AbstractImporter _valueImporter;
 
-        protected override object Import(object importData, Type propertyType)
+        public override object Import(object importData, Type propertyType)
         {
             return ImportMethods.ImportDictionary(importData, propertyType, Pantiment.GetImportFunc(_keyImporter), Pantiment.GetImportFunc(_valueImporter));
         }
 
-        protected override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty)
+        public override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty)
         {
             return FactoryInstantiator.CreateObjectWithDefaultConstructor(cachedFucineProperty.ThisPropInfo.PropertyType);
         }
@@ -71,7 +71,7 @@ namespace SecretHistories.Fucine
 
     class ConstructorPanImporter : AbstractImporter
     {
-        protected override object Import(object importData, Type type)
+        public override object Import(object importData, Type type)
         {
             object result;
             try
@@ -84,7 +84,7 @@ namespace SecretHistories.Fucine
             }
             return result;
         }
-        protected override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty)
+        public override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty)
         {
             if (cachedFucineProperty.FucineAttribute.DefaultValue != null)
                 return ImportMethods.ConstructFromParameters(cachedFucineProperty.FucineAttribute.DefaultValue, cachedFucineProperty.ThisPropInfo.PropertyType);
