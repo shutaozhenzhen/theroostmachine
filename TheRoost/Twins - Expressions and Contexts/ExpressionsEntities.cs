@@ -104,7 +104,7 @@ namespace Roost.Twins.Entities
         }
     }
 
-    public class FucinePathPlus : FucinePath, IConvertible //dont ask
+    public class FucinePathPlus : FucinePath
     {
         private readonly string fullPath;
         public readonly string sphereMask;
@@ -144,26 +144,6 @@ namespace Roost.Twins.Entities
         private static readonly List<SphereCategory> allCategories = new List<SphereCategory>((SphereCategory[])Enum.GetValues(typeof(SphereCategory)));
         private static readonly List<SphereCategory> defaultExcludedCategories = new List<SphereCategory> { SphereCategory.Notes, SphereCategory.Null, SphereCategory.Meta };
         private static readonly List<SphereCategory> defaultAcceptableCategories = allCategories.Except(defaultExcludedCategories).ToList();
-
-        //dont ask
-        public override string ToString() { return fullPath; }
-        public string ToString(IFormatProvider provider) { return fullPath; }
-        public TypeCode GetTypeCode() { return default(TypeCode); }
-        public bool ToBoolean(IFormatProvider provider) { return default(bool); }
-        public byte ToByte(IFormatProvider provider) { return default(byte); }
-        public char ToChar(IFormatProvider provider) { return default(char); }
-        public DateTime ToDateTime(IFormatProvider provider) { return default(DateTime); }
-        public decimal ToDecimal(IFormatProvider provider) { return default(decimal); }
-        public double ToDouble(IFormatProvider provider) { return default(double); }
-        public short ToInt16(IFormatProvider provider) { return default(short); }
-        public int ToInt32(IFormatProvider provider) { return default(int); }
-        public long ToInt64(IFormatProvider provider) { return default(long); }
-        public sbyte ToSByte(IFormatProvider provider) { return default(sbyte); }
-        public float ToSingle(IFormatProvider provider) { return default(ulong); }
-        public object ToType(Type conversionType, IFormatProvider provider) { return this; }
-        public ushort ToUInt16(IFormatProvider provider) { return default(ushort); }
-        public uint ToUInt32(IFormatProvider provider) { return default(uint); }
-        public ulong ToUInt64(IFormatProvider provider) { return default(ulong); }
     }
 
     public struct FucineNumberGetter
