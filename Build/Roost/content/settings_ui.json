@@ -11,10 +11,6 @@
 				"UI_VERBOSITY_SIGNIFICANT": "Significant",
 				"UI_VERBOSITY_CHATTER": "Chatter",
 				"UI_TRIVIA": "Trivia",
-				"UI_USE_CHECKPOINTS": "Allow Legacy Checkpoints",
-				"UI_CHECKPOINT_SAVED_LABEL": "Checkpoint reached",
-				"UI_CHECKPOINT_SAVED": "The Elegiast holds safe the memory of the world...",
-				"UI_LOAD_CHECKPOINT": "Reload Checkpoint"
 			}
 		}
 	]

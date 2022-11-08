@@ -1,45 +1,11 @@
-﻿{
-	"settings": [
-		{
-			"id": "MinimizePromo",
-			"tabid": "UI_ROOST_SETTINGS",
-			"hint": "UI_ROOST_MINIMIZE_PROMO",
-			"datatype": "Int32",
-			"minvalue": 0,
-			"maxvalue": 1,
-			"defaultValue": 0,
-			"valuelabels": {
-				"0": "UI_OFF",
-				"1": "UI_ON"
-			}
-		},
-		{
-			"id": "verbosity",
-			"tabid": "UI_ROOST_SETTINGS",
-			"hint": "UI_VERBOSITY",
-			"datatype": "Int32",
-			"minvalue": 0,
-			"maxvalue": 3,
-			"defaultValue": 1,
-			"valuelabels": {
-				"0": "UI_VERBOSITY_ESSENTIAL",
-				"1": "UI_VERBOSITY_SIGNIFICANT",
-				"2": "UI_VERBOSITY_CHATTER",
-				"3": "UI_TRIVIA"
-			}
-		},
-		{
-			"id": "checkpoints",
-			"tabid": "UI_ROOST_SETTINGS",
-			"hint": "UI_USE_CHECKPOINTS",
-			"datatype": "Int32",
-			"minvalue": 0,
-			"maxvalue": 1,
-			"defaultValue": 1,
-			"valuelabels": {
-				"0": "UI_OFF",
-				"1": "UI_ON"
-			}
-		}
-	]
-}
+﻿{"settings": [
+	{   "id": "MinimizePromo", "tabid": "UI_ROOST_SETTINGS", "hint": "UI_ROOST_MINIMIZE_PROMO",
+	    "datatype": "Int32", "minvalue": 0, "maxvalue": 1, "defaultValue": 0,
+		"valuelabels": { "0": "UI_OFF", "1": "UI_ON" }
+	},
+
+	{   "id": "verbosity", "tabid": "UI_ROOST_SETTINGS", "hint": "UI_VERBOSITY",
+			"datatype": "Int32", "minvalue": 0, "maxvalue": 3, "defaultValue": 1,
+			"valuelabels": { "0": "UI_VERBOSITY_ESSENTIAL", "1": "UI_VERBOSITY_SIGNIFICANT", "2": "UI_VERBOSITY_CHATTER", "3": "UI_TRIVIA" }
+	},
+]}

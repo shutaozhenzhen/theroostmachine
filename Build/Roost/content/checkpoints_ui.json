@@ -1,0 +1,13 @@
+﻿{
+	"cultures": [
+		{
+			"id": "en",
+			"$mute": true,
+			"uilabels$add": {
+				"UI_CHECKPOINT_SAVED_LABEL": "Checkpoint reached",
+				"UI_CHECKPOINT_SAVED": "The Elegiast holds safe the memory of the world...",
+				"UI_LOAD_CHECKPOINT": "Reload Checkpoint"
+			}
+		}
+	]
+}

@@ -18,7 +18,7 @@ namespace Roost.World
         public delegate void EventHandler(PointerEventData eventData);
         public static void Enact()
         {
-            //1. New property on legacies, + new setting (in setting files)
+            //1. New property on legacies
             Machine.ClaimProperty<Legacy, Boolean>(USE_CHECKPOINTS, false, false);
 
             //2. New property on recipes to save a checkpoint as a "checkpoint.json" save file
@@ -33,9 +33,10 @@ namespace Roost.World
             AtTimeOfPower.NewGameSceneInit.Schedule(ClearCheckpointFile, PatchType.Postfix);
         }
 
+        const string DISABLE_CHECKPOINTS = "disableCheckpoints";
         private static bool CheckpointsAllowedInSettings()
         {
-            return Watchman.Get<Compendium>().GetEntityById<Setting>("checkpoints").CurrentValue.Equals(1);
+            return Watchman.Get<Config>().GetConfigValueAsInt(DISABLE_CHECKPOINTS) != 1;
         }
 
         private static bool LegacyAllowsCheckpoints()
@@ -52,7 +53,7 @@ namespace Roost.World
             if (!CheckpointsAllowedInSettings()) return; 
             if (!LegacyAllowsCheckpoints())
             {
-                Birdsong.Sing(Birdsong.Incr(), "WARNING: A recipe just tried to save a checkpoint, but the current legacy DOES NOT ALLOW IT. Add useCheckpoints: true to the legacy to enable this feature.");
+                Birdsong.Tweet($"WARNING: Recipe '{situation.CurrentRecipe}' in '{situation.Id}' just tried to save a checkpoint, but the current legacy DOES NOT ALLOW IT. Add useCheckpoints: true to the legacy to enable this feature.");
                 return;
             }
 
