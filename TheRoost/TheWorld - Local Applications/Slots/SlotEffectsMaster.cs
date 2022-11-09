@@ -77,7 +77,7 @@ namespace Roost.World.Slots
             return false;
         }
 
-        private static bool TryGrabStackTrulyRandom(SphereSpec slotSpec, Sphere sphereToSearch, Token __result)
+        private static bool TryGrabStackTrulyRandom(SphereSpec slotSpec, Sphere sphereToSearch, ref Token __result)
         {
             List<Token> tokens = sphereToSearch.GetElementTokens();
             Crossroads.MarkAllLocalTokens(tokens);
