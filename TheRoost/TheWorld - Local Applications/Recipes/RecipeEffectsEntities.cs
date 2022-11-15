@@ -30,7 +30,7 @@ namespace Roost.World.Recipes.Entities
         [FucineDict] public Dictionary<string, FucineExp<int>> DeleteVerb { get; set; }
         [FucineDict] public List<GrandEffects> DistantEffects { get; set; }
 
-        [FucineCustomDict(KeyImporter: typeof(PathImporter), ValueImporter: typeof(ListImporter))]
+        [FucineAutoValue]
         public Dictionary<FucinePath, List<TokenFilterSpec>> Movements { get; set; }
 
         [FucineValue(DefaultValue = RetirementVFX.None)] public RetirementVFX DeckEffectsVFX { get; set; }
