@@ -634,10 +634,15 @@ namespace Roost.World.Recipes.Entities
 
         public List<Token> GetTokens(List<Token> tokens)
         {
-            if (Limit.isUndefined)
-                return tokens.FilterTokens(Filter);
+            List<Token> filteredTokens = tokens.FilterTokens(Filter);
 
-            return tokens.FilterTokens(Filter).SelectRandom(Limit.value);
+            if (!Limit.isUndefined)
+            {
+                List<Token> otherList = FairTokenSelector.SelectRandom(filteredTokens,Limit.value);
+                Birdsong.Sing($"Receiving list with {otherList.Count} elements");
+            }
+
+            return filteredTokens;
         }
 
         public void QuickSpec(string data)

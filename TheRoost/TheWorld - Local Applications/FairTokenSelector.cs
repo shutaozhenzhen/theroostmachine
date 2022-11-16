@@ -23,7 +23,10 @@ namespace Roost.World
                 Twins.Crossroads.MarkLocalToken(token);
 
                 if (filter.value == true)
+                {
+                    //Birdsong.Tweet($"{token.PayloadId} satisfied filter {filter.formula}");
                     result.Add(token);
+                }
             }
 
             Twins.Crossroads.UnmarkAllLocalTokens();
@@ -67,7 +70,11 @@ namespace Roost.World
             }
 
             if (totalQuantity <= Limit)
-                return new List<Token>(fromTokens);
+            {
+                List<Token> r = new List<Token>(fromTokens);
+                Birdsong.Sing($"Returning list with {r.Count} elements");
+                return r;
+            }
 
             HashSet<int> selectedNumbers = new HashSet<int>();
             while (selectedNumbers.Count < Limit)
