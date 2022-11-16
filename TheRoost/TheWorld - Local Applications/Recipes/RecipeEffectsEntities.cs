@@ -67,6 +67,8 @@ namespace Roost.World.Recipes.Entities
         {
             Crossroads.MarkLocalSphere(localSphere);
 
+            RunVerbXTriggers(situation);
+
             RunRootEffects();
             RunMutations(localSphere);
 
@@ -81,6 +83,17 @@ namespace Roost.World.Recipes.Entities
             RunVerbManipulations();
             RunDistantEffects(situation);
             RunMovements(localSphere);
+        }
+
+        private void RunVerbXTriggers(Situation situation)
+        {
+            AspectsDictionary aspectsPresent = situation.GetAspects(true);
+            aspectsPresent.CombineAspects(situation.CurrentRecipe.Aspects);
+            IDice dice = Watchman.Get<IDice>();
+
+            Sphere singleSphereByCategory = situation.GetSingleSphereByCategory(SphereCategory.SituationStorage);
+            var command = new SecretHistories.Commands.SituationXTriggerCommand(aspectsPresent, dice, singleSphereByCategory);
+            situation.Token.ExecuteTokenEffectCommand(command);
         }
 
         private void RunRootEffects()
