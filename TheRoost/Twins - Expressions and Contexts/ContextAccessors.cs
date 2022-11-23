@@ -54,7 +54,6 @@ namespace Roost.Twins
             if (specialSpheres.ContainsKey(fullPath))
             {
                 result = specialSpheres[fullPath]();
-                NoonUtility.LogWarning(result, result.Count);
             }
             else if (fucinePath is FucinePathPlus)
             {
@@ -199,12 +198,12 @@ namespace Roost.Twins
             try
             {
                 FucineRef reference = new FucineRef(path);
-                Birdsong.Tweet($"Reference value '{reference.value}'");
+                Birdsong.TweetLoud($"Reference value '{reference.value}'");
                 Crossroads.ResetCache();
             }
             catch (Exception ex)
             {
-                Birdsong.Tweet(ex.FormatException());
+                Birdsong.TweetLoud(ex.FormatException());
             }
         }
 
@@ -213,12 +212,12 @@ namespace Roost.Twins
             try
             {
                 string formula = string.Concat(command);
-                Birdsong.Tweet(new FucineExp<float>(formula));
+                Birdsong.TweetLoud(new FucineExp<float>(formula));
                 Crossroads.ResetCache();
             }
             catch (Exception ex)
             {
-                Birdsong.Tweet(ex.FormatException());
+                Birdsong.TweetLoud(ex.FormatException());
             }
         }
 
@@ -245,7 +244,7 @@ namespace Roost.Twins
             foreach (Sphere sphere in foundSpheres)
                 result += $"{sphere.SphereCategory.ToString().ToUpper()} SPHERE ID '{sphere.Id}'\nPath: '{sphere.GetAbsolutePath()}'\nWild: '{sphere.GetWildPath()}'\n";
 
-            Birdsong.Tweet(result);
+            Birdsong.TweetLoud(result);
         }
 
         public static void SphereContent(params string[] command)
@@ -254,7 +253,7 @@ namespace Roost.Twins
 
             if (command.Length == 0)
             {
-                Birdsong.Tweet("Empty sphere reference");
+                Birdsong.TweetLoud("Empty sphere reference");
                 return;
             }
 
@@ -273,7 +272,7 @@ namespace Roost.Twins
             else
                 result = $"No spheres found for path '{path}'\n";
 
-            Birdsong.Tweet(result);
+            Birdsong.TweetLoud(result);
         }
     }
 }

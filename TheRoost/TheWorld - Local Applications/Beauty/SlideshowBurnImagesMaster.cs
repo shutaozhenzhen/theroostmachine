@@ -57,7 +57,7 @@ namespace Roost.World.Beauty
 
         internal static void Enact()
         {
-            Birdsong.Tweet(VerbosityLevel.SystemChatter, 0, "Slideshow Was properly enabled");
+            Birdsong.TweetQuiet("Slideshow Was properly enabled");
             Machine.ClaimProperty<Recipe, List<BurnImageData>>("burnimages", true);
             AtTimeOfPower.RecipeExecution.Schedule<Situation>(CheckForPresenceOfBurnImages, PatchType.Postfix);
             AtTimeOfPower.TabletopSceneInit.Schedule(SetupComponent, PatchType.Postfix);
@@ -130,7 +130,7 @@ namespace Roost.World.Beauty
 
             if (sprite == null)
             {
-                NoonUtility.Log("Can't find a sprite at " + "burns/" + spriteName + "!", 1);
+                Birdsong.TweetLoud("Can't find a sprite at " + "burns/" + spriteName + "!", 1);
                 return;
             }
 

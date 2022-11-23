@@ -13,7 +13,7 @@ public static class TheRoostMachine
         //the only possiblity is that it's some kind of weird properties/framework version bug, but I've no idea about that
 
         if (alreadyAssembled == true)
-            Birdsong.Tweet("Trying to initialise the Roost Machine for the second time (don't do that!)");
+            Birdsong.TweetLoud("Trying to initialise the Roost Machine for the second time (don't do that!)");
         else
             try
             {
@@ -34,7 +34,7 @@ public static class TheRoostMachine
             }
             catch (Exception ex)
             {
-                Birdsong.Tweet(ex);
+                Birdsong.TweetLoud(ex);
             }
     }
 }

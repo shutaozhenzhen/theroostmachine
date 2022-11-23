@@ -354,7 +354,7 @@ namespace Roost.World.Recipes.Entities
                     filter.OnPostImport(subLog, populatedCompendium);
 
             foreach (ILogMessage message in subLog.GetMessages())
-                Birdsong.Tweet(VerbosityLevel.Essential, message.MessageLevel, $"PROBLEM IN RECIPE '{this.Id}' - {message.Description}'");
+                Birdsong.TweetLoud($"PROBLEM IN RECIPE '{this.Id}' - {message.Description}'");
 
             int i = 0;
             foreach (GrandEffects distantEffect in DistantEffects)
@@ -611,7 +611,7 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.Link:
                     Machine.PushTemporaryRecipeLink(this.Id, Level.value);
                     break;
-                default: Birdsong.Tweet($"Unknown trigger '{MorphEffect}' for element stack '{targetToken.PayloadEntityId}'"); break;
+                default: Birdsong.TweetLoud($"Unknown trigger '{MorphEffect}' for element stack '{targetToken.PayloadEntityId}'"); break;
             }
         }
     }

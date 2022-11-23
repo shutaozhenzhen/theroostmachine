@@ -107,7 +107,7 @@ namespace SecretHistories.Spheres.Angels
             _watchingOverThreshold = sphere as ThresholdSphere;
             if (_watchingOverThreshold == null)
             {
-                Birdsong.Tweet(VerbosityLevel.Essential, 1, $"tried to set an xtriggering angel to watch over sphere {sphere.Id}, but it isn't a threshold sphere, so that won't work.");
+                Birdsong.TweetLoud($"Tried to set an xtriggering angel to watch over sphere {sphere.Id}, but it isn't a threshold sphere, so that won't work.");
                 return;
             }
 

@@ -53,7 +53,7 @@ namespace Roost.World
             if (!CheckpointsAllowedInSettings()) return; 
             if (!LegacyAllowsCheckpoints())
             {
-                Birdsong.Tweet($"WARNING: Recipe '{situation.CurrentRecipe}' in '{situation.Id}' just tried to save a checkpoint, but the current legacy DOES NOT ALLOW IT. Add useCheckpoints: true to the legacy to enable this feature.");
+                Birdsong.TweetLoud($"WARNING: Recipe '{situation.CurrentRecipe}' in '{situation.Id}' just tried to save a checkpoint, but the current legacy DOES NOT ALLOW IT. Add useCheckpoints: true to the legacy to enable this feature.");
                 return;
             }
 
@@ -96,7 +96,7 @@ namespace Roost.World
 
         private static void ReloadCheckpoint()
         {
-            Birdsong.Sing("Reloading Checkpoint!");
+            Birdsong.TweetQuiet("Reloading Checkpoint!");
             CustomSavesMaster.LoadCustomSave("checkpoint", false);
         }
 

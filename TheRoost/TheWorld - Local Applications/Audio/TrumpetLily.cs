@@ -158,7 +158,7 @@ namespace Roost.World.Audio
         {
             if (!audioClips.ContainsKey(name))
             {
-                Birdsong.Tweet(VerbosityLevel.Essential, 1, $"Trying to get audio clip '{name}', but it's not loaded");
+                Birdsong.TweetLoud($"Trying to get audio clip '{name}', but it's not loaded");
                 clip = null;
                 return false;
             }
@@ -184,7 +184,7 @@ namespace Roost.World.Audio
             }
             catch (Exception ex)
             {
-                Birdsong.Tweet(VerbosityLevel.Essential, 1, $"Unable to play track '{trackName}': {ex.FormatException()}");
+                Birdsong.TweetLoud($"Unable to play track '{trackName}': {ex.FormatException()}");
             }
         }
 
@@ -193,7 +193,7 @@ namespace Roost.World.Audio
             string sfxName = String.Join(" ", command);
 
             if (SoundManager.PlaySfx(sfxName) == -1)
-                Birdsong.Tweet(VerbosityLevel.Essential, 1, $"Unable to play sfx '{sfxName}'.");
+                Birdsong.TweetLoud($"Unable to play sfx '{sfxName}'.");
         }
     }
 

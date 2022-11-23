@@ -189,7 +189,7 @@ namespace Roost.World.Elements
 
             if (element.Id == NullElement.NULL_ELEMENT_ID)
             {
-                Birdsong.Tweet(VerbosityLevel.Essential, 1, $"Trying to displace {affectedStack.EntityId} into non-existent element {displaceTo}");
+                Birdsong.TweetLoud($"Trying to displace {affectedStack.EntityId} into non-existent element {displaceTo}");
                 affectedStack.Retire(RetirementVFX.CardHide);
                 return false;
             }

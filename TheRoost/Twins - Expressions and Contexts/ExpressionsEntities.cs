@@ -191,7 +191,7 @@ namespace Roost.Twins.Entities
                         this.targetId = target.Remove(target.Length - 1);
                     }
                     else
-                        Birdsong.Tweet(VerbosityLevel.Essential, 1, $"{fromArea}{withOperation}/{target} - '*' is used, but {fromArea} doesn't support wildcards");
+                        Birdsong.TweetLoud($"{fromArea}{withOperation}/{target} - '*' is used, but {fromArea} doesn't support wildcards");
                 }
 
                 const string leverMark = "lever_";
@@ -327,7 +327,7 @@ namespace Roost.Twins.Entities
                 }
                 catch (Exception ex)
                 {
-                    NoonUtility.LogWarning($"Unable to parse property '{target}' of '{token.Payload}': {ex.FormatException()}");
+                    Birdsong.TweetLoud($"Unable to parse property '{target}' of '{token.Payload}': {ex.FormatException()}");
                     return 0;
                 }
             }
@@ -342,7 +342,7 @@ namespace Roost.Twins.Entities
                 }
                 catch (Exception ex)
                 {
-                    NoonUtility.LogWarning($"Unable to parse property '{target}' of '{token.Payload}': {ex.FormatException()}");
+                    Birdsong.TweetLoud($"Unable to parse property '{target}' of '{token.Payload}': {ex.FormatException()}");
                     return 0;
                 }
             }
@@ -361,7 +361,7 @@ namespace Roost.Twins.Entities
                     }
                     catch (Exception ex)
                     {
-                        NoonUtility.LogWarning($"Unable to parse property '{target}' of '{element}': {ex.FormatException()}");
+                        Birdsong.TweetLoud($"Unable to parse property '{target}' of '{element}': {ex.FormatException()}");
                         return 0;
                     }
                 }
@@ -377,7 +377,7 @@ namespace Roost.Twins.Entities
                     }
                     catch (Exception ex)
                     {
-                        NoonUtility.LogWarning($"Unable to parse property '{target}' of '{recipe}': {ex.FormatException()}");
+                        Birdsong.TweetLoud($"Unable to parse property '{target}' of '{recipe}': {ex.FormatException()}");
                         return 0;
                     }
                 }
@@ -497,7 +497,7 @@ namespace Roost.Twins.Entities
                 var deck = Watchman.Get<Compendium>().GetEntityById<DeckSpec>(target);
                 if (deck == null)
                 {
-                    NoonUtility.LogWarning($"Trying to access non-existent deck spec {target}");
+                    Birdsong.TweetLoud($"Trying to access non-existent deck spec {target}");
                     return 0;
                 }
 
@@ -518,7 +518,7 @@ namespace Roost.Twins.Entities
                 var deck = Watchman.Get<Compendium>().GetEntityById<DeckSpec>(target);
                 if (deck == null)
                 {
-                    NoonUtility.LogWarning($"Trying to access non-existent deck spec {target}");
+                    Birdsong.TweetLoud($"Trying to access non-existent deck spec {target}");
                     return 0;
                 }
 

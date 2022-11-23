@@ -37,7 +37,7 @@ namespace Roost.Vagabond
         public static void Unpatch(string patchId)
         {
             if (patchers.ContainsKey(patchId) == false)
-                Birdsong.Tweet($"Harmony patch '{patchId}' isn't present in the Roost Machine");
+                Birdsong.TweetLoud($"Harmony patch '{patchId}' isn't present in the Roost Machine");
             else if (Harmony.HasAnyPatches(patchId))
                 patchers[patchId].UnpatchAll(patchId);
         }
@@ -50,7 +50,7 @@ namespace Roost.Vagabond
         internal static MethodInfo GetMethodInvariant(Type definingClass, string name)
         {
             if (string.IsNullOrWhiteSpace(name))
-                Birdsong.Tweet($"Trying to find whitespace method for class {definingClass.Name} (don't!)");
+                Birdsong.TweetLoud($"Trying to find whitespace method for class {definingClass.Name} (don't!)");
 
             try
             {
@@ -105,11 +105,11 @@ namespace Roost.Vagabond
         internal static FieldInfo GetFieldInvariant(this Type definingClass, string name)
         {
             if (string.IsNullOrWhiteSpace(name))
-                Birdsong.Tweet($"Trying to find whitespace field for class {definingClass.Name} (don't!)");
+                Birdsong.TweetLoud($"Trying to find whitespace field for class {definingClass.Name} (don't!)");
 
             FieldInfo field = definingClass.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic);
             if (field == null)
-                Birdsong.Tweet($"Field {name} is not found in class {definingClass.Name}");
+                Birdsong.TweetLoud($"Field {name} is not found in class {definingClass.Name}");
 
             return field;
         }
@@ -117,12 +117,12 @@ namespace Roost.Vagabond
         internal static PropertyInfo GetPropertyInvariant(this Type definingClass, string name)
         {
             if (string.IsNullOrWhiteSpace(name))
-                Birdsong.Tweet($"Trying to find whitespace property for class {definingClass.Name} (don't!)");
+                Birdsong.TweetLoud($"Trying to find whitespace property for class {definingClass.Name} (don't!)");
 
             PropertyInfo property = definingClass.GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic);
 
             if (property == null)
-                Birdsong.Tweet($"Property {name} not found in class {definingClass.Name}");
+                Birdsong.TweetLoud($"Property {name} not found in class {definingClass.Name}");
 
             return property;
         }
@@ -166,7 +166,7 @@ namespace Roost.Vagabond
             else if (patchType == PatchType.Postfix)
                 Machine.Patch(methodsToPatch[time], postfix: patchMethod.Method, patchId: patchId);
             else
-                Birdsong.Tweet($"Trying to schedule method {patchMethod.Method.Name} at Time of Power '{time}' with patch type '{patchType}' - which is not a valid PatchType (not a prefix, not a postfix). No fooling around with the Times of Power, please.");
+                Birdsong.TweetLoud($"Trying to schedule method {patchMethod.Method.Name} at Time of Power '{time}' with patch type '{patchType}' - which is not a valid PatchType (not a prefix, not a postfix). No fooling around with the Times of Power, please.");
         }
 
         internal static IEnumerable<CodeInstruction> TranspilerInsertAtMethod(IEnumerable<CodeInstruction> instructions, MethodInfo referenceMethodCall, List<CodeInstruction> myCode, bool deleteOriginalMethod, int skipCallsCount)
@@ -203,7 +203,7 @@ namespace Roost.Vagabond
         {
             if (myCode == null || myCode.Count == 0)
             {
-                Birdsong.Tweet(VerbosityLevel.Essential, 1, "Trying to transpile with an empty myCode!");
+                Birdsong.TweetLoud("Trying to transpile with an empty myCode!");
                 return instructions;
             }
 
@@ -230,15 +230,15 @@ namespace Roost.Vagabond
                 }
             }
 
-            Birdsong.Tweet(VerbosityLevel.Essential, 1, "Incorrect mask in transpiler!");
+            Birdsong.TweetLoud("Incorrect mask in transpiler!");
             return null;
         }
 
         internal static void LogILCodes(IEnumerable<CodeInstruction> instructions)
         {
-            Birdsong.Tweet("IL CODE:");
+            Birdsong.TweetLoud("IL CODE:");
             foreach (CodeInstruction instruction in instructions)
-                Birdsong.Tweet($"{instruction.opcode} {(instruction.operand == null ? string.Empty : $": {instruction.operand} ({instruction.operand.GetType().Name})")} {instruction.labels.UnpackCollection()}");
+                Birdsong.TweetLoud($"{instruction.opcode} {(instruction.operand == null ? string.Empty : $": {instruction.operand} ({instruction.operand.GetType().Name})")} {instruction.labels.UnpackCollection()}");
         }
     }
 }

@@ -106,7 +106,7 @@ namespace Roost.Beachcomber
             if (defaultValue != null
                 && typeof(TProperty).IsValueType == false && typeof(TProperty) != typeof(string))
             {
-                Birdsong.Tweet($"Trying to assign default value for a {entityType.Name} property '{propertyName}'; but its type - {nameof(TProperty)} - is a reference type and thus can only be null.");
+                Birdsong.TweetLoud($"Trying to assign default value for a {entityType.Name} property '{propertyName}'; but its type - {nameof(TProperty)} - is a reference type and thus can only be null.");
                 defaultValue = default(TProperty);
             }
 
@@ -114,7 +114,7 @@ namespace Roost.Beachcomber
                 claimedProperties.Add(entityType, new Dictionary<string, CustomProperty>(StringComparer.InvariantCultureIgnoreCase));
 
             if (claimedProperties[entityType].ContainsKey(propertyName))
-                Birdsong.Tweet($"Trying to add {entityType.Name} property '{propertyName}', but the property of the same name for the same type is already added.");
+                Birdsong.TweetLoud($"Trying to add {entityType.Name} property '{propertyName}', but the property of the same name for the same type is already added.");
             else
                 claimedProperties[entityType][propertyName] = new CustomProperty(typeof(TProperty), defaultValue, localize);
         }
@@ -150,7 +150,7 @@ namespace Roost.Beachcomber
                     loadedData.Remove(entity);
             }
             else
-                Birdsong.Tweet($"Trying to remove property {propertyName} from {entity.GetType().Name} {entity.Id}, but that property isn't set.");
+                Birdsong.TweetLoud($"Trying to remove property {propertyName} from {entity.GetType().Name} {entity.Id}, but that property isn't set.");
         }
 
         internal static void SetCustomProperty(IEntityWithId owner, string propertyName, object value)
@@ -158,7 +158,7 @@ namespace Roost.Beachcomber
             Type ownerType = owner.GetType();
 
             if (claimedProperties.ContainsKey(ownerType) == false || claimedProperties[ownerType].ContainsKey(propertyName) == false)
-                Birdsong.Tweet($"Setting an unclaimed property '{propertyName}' for {ownerType.Name} '{owner.Id}'; possible typo.");
+                Birdsong.TweetLoud($"Setting an unclaimed property '{propertyName}' for {ownerType.Name} '{owner.Id}'; possible typo.");
 
             if (loadedData.ContainsKey(owner) == false)
                 loadedData[owner] = new Dictionary<string, object>(StringComparer.InvariantCultureIgnoreCase);
@@ -195,7 +195,7 @@ namespace Roost.Beachcomber
             {
                 if (Ostrich.Ignores(entityType, propertyName))
                 {
-                    Birdsong.Tweet(VerbosityLevel.SystemChatter, 0, "Ignoring custom property '{0}' for '{1}' {2}", propertyName, entity.Id, entityType.Name);
+                    Birdsong.TweetQuiet($"Ignoring custom property '{propertyName}' for '{entity.Id}' {entityType.Name}");
                     return;
                 }
 

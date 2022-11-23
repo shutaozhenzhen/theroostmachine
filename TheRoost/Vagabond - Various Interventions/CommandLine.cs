@@ -31,7 +31,7 @@ namespace Roost.Vagabond
         {
             if (commandMethods.ContainsKey(reference))
             {
-                Birdsong.Tweet("Trying to register command '{0}', but it's already registered", reference);
+                Birdsong.TweetLoud($"Trying to register command '{reference}', but it's already registered");
                 return;
             }
             commandMethods.Add(reference, method);
@@ -138,7 +138,7 @@ namespace Roost.Vagabond
 
         public static void Log(object data, params object[] furtherData)
         {
-            Birdsong.Tweet(data, furtherData);
+            Birdsong.TweetLoud(data, furtherData);
         }
     }
 
@@ -150,8 +150,8 @@ namespace Roost.Vagabond
             Compendium compendium = Watchman.Get<Compendium>();
             CompendiumLoader loader = new CompendiumLoader(Watchman.Get<Config>().GetConfigValue("contentdir"));
             DateTime now = DateTime.Now;
-            foreach (SecretHistories.Fucine.ILogMessage logMessage in loader.PopulateCompendium(compendium, Watchman.Get<Config>().GetConfigValue("Culture")).GetMessages())
-                Birdsong.Tweet(logMessage.VerbosityNeeded, logMessage.MessageLevel, logMessage.Description);
+            foreach (ILogMessage logMessage in loader.PopulateCompendium(compendium, Watchman.Get<Config>().GetConfigValue("Culture")).GetMessages())
+                Birdsong.TweetLoud(logMessage.VerbosityNeeded, logMessage.MessageLevel, logMessage.Description);
             CommandLine.Log("Total time to import: {0}", (DateTime.Now - now));
         }
 
@@ -216,8 +216,8 @@ namespace Roost.Vagabond
                     return;
                 }
 
-                if ((value as IEnumerable) != null)
-                    value = (value as IEnumerable).LogCollection();
+                if (value is ICollection collection)
+                    value = collection.UnpackCollection();
 
                 CommandLine.Log("{0} of {1} '{2}': {3}", propertyName, entityType.Name, entity.Id, value);
             }

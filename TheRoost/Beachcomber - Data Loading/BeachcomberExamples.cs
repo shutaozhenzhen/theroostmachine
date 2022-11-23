@@ -67,7 +67,7 @@ namespace Roost.Beachcomber.Entities
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
         {
             foreach (CachedFucineProperty<ExampleFucineClass> property in TypeInfoCache<ExampleFucineClass>.GetCachedFucinePropertiesForType())
-                Birdsong.Tweet($"Example entity '{this.Id}' - '{property.ThisPropInfo.Name}': {property.ThisPropInfo.GetValue(this)}");
+                Birdsong.TweetLoud($"Example entity '{this.Id}' - '{property.ThisPropInfo.Name}': {property.ThisPropInfo.GetValue(this)}");
         }
 
         //and of course, entity can have any amount of its own methods 

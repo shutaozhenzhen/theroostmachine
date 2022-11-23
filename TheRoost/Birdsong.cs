@@ -28,12 +28,17 @@ namespace Roost
         //this one reserved for operative debug logs; separated in its own method so I can easily find all the calls and won't accidentally left one in the release version
         public static void Sing(object data, params object[] furtherData)
         {
-            Birdsong.Tweet(0, 1, data, furtherData);
+            Birdsong.Tweet(VerbosityLevel.Essential, 1, data, furtherData);
         }
 
-        public static void Tweet(object data, params object[] furtherData)
+        public static void TweetLoud(object data, params object[] furtherData)
         {
-            Birdsong.Tweet(0, 1, data, furtherData);
+            Birdsong.Tweet(VerbosityLevel.Essential, 1, data, furtherData);
+        }
+
+        public static void TweetQuiet(object data, params object[] furtherData)
+        {
+            Birdsong.Tweet(VerbosityLevel.SystemChatter, 0, data, furtherData);
         }
 
         public static void Tweet(VerbosityLevel verbosity, int messageLevel, object data, params object[] furtherData)
@@ -69,28 +74,6 @@ namespace Roost
             }
             else
                 return String.Concat(wrapMessageMaybe.ToString(), " ", furtherData.UnpackCollection());
-        }
-
-        public static string LogCollection(this IEnumerable collection, Func<object, object> handler = null, string separator = " ")
-        {
-            if (collection == null)
-                return "null";
-
-            if (handler == null)
-                handler = entry => entry;
-
-            string result = string.Empty;
-            foreach (object obj in collection)
-                try
-                {
-                    result += (obj == null ? "null" : handler(obj)?.ToString()) + separator;
-                }
-                catch (Exception ex)
-                {
-                    Birdsong.Tweet(VerbosityLevel.Essential, 1, $"Collection caused an exception: {ex.FormatException()}\nLog so far: {result}");
-                }
-
-            return result;
         }
 
         public static string FormatException(this Exception ex)

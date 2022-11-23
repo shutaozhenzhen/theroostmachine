@@ -93,7 +93,7 @@ namespace Roost.World
 
                 var callbackRecipeId = Machine.GetLeverForCurrentPlaythrough(CompleteCallbackId(currentSituation, callbackId));
                 if (callbackRecipeId == null)
-                    Birdsong.Tweet(VerbosityLevel.Essential, 1, $"Trying to use the callback '{callbackId}' in '{currentSituation.RecipeId}', but the callback is not set");
+                    Birdsong.TweetLoud($"Trying to use the callback '{callbackId}' in '{currentSituation.RecipeId}', but the callback is not set");
 
                 //if the recipe id is wrong - or null, in case callback isn't set - default logger will display a message
                 linkDetails.SetId(callbackRecipeId);
@@ -101,7 +101,7 @@ namespace Roost.World
                 var cachedRecipe = Watchman.Get<Compendium>().GetEntityById<Recipe>(linkDetails.Id);
                 setCachedRecipe(linkDetails, cachedRecipe);
                 if (!cachedRecipe.IsValid())
-                    Birdsong.Tweet(VerbosityLevel.Essential, 1, $"Wrong callback link '{linkDetails.Id}'");
+                    Birdsong.TweetLoud($"Wrong callback link '{linkDetails.Id}'");
             }
         }
 

@@ -53,7 +53,7 @@ namespace Roost.Vagabond
             FileInfo[] saveFiles = d.GetFiles("custom_save_*");
             if (saveFiles.Length == 0)
             {
-                Birdsong.Tweet("Didn't find any custom save file.");
+                Birdsong.TweetLoud("Didn't find any custom save file.");
                 return;
             }
             foreach (FileInfo fileInfo in saveFiles)
@@ -61,7 +61,7 @@ namespace Roost.Vagabond
                 char[] sep = { '.' };
                 string saveWithExtension = fileInfo.Name.Substring(12);
                 string saveWithoutExtension = saveWithExtension.Split(sep)[0];
-                Birdsong.Tweet("→ " + saveWithoutExtension);
+                Birdsong.TweetLoud("→ " + saveWithoutExtension);
             }
         }
 
@@ -69,7 +69,7 @@ namespace Roost.Vagabond
         {
             if (args.Length < 1)
             {
-                Birdsong.Tweet("This command requires to provide the save name as the first argument");
+                Birdsong.TweetLoud("This command requires to provide the save name as the first argument");
                 return;
             }
             string saveName = args[0];
@@ -78,7 +78,7 @@ namespace Roost.Vagabond
 
         public static void LoadCustomSave(string saveName, bool asCustom = true)
         {
-            Birdsong.Tweet("Trying to load save", saveName);
+            Birdsong.TweetLoud("Trying to load save", saveName);
             var persistenceProvider = new CustomSavePersistenceProvider(saveName, asCustom);
             Watchman.Get<StageHand>().LoadGameOnTabletop(persistenceProvider);
         }
@@ -87,7 +87,7 @@ namespace Roost.Vagabond
         {
             if (args.Length < 1)
             {
-                Birdsong.Tweet("This command requires to provide the save name as the first argument");
+                Birdsong.TweetLoud("This command requires to provide the save name as the first argument");
                 return;
             }
             string saveName = args[0];
@@ -96,7 +96,7 @@ namespace Roost.Vagabond
 
         public static async Task<bool> SaveCustomSave(string saveName, bool asCustom)
         {
-            Birdsong.Tweet("Trying to save to custom save", saveName);
+            Birdsong.TweetLoud("Trying to save to custom save", saveName);
             Watchman.Get<Heart>().Metapause();
             Watchman.Get<LocalNexus>().DisablePlayerInput(0f);
 
@@ -106,7 +106,7 @@ namespace Roost.Vagabond
             {
                 Watchman.Get<Heart>().Unmetapause();
                 Watchman.Get<LocalNexus>().EnablePlayerInput();
-                Birdsong.Tweet("Saved!");
+                Birdsong.TweetLoud("Saved!");
                 return true;
             }
             return false;

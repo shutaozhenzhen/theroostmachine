@@ -44,7 +44,7 @@ namespace Roost.Elegiast
                             needUpdate = true;
                         }
 
-                Birdsong.Tweet($"Legacy achievements from {ACHIEVEMENTS_FILE} were converted. Removing the old file from the cloud.");
+                Birdsong.TweetLoud($"Legacy achievements from {ACHIEVEMENTS_FILE} were converted. Removing the old file from the cloud.");
                 SteamRemoteStorage.FileDelete(ACHIEVEMENTS_FILE);
             }
 
@@ -61,7 +61,7 @@ namespace Roost.Elegiast
                             needUpdate = true;
                         }
 
-                Birdsong.Tweet($"Legacy achievements from {ACHIEVEMENTS_FILE} were converted. Removing the old file from the disk.");
+                Birdsong.TweetLoud($"Legacy achievements from {ACHIEVEMENTS_FILE} were converted. Removing the old file from the disk.");
                 File.Delete(localFile);
             }
 
@@ -105,7 +105,7 @@ namespace Roost.Elegiast
                 }
                 catch
                 {
-                    Birdsong.Tweet($"Malformed achievement in {ACHIEVEMENTS_FILE}, deleting.");
+                    Birdsong.TweetLoud($"Malformed achievement in {ACHIEVEMENTS_FILE}, deleting.");
                 }
 
             return dictionary;
@@ -124,7 +124,7 @@ namespace Roost.Elegiast
             }
             catch
             {
-                Birdsong.Tweet($"Malformed entry in {ACHIEVEMENTS_FILE}, deleting");
+                Birdsong.TweetLoud($"Malformed entry in {ACHIEVEMENTS_FILE}, deleting");
                 return string.Empty;
             }
         }

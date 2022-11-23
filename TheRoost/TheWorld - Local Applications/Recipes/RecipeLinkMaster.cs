@@ -187,7 +187,7 @@ namespace Roost
         {
             Recipe recipe = Machine.GetEntity<Recipe>(recipeId);
             if (recipe.IsNullEntity())
-                Birdsong.Tweet(VerbosityLevel.Essential, 1, $"Trying to push non-existed recipe link '{recipeId}'");
+                Birdsong.TweetLoud($"Trying to push non-existed recipe link '{recipeId}'");
             else
                 PushTemporaryRecipeLink(recipe, priority);
         }
