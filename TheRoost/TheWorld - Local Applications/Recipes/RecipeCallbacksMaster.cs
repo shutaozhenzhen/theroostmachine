@@ -30,7 +30,7 @@ namespace Roost.World
         const string RESET_CALLBACKS = "resetcallbacks";
         const string USE_CALLBACK = "useCallback";
 
-        static Action<object, object> setCachedRecipe = typeof(LinkedRecipeDetails).GetFieldInvariant("_possibleWildcardMatchRecipes").SetValue;
+        static Action<object, object> setCachedRecipe = typeof(LinkedRecipeDetails).GetFieldInvariant("_cachedRecipe").SetValue;
 
         internal static void Enact()
         {
