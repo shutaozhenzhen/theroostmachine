@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -25,6 +26,33 @@ namespace Roost.Beachcomber
             Machine.Patch(
                 original: typeof(AbstractEntity<Element>).GetConstructors(BindingFlags.NonPublic | BindingFlags.Instance)[0],
                 transpiler: typeof(Usurper).GetMethodInvariant(nameof(AbstractEntityConstructorTranspiler)));
+
+            Machine.Patch(
+                original: typeof(AbstractEntity<Element>).GetMethodInvariant("<OnPostImportForProperties>g__OnPostImportSubEntity|18_0"),
+                prefix: typeof(Usurper).GetMethodInvariant(nameof(SubEntityNullCheck)));
+
+            Machine.Patch(
+                original: typeof(AbstractEntity<Element>).GetMethodInvariant("<OnPostImportForProperties>g__OnPostImportSubList|18_1"),
+                prefix: typeof(Usurper).GetMethodInvariant(nameof(SubListNullCheck)));
+
+            Machine.Patch(
+                original: typeof(AbstractEntity<Element>).GetMethodInvariant("<OnPostImportForProperties>g__OnPostImportSubDictionary|18_2"),
+                prefix: typeof(Usurper).GetMethodInvariant(nameof(SubDictNullCheck)));
+        }
+
+        private static bool SubEntityNullCheck(IEntityWithId subEntity)
+        {
+            return subEntity != null;
+        }
+
+        private static bool SubListNullCheck(IList list)
+        {
+            return list != null;
+        }
+
+        private static bool SubDictNullCheck(IDictionary dictionary)
+        {
+            return dictionary != null;
         }
 
         private static IEnumerable<CodeInstruction> AbstractEntityConstructorTranspiler(IEnumerable<CodeInstruction> instructions)

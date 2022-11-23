@@ -136,10 +136,13 @@ namespace Roost.World.Recipes
                 AspectsInContext aspectsInContext = Watchman.Get<HornedAxe>().GetAspectsInContext(situation.GetAspects(true), null);
 
                 foreach (LinkedRecipeDetails link in inductions[situation])
-                    if (link.CanExecuteInContext(aspectsInContext, protag))
-                        situation.AdditionalRecipeSpawnToken(link);
+                {
+                    Recipe recipeWhichCanExecuteInContext = link.GetRecipeWhichCanExecuteInContext(aspectsInContext, protag);
+                    if (recipeWhichCanExecuteInContext.IsValid())
+                        situation.AdditionalRecipeSpawnToken(recipeWhichCanExecuteInContext, link.Expulsion, link.ToPath);
+                }
             }
-            inductions.Clear();
+                inductions.Clear();
         }
 
         public static void ApplyVFX()

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Reflection;
 using System.Linq;
 using System.Collections.Generic;
 using SecretHistories.UI;
@@ -28,9 +29,13 @@ namespace Roost.World
         const string CLEAR_CALLBACKS = "clearcallbacks";
         const string RESET_CALLBACKS = "resetcallbacks";
         const string USE_CALLBACK = "useCallback";
+
+        static Action<object, object> setCachedRecipe = typeof(LinkedRecipeDetails).GetFieldInvariant("_possibleWildcardMatchRecipes").SetValue;
+
         internal static void Enact()
         {
             var dict = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            
 
             Machine.ClaimProperty<Recipe, Dictionary<string, string>>(ADD_CALLBACKS);
             Machine.ClaimProperty<Recipe, List<string>>(CLEAR_CALLBACKS);
@@ -92,8 +97,10 @@ namespace Roost.World
 
                 //if the recipe id is wrong - or null, in case callback isn't set - default logger will display a message
                 linkDetails.SetId(callbackRecipeId);
-                linkDetails.Recipe = Watchman.Get<Compendium>().GetEntityById<Recipe>(linkDetails.Id);
-                if (!linkDetails.Recipe.IsValid())
+
+                var cachedRecipe = Watchman.Get<Compendium>().GetEntityById<Recipe>(linkDetails.Id);
+                setCachedRecipe(linkDetails, cachedRecipe);
+                if (!cachedRecipe.IsValid())
                     Birdsong.Tweet(VerbosityLevel.Essential, 1, $"Wrong callback link '{linkDetails.Id}'");
             }
         }

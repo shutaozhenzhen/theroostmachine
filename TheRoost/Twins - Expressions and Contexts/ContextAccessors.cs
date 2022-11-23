@@ -179,7 +179,7 @@ namespace Roost.Twins
                 () => new List<Sphere>(Watchman.Get<HornedAxe>().GetExteriorSpheres()) },
 
             { "~/default",
-                () => new List<Sphere> { Watchman.Get<HornedAxe>().GetDefaultSphere(OccupiesSpaceAs.Intangible) } },
+                () => new List<Sphere> { Watchman.Get<HornedAxe>().GetDefaultSphereForUnknownToken()} },
         };
     }
 

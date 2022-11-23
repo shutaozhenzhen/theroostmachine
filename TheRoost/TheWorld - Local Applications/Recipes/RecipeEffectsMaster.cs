@@ -134,16 +134,12 @@ namespace Roost.World.Recipes
 
         private static void PostImportForTheNewXtriggers(Element __instance, ContentImportLog log, Compendium populatedCompendium)
         {
-            Dictionary<string, List<RefMorphDetails>> xtriggers = __instance.RetrieveProperty<Dictionary<string, List<RefMorphDetails>>>("xtriggers");
+            Dictionary<string, List<RefMorphDetails>> xtriggers = __instance.RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
             if (xtriggers != null)
             {
-                ContentImportLog subLog = new ContentImportLog();
                 foreach (string catalyst in xtriggers.Keys)
                     foreach (RefMorphDetails morphDetails in xtriggers[catalyst])
-                        morphDetails.OnPostImport(subLog, populatedCompendium);
-
-                foreach (ILogMessage message in subLog.GetMessages())
-                    Birdsong.Tweet(VerbosityLevel.Essential, message.MessageLevel, $"PROBLEM IN XTRIGGERS FOR ELEMENT '{__instance.Id}' - {message.Description}'");
+                        morphDetails.OnPostImport(log, populatedCompendium);
             }
         }
 

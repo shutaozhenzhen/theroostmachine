@@ -381,6 +381,8 @@ namespace Roost.World.Recipes.Entities
         [FucineValue(DefaultValue = RetirementVFX.CardTransformWhite)] public RetirementVFX VFX { get; set; }
         [FucineSubEntity] public TokenFilterSpec Filter { get; set; }
 
+        protected override Type ValidateIdAs => typeof(Element);
+
         public RefMutationEffect() { }
         public RefMutationEffect(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
@@ -452,13 +454,7 @@ namespace Roost.World.Recipes.Entities
         public void QuickSpec(string value)
         {
             this.SetId(value);
-            Chance = new FucineExp<int>("100");
-            MorphEffect = MorphEffectsExtended.Transform;
-            Level = new FucineExp<int>("1");
-            IgnoreTargetQuantity = false;
-            IgnoreCatalystQuantity = false;
-            Expulsion = null;
-            VFX = RetirementVFX.CardTransformWhite;
+            SetDefaultValues();
         }
 
         public RefMorphDetails() { }
