@@ -121,6 +121,12 @@ namespace Roost.Beachcomber
 
         internal static object RetrieveProperty(IEntityWithId entity, string propertyName)
         {
+            if (entity == null || propertyName == null)
+            {
+                Birdsong.TweetLoud($"Trying to retrieve a custom property '{propertyName}' from '{entity}', but one of these is null");
+                return null;
+            }
+
             if (HasCustomProperty(entity, propertyName))
                 return loadedData[entity][propertyName];
             else
@@ -177,9 +183,9 @@ namespace Roost.Beachcomber
                 foreach (string claimedProperty in claimedProperties[entityType].Keys)
                 {
                     //need to keep ToLower() here as ValuesTable is case sensitive (and always lowercase)
-                    string propertyLowercaseName = claimedProperty.ToLower(System.Globalization.CultureInfo.InvariantCulture); 
+                    string propertyLowercaseName = claimedProperty.ToLower(System.Globalization.CultureInfo.InvariantCulture);
 
-                    if (entityData.ValuesTable.ContainsKey(propertyLowercaseName)) 
+                    if (entityData.ValuesTable.ContainsKey(propertyLowercaseName))
                     {
                         LoadCustomProperty(entity, propertyLowercaseName, entityData.ValuesTable[propertyLowercaseName], log);
                         entityData.ValuesTable.Remove(propertyLowercaseName);
