@@ -292,7 +292,9 @@ namespace Roost
 
         public static T RetrieveProperty<T>(this IEntityWithId owner, string propertyName)
         {
-            return (T)Beachcomber.Hoard.RetrieveProperty(owner, propertyName);
+            var value = Beachcomber.Hoard.RetrieveProperty(owner, propertyName);
+
+            return value == null ? default(T) : (T)value;
         }
 
         public static object RetrieveProperty(this IEntityWithId owner, string propertyName)
