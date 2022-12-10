@@ -70,11 +70,7 @@ namespace Roost.World
             }
 
             if (totalQuantity <= Limit)
-            {
-                List<Token> r = new List<Token>(fromTokens);
-                Birdsong.Sing($"Returning list with {r.Count} elements");
-                return r;
-            }
+                return new List<Token>(fromTokens);
 
             HashSet<int> selectedNumbers = new HashSet<int>();
             while (selectedNumbers.Count < Limit)

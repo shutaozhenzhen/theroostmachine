@@ -393,11 +393,11 @@ namespace Roost.World.Recipes.Entities
             {
                 try
                 {
-                    Filter.Limit = new FucineExp<int>(UnknownProperties.ToString());
+                    Filter.Limit = new FucineExp<int>(UnknownProperties[LIMIT].ToString());
                 }
                 catch (Exception ex)
                 {
-                    log.LogProblem($"Malformed limit {UnknownProperties}: {ex.FormatException()}");
+                    log.LogProblem($"Malformed limit {UnknownProperties[LIMIT]}: {ex.FormatException()}");
                 }
 
                 UnknownProperties.Remove(LIMIT);
@@ -646,10 +646,7 @@ namespace Roost.World.Recipes.Entities
             List<Token> filteredTokens = tokens.FilterTokens(Filter);
 
             if (!Limit.isUndefined)
-            {
-                List<Token> otherList = FairTokenSelector.SelectRandom(filteredTokens,Limit.value);
-                Birdsong.Sing($"Receiving list with {otherList.Count} elements");
-            }
+                return filteredTokens.SelectRandom(Limit.value);
 
             return filteredTokens;
         }
