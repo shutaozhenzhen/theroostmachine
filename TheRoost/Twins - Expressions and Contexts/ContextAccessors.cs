@@ -7,6 +7,7 @@ using SecretHistories.UI;
 using SecretHistories.Fucine;
 using SecretHistories.Spheres;
 using SecretHistories.Enums;
+using SecretHistories.Entities.NullEntities;
 using SecretHistories.States;
 using SecretHistories.Commands.SituationCommands;
 
@@ -160,7 +161,7 @@ namespace Roost.Twins
         {
             cachedSpheres.Clear();
             nullContainer.Clear();
-            nullContainer.Add(SecretHistories.NullEntities.NullSphere.Create());
+            nullContainer.Add(NullSphere.Create());
 
             cachedSpheres[currentSituation] = nullContainer; 
             cachedSpheres[currentTokens] = allLocalTokensContainer;

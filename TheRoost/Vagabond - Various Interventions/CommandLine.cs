@@ -7,10 +7,10 @@ using System.Reflection;
 using SecretHistories.UI;
 using SecretHistories.Services;
 using SecretHistories.Fucine;
+using SecretHistories.Infrastructure.Modding;
 
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.InputSystem;
 using TMPro;
 
 namespace Roost.Vagabond
@@ -70,39 +70,21 @@ namespace Roost.Vagabond
         }
 
         private GameObject console;
-        void Update()
-        {
-            if (Keyboard.current.backquoteKey.wasPressedThisFrame)
-                if (GameObject.FindObjectOfType<DebugTools>() == null)
-                    Watchman.Get<Concursum>().ToggleSecretHistory();
-
-           DoSomething();
-        }
-
-        void DoSomething()
-        {
-        }
 
         private static void CreateCommandLine()
         {
-            bool consoleEnabled = GameObject.Find("SecretHistoryLogMessageEntry(Clone)") != null;
-            if (consoleEnabled == false)
-                Watchman.Get<Concursum>().ToggleSecretHistory();
-
             if (GameObject.FindObjectOfType<CommandLine>() != null)
-            {
-                Watchman.Get<Concursum>().ToggleSecretHistory();
                 return;
-            }
 
-            var debugCanvas = GameObject.Find("SecretHistoryLogMessageEntry(Clone)").GetComponentInParent<Canvas>().transform;
+            GameObject OGLog = GameObject.Find("LogDisplay");
+
             CommandLine vagabond = GameObject.FindObjectOfType<SecretHistory>().gameObject.AddComponent<CommandLine>();
             vagabond.console = new GameObject("AuxConsole", typeof(RectTransform), typeof(Image), typeof(TMP_InputField));
 
-            vagabond.console.GetComponent<Image>().color = debugCanvas.GetComponentsInChildren<Image>()[1].color;
+            vagabond.console.GetComponent<Image>().color = OGLog.GetComponentsInChildren<Image>()[1].color;
 
             var consoleT = vagabond.console.GetComponent<RectTransform>();
-            consoleT.SetParent(debugCanvas.GetChild(0));
+            consoleT.SetParent(OGLog.transform.GetChild(0));
             consoleT.pivot = new Vector2(0.5f, 1f);
             consoleT.anchorMin = new Vector2(0.13f, 0f);
             consoleT.anchorMax = new Vector2(0.85f, 0f);
@@ -110,7 +92,7 @@ namespace Roost.Vagabond
             consoleT.anchoredPosition = new Vector2(0, 2);
             consoleT.localScale = Vector2.one;
 
-            GameObject button = GameObject.Instantiate(GameObject.Find("SecretHistoryLogMessageEntry(Clone)").gameObject, consoleT);
+            GameObject button = GameObject.Instantiate(OGLog.FindInChildren("Messages", true), consoleT);
             RectTransform textT = button.GetComponent<RectTransform>();
             textT.localScale = Vector3.one;
             textT.pivot = Vector2.one / 2;
@@ -132,8 +114,6 @@ namespace Roost.Vagabond
 
             consoleI.onSubmit = new TMP_InputField.SubmitEvent();
             consoleI.onSubmit.AddListener(new UnityEngine.Events.UnityAction<string>(ExecuteCommand));
-
-            Watchman.Get<Concursum>().ToggleSecretHistory();
         }
 
         public static void Log(object data, params object[] furtherData)
@@ -146,7 +126,7 @@ namespace Roost.Vagabond
     {
         public static void Reimport(string[] command)
         {
-            Watchman.Get<SecretHistories.Constants.Modding.ModManager>().CatalogueMods();
+            Watchman.Get<ModManager>().CatalogueMods();
             Compendium compendium = Watchman.Get<Compendium>();
             CompendiumLoader loader = new CompendiumLoader(Watchman.Get<Config>().GetConfigValue("contentdir"));
             DateTime now = DateTime.Now;

@@ -99,7 +99,7 @@ namespace Roost.World
                     result.Add(newToken);
 
                     if (newToken.Sphere.SphereCategory == SecretHistories.Enums.SphereCategory.World)
-                        new TokenTravelItinerary(token.Location.Anchored3DPosition, token.Location.Anchored3DPosition + Vector3.right * 40).WithDuration(0.1f).Depart(newToken, contextCalve);
+                        new TokenTravelItinerary(token.Location.LocalPosition, token.Location.LocalPosition + Vector3.right * 40).WithDuration(0.1f).Depart(newToken, contextCalve);
                 }
                 else
                     result.Add(token);

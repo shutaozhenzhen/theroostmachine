@@ -6,6 +6,7 @@ using System.Reflection.Emit;
 
 using SecretHistories.Fucine;
 using SecretHistories.Fucine.DataImport;
+using SecretHistories.Entities.NullEntities;
 
 using HarmonyLib;
 using UnityEngine;
@@ -343,7 +344,7 @@ namespace Roost
 
         public static bool IsNullEntity(this SecretHistories.Entities.Element element)
         {
-            return element.Id == SecretHistories.Entities.NullElement.NULL_ELEMENT_ID;
+            return element.Id == NullElement.NULL_ELEMENT_ID;
         }
 
         public static bool IsNullEntity(this SecretHistories.Entities.Recipe recipe)

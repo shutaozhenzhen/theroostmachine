@@ -8,7 +8,7 @@ using System.Linq;
 using SecretHistories.Entities;
 using SecretHistories.Fucine;
 using SecretHistories.UI;
-using SecretHistories.Constants.Modding;
+using SecretHistories.Infrastructure.Modding;
 
 using UnityEngine;
 using UnityEngine.Networking;

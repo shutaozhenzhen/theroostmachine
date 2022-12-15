@@ -19,16 +19,11 @@ public static class TheRoostMachine
             {
                 Birdsong.SetVerbosityFromConfig(Roost.Vagabond.ConfigMask.GetConfigValueSafe("verbosity", 1));
 
-                //in case something breaks during the setup
-                SecretHistories.UI.Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
-
                 Roost.Enactors.Beachcomber.Enact();
                 Roost.Enactors.Vagabond.Enact();
                 Roost.Enactors.Elegiast.Enact();
                 Roost.Enactors.Twins.Enact();
                 Roost.Enactors.World.Enact();
-
-                SecretHistories.UI.Watchman.Get<SecretHistories.Services.Concursum>().ToggleSecretHistory();
 
                 alreadyAssembled = true;
             }

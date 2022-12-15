@@ -90,7 +90,7 @@ namespace Roost.World.Beauty
             if (burnImages == null) return;
 
             // Start a coroutine where we'll regularly display new burn images
-            var spawnTransform = situation.Token.Location.Anchored3DPosition;
+            var spawnTransform = situation.Token.Location.LocalPosition;
             //Birdsong.Sing("Found burnimages. Starting slideshow coroutine...");
             _instance.StartCoroutine(_instance.ShowSlideshow(spawnTransform, burnImages));
         }

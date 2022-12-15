@@ -1,6 +1,6 @@
 using System;
 using System.Reflection;
-using SecretHistories.Constants.Modding;
+using SecretHistories.Infrastructure.Modding;
 using SecretHistories.UI;
 using TMPro;
 using UnityEngine;

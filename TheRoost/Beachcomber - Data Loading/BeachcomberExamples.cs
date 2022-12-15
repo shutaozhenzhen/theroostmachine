@@ -31,7 +31,7 @@ namespace Roost.Beachcomber.Entities
         [FucineValue(DefaultValue = EndingFlavour.Grand)]
         public EndingFlavour MyEnum { get; set; }
 
-        [FucineList(ValidateAs = typeof(Element))]
+        [FucineList(ValidateValueAs = typeof(Element))]
         public List<string> ListOfElements { get; set; }
         [FucineDict]
         public Dictionary<int, int> MyDict { get; set; }

@@ -30,7 +30,7 @@ namespace Roost.World
         const string RESET_CALLBACKS = "resetcallbacks";
         const string USE_CALLBACK = "useCallback";
 
-        static Action<object, object> setCachedRecipe = typeof(LinkedRecipeDetails).GetFieldInvariant("_cachedRecipe").SetValue;
+        static Func<object, object> getCachedRecipesList = typeof(LinkedRecipeDetails).GetFieldInvariant("_possibleMatchesRecipes").GetValue;
 
         internal static void Enact()
         {
@@ -98,10 +98,11 @@ namespace Roost.World
                 //if the recipe id is wrong - or null, in case callback isn't set - default logger will display a message
                 linkDetails.SetId(callbackRecipeId);
 
-                var cachedRecipe = Watchman.Get<Compendium>().GetEntityById<Recipe>(linkDetails.Id);
-                setCachedRecipe(linkDetails, cachedRecipe);
-                if (!cachedRecipe.IsValid())
-                    Birdsong.TweetLoud($"Wrong callback link '{linkDetails.Id}'");
+                List<Recipe> cachedRecipes = getCachedRecipesList(linkDetails) as List<Recipe>;
+                cachedRecipes = Watchman.Get<Compendium>().GetEntitiesAsList<Recipe>().Where(r => r.WildcardMatchId(callbackRecipeId)).ToList();
+
+                if (cachedRecipes.Count == 0)
+                    Birdsong.TweetLoud($"No matching recipes for callback id '{callbackId}'");
             }
         }
 

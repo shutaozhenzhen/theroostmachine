@@ -111,7 +111,7 @@ namespace Roost.Elegiast
 
 namespace Roost.World.Entities
 {
-    [FucineImportable("levers")]
+    [FucineImportable("customlevers")]
     public class LeverData : AbstractEntity<LeverData>
     {
         [FucineDict] public Dictionary<string, string> defaultValues { get; set; }
