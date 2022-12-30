@@ -54,7 +54,7 @@ namespace Roost.World.Audio
         static List<AudioClip> tabletopBGMusic;
         static List<AudioClip> legacyDefaultBGMusic;
         static AudioSource tabletopMusicAudioSource;
-        static AudioClip emptyClip = AudioClip.Create("", 1, 1, 1, false);
+        static AudioClip emptyClip = AudioClip.Create("", 1, 1, 1000, false);
         private static void HandleTabletopBGMusic()
         {
             var bgMusField = typeof(BackgroundMusic).GetFieldInvariant("backgroundMusic");
@@ -125,7 +125,7 @@ namespace Roost.World.Audio
             {
                 float startingVolume = tabletopMusicAudioSource.volume;
 
-                Watchman.Get<BackgroundMusic>().FadeToSilence(duration-0.1f);
+                Watchman.Get<BackgroundMusic>().FadeToSilence(duration - 0.1f);
                 yield return new WaitForSeconds(duration);
 
                 tabletopMusicAudioSource.volume = startingVolume;
