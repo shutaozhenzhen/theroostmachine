@@ -99,7 +99,8 @@ namespace Roost.World
                 linkDetails.SetId(callbackRecipeId);
 
                 List<Recipe> cachedRecipes = getCachedRecipesList(linkDetails) as List<Recipe>;
-                cachedRecipes = Watchman.Get<Compendium>().GetEntitiesAsList<Recipe>().Where(r => r.WildcardMatchId(callbackRecipeId)).ToList();
+                cachedRecipes.Clear();
+                cachedRecipes.AddRange(Watchman.Get<Compendium>().GetEntitiesAsList<Recipe>().Where(r => r.WildcardMatchId(callbackRecipeId)));
 
                 if (cachedRecipes.Count == 0)
                     Birdsong.TweetLoud($"No matching recipes for callback id '{callbackId}'");
