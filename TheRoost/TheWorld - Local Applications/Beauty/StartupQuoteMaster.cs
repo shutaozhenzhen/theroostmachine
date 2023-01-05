@@ -23,7 +23,7 @@ namespace Roost.World.Beauty
             List<string> quotes = legacy.RetrieveProperty<List<string>>("quotes");
             if (quotes == null) return;
 
-            int randomIndex = UnityEngine.Random.Range(0, quotes.Count - 1);
+            int randomIndex = UnityEngine.Random.Range(0, quotes.Count);
             GameObject.Find("Quote").GetComponent<TextMeshProUGUI>().text = quotes[randomIndex];
         }
     }

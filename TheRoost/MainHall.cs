@@ -82,6 +82,7 @@ namespace Roost.Enactors
             Roost.World.CheckpointMaster.Enact();
             Roost.World.Recipes.RecipeEffectsMaster.Enact();
             Roost.World.Recipes.RecipeLinkMaster.Enact();
+            Roost.World.Recipes.RecipeRandomWildcardMaster.Enact();
 
             Roost.World.Elements.ElementRandomDecay.Enact();
             Roost.World.Elements.ElementEffectsMaster.Enact();
