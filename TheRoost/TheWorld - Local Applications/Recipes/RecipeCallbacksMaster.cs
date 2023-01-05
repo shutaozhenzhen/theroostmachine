@@ -21,7 +21,7 @@ namespace Roost.World
      * - patches to store the original recipe linked array, and one to put it back
      * - adds the clearCallbacks custom property to recipes so they can clear callbacks before routing
      */
-    class RecipeCallbacksMaster
+    static class RecipeCallbacksMaster
     {
         static Situation currentSituation = null;
 

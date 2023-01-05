@@ -8,7 +8,7 @@ using Roost.Twins.Entities;
 
 namespace Roost.World.Recipes
 {
-    class RecipeRandomWildcardMaster
+    static class RecipeRandomWildcardMaster
     {
         const string RANDOM_PICK = "randomPick";
         const string VALIDATION_CHANCES = "chances";
@@ -22,9 +22,11 @@ namespace Roost.World.Recipes
                 prefix: typeof(RecipeRandomWildcardMaster).GetMethodInvariant(nameof(HandleRandomPick)));
         }
 
-        static bool ChanceRoll(Dictionary<string, FucineExp<int>> Chances, string RecipeId)
+        static bool ChanceRoll(this Recipe recipe, Dictionary<string, FucineExp<int>> Chances)
         {
-            if (!Chances.TryGetValue(RecipeId, out FucineExp<int> chance)) return true;
+            if (!Chances.TryGetValue(recipe.Id, out FucineExp<int> chance)) 
+                return true;
+
             return Watchman.Get<IDice>().Rolld100() <= chance.value;
         }
 
@@ -39,8 +41,21 @@ namespace Roost.World.Recipes
                 return false;
 
             Dictionary<string, FucineExp<int>> chances = __instance.RetrieveProperty<Dictionary<string, FucineExp<int>>>(VALIDATION_CHANCES);
-            
-            List<Recipe> validRecipes = ____possibleMatchesRecipes.Where(recipe => ChanceRoll(chances, recipe.Id) && recipe.CanExecuteInContext(aspectsInContext, character)).ToList();
+
+            List<Recipe> validRecipes = new List<Recipe>();
+
+            if (chances == null)
+            {
+                foreach (Recipe recipe in ____possibleMatchesRecipes)
+                    if (recipe.CanExecuteInContext(aspectsInContext, character))
+                        validRecipes.Add(recipe);
+            }
+            else
+            {
+                foreach (Recipe recipe in ____possibleMatchesRecipes)
+                    if (recipe.ChanceRoll(chances) && recipe.CanExecuteInContext(aspectsInContext, character))
+                        validRecipes.Add(recipe);
+            }
 
             if (validRecipes.Count > 0)
             {
