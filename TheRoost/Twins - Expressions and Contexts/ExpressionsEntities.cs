@@ -162,9 +162,7 @@ namespace Roost.Twins.Entities
 
         public float GetValueFromTokens(List<Token> tokens)
         {
-            if (tokens == null || tokens.Count == 0)
-                return 0;
-
+            //NB - not always tokens! sometimes Root or Char data
             return HandleValues(tokens, GetValue, target);
         }
 
@@ -434,6 +432,9 @@ namespace Roost.Twins.Entities
         {
             public static int Sum(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
+                if (tokens == null || tokens.Count == 0)
+                    return 0;
+
                 int result = 0;
                 foreach (Token token in tokens)
                     result += tokenValue(token, target);
@@ -442,6 +443,9 @@ namespace Roost.Twins.Entities
 
             public static int Num(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
+                if (tokens == null || tokens.Count == 0)
+                    return 0;
+
                 int result = 0;
                 foreach (Token token in tokens)
                     result += tokenValue(token, target) / token.Quantity;
@@ -450,6 +454,9 @@ namespace Roost.Twins.Entities
 
             public static int Max(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
+                if (tokens == null || tokens.Count == 0)
+                    return 0;
+
                 int maxValue = 0; int currentTokenValue;
                 foreach (Token token in tokens)
                 {
@@ -462,6 +469,9 @@ namespace Roost.Twins.Entities
 
             public static int Min(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
+                if (tokens == null || tokens.Count == 0)
+                    return 0;
+
                 int minValue = int.MaxValue; int currentTokenValue;
                 foreach (Token token in tokens)
                     if (token.IsValidElementStack())
@@ -475,12 +485,18 @@ namespace Roost.Twins.Entities
 
             public static int Rand(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
+                if (tokens == null || tokens.Count == 0)
+                    return 0;
+
                 int i = UnityEngine.Random.Range(0, tokens.Count - 1);
                 return tokenValue(tokens[i], target);
             }
 
             public static int Count(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
+                if (tokens == null || tokens.Count == 0)
+                    return 0;
+
                 int result = 0;
                 foreach (Token token in tokens)
                     result += token.Quantity;
