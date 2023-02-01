@@ -88,7 +88,7 @@ namespace Roost
             return errorMessage;
         }
 
-        static int alarmCount = 0;
+        public static int alarmCount = 0;
         public static int Incr()
         {
             return alarmCount++;
@@ -116,7 +116,7 @@ namespace Roost
             delayer.StartCoroutine(delayer.ExecuteDelayed(action, actor, parameters, delay));
         }
 
-        public static void Schedule(Delegate action, YieldInstruction delay, object actor = null, object[] parameters = null)
+        public static void Schedule(Action action, YieldInstruction delay, object actor = null, object[] parameters = null)
         {
             Schedule(action.Method, delay, actor, parameters);
         }
