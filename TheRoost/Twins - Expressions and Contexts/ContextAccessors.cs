@@ -11,6 +11,8 @@ using SecretHistories.Entities.NullEntities;
 using SecretHistories.States;
 using SecretHistories.Commands.SituationCommands;
 
+using UnityEngine;
+
 using Roost.Twins.Entities;
 
 namespace Roost.Twins
@@ -113,13 +115,13 @@ namespace Roost.Twins
 
         public static void MarkAllLocalTokens(List<Token> tokens)
         {
-            (allLocalTokensContainer[0] as TokenFakeSphere).Set(tokens);
+            allLocalTokens.Set(tokens);
         }
 
         public static void MarkLocalToken(Token token)
         {
-            (localSingleTokenContainer[0] as TokenFakeSphere).Set(token);
-            MarkLocalScope(cachedSpheres[currentToken]);
+            singleLocalToken.Set(token);
+            MarkLocalScope(singleLocalToken);
         }
 
         public static void MarkLocalScope(List<Sphere> sphere)
@@ -135,14 +137,14 @@ namespace Roost.Twins
 
         public static void UnmarkAllLocalTokens()
         {
-            allLocalTokensContainer[0].RetireAllTokens(); //don't be afraid, the method is overriden to just clear the list
-            localSingleTokenContainer[0].RetireAllTokens(); //don't be afraid, the method is overriden to just clear the list
+            singleLocalToken.Reset();
+            allLocalTokens.Reset();
             MarkLocalScope(cachedSpheres[currentSphere]);
         }
 
         public static void UnmarkLocalToken()
         {
-            localSingleTokenContainer[0].RetireAllTokens(); //don't be afraid, the method is overriden to just clear the list
+            singleLocalToken.Reset();
             MarkLocalScope(cachedSpheres[currentSphere]);
         }
 
@@ -152,20 +154,20 @@ namespace Roost.Twins
         public const string currentToken = "~/token";
         public const string currentScope = "~/local";
 
-        private static readonly List<Sphere> localSingleTokenContainer = new List<Sphere> { new TokenFakeSphere() };
-        private static readonly List<Sphere> allLocalTokensContainer = new List<Sphere> { new TokenFakeSphere() };
         private static readonly List<Sphere> nullContainer = new List<Sphere>();
+        private static readonly FakeSphereList singleLocalToken = new FakeSphereList();
+        private static readonly FakeSphereList allLocalTokens = new FakeSphereList();
 
-        private static readonly Dictionary<string, List<Sphere>> cachedSpheres = new Dictionary<string, List<Sphere>>(); 
+        private static readonly Dictionary<string, List<Sphere>> cachedSpheres = new Dictionary<string, List<Sphere>>();
         public static void ResetCache()
         {
             cachedSpheres.Clear();
             nullContainer.Clear();
             nullContainer.Add(NullSphere.Create());
 
-            cachedSpheres[currentSituation] = nullContainer; 
-            cachedSpheres[currentTokens] = allLocalTokensContainer;
-            cachedSpheres[currentToken] = localSingleTokenContainer;
+            cachedSpheres[currentSituation] = nullContainer;
+            cachedSpheres[currentTokens] = allLocalTokens;
+            cachedSpheres[currentToken] = singleLocalToken;
             cachedSpheres[currentSphere] = specialSpheres["~/default"]();
             cachedSpheres[currentScope] = cachedSpheres[currentSphere];
         }
@@ -183,13 +185,65 @@ namespace Roost.Twins
         };
     }
 
-    public class TokenFakeSphere : Sphere
+    public class FakeSphereList : List<Sphere>
     {
-        public override SphereCategory SphereCategory { get { return SphereCategory.Meta; } }
-        public void Set(List<Token> token) { _tokens.Clear(); _tokens.AddRange(token); }
-        public void Set(Token token) { _tokens.Clear(); _tokens.Add(token); }
-        public override void RetireAllTokens() { _tokens.Clear(); }
+        FakeSphere sphere;
+
+        public FakeSphereList()
+        {
+            var fakeSphere = new GameObject();
+            fakeSphere.name = "Fake Token Sphere";
+            sphere = fakeSphere.AddComponent<FakeSphere>();
+
+            UnityEngine.Object.DontDestroyOnLoad(fakeSphere);
+
+            this.Add(sphere);
+        }
+
+        public void Set(List<Token> tokens)
+        {
+            sphere.Set(tokens);
+        }
+
+        public void Set(Token token)
+        {
+            sphere.Set(token);
+        }
+
+        public void Reset()
+        {
+            sphere.Reset();
+        }
+
+        class FakeSphere : Sphere
+        {
+            public override SphereCategory SphereCategory { get { return SphereCategory.Meta; } }
+
+            public void Set(List<Token> tokens)
+            {
+                _tokens.Clear();
+                _tokens.AddRange(tokens);
+            }
+
+            public void Set(Token token)
+            {
+                _tokens.Clear();
+                _tokens.Add(token);
+            }
+
+            public void Reset()
+            {
+                _tokens.Clear();
+            }
+
+            public override void AcceptToken(Token token, Context context)
+            {
+                token.GoAway(context);
+            }
+        }
     }
+
+
 
     internal class TwinsDebug
     {
