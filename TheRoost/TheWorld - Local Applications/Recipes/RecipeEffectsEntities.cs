@@ -376,7 +376,7 @@ namespace Roost.World.Recipes.Entities
     public class RefMutationEffect : AbstractEntity<RefMutationEffect>, IQuickSpecEntity
     {
         [FucineValue(DefaultValue = null)] public string Mutate { get; set; }
-        [FucineConstruct("1")] public FucineExp<int> Level { get; set; }
+        [FucineConstruct("0")] public FucineExp<int> Level { get; set; }
         [FucineValue(false)] public bool Additive { get; set; }
         [FucineValue(DefaultValue = RetirementVFX.CardTransformWhite)] public RetirementVFX VFX { get; set; }
         [FucineSubEntity] public TokenFilterSpec Filter { get; set; }
