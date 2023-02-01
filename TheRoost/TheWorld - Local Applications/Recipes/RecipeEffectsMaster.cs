@@ -14,6 +14,8 @@ using Roost.Twins;
 using Roost.Twins.Entities;
 using Roost.World.Recipes.Entities;
 
+using SecretHistories.Logic;
+
 using SecretHistories.Services;
 
 using HarmonyLib;
@@ -168,11 +170,10 @@ namespace Roost.World.Recipes
 
         public static bool CheckGrandReqs(Dictionary<FucineExp<int>, FucineExp<int>> grandreqs)
         {
-            //grand reqs usually require the calling context to be marked as "local" for the Crossroads;
+            //grand reqs usually require the calling context to be marked as "local" for the Crossroads
             //ie MarkCurrentSituation, MarkCurrentSphere, MarkCurrentToken
-            //so don't forget to do that
+            //so don't forget to do that (!!)
 
-            //Birdsong.Sing($"Checking GrandReqs for {__instance.Id} in {situation.VerbId} verb");
             foreach (KeyValuePair<FucineExp<int>, FucineExp<int>> req in grandreqs)
             {
                 int presentValue = req.Key.value;
@@ -180,16 +181,8 @@ namespace Roost.World.Recipes
 
                 //Birdsong.Sing($"{req.Key.formula}: {req.Value.formula} --> {presentValue}: {requiredValue}");
 
-                if (requiredValue <= -1)
-                {
-                    if (presentValue >= -requiredValue)
-                        return false;
-                }
-                else
-                {
-                    if (presentValue < requiredValue)
-                        return false;
-                }
+                if (!RequirementsArbiter.CheckRequirement(requiredValue, presentValue))
+                    return false;
             }
 
             return true;
