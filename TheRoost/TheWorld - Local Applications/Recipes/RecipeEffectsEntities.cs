@@ -61,7 +61,7 @@ namespace Roost.World.Recipes.Entities
             RunEffects(localSphere);
             RunDecays(localSphere);
             RunVerbManipulations();
-            RunDistantEffects(situation);
+            RunDistantEffects(situation, localSphere);
             RunMovements(localSphere);
 
             RecipeExecutionBuffer.ApplyVFX();
@@ -289,14 +289,17 @@ namespace Roost.World.Recipes.Entities
             }
         }
 
-        private void RunDistantEffects(Situation situation)
+        private void RunDistantEffects(Situation situation, Sphere localSphere)
         {
             if (DistantEffects == null)
                 return;
 
             foreach (GrandEffects distantEffect in DistantEffects)
                 foreach (Sphere sphere in new List<Sphere>(distantEffect.Target.GetSpheresByPath()))
+                {
                     distantEffect.RunGrandEffects(situation, sphere, false);
+                    Crossroads.MarkLocalSphere(localSphere);
+                }
         }
 
         private void RunMovements(Sphere fromSphere)
