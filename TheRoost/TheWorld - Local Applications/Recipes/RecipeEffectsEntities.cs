@@ -43,27 +43,7 @@ namespace Roost.World.Recipes.Entities
         public GrandEffects(ContentImportLog log) : base(new EntityData(), log) { }
         public GrandEffects(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
 
-        public static void RunGrandEffects(GrandEffects grandEffects, Situation situation, Sphere localSphere)
-        {
-            //even if there are no effects for the recipe, aspect xtriggering should happen
-            if (grandEffects == null)
-            {
-                Crossroads.MarkLocalSphere(localSphere);
-                RunElementXTriggers(localSphere, situation);
-
-                RecipeExecutionBuffer.ApplyVFX();
-                RecipeExecutionBuffer.ApplyRecipeInductions();
-            }
-            else
-            {
-                grandEffects.Run(situation, localSphere, true);
-
-                RecipeExecutionBuffer.ApplyVFX();
-                RecipeExecutionBuffer.ApplyRecipeInductions();
-            }
-        }
-
-        private void Run(Situation situation, Sphere localSphere, bool localXtriggers)
+        public void RunGrandEffects(Situation situation, Sphere localSphere, bool localXtriggers)
         {
             Crossroads.MarkLocalSphere(localSphere);
 
@@ -83,6 +63,19 @@ namespace Roost.World.Recipes.Entities
             RunVerbManipulations();
             RunDistantEffects(situation);
             RunMovements(localSphere);
+
+            RecipeExecutionBuffer.ApplyVFX();
+            RecipeExecutionBuffer.ApplyRecipeInductions();
+        }
+
+        public static void RunElementTriggersOnly(Situation situation, Sphere localSphere)
+        {
+            //even if there are no effects for the recipe, aspect xtriggering should still happen
+            Crossroads.MarkLocalSphere(localSphere);
+            RunElementXTriggers(localSphere, situation);
+
+            RecipeExecutionBuffer.ApplyVFX();
+            RecipeExecutionBuffer.ApplyRecipeInductions();
         }
 
         private void RunVerbXTriggers(Situation situation)
@@ -304,7 +297,7 @@ namespace Roost.World.Recipes.Entities
             foreach (GrandEffects sphereEffect in DistantEffects)
             {
                 foreach (Sphere sphere in new List<Sphere>(Crossroads.GetSpheresByPath(sphereEffect.Target)))
-                    sphereEffect.Run(situation, sphere, false);
+                    sphereEffect.RunGrandEffects(situation, sphere, false);
             }
         }
 
