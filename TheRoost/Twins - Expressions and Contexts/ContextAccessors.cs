@@ -45,7 +45,7 @@ namespace Roost.Twins
             situation.AddCommand(new ClearDominionCommand(OUTPUT_SPHERE, SphereRetirementType.Graceful));
         }
 
-        public static List<Sphere> GetSpheresByPath(FucinePath fucinePath)
+        public static List<Sphere> GetSpheresByPath(this FucinePath fucinePath)
         {
             string fullPath = fucinePath.ToString();
             if (cachedSpheres.ContainsKey(fullPath))

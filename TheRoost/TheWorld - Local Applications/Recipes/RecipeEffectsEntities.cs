@@ -294,11 +294,9 @@ namespace Roost.World.Recipes.Entities
             if (DistantEffects == null)
                 return;
 
-            foreach (GrandEffects sphereEffect in DistantEffects)
-            {
-                foreach (Sphere sphere in new List<Sphere>(Crossroads.GetSpheresByPath(sphereEffect.Target)))
-                    sphereEffect.RunGrandEffects(situation, sphere, false);
-            }
+            foreach (GrandEffects distantEffect in DistantEffects)
+                foreach (Sphere sphere in new List<Sphere>(distantEffect.Target.GetSpheresByPath()))
+                    distantEffect.RunGrandEffects(situation, sphere, false);
         }
 
         private void RunMovements(Sphere fromSphere)
@@ -494,7 +492,6 @@ namespace Roost.World.Recipes.Entities
                     if (MorphEffect == MorphEffectsExtended.Induce)
                     {
                         Induction = LinkedRecipeDetails.AsCurrentRecipe(linkedRecipe); //no other way to construct it normally
-                        Induction.SetCustomProperty("chance", new FucineExp<int>("100")); //xtriggers already have chance
                         Induction.ToPath = this.ToPath;
                         Induction.Expulsion = this.Expulsion;
                     }
