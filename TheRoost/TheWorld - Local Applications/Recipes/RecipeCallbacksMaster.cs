@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Linq;
 using System.Collections.Generic;
 using SecretHistories.UI;
@@ -8,6 +9,8 @@ using SecretHistories.UI;
 using SecretHistories.Core;
 using SecretHistories.Entities;
 using SecretHistories.States;
+
+using HarmonyLib;
 
 namespace Roost.World
 {
@@ -34,9 +37,6 @@ namespace Roost.World
 
         internal static void Enact()
         {
-            var dict = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            
-
             Machine.ClaimProperty<Recipe, Dictionary<string, string>>(ADD_CALLBACKS);
             Machine.ClaimProperty<Recipe, List<string>>(CLEAR_CALLBACKS);
             Machine.ClaimProperty<Recipe, bool>(RESET_CALLBACKS, defaultValue: false);
@@ -47,19 +47,9 @@ namespace Roost.World
                 original: typeof(RequiresExecutionState).GetMethodInvariant(nameof(RequiresExecutionState.Continue)),
                 prefix: typeof(RecipeCallbacksMaster).GetMethodInvariant(nameof(StoreCurrentSituation)));
 
-            // Patch: evaluate alts and set their Ids to callback values (if set)
             Machine.Patch(
-                original: typeof(StartingState).GetMethodInvariant(nameof(StartingState.UpdateRecipePrediction)),
-                prefix: typeof(RecipeCallbacksMaster).GetMethodInvariant(nameof(EvaluateCallbacksForAlts)));
-
-            Machine.Patch(
-                original: typeof(OngoingState).GetMethodInvariant(nameof(OngoingState.UpdateRecipePrediction)),
-                prefix: typeof(RecipeCallbacksMaster).GetMethodInvariant(nameof(EvaluateCallbacksForAlts)));
-
-            // Patch: evaluate links and set their Ids to callback values (if set)
-            Machine.Patch(
-                original: typeof(RequiresExecutionState).GetMethodInvariant(nameof(RequiresExecutionState.GetNextValidLink)),
-                prefix: typeof(RecipeCallbacksMaster).GetMethodInvariant(nameof(EvaluateCallbacksForLinks)));
+                original: typeof(LinkedRecipeDetails).GetMethodInvariant(nameof(LinkedRecipeDetails.GetRecipeWhichCanExecuteInContext)),
+                transpiler: typeof(RecipeCallbacksMaster).GetMethodInvariant(nameof(UpdateMatchingRecipes)));
 
             // Patch: clear callbacks when recipe chain ends
             Machine.Patch(
@@ -70,6 +60,49 @@ namespace Roost.World
             AtTimeOfPower.RecipeExecution.Schedule<Situation>(RecipeCallbackOperations, PatchType.Postfix);
         }
 
+        //LinkedRecipeDetails.GetRecipeWhichCanExecuteInContext()
+        private static IEnumerable<CodeInstruction> UpdateMatchingRecipes(IEnumerable<CodeInstruction> instructions)
+        {
+            //a very simple transpiler - if link passed the vanilla chance roll, we sneak in callback evaluation
+            //so link's cached recipes are updated in time before the reqs checks
+            List<CodeInstruction> myCode = new List<CodeInstruction>()
+            {
+                new CodeInstruction(OpCodes.Call, typeof(RecipeCallbacksMaster).GetMethodInvariant(nameof(EvaluateCallbacks))),
+                new CodeInstruction(OpCodes.Ldarg_0),
+            };
+
+#pragma warning disable
+            Vagabond.CodeInstructionMask mask = instruction => instruction.operand == typeof(LinkedRecipeDetails).GetFieldInvariant("_possibleMatchesRecipes");
+#pragma warning restore 
+            return instructions.InsertBefore(mask, myCode, 0);
+        }
+
+        private static void EvaluateCallbacks(LinkedRecipeDetails linkDetails)
+        {
+            string callbackId = linkDetails.RetrieveProperty<string>(USE_CALLBACK);
+
+            if (callbackId == null)
+                return;
+
+            var callbackRecipeId = Machine.GetLeverForCurrentPlaythrough(CompleteCallbackId(currentSituation, callbackId));
+            if (callbackRecipeId == null)
+            {
+                Birdsong.TweetLoud($"Trying to use the callback '{callbackId}' in '{currentSituation.RecipeId}', but the callback is not set");
+                return;
+            }
+
+            //if the recipe id is wrong - or null, in case callback isn't set - default logger will display a message
+            linkDetails.SetId(callbackRecipeId);
+
+            List<Recipe> cachedRecipes = getCachedRecipesList(linkDetails) as List<Recipe>;
+            cachedRecipes.Clear();
+            cachedRecipes.AddRange(Watchman.Get<Compendium>().GetEntitiesAsList<Recipe>().Where(r => r.WildcardMatchId(callbackRecipeId)));
+
+            if (cachedRecipes.Count == 0)
+                Birdsong.TweetLoud($"No matching recipes for callback id '{callbackId}'");
+        }
+
+
         public static string CompleteCallbackId(Situation situation, string callback)
         {
             return situation.Id + ".callbacks." + callback.ToLower();
@@ -78,45 +111,6 @@ namespace Roost.World
         private static void StoreCurrentSituation(Situation situation)
         {
             currentSituation = situation;
-        }
-
-        private static void EvaluateCallbacks(List<LinkedRecipeDetails> links)
-        {
-            foreach (LinkedRecipeDetails linkDetails in links.Where(link=>!link.Additional))
-            {
-                string callbackId = linkDetails.RetrieveProperty<string>(USE_CALLBACK);
-
-                if (callbackId == null)
-                {
-                    continue;
-                }
-
-                var callbackRecipeId = Machine.GetLeverForCurrentPlaythrough(CompleteCallbackId(currentSituation, callbackId));
-                if (callbackRecipeId == null)
-                    Birdsong.TweetLoud($"Trying to use the callback '{callbackId}' in '{currentSituation.RecipeId}', but the callback is not set");
-
-                //if the recipe id is wrong - or null, in case callback isn't set - default logger will display a message
-                linkDetails.SetId(callbackRecipeId);
-
-                List<Recipe> cachedRecipes = getCachedRecipesList(linkDetails) as List<Recipe>;
-                cachedRecipes.Clear();
-                cachedRecipes.AddRange(Watchman.Get<Compendium>().GetEntitiesAsList<Recipe>().Where(r => r.WildcardMatchId(callbackRecipeId)));
-
-                if (cachedRecipes.Count == 0)
-                    Birdsong.TweetLoud($"No matching recipes for callback id '{callbackId}'");
-            }
-        }
-
-        //RecipeConductor.GetLinkedRecipe() prefix
-        private static void EvaluateCallbacksForLinks(Situation situation)
-        {
-            EvaluateCallbacks(situation.CurrentRecipe.Linked);
-        }
-
-        //RecipeConductor.GetAlternateRecipes() prefix
-        private static void EvaluateCallbacksForAlts(Situation situation)
-        {
-            EvaluateCallbacks(situation.CurrentRecipe.Linked);
         }
 
         public static void ClearAllCallbacksForSituation(Situation situation)
