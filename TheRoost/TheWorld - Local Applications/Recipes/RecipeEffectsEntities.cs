@@ -28,7 +28,7 @@ namespace Roost.World.Recipes.Entities
         [FucineList] public List<TokenFilterSpec> Decays { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> HaltVerb { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> DeleteVerb { get; set; }
-        [FucineDict] public List<GrandEffects> DistantEffects { get; set; }
+        [FucineList] public List<GrandEffects> DistantEffects { get; set; }
 
         [FucineAutoValue]
         public Dictionary<FucinePath, List<TokenFilterSpec>> Movements { get; set; }
