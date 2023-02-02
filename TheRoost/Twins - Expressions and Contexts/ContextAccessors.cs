@@ -181,7 +181,7 @@ namespace Roost.Twins
                 () => new List<Sphere>(Watchman.Get<HornedAxe>().GetExteriorSpheres()) },
 
             { "~/default",
-                () => new List<Sphere> { Watchman.Get<HornedAxe>().GetDefaultSphereForUnknownToken()} },
+                () => new List<Sphere> { Watchman.Get<HornedAxe>().GetDefaultSphereForUnknownToken() } },
         };
     }
 
@@ -252,7 +252,15 @@ namespace Roost.Twins
 
             public override void AcceptToken(Token token, Context context)
             {
-                token.GoAway(context);
+                //in some occassions, FakeSphere is a local sphere and is targeted by the effects
+                //we don't want it to actually accept any tokens
+                if (_tokens.Count > 0)
+                {
+                    if (!_tokens[0].Sphere.TryAcceptToken(token, context))
+                        _tokens[0].Sphere.ProcessEvictedToken(token, context);
+                }
+                else
+                    Watchman.Get<HornedAxe>().GetDefaultSphereForUnknownToken().ProcessEvictedToken(token, context);
             }
 
             public override string ToString()
