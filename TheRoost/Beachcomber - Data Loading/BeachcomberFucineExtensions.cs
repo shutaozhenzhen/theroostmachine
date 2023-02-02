@@ -118,8 +118,6 @@ namespace SecretHistories.Fucine
     public class FucineCustomList : Fucine
     {
         public Type EntryImporter { get; private set; }
-
-        // Token: 0x060010D2 RID: 4306 RVA: 0x0002F57C File Offset: 0x0002D77C
         public FucineCustomList(Type EntryImporter) { this.EntryImporter = EntryImporter; }
         public override AbstractImporter CreateImporterInstance() { return new CustomListPanImporter(EntryImporter); }
     }
@@ -129,8 +127,6 @@ namespace SecretHistories.Fucine
     {
         public Type KeyImporter { get; private set; }
         public Type ValueImporter { get; private set; }
-
-        // Token: 0x060010D2 RID: 4306 RVA: 0x0002F57C File Offset: 0x0002D77C
         public FucineCustomDict(Type KeyImporter, Type ValueImporter) { this.KeyImporter = KeyImporter; this.ValueImporter = ValueImporter; }
         public override AbstractImporter CreateImporterInstance() { return new CustomDictPanImporter(KeyImporter, ValueImporter); }
     }
