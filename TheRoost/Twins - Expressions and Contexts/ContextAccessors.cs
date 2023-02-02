@@ -51,12 +51,12 @@ namespace Roost.Twins
         {
             string fullPath = fucinePath.ToString();
             if (cachedSpheres.ContainsKey(fullPath))
-                return cachedSpheres[fullPath];
+                return new List<Sphere>(cachedSpheres[fullPath]);
 
             List<Sphere> result;
             if (specialSpheres.ContainsKey(fullPath))
             {
-                result = specialSpheres[fullPath]();
+                result = specialSpheres[fullPath](); //special spheres are already wrapped in a new List
             }
             else if (fucinePath is FucinePathPlus)
             {
@@ -232,7 +232,7 @@ namespace Roost.Twins
         class FakeSphere : Sphere
         {
             public override SphereCategory SphereCategory { get { return SphereCategory.Meta; } }
-
+            public override bool IsValid => false;
             public void Set(List<Token> tokens)
             {
                 _tokens.Clear();
@@ -253,6 +253,11 @@ namespace Roost.Twins
             public override void AcceptToken(Token token, Context context)
             {
                 token.GoAway(context);
+            }
+
+            public override string ToString()
+            {
+                return "FakeSphere";
             }
         }
     }

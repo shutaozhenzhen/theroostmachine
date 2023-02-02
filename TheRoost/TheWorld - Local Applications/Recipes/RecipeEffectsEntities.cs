@@ -18,7 +18,7 @@ namespace Roost.World.Recipes.Entities
 {
     public class GrandEffects : AbstractEntity<GrandEffects>
     {
-        [FucinePathValue(defaultValue: "~/local")] public FucinePath Target { get; set; }
+        [FucinePathValue(defaultValue: "~/sphere")] public FucinePath Target { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> RootEffects { get; set; }
         [FucineList] public List<RefMutationEffect> Mutations { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> Aspects { get; set; }
@@ -45,6 +45,10 @@ namespace Roost.World.Recipes.Entities
 
         public void RunGrandEffects(Situation situation, Sphere localSphere, bool localXtriggers)
         {
+            //shouldn't happen, but happened
+            if (localSphere == null)
+                return;
+
             Crossroads.MarkLocalSphere(localSphere);
 
             RunVerbXTriggers(situation);
@@ -295,7 +299,7 @@ namespace Roost.World.Recipes.Entities
                 return;
 
             foreach (GrandEffects distantEffect in DistantEffects)
-                foreach (Sphere sphere in new List<Sphere>(distantEffect.Target.GetSpheresByPath()))
+                foreach (Sphere sphere in distantEffect.Target.GetSpheresByPath())
                 {
                     distantEffect.RunGrandEffects(situation, sphere, false);
                     Crossroads.MarkLocalSphere(localSphere);
