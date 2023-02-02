@@ -63,8 +63,8 @@ namespace Roost.World
         //LinkedRecipeDetails.GetRecipeWhichCanExecuteInContext()
         private static IEnumerable<CodeInstruction> UpdateMatchingRecipes(IEnumerable<CodeInstruction> instructions)
         {
-            //a very simple transpiler - if link passed the vanilla chance roll, we sneak in callback evaluation
-            //so link's cached recipes are updated in time before the reqs checks
+            //every time link is supposed to return a recipe, we evaluate callbacks and assign valid recipes based on that
+            //doing that after the chance is already evaluated to avoid overhead - and just before _possibleMatchesRecipes are accessed
             List<CodeInstruction> myCode = new List<CodeInstruction>()
             {
                 new CodeInstruction(OpCodes.Call, typeof(RecipeCallbacksMaster).GetMethodInvariant(nameof(EvaluateCallbacks))),
