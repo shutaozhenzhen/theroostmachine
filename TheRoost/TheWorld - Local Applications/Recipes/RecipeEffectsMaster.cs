@@ -73,6 +73,9 @@ namespace Roost.World.Recipes
             Machine.Patch(
                 original: typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.ChangeTo)),
                 postfix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(NotifyOnChangeTo)));
+
+
+            RefMorphDetails.ClaimOptionalProperties();
         }
 
         private static void NotifyOnChangeTo(Token ____token)

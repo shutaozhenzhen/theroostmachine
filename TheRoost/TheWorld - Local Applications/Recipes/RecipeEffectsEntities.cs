@@ -430,7 +430,7 @@ namespace Roost.World.Recipes.Entities
         }
     }
 
-    public enum MorphEffectsExtended { Transform, Spawn, Mutate, SetMutation, DeckDraw, DeckShuffle, Destroy, Decay, Induce, Link }
+    public enum MorphEffectsExtended { Transform, Spawn, Mutate, SetMutation, DeckDraw, DeckShuffle, Destroy, Decay, Induce, Link, GrandEffects }
     public class RefMorphDetails : AbstractEntity<RefMorphDetails>, IQuickSpecEntity
     {
         public enum TriggerMode { Default, TokenOnly, AspectOnly, Always }
@@ -445,6 +445,18 @@ namespace Roost.World.Recipes.Entities
         private LinkedRecipeDetails Induction { get; set; }
         [FucinePathValue] public FucinePath ToPath { get; set; }
         [FucineSubEntity] public Expulsion Expulsion { get; set; }
+
+        [FucineSubEntity] public GrandEffects GrandEffects { get; set; }
+
+        public static void ClaimOptionalProperties()
+        {
+            //there are several properties that won't be used by the majority of the triggers
+            //since the xtriggers themselves are relatively numerous entities, I don't want each one to have a bunch of unused properties
+            //so these properties exist as an optional "claimed" ones
+            //it adds an overhead when executing, but should go much easier on the memory
+
+            //but actually I'll do that later!!
+        }
 
         public void QuickSpec(string value)
         {
@@ -522,11 +534,16 @@ namespace Roost.World.Recipes.Entities
             }
 
             UnknownProperties.Remove(this.Id);
+
+            if (MorphEffect != MorphEffectsExtended.GrandEffects)
+                GrandEffects = null;
+
             if (MorphEffect != MorphEffectsExtended.Induce)
                 Induction = null;
             //even if these properties are needed, they are safely wrapped inside the Induction by now
             Expulsion = null;
             ToPath = null;
+
             return;
 
         NO_ID:
@@ -605,8 +622,19 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.Link:
                     Machine.PushTemporaryRecipeLink(this.Id, Level.value);
                     break;
+                case MorphEffectsExtended.GrandEffects:
+                    {
+                        foreach (Sphere sphere in GrandEffects.Target.GetSpheresByPath())
+                        {
+                            GrandEffects.RunGrandEffects(situation, sphere, false);
+                            Crossroads.MarkLocalSphere(targetToken.Sphere);
+                        }
+                        break;
+                    }
                 default: Birdsong.TweetLoud($"Unknown trigger '{MorphEffect}' for element stack '{targetToken.PayloadEntityId}'"); break;
             }
+
+            Crossroads.UnmarkLocalToken();
         }
     }
 
