@@ -191,6 +191,20 @@ namespace Roost.Twins
 
         public FakeSphereList()
         {
+            //holy jesus freaking christ
+            //dear diary, I am writing this with a trembling hand and a sinking heart 
+            //a classic mistake is to treat Spheres as an independent objects that can be constructed directly - var s = new Sphere()
+            //Gen made it, I made it too, here, long ago
+            //Spheres, however, are MonoBehaviors, a component on a GameObject
+            //therefore, they possibly can't be instantiated without a GameObject to accompany them, as it's done here below
+            //constructing a component without a GO just makes it vanish, they turn into a null at the same instant of their creation
+            //or do they? do they?
+            //in truth, they never cease to exist; but, oh, how terrifying their existence is!
+            //everything will tell they are null; "obj == null" will return true
+            //but everything, nevertheless, will still operate with it as with a valid class -  you can store variables; you can execute methods
+            //in its own method, you can ask: 'this == null'? and the answer will be 'true'
+            //there are no words in this world to describe how wrong this is
+
             var fakeSphere = new GameObject();
             fakeSphere.name = "Fake Token Sphere";
             sphere = fakeSphere.AddComponent<FakeSphere>();
