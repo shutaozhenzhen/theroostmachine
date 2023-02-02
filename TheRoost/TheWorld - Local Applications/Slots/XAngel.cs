@@ -121,7 +121,7 @@ namespace SecretHistories.Spheres.Angels
                 Situation situation = _watchingOverThreshold.GetContainer() as Situation;
                 Crossroads.MarkLocalSituation(situation);
                 Crossroads.MarkLocalToken(token);
-                GrandEffects.RunXTriggersOnToken(token, situation, new Dictionary<string, int>() { { _trigger, 1 } });
+                GrandEffects.RunXTriggers(token, situation, new Dictionary<string, int>() { { _trigger, 1 } });
 
                 RecipeExecutionBuffer.ApplyAllEffects();
                 RecipeExecutionBuffer.ApplyVFX();

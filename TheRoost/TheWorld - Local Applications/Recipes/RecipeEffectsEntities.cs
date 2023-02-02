@@ -146,7 +146,10 @@ namespace Roost.World.Recipes.Entities
             if (allCatalysts.Count == 0)
                 return;
 
-            RunXTriggers(allCatalysts, tokens, situation, sphere);
+            foreach (Token token in tokens)
+                RunXTriggers(token, situation, allCatalysts);
+
+            RecipeExecutionBuffer.ApplyAllEffects();
         }
 
 
@@ -160,19 +163,13 @@ namespace Roost.World.Recipes.Entities
             foreach (Token token in tokens)
                 allCatalysts.CombineAspects(token.GetAspects(true));
 
-            RunXTriggers(allCatalysts, tokens, situation, sphere);
-        }
-
-        private static void RunXTriggers(AspectsDictionary catalysts, List<Token> tokens, Situation situation, Sphere coreSphere)
-        {
             foreach (Token token in tokens)
-                RunXTriggersOnToken(token, situation, catalysts);
+                RunXTriggers(token, situation, allCatalysts);
 
-            Crossroads.UnmarkLocalToken();
             RecipeExecutionBuffer.ApplyAllEffects();
         }
 
-        public static void RunXTriggersOnToken(Token token, Situation situation, Dictionary<string, int> catalysts)
+        public static void RunXTriggers(Token token, Situation situation, Dictionary<string, int> catalysts)
         {
             if (token.IsValidElementStack() == false)
                 return;
