@@ -17,10 +17,10 @@ namespace Roost.World.Elements
 
             Machine.Patch(
                 original: typeof(SituationStorageSphere).GetMethodInvariant(nameof(Sphere.AcceptToken)),
-                prefix: typeof(StackNoStackMaster).GetMethodInvariant(nameof(StorageShroudOverride)));
+                prefix: typeof(StackShroudMaster).GetMethodInvariant(nameof(StorageShroudOverride)));
             Machine.Patch(
                 original: typeof(OutputSphere).GetMethodInvariant(nameof(Sphere.AcceptToken)),
-                prefix: typeof(StackNoStackMaster).GetMethodInvariant(nameof(OutputShroudOverride)));
+                prefix: typeof(StackShroudMaster).GetMethodInvariant(nameof(OutputShroudOverride)));
         }
 
         private static void StorageShroudOverride(Token token, ref Context context)

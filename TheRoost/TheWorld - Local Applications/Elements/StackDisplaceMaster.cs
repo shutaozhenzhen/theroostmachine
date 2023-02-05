@@ -29,7 +29,7 @@ namespace Roost.World.Elements
 
             Machine.Patch(
                 original: typeof(Sphere).GetMethodInvariant(nameof(Sphere.EnforceUniquenessForIncomingStack)),
-                transpiler: typeof(StackNoStackMaster).GetMethodInvariant(nameof(TryDisplaceDuplicate)));
+                transpiler: typeof(StackDisplaceMaster).GetMethodInvariant(nameof(TryDisplaceDuplicate)));
         }
 
         private static IEnumerable<CodeInstruction> TryDisplaceDuplicate(IEnumerable<CodeInstruction> instructions)

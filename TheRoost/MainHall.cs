@@ -88,7 +88,6 @@ namespace Roost.Enactors
             Roost.World.Elements.ElementVFXMaster.Enact();
             Roost.World.Elements.StackDisplaceMaster.Enact();
             Roost.World.Elements.StackShroudMaster.Enact();
-            Roost.World.Elements.StackNoStackMaster.Enact();
 
             Roost.World.Slots.XAngelMaster.Enact();
             Roost.World.Slots.SlotEffectsMaster.Enact();
