@@ -446,8 +446,12 @@ namespace Roost.World.Recipes.Entities
 
         [FucineSubEntity] public GrandEffects GrandEffects { get; set; }
 
-        public static void ClaimOptionalProperties()
+        public const string TRIGGER_MODE = "triggerMode";
+        public static void Enact()
         {
+
+            Machine.ClaimProperty<Element, RefMorphDetails.TriggerMode>(TRIGGER_MODE, false, TriggerMode.Default);
+
             //there are several properties that won't be used by the majority of the triggers
             //since the xtriggers themselves are relatively numerous entities, I don't want each one to have a bunch of unused properties
             //so these properties exist as an optional "claimed" ones
@@ -565,7 +569,7 @@ namespace Roost.World.Recipes.Entities
         public void Execute(Situation situation, Token targetToken, string targetElementId, int targetQuantity, int catalystAmount, bool onAspect)
         {
             Element element = Watchman.Get<Compendium>().GetEntityById<Element>(targetElementId);
-            TriggerMode mode = element.RetrieveProperty<TriggerMode>("triggerMode");
+            TriggerMode mode = element.RetrieveProperty<TriggerMode>(TRIGGER_MODE);
 
             if (!ShouldTriggerInThisMode(mode, onAspect, element))
                 return;

@@ -75,7 +75,7 @@ namespace Roost.World.Recipes
                 postfix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(NotifyOnChangeTo)));
 
 
-            RefMorphDetails.ClaimOptionalProperties();
+            RefMorphDetails.Enact();
         }
 
         private static void NotifyOnChangeTo(Token ____token)
