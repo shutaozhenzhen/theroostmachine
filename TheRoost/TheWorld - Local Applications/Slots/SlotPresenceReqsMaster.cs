@@ -41,7 +41,7 @@ namespace Roost.World.Slots
             Machine.Patch(
                 original: typeof(SituationDominion).GetMethodInvariant("SphereIsDependent"),
                 prefix: typeof(SlotPresenceReqsMaster).GetMethodInvariant(nameof(SphereIsDependent)));
-            
+
             Machine.Patch(
                  original: typeof(StartingState).GetMethodInvariant("PopulateRecipeSlots"),
                  prefix: typeof(SlotPresenceReqsMaster).GetMethodInvariant(nameof(PopulateRecipeSlots)));
@@ -146,8 +146,9 @@ namespace Roost.World.Slots
 
         private static bool SuitsVerbAndSatisfiedReqs(this SphereSpec slot, string verbId)
         {
-            if (!NoonUtility.WildcardMatchId(verbId, slot.ActionId))
-                return false;
+            if (!string.IsNullOrWhiteSpace(slot.ActionId))
+                if (!NoonUtility.WildcardMatchId(verbId, slot.ActionId))
+                    return false;
 
             Dictionary<FucineExp<int>, FucineExp<int>> presenceReqs = slot.RetrieveProperty(SLOT_PRESENCE_REQS) as Dictionary<FucineExp<int>, FucineExp<int>>;
             if (presenceReqs != null)
