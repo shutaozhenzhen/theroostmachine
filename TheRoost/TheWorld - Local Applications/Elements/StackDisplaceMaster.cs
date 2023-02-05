@@ -38,7 +38,7 @@ namespace Roost.World.Elements
             {
               new CodeInstruction(OpCodes.Ldarg_1),
               new CodeInstruction(OpCodes.Ldloc_2),
-              new CodeInstruction(OpCodes.Call, typeof(StackNoStackMaster).GetMethodInvariant(nameof(DisplaceStack))),
+              new CodeInstruction(OpCodes.Call, typeof(StackDisplaceMaster).GetMethodInvariant(nameof(DisplaceStack))),
             };
 
             //do it twice for two calls

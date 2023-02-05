@@ -48,7 +48,7 @@ namespace Roost.World.Elements
               new CodeInstruction(OpCodes.Ldarg_0),
               new CodeInstruction(OpCodes.Ldarg_0),
               new CodeInstruction(OpCodes.Call, typeof(ElementStack).GetMethodInvariant("get_Element")),
-              new CodeInstruction(OpCodes.Call, typeof(StackNoStackMaster).GetMethodInvariant(nameof(RetireWithVFX))),
+              new CodeInstruction(OpCodes.Call, typeof(ElementVFXMaster).GetMethodInvariant(nameof(RetireWithVFX))),
             };
 
             //technically I can just pass the appropriate vfx to the original retire method instead of replacing it completely
@@ -61,7 +61,7 @@ namespace Roost.World.Elements
             {
               new CodeInstruction(OpCodes.Ldarg_0),
               new CodeInstruction(OpCodes.Call, typeof(ElementStack).GetMethodInvariant("get_Element")),
-              new CodeInstruction(OpCodes.Call, typeof(StackNoStackMaster).GetMethodInvariant(nameof(StoreVFXForStackDecayPayloadChange))),
+              new CodeInstruction(OpCodes.Call, typeof(ElementVFXMaster).GetMethodInvariant(nameof(StoreVFXForStackDecayPayloadChange))),
             };
 
             instructions = instructions.InsertBeforeMethodCall(typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.ChangeTo)), changeToCode);
@@ -91,7 +91,7 @@ namespace Roost.World.Elements
             List<CodeInstruction> myCode = new List<CodeInstruction>()
             {
               new CodeInstruction(OpCodes.Ldarg_0),
-              new CodeInstruction(OpCodes.Call, typeof(StackNoStackMaster).GetMethodInvariant(nameof(RemanifestWithVFX))),
+              new CodeInstruction(OpCodes.Call, typeof(ElementVFXMaster).GetMethodInvariant(nameof(RemanifestWithVFX))),
             };
 
             Vagabond.CodeInstructionMask mask = instruction => instruction.operand as MethodInfo == typeof(Token).GetMethodInvariant(nameof(Token.Remanifest));
