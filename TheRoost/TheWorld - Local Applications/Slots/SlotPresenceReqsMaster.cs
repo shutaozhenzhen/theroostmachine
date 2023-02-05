@@ -23,7 +23,7 @@ namespace Roost.World.Slots
         const string ASPECT_SLOT_USE_QUANTITY = "quantityMatters";
 
         const string SLOT_ENTRANCE_REQS = "filter";
-        const string SLOT_PRESENCE_REQS = "presenceReqs";
+        const string SLOT_PRESENCE_REQS = nameof(SphereSpec.IfAspectsPresent);
 
         internal static void Enact()
         {
