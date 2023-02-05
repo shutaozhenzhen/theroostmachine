@@ -38,17 +38,6 @@ namespace Roost.World.Slots
                 original: typeof(Sphere).GetMethodInvariant(nameof(Sphere.GetChildSpheresSpecsToAddIfThisTokenAdded)),
                 prefix: typeof(SlotEffectsMaster).GetMethodInvariant(nameof(GetSlotsForVerb)));
 
-            //greedy slots grab tokens based on even chance
-            Machine.Patch(
-                original: typeof(GreedyAngel).GetMethodInvariant("FindStackForSlotSpecificationInSphere"),
-                prefix: typeof(SlotEffectsMaster).GetMethodInvariant(nameof(TryGrabStackTrulyRandom)));
-
-            //tokens are checked against an additional expression filter before going in the slot
-            Machine.ClaimProperty<SphereSpec, FucineExp<bool>>(SLOT_ENTRANCE_REQS, false, FucineExp<bool>.UNDEFINED);
-            Machine.Patch(
-                original: typeof(SphereSpec).GetMethodInvariant(nameof(SphereSpec.CheckPayloadAllowedHere)),
-                prefix: typeof(SlotEffectsMaster).GetMethodInvariant(nameof(SlotFilterSatisfied)));
-
             Machine.Patch(
                 original: typeof(StartingState).GetMethodInvariant("PopulateRecipeSlots"),
                 prefix: typeof(SlotEffectsMaster).GetMethodInvariant(nameof(PopulateRecipeSlots)));
@@ -75,35 +64,6 @@ namespace Roost.World.Slots
             PopulateDominionCommand command = new PopulateDominionCommand(SituationDominionEnum.RecipeThresholds.ToString(), slots);
             situation.AddCommand(command);
             return false;
-        }
-
-        private static bool TryGrabStackTrulyRandom(SphereSpec slotSpec, Sphere sphereToSearch, ref Token __result)
-        {
-            List<Token> tokens = sphereToSearch.GetElementTokens();
-            Crossroads.MarkAllLocalTokens(tokens);
-            var candidateTokens = tokens.Where(token => token.CanBePulled() && slotSpec.CheckPayloadAllowedHere(token.Payload).MatchType == SlotMatchForAspectsType.Okay);
-            Crossroads.ResetCache();
-
-            __result = candidateTokens.SelectSingleToken();
-
-            return false;
-        }
-
-        private static bool SlotFilterSatisfied(SphereSpec __instance, ITokenPayload payload, ref ContainerMatchForStack __result)
-        {
-            Token token = payload.GetToken();
-            Crossroads.MarkLocalToken(token);
-            FucineExp<bool> filter = __instance.RetrieveProperty<FucineExp<bool>>(SLOT_ENTRANCE_REQS);
-            bool filterFailed = !filter.isUndefined && filter.value == false;
-            Crossroads.ResetCache();
-
-            if (filterFailed)
-            {
-                __result = new ContainerMatchForStack(new List<string>(), SlotMatchForAspectsType.InvalidToken);
-                return false;
-            }
-
-            return true;
         }
 
         private static bool GetSlotsForVerb(Token t, string verbId, ref List<SphereSpec> __result, Sphere __instance)
