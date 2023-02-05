@@ -91,7 +91,7 @@ namespace Roost.Enactors
             Roost.World.Elements.StackNoStackMaster.Enact();
 
             Roost.World.Slots.XAngelMaster.Enact();
-            Roost.World.Slots.SlotEffectsMaster.Enact();
+            Roost.World.Slots.SlotPresenceReqsMaster.Enact();
             Roost.World.Slots.SlotEntranceReqsMaster.Enact();
             Roost.World.Slots.GreedySlotsMaster.Enact();
 
