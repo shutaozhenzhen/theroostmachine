@@ -554,69 +554,65 @@ namespace Roost.World.Recipes.Entities
             ToPath = null;
         }
 
-        private bool ShouldTriggerInThisMode(TriggerMode mode, bool onAspect, Element element)
+        private bool ShouldReactInThisMode(string reactingElementId, bool aspectReacts)
         {
+            Element affectedElement = Watchman.Get<Compendium>().GetEntityById<Element>(reactingElementId);
+            TriggerMode mode = affectedElement.RetrieveProperty<TriggerMode>(TRIGGER_MODE);
+
             switch (mode)
             {
                 case TriggerMode.Always: return true;
-                case TriggerMode.TokenOnly: return !onAspect;
-                case TriggerMode.AspectOnly: return onAspect;
-                default:
-                    return onAspect ? element.IsAspect : true;
+                case TriggerMode.TokenOnly: return !aspectReacts;
+                case TriggerMode.AspectOnly: return aspectReacts;
+                case TriggerMode.Default: return aspectReacts ? affectedElement.IsAspect : true;
+                default: return false;
             }
         }
 
-        public void Execute(Situation situation, Token targetToken, string targetElementId, int targetQuantity, int catalystAmount, bool onAspect)
+        public void Execute(Situation situation, Token reactingToken, string reactingElementId, int reactingElementQuantity, int catalystQuantity, bool aspectReacts)
         {
-            Element element = Watchman.Get<Compendium>().GetEntityById<Element>(targetElementId);
-            TriggerMode mode = element.RetrieveProperty<TriggerMode>(TRIGGER_MODE);
-
-            if (!ShouldTriggerInThisMode(mode, onAspect, element))
+            if (!ShouldReactInThisMode(reactingElementId, aspectReacts))
                 return;
 
-            Crossroads.MarkLocalToken(targetToken);
+            Crossroads.MarkLocalToken(reactingToken);
 
             if (UnityEngine.Random.Range(1, 101) > Chance.value)
                 return;
 
-            Sphere coreSphere = targetToken.Sphere;
-
-            if (IgnoreTargetQuantity)
-                targetQuantity = 1;
-            if (IgnoreCatalystQuantity)
-                catalystAmount = 1;
+            reactingElementQuantity = IgnoreTargetQuantity ? 1 : reactingElementQuantity;
+            catalystQuantity = IgnoreCatalystQuantity ? 1 : catalystQuantity;
 
             switch (MorphEffect)
             {
                 case MorphEffectsExtended.Transform:
-                    if (!onAspect)
-                        RecipeExecutionBuffer.ScheduleTransformation(targetToken, this.Id, VFX);
+                    if (!aspectReacts)
+                        RecipeExecutionBuffer.ScheduleTransformation(reactingToken, this.Id, VFX);
                     else
                     {
                         //if there are several chanced transforms on a single aspect, we don't want mutations to happen several times
                         //(it is TRANSFORM, previous aspect must end up being a single thing, not multiply into several different things)
                         //thus we're making use of "mutation groups" - if one transform did trigger and registered a mutation, then other won't happen
-                        RecipeExecutionBuffer.ScheduleUniqueMutation(targetToken, targetElementId, -targetQuantity, true, RetirementVFX.None, "-" + targetToken.PayloadEntityId + targetElementId);
-                        RecipeExecutionBuffer.ScheduleUniqueMutation(targetToken, this.Id, targetQuantity, true, VFX, targetToken.PayloadEntityId + targetElementId);
+                        RecipeExecutionBuffer.ScheduleUniqueMutation(reactingToken, reactingElementId, -reactingElementQuantity, true, RetirementVFX.None, "-" + reactingToken.PayloadEntityId + reactingElementId);
+                        RecipeExecutionBuffer.ScheduleUniqueMutation(reactingToken, this.Id, reactingElementQuantity, true, VFX, reactingToken.PayloadEntityId + reactingElementId);
                     }
                     break;
                 case MorphEffectsExtended.Spawn:
-                    RecipeExecutionBuffer.ScheduleCreation(coreSphere, this.Id, targetQuantity * Level.value * catalystAmount, VFX);
+                    RecipeExecutionBuffer.ScheduleCreation(reactingToken.Sphere, this.Id, reactingElementQuantity * Level.value * catalystQuantity, VFX);
                     break;
                 case MorphEffectsExtended.SetMutation:
-                    RecipeExecutionBuffer.ScheduleMutation(targetToken, this.Id, Level.value * catalystAmount * targetQuantity, false, VFX);
+                    RecipeExecutionBuffer.ScheduleMutation(reactingToken, this.Id, Level.value * catalystQuantity * reactingElementQuantity, false, VFX);
                     break;
                 case MorphEffectsExtended.Mutate:
-                    RecipeExecutionBuffer.ScheduleMutation(targetToken, this.Id, Level.value * catalystAmount * targetQuantity, true, VFX);
+                    RecipeExecutionBuffer.ScheduleMutation(reactingToken, this.Id, Level.value * catalystQuantity * reactingElementQuantity, true, VFX);
                     break;
                 case MorphEffectsExtended.DeckDraw:
-                    Legerdemain.Deal(this.Id, coreSphere, Level.value * catalystAmount * targetQuantity, VFX);
+                    Legerdemain.Deal(this.Id, reactingToken.Sphere, Level.value * catalystQuantity * reactingElementQuantity, VFX);
                     break;
                 case MorphEffectsExtended.DeckShuffle:
                     RecipeExecutionBuffer.ScheduleDeckRenew(this.Id);
                     break;
                 case MorphEffectsExtended.Destroy:
-                    RecipeExecutionBuffer.ScheduleRetirement(targetToken, VFX);
+                    RecipeExecutionBuffer.ScheduleRetirement(reactingToken, VFX);
                     break;
                 case MorphEffectsExtended.Induce:
                     RecipeExecutionBuffer.ScheduleRecipeInduction(situation, Induction);
@@ -629,11 +625,11 @@ namespace Roost.World.Recipes.Entities
                         foreach (Sphere sphere in GrandEffects.Target.GetSpheresByPath())
                         {
                             GrandEffects.RunGrandEffects(situation, sphere, false);
-                            Crossroads.MarkLocalSphere(targetToken.Sphere);
+                            Crossroads.MarkLocalSphere(reactingToken.Sphere);
                         }
                         break;
                     }
-                default: Birdsong.TweetLoud($"Unknown trigger '{MorphEffect}' for element stack '{targetToken.PayloadEntityId}'"); break;
+                default: Birdsong.TweetLoud($"Unknown trigger '{MorphEffect}' for element stack '{reactingToken.PayloadEntityId}'"); break;
             }
 
             Crossroads.UnmarkLocalToken();
