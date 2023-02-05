@@ -29,9 +29,7 @@ namespace Roost.World.Recipes.Entities
         [FucineDict] public Dictionary<string, FucineExp<int>> HaltVerb { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> DeleteVerb { get; set; }
         [FucineList] public List<GrandEffects> DistantEffects { get; set; }
-
-        [FucineAutoValue]
-        public Dictionary<FucinePath, List<TokenFilterSpec>> Movements { get; set; }
+        [FucineAutoValue] public Dictionary<FucinePath, List<TokenFilterSpec>> Movements { get; set; }
 
         [FucineValue(DefaultValue = RetirementVFX.None)] public RetirementVFX DeckEffectsVFX { get; set; }
         [FucineValue(DefaultValue = RetirementVFX.CardTransformWhite)] public RetirementVFX CreateVFX { get; set; }
