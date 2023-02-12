@@ -434,19 +434,25 @@ namespace Roost.World.Recipes.Entities
         Transform, Spawn, Mutate, //classic trio
         SetMutation, DeckDraw, DeckShuffle,  //makes sense, right?
         Destroy, Decay, //destructive forces
-        Lever, LeverNow, //exotique
+        Lever, LeverNow, Lifetime, //exotique
         GrandEffects, //big boy
         Induce, Link //wot
     }
+    
     public class RefMorphDetails : AbstractEntity<RefMorphDetails>, IQuickSpecEntity
     {
-
         public enum TriggerMode { Default, TokenOnly, AspectOnly, Always }
         [FucineValue(DefaultValue = MorphEffectsExtended.Transform)] public MorphEffectsExtended MorphEffect { get; set; }
         [FucineConstruct("1")] public FucineExp<int> Level { get; set; }
         [FucineConstruct("100")] public FucineExp<int> Chance { get; set; }
 
         [FucineEverValue(DefaultValue = RetirementVFX.CardTransformWhite)] public RetirementVFX VFX { get; set; }
+
+        public static void ClaimOptionalProperties()
+        {
+
+        }
+
         [FucineValue(false)] public bool IgnoreTargetQuantity { get; set; }
         [FucineValue(false)] public bool IgnoreCatalystQuantity { get; set; }
 
@@ -552,6 +558,7 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.Decay:
                 case MorphEffectsExtended.Destroy:
                 case MorphEffectsExtended.GrandEffects:
+                case MorphEffectsExtended.Lifetime:
                 case MorphEffectsExtended.Lever:
                 case MorphEffectsExtended.LeverNow:
                 default:
@@ -656,6 +663,18 @@ namespace Roost.World.Recipes.Entities
                         }
                         break;
                     }
+
+                case MorphEffectsExtended.Lifetime:
+                    ElementStack stack = reactingToken.Payload as ElementStack;
+                    Timeshadow timeshadow = stack.GetTimeshadow();
+                    timeshadow.SpendTime(-Level.value);
+
+                    if (timeshadow.LifetimeRemaining <= 0)
+                        RecipeExecutionBuffer.ScheduleDecay(reactingToken, VFX);
+                    else
+                        RecipeExecutionBuffer.ScheduleVFX(reactingToken, VFX);
+
+                    break;
 
                 case MorphEffectsExtended.Lever:
                     NoonUtility.LogWarning(this.Id, reactingToken.PayloadEntityId);
