@@ -203,15 +203,29 @@ namespace Roost.Twins
                 case 0:
                     throw Birdsong.Cack($"Malformed token value reference '{data}' - appears to be empty");
                 case 1:
-                    //special operation, doesn't require area and target
+                    //special symbol; no target
                     if (parts[0][0] == specialOpSymbol)
                     {
-                        string specialOpName = parts[0].Substring(1);
-                        FucineNumberGetter.ValueOperation specialOp;
-                        if (Enum.TryParse(specialOpName, true, out specialOp))
+                        string specialRefData = parts[0].Substring(1);
+
+                        //special operation; doesn't require target and area
+                        if (Enum.TryParse(specialRefData, true, out FucineNumberGetter.ValueOperation specialOp))
                             return new FucineNumberGetter(null, FucineNumberGetter.ValueArea.NoArea, specialOp);
-                        else
-                            throw Birdsong.Cack($"Unknown special token value reference '{parts[0]}'");
+
+                        //special area; doesn't require target and, possibly, operation
+                        foreach (string areaName in Enum.GetNames(typeof(FucineNumberGetter.ValueArea)))
+                            if (specialRefData.StartsWith(areaName, StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                Enum.TryParse(areaName, true, out FucineNumberGetter.ValueArea specialArea);
+                                string remainderData = specialRefData.Substring(areaName.Length);
+
+                                if (string.IsNullOrWhiteSpace(remainderData))
+                                    return new FucineNumberGetter(null, specialArea, FucineNumberGetter.ValueOperation.Sum);
+                                else if (Enum.TryParse(areaName, true, out specialOp))
+                                    return new FucineNumberGetter(null, specialArea, specialOp);
+                            }
+
+                        throw Birdsong.Cack($"Unknown special token value reference '{parts[0]}'");
                     }
 
                     //only target is defined, area and operation are default
