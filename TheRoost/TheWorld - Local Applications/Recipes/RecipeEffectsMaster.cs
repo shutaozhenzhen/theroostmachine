@@ -45,7 +45,6 @@ namespace Roost.World.Recipes
             Machine.ClaimProperties<Recipe>(allRecipeEffectsProperties);
 
             AtTimeOfPower.OnPostImportRecipe.Schedule<Recipe, ContentImportLog, Compendium>(WrapAndFlushFirstPassEffects, PatchType.Prefix);
-            AtTimeOfPower.OnPostImportElement.Schedule<Element, ContentImportLog, Compendium>(PostImportForTheNewXtriggers, PatchType.Postfix);
 
             Machine.Patch(
                 original: typeof(RecipeCompletionEffectCommand).GetMethodInvariant(nameof(RecipeCompletionEffectCommand.Execute), typeof(Situation)),
@@ -130,17 +129,6 @@ namespace Roost.World.Recipes
                 if (firstPassEffects.Aspects != null)
                     foreach (string aspectId in firstPassEffects.Aspects.Keys)
                         recipe.Aspects.Add(aspectId, 1);
-            }
-        }
-
-        private static void PostImportForTheNewXtriggers(Element __instance, ContentImportLog log, Compendium populatedCompendium)
-        {
-            Dictionary<string, List<RefMorphDetails>> xtriggers = __instance.RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
-            if (xtriggers != null)
-            {
-                foreach (string catalyst in xtriggers.Keys)
-                    foreach (RefMorphDetails morphDetails in xtriggers[catalyst])
-                        morphDetails.OnPostImport(log, populatedCompendium);
             }
         }
 

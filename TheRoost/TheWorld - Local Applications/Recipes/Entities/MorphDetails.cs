@@ -46,7 +46,9 @@ namespace Roost.World.Recipes.Entities
         public static void Enact()
         {
             Machine.ClaimProperty<Element, Dictionary<string, List<RefMorphDetails>>>("xtriggers");
+
             Machine.ClaimProperty<Element, TriggerMode>(TRIGGER_MODE, false, TriggerMode.Default);
+            AtTimeOfPower.OnPostImportElement.Schedule<Element, ContentImportLog, Compendium>(PostImportForTheNewXtriggers, PatchType.Postfix);
 
             //there are several properties that won't be used by the majority of the triggers
             //since the xtriggers themselves are relatively numerous entities, I don't want each one to have a bunch of unused properties
@@ -277,6 +279,18 @@ namespace Roost.World.Recipes.Entities
         public override string ToString()
         {
             return $"{_container} {MorphEffect} {Id}";
+        }
+
+        //Element.OnPostImport
+        private static void PostImportForTheNewXtriggers(Element __instance, ContentImportLog log, Compendium populatedCompendium)
+        {
+            Dictionary<string, List<RefMorphDetails>> xtriggers = __instance.RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
+            if (xtriggers != null)
+            {
+                foreach (string catalyst in xtriggers.Keys)
+                    foreach (RefMorphDetails morphDetails in xtriggers[catalyst])
+                        morphDetails.OnPostImport(log, populatedCompendium);
+            }
         }
     }
 }
