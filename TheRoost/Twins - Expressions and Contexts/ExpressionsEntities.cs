@@ -208,8 +208,8 @@ namespace Roost.Twins.Entities
             else
                 lever = false;
 
-            GetValue = singleValueGetters[this.area];
-            HandleValues = valueHandlers[this.operation];
+            GetValue = AreaOperationsStorage.GetAreaHandler(area);
+            HandleValues = ValueOperationsStorage.GetOperationHandler(operation);
         }
 
         public enum ValueArea
@@ -225,56 +225,74 @@ namespace Roost.Twins.Entities
             NoArea
         };
 
-        private static readonly Dictionary<ValueArea, SingleTokenValue> singleValueGetters = new Dictionary<ValueArea, SingleTokenValue>()
+        public enum ValueOperation
         {
-            { ValueArea.Aspect, AreaOperationsStorage.ElementAspect },
-            { ValueArea.Mutation, AreaOperationsStorage.Mutation },
-            { ValueArea.SituationContent, AreaOperationsStorage.AspectInSituation },
-            { ValueArea.AnySourceAspect, AreaOperationsStorage.AspectOnAnyToken },
-            { ValueArea.Verb, AreaOperationsStorage.VerbId },
-            { ValueArea.VerbWild, AreaOperationsStorage.VerbWild },
-            { ValueArea.Recipe, AreaOperationsStorage.RecipeId },
-            { ValueArea.RecipeWild, AreaOperationsStorage.RecipeWild },
-            { ValueArea.RecipeAspect, AreaOperationsStorage.RecipeAspect },
-            { ValueArea.Token, AreaOperationsStorage.Token },
-            { ValueArea.Payload, AreaOperationsStorage.Payload },
-            { ValueArea.Entity, AreaOperationsStorage.Entity },
-            { ValueArea.NoArea, null },
+            Sum, //sum of values of all tokens
+            Num, //value from a token as if it had quantity 1
+            Max, Min, //max/min value among all tokens
+            Rand, //single value of a random token
+            Root, //value from FucineRoot mutations
+            DeckSpecCount, //value from Deck spec
+            Executions, //recipe execution count for the current character - NoArea
+            Count, //number of tokens - NoArea and no target
         };
 
         private static class AreaOperationsStorage
         {
-            public static int ElementAspect(Token token, string target)
+            public static SingleTokenValue GetAreaHandler(ValueArea area)
+            {
+                switch (area)
+                {
+                    case ValueArea.Aspect: return ElementAspect;
+                    case ValueArea.Mutation: return Mutation;
+                    case ValueArea.SituationContent: return AspectInSituation;
+                    case ValueArea.AnySourceAspect: return AspectOnAnyToken;
+                    case ValueArea.Verb: return VerbId;
+                    case ValueArea.VerbWild: return VerbWild;
+                    case ValueArea.Recipe: return RecipeId;
+                    case ValueArea.RecipeWild: return RecipeWild;
+                    case ValueArea.RecipeAspect: return RecipeAspect;
+                    case ValueArea.Token: return Token;
+                    case ValueArea.Payload: return Payload;
+                    case ValueArea.Entity: return Entity;
+                    case ValueArea.NoArea: return null;
+                    default:
+                        Birdsong.TweetLoud($"Value area '{area}' doesn't have a matching method; will always return zero");
+                        return Zero;
+                }
+            }
+
+            private static int ElementAspect(Token token, string target)
             {
                 return token.IsValidElementStack() ? token.GetAspects(true).AspectValue(target) : 0;
             }
 
-            public static int Mutation(Token token, string target)
+            private static int Mutation(Token token, string target)
             {
                 return token.GetCurrentMutations().TryGetValue(target, out int value) ? value : 0;
             }
 
-            public static int AspectInSituation(Token token, string target)
+            private static int AspectInSituation(Token token, string target)
             {
                 return IsSituation(token.Payload) ? token.GetAspects(true).AspectValue(target) : 0;
             }
 
-            public static int AspectOnAnyToken(Token token, string target)
+            private static int AspectOnAnyToken(Token token, string target)
             {
                 return token.GetAspects(true).AspectValue(target);
             }
 
-            public static int VerbId(Token token, string target)
+            private static int VerbId(Token token, string target)
             {
                 return (IsSituation(token.Payload) && token.PayloadEntityId == target) ? token.Quantity : 0;
             }
 
-            public static int VerbWild(Token token, string target)
+            private static int VerbWild(Token token, string target)
             {
                 return (IsSituation(token.Payload) && token.PayloadEntityId.StartsWith(target)) ? token.Quantity : 0;
             }
 
-            public static int RecipeId(Token token, string target)
+            private static int RecipeId(Token token, string target)
             {
                 Situation situation = token.Payload as Situation;
 
@@ -290,7 +308,7 @@ namespace Roost.Twins.Entities
                 return 0;
             }
 
-            public static int RecipeWild(Token token, string target)
+            private static int RecipeWild(Token token, string target)
             {
                 Situation situation = token.Payload as Situation;
 
@@ -306,7 +324,7 @@ namespace Roost.Twins.Entities
                 return 0;
             }
 
-            public static int RecipeAspect(Token token, string target)
+            private static int RecipeAspect(Token token, string target)
             {
                 if (!IsSituation(token.Payload))
                     return 0;
@@ -314,7 +332,7 @@ namespace Roost.Twins.Entities
                 return (token.Payload as Situation).CurrentRecipe.Aspects.AspectValue(target);
             }
 
-            public static int Payload(Token token, string target)
+            private static int Payload(Token token, string target)
             {
 
                 object value = token.Payload.GetType().GetProperty(target).GetValue(token.Payload);
@@ -330,7 +348,7 @@ namespace Roost.Twins.Entities
                 }
             }
 
-            public static int Token(Token token, string target)
+            private static int Token(Token token, string target)
             {
                 object value = token.Payload.GetType().GetProperty(target).GetValue(token.Payload);
 
@@ -345,7 +363,7 @@ namespace Roost.Twins.Entities
                 }
             }
 
-            public static int Entity(Token token, string target)
+            private static int Entity(Token token, string target)
             {
                 if (token.IsValidElementStack())
                 {
@@ -383,6 +401,11 @@ namespace Roost.Twins.Entities
                 return 0;
             }
 
+            private static int Zero(Token token, string target)
+            {
+                return 0;
+            }
+
             private static int ConvertToInt(object value)
             {
                 if (value is int intValue)
@@ -402,35 +425,30 @@ namespace Roost.Twins.Entities
             }
         }
 
-        public enum ValueOperation
-        {
-            Sum, //sum of values of all tokens
-            Num, //value from a token as if it had quantity 1
-            Max, Min, //max/min value among all tokens
-            Rand, //single value of a random token
-            Root, //value from FucineRoot mutations
-            DeckSpecCount, //value from Deck spec
-            Executions, //recipe execution count for the current character - NoArea
-            Count, //number of tokens - NoArea and no target
-        };
-
-        private static readonly Dictionary<ValueOperation, HandleTokenValues> valueHandlers = new Dictionary<ValueOperation, HandleTokenValues>()
-        {
-            { ValueOperation.Sum, ValueOperationsStorage.Sum },
-            { ValueOperation.Num, ValueOperationsStorage.Num },
-            { ValueOperation.Max, ValueOperationsStorage.Max },
-            { ValueOperation.Min, ValueOperationsStorage.Min },
-            { ValueOperation.Rand, ValueOperationsStorage.Rand },
-            { ValueOperation.Root, ValueOperationsStorage.Root },
-            //{ ValueOperation.DeckSpec, ValueOperationsStorage.DeckSpec },
-            { ValueOperation.DeckSpecCount, ValueOperationsStorage.DeckSpecCount },
-            { ValueOperation.Executions, ValueOperationsStorage.Executions },
-            { ValueOperation.Count, ValueOperationsStorage.Count },
-        };
-
         private static class ValueOperationsStorage
         {
-            public static int Sum(List<Token> tokens, SingleTokenValue tokenValue, string target)
+            public static HandleTokenValues GetOperationHandler(ValueOperation operation)
+            {
+                switch (operation)
+                {
+                    case ValueOperation.Sum: return Sum;
+                    case ValueOperation.Num: return Num;
+                    case ValueOperation.Max: return Max;
+                    case ValueOperation.Min: return Min;
+                    case ValueOperation.Rand: return Rand;
+                    case ValueOperation.Root: return Root;
+                    //case ValueOperation.DeckSpec: return DeckSpec;
+                    case ValueOperation.DeckSpecCount: return DeckSpecCount;
+                    case ValueOperation.Executions: return Executions;
+                    case ValueOperation.Count: return Count;
+
+                    default:
+                        Birdsong.TweetLoud($"Value operation {operation} doesn't have a matching method; will always return zero");
+                        return Zero;
+                }
+            }
+
+            private static int Sum(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
                 if (tokens == null || tokens.Count == 0)
                     return 0;
@@ -452,7 +470,7 @@ namespace Roost.Twins.Entities
                 return result;
             }
 
-            public static int Max(List<Token> tokens, SingleTokenValue tokenValue, string target)
+            private static int Max(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
                 if (tokens == null || tokens.Count == 0)
                     return 0;
@@ -467,7 +485,7 @@ namespace Roost.Twins.Entities
                 return maxValue;
             }
 
-            public static int Min(List<Token> tokens, SingleTokenValue tokenValue, string target)
+            private static int Min(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
                 if (tokens == null || tokens.Count == 0)
                     return 0;
@@ -483,7 +501,7 @@ namespace Roost.Twins.Entities
                 return minValue == int.MaxValue ? 0 : minValue;
             }
 
-            public static int Rand(List<Token> tokens, SingleTokenValue tokenValue, string target)
+            private static int Rand(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
                 if (tokens == null || tokens.Count == 0)
                     return 0;
@@ -492,7 +510,7 @@ namespace Roost.Twins.Entities
                 return tokenValue(tokens[i], target);
             }
 
-            public static int Count(List<Token> tokens, SingleTokenValue tokenValue, string target)
+            private static int Count(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
                 if (tokens == null || tokens.Count == 0)
                     return 0;
@@ -503,12 +521,12 @@ namespace Roost.Twins.Entities
                 return result;
             }
 
-            public static int Root(List<Token> tokens, SingleTokenValue tokenValue, string target)
+            private static int Root(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
                 return FucineRoot.Get().Mutations.TryGetValue(target, out int result) ? result : 0;
             }
 
-            public static int DeckSpec(List<Token> tokens, SingleTokenValue tokenValue, string target)
+            private static int DeckSpec(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
                 var deck = Watchman.Get<Compendium>().GetEntityById<DeckSpec>(target);
                 if (deck == null)
@@ -529,7 +547,7 @@ namespace Roost.Twins.Entities
                 return specAspects.AspectValue(target);
             }
 
-            public static int DeckSpecCount(List<Token> tokens, SingleTokenValue tokenValue, string target)
+            private static int DeckSpecCount(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
                 var deck = Watchman.Get<Compendium>().GetEntityById<DeckSpec>(target);
                 if (deck == null)
@@ -541,9 +559,14 @@ namespace Roost.Twins.Entities
                 return deck.Spec.Count;
             }
 
-            public static int Executions(List<Token> tokens, SingleTokenValue tokenValue, string target)
+            private static int Executions(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
                 return Watchman.Get<Stable>().Protag().GetExecutionsCount(target);
+            }
+
+            private static int Zero(List<Token> tokens, SingleTokenValue tokenValue, string target)
+            {
+                return 0;
             }
         }
 
