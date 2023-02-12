@@ -114,17 +114,16 @@ namespace Roost.World.Entities
     [FucineImportable("customlevers")]
     public class LeverData : AbstractEntity<LeverData>
     {
-        [FucineDict] public Dictionary<string, string> defaultValues { get; set; }
-        [FucineList] public List<string> textLevers { get; set; }
-        //finally, your entity needs to implement two methods of AbstractEntity<T> - constructor and OnPostImportForSpecificEntity()
-        //both of them can remain empty but the second one is sometimes useful - it's called right after all entities are imported
+        [FucineDict] public Dictionary<string, string> DefaultValues { get; set; }
+        [FucineList] public List<string> TextLevers { get; set; }
+
         public LeverData(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
         {
-            foreach (KeyValuePair<string, string> leverWithDefaultValue in defaultValues)
+            foreach (KeyValuePair<string, string> leverWithDefaultValue in DefaultValues)
                 Elegiast.Scribe.AddLeverDefaultValue(leverWithDefaultValue.Key.ToUpper(), leverWithDefaultValue.Value);
 
-            foreach (string textLever in textLevers)
+            foreach (string textLever in TextLevers)
                 Elegiast.Scribe.AddTextLever(textLever);
         }
     }
