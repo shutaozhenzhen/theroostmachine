@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using SecretHistories.UI;
 using SecretHistories.Fucine;
 using SecretHistories.Fucine.DataImport;
-using SecretHistories.Logic;
+using SecretHistories.Entities;
 
 using Roost.Twins.Entities;
 
@@ -14,6 +15,11 @@ namespace Roost.World.Recipes.Entities
     {
         [FucineConstruct(FucineExp<int>.UNDEFINED)] public FucineExp<bool> Filter { get; set; }
         [FucineConstruct(FucineExp<int>.UNDEFINED)] public FucineExp<int> Limit { get; set; } //unlimited by default
+
+        public static void Enact()
+        {
+            Machine.AddImportMolding<Expulsion>(ConvertExpulsionFilters);
+        }
 
         public TokenFilterSpec() { }
         public TokenFilterSpec(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
@@ -61,11 +67,57 @@ namespace Roost.World.Recipes.Entities
         {
             try
             {
-                MoldingsStorage.ConvertExpulsionFilters(data);
+                ConvertExpulsionFilters(data);
             }
             catch (Exception ex)
             {
                 throw ex;
+            }
+        }
+
+        static void ConvertExpulsionFilters(EntityData data)
+        {
+            const string FILTER = "filter";
+
+            try
+            {
+                EntityData filters = data.GetEntityDataFromEntityData(FILTER);
+                if (filters != null)
+                {
+                    string positiveORFilters = string.Empty;
+                    string negativeANDFilters = string.Empty;
+
+                    foreach (DictionaryEntry filter in filters.ValuesTable)
+                    {
+                        if (filter.Value.ToString()[0] == '-')
+                            //if starts with '-', negative requirement; must be "less than abs()"; but instead of abs() we just remove '-' - same result
+                            negativeANDFilters += $"{AsExpression(filter.Key)}<{AsExpression(filter.Value).Substring(1)}&&";
+                        else
+                            positiveORFilters += $"{AsExpression(filter.Key)}>={AsExpression(filter.Value)}||";
+                    }
+
+                    if (positiveORFilters.Length > 0)
+                        positiveORFilters = positiveORFilters.Remove(positiveORFilters.Length - 2);
+                    if (negativeANDFilters.Length > 0)
+                        negativeANDFilters = negativeANDFilters.Remove(negativeANDFilters.Length - 2);
+
+                    if (positiveORFilters.Length > 0 && negativeANDFilters.Length > 0)
+                        data[FILTER] = $"({positiveORFilters})&&({negativeANDFilters})";
+                    else
+                        data[FILTER] = positiveORFilters.Length > 0 ? positiveORFilters : negativeANDFilters;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+            string AsExpression(object value)
+            {
+                string result = value.ToString();
+                if (!result.Contains("[") && !int.TryParse(result, out _))//not a wrapped expression already and not a numeric value
+                    result = "[" + result + "]";
+                return result;
             }
         }
     }

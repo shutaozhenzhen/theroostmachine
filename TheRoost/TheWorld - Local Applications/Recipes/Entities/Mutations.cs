@@ -12,13 +12,17 @@ namespace Roost.World.Recipes.Entities
 {
     public class RefMutationEffect : AbstractEntity<RefMutationEffect>, IQuickSpecEntity
     {
-        [FucineValue(DefaultValue = null)] public string Mutate { get; set; }
+        [FucineValue(DefaultValue = null, ValidateValueAs = typeof(Element))] public string Mutate { get; set; }
         [FucineConstruct("0")] public FucineExp<int> Level { get; set; }
         [FucineValue(false)] public bool Additive { get; set; }
         [FucineValue(DefaultValue = RetirementVFX.CardTransformWhite)] public RetirementVFX VFX { get; set; }
         [FucineSubEntity] public TokenFilterSpec Filter { get; set; }
 
-        protected override Type ValidateIdAs => typeof(Element);
+        public static void Enact()
+        {
+            Machine.AddImportMolding<Recipe>(ConvertLegacyMutations);
+            Machine.AddImportMolding<GrandEffects>(ConvertLegacyMutations);
+        }
 
         public RefMutationEffect() { }
         public RefMutationEffect(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
@@ -71,11 +75,41 @@ namespace Roost.World.Recipes.Entities
             VFX = RetirementVFX.CardTransformWhite;
         }
 
-        public static void Enact()
-        {
-            Machine.AddImportMolding<Recipe>(ConvertLegacyMutations);
-            Machine.AddImportMolding<GrandEffects>(ConvertLegacyMutations);
-        }
 
+        static void ConvertLegacyMutations(EntityData recipeEntityData)
+        {
+            const string FILTER = "filter";
+            const string MUTATE = "mutate";
+            const string MUTATIONS = "mutations";
+
+            try
+            {
+                if (recipeEntityData.ValuesTable.ContainsKey(MUTATIONS)
+                && (recipeEntityData.ValuesTable[MUTATIONS] is EntityData))
+                {
+                    EntityData mutations = recipeEntityData.ValuesTable[MUTATIONS] as EntityData;
+                    ArrayList newMutations = new ArrayList();
+                    recipeEntityData.ValuesTable[MUTATIONS] = newMutations;
+
+                    foreach (string filter in mutations.ValuesTable.Keys)
+                        foreach (object mutation in mutations.GetArrayListFromEntityData(filter))
+                        {
+                            EntityData mutationEntityData = mutation as EntityData;
+                            if (mutationEntityData == null)
+                            {
+                                mutationEntityData = new EntityData();
+                                mutationEntityData[MUTATE] = mutation;
+                            }
+
+                            mutationEntityData[FILTER] = filter;
+                            newMutations.Add(mutationEntityData);
+                        }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw Birdsong.Cack($"Failed to mold mutations in {recipeEntityData.Id}: {ex.FormatException()}");
+            }
+        }
     }
 }

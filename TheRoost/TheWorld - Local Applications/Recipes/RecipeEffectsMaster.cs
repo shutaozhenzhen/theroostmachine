@@ -46,9 +46,6 @@ namespace Roost.World.Recipes
             allRecipeEffectsProperties.Remove("target");
             Machine.ClaimProperties<Recipe>(allRecipeEffectsProperties);
 
-            Machine.AddImportMolding<Recipe>(MoldingsStorage.ConvertLegacyMutations);
-            Machine.AddImportMolding<GrandEffects>(MoldingsStorage.ConvertLegacyMutations);
-
             AtTimeOfPower.OnPostImportRecipe.Schedule<Recipe, ContentImportLog, Compendium>(WrapAndFlushFirstPassEffects, PatchType.Prefix);
             AtTimeOfPower.OnPostImportElement.Schedule<Element, ContentImportLog, Compendium>(PostImportForTheNewXtriggers, PatchType.Postfix);
 
@@ -64,7 +61,6 @@ namespace Roost.World.Recipes
 
             Legerdemain.Enact();
 
-
             Machine.Patch(
                 original: typeof(TextRefiner).GetMethodInvariant(nameof(TextRefiner.RefineString)),
                 prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(OverrideRecipeRefinement)));
@@ -76,6 +72,8 @@ namespace Roost.World.Recipes
 
 
             RefMorphDetails.Enact();
+            RefMutationEffect.Enact();
+            TokenFilterSpec.Enact();
         }
 
         private static void NotifyOnChangeTo(Token ____token)

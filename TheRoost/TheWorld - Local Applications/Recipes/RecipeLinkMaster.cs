@@ -43,7 +43,7 @@ namespace Roost.World.Recipes
             //expulsions use expressions
             Machine.ClaimProperty<Expulsion, FucineExp<bool>>(FILTER, false);
             Machine.ClaimProperty<Expulsion, FucineExp<int>>(LIMIT, false);
-            Machine.AddImportMolding<Expulsion>(Entities.MoldingsStorage.ConvertExpulsionFilters);
+
             Machine.Patch(
                 original: typeof(Situation).GetMethodInvariant("AdditionalRecipeSpawnToken", new Type[] { typeof(Recipe), typeof(Expulsion), typeof(FucinePath) }),
                 transpiler: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(UseNewExpulsion)));
