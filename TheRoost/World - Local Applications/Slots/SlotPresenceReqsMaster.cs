@@ -2,6 +2,7 @@
 using System.Linq;
 
 using SecretHistories.Entities;
+using SecretHistories.Entities.NullEntities;
 using SecretHistories.Enums;
 using SecretHistories.Spheres;
 using SecretHistories.UI;
@@ -71,12 +72,9 @@ namespace Roost.World.Slots
 
         private static List<SphereSpec> DetermineActiveSlots(this Situation situation)
         {
-            Sphere firstThreshold = situation.GetSpheresByCategory(SphereCategory.Threshold).FirstOrDefault();
-            if (firstThreshold == null)
-                return new List<SphereSpec>();
+            Token tokenInFirstSlot = GetTokenInFirstSlot(situation);
 
-            Token firstToken = firstThreshold.GetElementTokens().FirstOrDefault();
-            if (firstToken == null)
+            if (!tokenInFirstSlot.IsValid())
                 return new List<SphereSpec>();
 
             List<SphereSpec> result = new List<SphereSpec>();
@@ -86,11 +84,11 @@ namespace Roost.World.Slots
 
             Crossroads.MarkLocalSituation(situation);
 
-            foreach (SphereSpec slot in compendium.GetEntityById<Element>(firstToken.PayloadEntityId).Slots)
+            foreach (SphereSpec slot in compendium.GetEntityById<Element>(tokenInFirstSlot.PayloadEntityId).Slots)
                 if (slot.SuitsVerbAndSatisfiedReqs(verbId))
                     result.Add(slot);
 
-            AspectsDictionary aspects = firstToken.GetAspects(false);
+            AspectsDictionary aspects = tokenInFirstSlot.GetAspects(false);
             foreach (string aspectId in aspects.Keys)
             {
                 List<SphereSpec> slots = compendium.GetEntityById<Element>(aspectId).RetrieveProperty(ASPECT_SLOTS) as List<SphereSpec>;
@@ -112,6 +110,27 @@ namespace Roost.World.Slots
             Crossroads.ResetCache();
 
             return result;
+        }
+
+        private static Token GetTokenInFirstSlot(Situation situation)
+        {
+            List<Sphere> candidateThresholds = situation.GetSpheresByCategory(SphereCategory.Threshold);
+            if (candidateThresholds.Count == 0)
+                return NullToken.Create();
+
+            candidateThresholds.Reverse();
+            foreach (Sphere candidateThreshold in candidateThresholds)
+                if (candidateThreshold.OwnerSphereIdentifier == null)
+                {
+                    Token token = candidateThreshold.GetElementTokens().FirstOrDefault();
+
+                    if (token != null)
+                        return token;
+
+                    break;
+                }
+
+            return NullToken.Create();
         }
 
         private static bool SphereIsDependent(bool __result)
