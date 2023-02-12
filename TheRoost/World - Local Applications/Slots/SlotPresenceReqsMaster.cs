@@ -171,7 +171,7 @@ namespace Roost.World.Slots
 
             Dictionary<FucineExp<int>, FucineExp<int>> presenceReqs = slot.RetrieveProperty(SLOT_PRESENCE_REQS) as Dictionary<FucineExp<int>, FucineExp<int>>;
             if (presenceReqs != null)
-                if (!RecipeEffectsMaster.CheckGrandReqs(presenceReqs))
+                if (!GrandReqsMaster.CheckGrandReqs(presenceReqs))
                     return false;
 
             return true;
