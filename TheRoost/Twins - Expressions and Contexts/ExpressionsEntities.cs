@@ -215,7 +215,9 @@ namespace Roost.Twins.Entities
         public enum ValueArea
         {
             Aspect, //returns aspect amount from an element token
-            Mutation, //return mutation amount from an element token
+            Mutation, //returns mutation amount from an element token
+            Lifetime, //returns remaining lifetime from an element token, or remaining warmup from a situation token
+            Lifespan, //returns max lifetime from an element token, or full warmup from a situation token
             SituationContent, //returns aspect amount from a situation token
             AnySourceAspect, //returns aspect amount from any token
             Verb, VerbWild, //retuns a quantity (likely 1) if the token is a verb
@@ -245,6 +247,8 @@ namespace Roost.Twins.Entities
                 {
                     case ValueArea.Aspect: return ElementAspect;
                     case ValueArea.Mutation: return Mutation;
+                    case ValueArea.Lifetime: return Lifetime;
+                    case ValueArea.Lifespan: return Lifespan;
                     case ValueArea.SituationContent: return AspectInSituation;
                     case ValueArea.AnySourceAspect: return AspectOnAnyToken;
                     case ValueArea.Verb: return VerbId;
@@ -270,6 +274,32 @@ namespace Roost.Twins.Entities
             private static int Mutation(Token token, string target)
             {
                 return token.GetCurrentMutations().TryGetValue(target, out int value) ? value : 0;
+            }
+
+            private static int Lifetime(Token token, string target)
+            {
+                float value;
+                if (IsSituation(token.Payload))
+                    value = (token.Payload as Situation).GetTimeshadow().LifetimeRemaining;
+                else if (token.IsValidElementStack())
+                    value = (token.Payload as ElementStack).GetTimeshadow().LifetimeRemaining;
+                else
+                    return 0;
+
+                return ConvertToInt(value);
+            }
+
+            private static int Lifespan(Token token, string target)
+            {
+                float value;
+                if (IsSituation(token.Payload))
+                    value = (token.Payload as Situation).Warmup;
+                else if (token.IsValidElementStack())
+                    value = (token.Payload as ElementStack).Element.Lifetime;
+                else
+                    return 0;
+
+                return ConvertToInt(value);
             }
 
             private static int AspectInSituation(Token token, string target)
@@ -334,7 +364,6 @@ namespace Roost.Twins.Entities
 
             private static int Payload(Token token, string target)
             {
-
                 object value = token.Payload.GetType().GetProperty(target).GetValue(token.Payload);
 
                 try
@@ -410,9 +439,6 @@ namespace Roost.Twins.Entities
             {
                 if (value is int intValue)
                     return intValue;
-
-                if (value is float floatValue)
-                    return (int)floatValue * 100;
 
                 try
                 {
