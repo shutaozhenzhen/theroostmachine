@@ -10,6 +10,7 @@ using SecretHistories.Entities;
 using SecretHistories.Core;
 using SecretHistories.Spheres;
 using SecretHistories.Infrastructure;
+using SecretHistories.Logic;
 
 using Roost.Twins;
 using Roost.Twins.Entities;
@@ -428,9 +429,17 @@ namespace Roost.World.Recipes.Entities
         }
     }
 
-    public enum MorphEffectsExtended { Transform, Spawn, Mutate, SetMutation, DeckDraw, DeckShuffle, Destroy, Decay, Induce, Link, GrandEffects }
+    public enum MorphEffectsExtended
+    {
+        Transform, Spawn, Mutate, //classic trio
+        SetMutation, DeckDraw, DeckShuffle,  //makes sense, right?
+        Destroy, Decay, //destructive forces
+        GrandEffects, //big boy
+        Induce, Link //wot
+    }
     public class RefMorphDetails : AbstractEntity<RefMorphDetails>, IQuickSpecEntity
     {
+
         public enum TriggerMode { Default, TokenOnly, AspectOnly, Always }
         [FucineValue(DefaultValue = MorphEffectsExtended.Transform)] public MorphEffectsExtended MorphEffect { get; set; }
         [FucineConstruct("1")] public FucineExp<int> Level { get; set; }
@@ -472,48 +481,54 @@ namespace Roost.World.Recipes.Entities
         {
             switch (MorphEffect)
             {
+
+                //mundane, id is a element
                 case MorphEffectsExtended.Transform:
                 case MorphEffectsExtended.Spawn:
                 case MorphEffectsExtended.Mutate:
                 case MorphEffectsExtended.SetMutation:
                     if (Id == null)
                         foreach (object key in UnknownProperties.Keys)
-                            if (populatedCompendium.GetEntityById<Element>(key.ToString()) != null)
+                            if (populatedCompendium.GetEntityById<Element>(key.ToString())?.IsValid() == true)
                             {
-                                this.SetId(key.ToString());
-                                this.Level = new FucineExp<int>(UnknownProperties[key].ToString());
+                                SetId(key.ToString());
+                                Level = new FucineExp<int>(UnknownProperties[key].ToString());
                                 break;
                             }
 
                     if (Id == null)
-                        goto NO_ID;
+                        log.LogWarning($"ID FOR XTRIGGER '{this}' ISN'T SET");
+                    else if (populatedCompendium.GetEntityById<Element>(Id)?.IsValid() != true)
+                        log.LogWarning($"UNKNOWN ELEMENT ID IN XTRIGGER {this}");
 
                     break;
+
+                //links, id is a recipe
                 case MorphEffectsExtended.Link:
                 case MorphEffectsExtended.Induce:
                     if (Id == null)
                         foreach (object key in UnknownProperties.Keys)
-                            if (populatedCompendium.GetEntityById<Recipe>(key.ToString()) != null)
+                            if (populatedCompendium.GetEntityById<Recipe>(key.ToString())?.IsValid() == true)
                             {
-                                this.SetId(key.ToString());
-                                this.Level = new FucineExp<int>(UnknownProperties[key].ToString());
+                                SetId(key.ToString());
+                                Level = new FucineExp<int>(UnknownProperties[key].ToString());
                                 break;
                             }
 
                     if (Id == null)
-                        goto NO_ID;
-
-                    Recipe linkedRecipe = populatedCompendium.GetEntityById<Recipe>(this.Id);
-                    if (linkedRecipe == null)
-                        log.LogWarning($"unknown recipe id '{this.Id}'");
-
-                    if (MorphEffect == MorphEffectsExtended.Induce)
+                        log.LogWarning($"ID FOR XTRIGGER '{this}' ISN'T SET");
+                    else if (populatedCompendium.GetEntityById<Recipe>(Id)?.IsValid() != true)
+                        log.LogWarning($"UNKNOWN RECIPE ID IN XTRIGGER {this}");
+                    else if (MorphEffect == MorphEffectsExtended.Induce)
                     {
-                        Induction = LinkedRecipeDetails.AsCurrentRecipe(linkedRecipe); //no other way to construct it normally
+                        Induction = LinkedRecipeDetails.AsCurrentRecipe(populatedCompendium.GetEntityById<Recipe>(Id)); //no other way to construct it normally
                         Induction.ToPath = this.ToPath;
                         Induction.Expulsion = this.Expulsion;
                     }
+
                     break;
+
+                //id is a deck
                 case MorphEffectsExtended.DeckDraw:
                 case MorphEffectsExtended.DeckShuffle:
                     if (Id == null)
@@ -526,11 +541,17 @@ namespace Roost.World.Recipes.Entities
                             }
 
                     if (Id == null)
-                        goto NO_ID;
+                        log.LogWarning($"ID FOR XTRIGGER '{this}' ISN'T SET");
+                    else if (populatedCompendium.GetEntityById<DeckSpec>(Id) == null)
+                        log.LogWarning($"UNKNOWN DECK ID IN XTRIGGER '{this}'");
 
-                    if (populatedCompendium.GetEntityById<DeckSpec>(this.Id) == null)
-                        log.LogWarning($"UNKNOWN DECK ID '{this.Id}' IN XTRIGGERS");
                     break;
+
+                //doesn't use Id
+                case MorphEffectsExtended.Decay:
+                case MorphEffectsExtended.Destroy:
+                case MorphEffectsExtended.GrandEffects:
+                case MorphEffectsExtended.LeverCurrent:
                 default:
                     break;
             }
@@ -542,14 +563,8 @@ namespace Roost.World.Recipes.Entities
 
             if (MorphEffect != MorphEffectsExtended.Induce)
                 Induction = null;
+
             //even if these properties are needed, they are safely wrapped inside the Induction by now
-            Expulsion = null;
-            ToPath = null;
-
-            return;
-
-        NO_ID:
-            log.LogWarning("XTRIGGER ID ISN'T SET");
             Expulsion = null;
             ToPath = null;
         }
@@ -605,21 +620,28 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.Mutate:
                     RecipeExecutionBuffer.ScheduleMutation(reactingToken, this.Id, Level.value * catalystQuantity * reactingElementQuantity, true, VFX);
                     break;
+
                 case MorphEffectsExtended.DeckDraw:
                     Legerdemain.Deal(this.Id, reactingToken.Sphere, Level.value * catalystQuantity * reactingElementQuantity, VFX);
                     break;
                 case MorphEffectsExtended.DeckShuffle:
                     RecipeExecutionBuffer.ScheduleDeckRenew(this.Id);
                     break;
+
                 case MorphEffectsExtended.Destroy:
                     RecipeExecutionBuffer.ScheduleRetirement(reactingToken, VFX);
                     break;
+                case MorphEffectsExtended.Decay:
+                    RecipeExecutionBuffer.ScheduleDecay(reactingToken, VFX);
+                    break;
+
                 case MorphEffectsExtended.Induce:
                     RecipeExecutionBuffer.ScheduleRecipeInduction(situation, Induction);
                     break;
                 case MorphEffectsExtended.Link:
                     Machine.PushTemporaryRecipeLink(this.Id, Level.value);
                     break;
+
                 case MorphEffectsExtended.GrandEffects:
                     {
                         foreach (Sphere sphere in GrandEffects.Target.GetSpheresByPath())
@@ -633,6 +655,11 @@ namespace Roost.World.Recipes.Entities
             }
 
             Crossroads.UnmarkLocalToken();
+        }
+
+        public override string ToString()
+        {
+            return $"{_container} {MorphEffect} {Id}";
         }
     }
 
