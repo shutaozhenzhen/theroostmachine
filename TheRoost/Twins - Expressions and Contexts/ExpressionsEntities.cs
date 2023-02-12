@@ -286,7 +286,7 @@ namespace Roost.Twins.Entities
                 else
                     return 0;
 
-                return ConvertToInt(value);
+                return ConvertToInt(value * 1000);
             }
 
             private static int Lifespan(Token token, string target)
@@ -299,7 +299,7 @@ namespace Roost.Twins.Entities
                 else
                     return 0;
 
-                return ConvertToInt(value);
+                return ConvertToInt(value * 1000);
             }
 
             private static int AspectInSituation(Token token, string target)

@@ -667,7 +667,8 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.Lifetime:
                     ElementStack stack = reactingToken.Payload as ElementStack;
                     Timeshadow timeshadow = stack.GetTimeshadow();
-                    timeshadow.SpendTime(-Level.value);
+                    float timeInSeconds = Level.value / 1000;
+                    timeshadow.SpendTime(-timeInSeconds);
 
                     if (timeshadow.LifetimeRemaining <= 0)
                         RecipeExecutionBuffer.ScheduleDecay(reactingToken, VFX);
