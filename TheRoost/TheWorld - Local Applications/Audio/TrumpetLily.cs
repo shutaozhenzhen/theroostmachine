@@ -65,12 +65,15 @@ namespace Roost.World.Audio
 
             List<string> trackList;
             if (Watchman.Get<Stable>().Protag().ActiveLegacy.RetrieveProperty<bool>(OVERRIDE_MUSIC))
+            {
                 tabletopBGMusic.Clear();
+                tabletopBGMusic.Add(emptyClip);
+            }
 
             if (Watchman.Get<Stable>().Protag().ActiveLegacy.TryRetrieveProperty(MUSIC, out trackList))
                 foreach (string trackName in trackList)
                 {
-                    if (TryGetCustomClip(trackName, out AudioClip clip))
+                    if (!TryGetCustomClip(trackName, out AudioClip clip))
                         continue;
 
                     tabletopBGMusic.Add(clip);
@@ -139,7 +142,7 @@ namespace Roost.World.Audio
         {
             if (ending.TryRetrieveProperty(MUSIC, out string trackName))
             {
-                if (TryGetCustomClip(trackName, out AudioClip clip))
+                if (!TryGetCustomClip(trackName, out AudioClip clip))
                     return;
 
                 ___audioSource.Stop();
