@@ -29,8 +29,6 @@ namespace Roost.World.Recipes
 
         internal static void Enact()
         {
-            Machine.ClaimProperty<Element, Dictionary<string, List<RefMorphDetails>>>("xtriggers");
-
             Machine.ClaimProperty<Recipe, Dictionary<FucineExp<int>, FucineExp<int>>>(GRAND_REQS);
 
             Machine.Patch(

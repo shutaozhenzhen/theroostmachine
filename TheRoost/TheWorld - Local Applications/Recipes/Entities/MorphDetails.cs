@@ -45,8 +45,8 @@ namespace Roost.World.Recipes.Entities
         public const string TRIGGER_MODE = "triggerMode";
         public static void Enact()
         {
-
-            Machine.ClaimProperty<Element, RefMorphDetails.TriggerMode>(TRIGGER_MODE, false, TriggerMode.Default);
+            Machine.ClaimProperty<Element, Dictionary<string, List<RefMorphDetails>>>("xtriggers");
+            Machine.ClaimProperty<Element, TriggerMode>(TRIGGER_MODE, false, TriggerMode.Default);
 
             //there are several properties that won't be used by the majority of the triggers
             //since the xtriggers themselves are relatively numerous entities, I don't want each one to have a bunch of unused properties
