@@ -29,6 +29,10 @@ namespace Roost.World.Recipes
 
         internal static void Enact()
         {
+            //reasonably should be somewhere else
+            AtTimeOfPower.TabletopSceneInit.Schedule(ResetCrossroadsOnTabletopEnter, PatchType.Prefix);
+
+            //grand reqs
             Machine.ClaimProperty<Recipe, Dictionary<FucineExp<int>, FucineExp<int>>>(GRAND_REQS);
 
             Machine.Patch(
@@ -36,6 +40,7 @@ namespace Roost.World.Recipes
                 prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(StoreSituationForReqs)));
             AtTimeOfPower.RecipeRequirementsCheck.Schedule<Recipe, AspectsInContext>(CheckGrandReqsForSituation);
 
+            //grand effects
             Machine.ClaimProperty<Recipe, GrandEffects>(GRAND_EFFECTS);
             Dictionary<string, Type> allRecipeEffectsProperties = new Dictionary<string, Type>();
             foreach (CachedFucineProperty<GrandEffects> cachedProperty in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
@@ -54,33 +59,19 @@ namespace Roost.World.Recipes
                 original: typeof(Token).GetMethodInvariant(nameof(Token.CalveToken)),
                 postfix: typeof(RecipeExecutionBuffer).GetMethodInvariant(nameof(RecipeExecutionBuffer.OnTokenCalved)));
 
-            AtTimeOfPower.TabletopSceneInit.Schedule(TabletopEnter, PatchType.Prefix);
 
             Legerdemain.Enact();
-
-            Machine.Patch(
-                original: typeof(TextRefiner).GetMethodInvariant(nameof(TextRefiner.RefineString)),
-                prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(OverrideRecipeRefinement)));
-
-
-            Machine.Patch(
-                original: typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.ChangeTo)),
-                postfix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(NotifyOnChangeTo)));
-
 
             RefMorphDetails.Enact();
             RefMutationEffect.Enact();
             TokenFilterSpec.Enact();
+
+            Machine.Patch(
+                original: typeof(TextRefiner).GetMethodInvariant(nameof(TextRefiner.RefineString)),
+                prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(OverrideRecipeRefinement)));
         }
 
-        private static void NotifyOnChangeTo(Token ____token)
-        {
-            SphereContentsChangedEventArgs sphereContentsChangedEventArgs = new SphereContentsChangedEventArgs(____token.Sphere, new Context(Context.ActionSource.ChangeTo));
-            sphereContentsChangedEventArgs.TokenChanged = ____token;
-            ____token.Sphere.NotifyTokensChangedForSphere(sphereContentsChangedEventArgs);
-        }
-
-        private static void TabletopEnter()
+        private static void ResetCrossroadsOnTabletopEnter()
         {
             Crossroads.ResetCache();
         }
