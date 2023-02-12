@@ -592,7 +592,10 @@ namespace Roost.World.Recipes.Entities
             Crossroads.MarkLocalToken(reactingToken);
 
             if (UnityEngine.Random.Range(1, 101) > Chance.value)
+            {
+                Crossroads.UnmarkLocalToken();
                 return;
+            }
 
             reactingElementQuantity = IgnoreTargetQuantity ? 1 : reactingElementQuantity;
             catalystQuantity = IgnoreCatalystQuantity ? 1 : catalystQuantity;
