@@ -12,8 +12,8 @@ namespace Roost.Elegiast
 {
     public static class RoostChronicler
     {
-        private const string SET_LEVERS_CURRENT = "setLeversCurrent";
-        private const string SET_LEVERS_FUTURE = "setLeversFuture";
+        private const string SET_LEVERS_CURRENT = "levers";
+        private const string SET_LEVERS_FUTURE = "leversNow";
 
         internal static void Enact()
         {

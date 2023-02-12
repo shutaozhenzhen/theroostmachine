@@ -434,6 +434,7 @@ namespace Roost.World.Recipes.Entities
         Transform, Spawn, Mutate, //classic trio
         SetMutation, DeckDraw, DeckShuffle,  //makes sense, right?
         Destroy, Decay, //destructive forces
+        Lever, LeverNow, //exotique
         GrandEffects, //big boy
         Induce, Link //wot
     }
@@ -551,7 +552,8 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.Decay:
                 case MorphEffectsExtended.Destroy:
                 case MorphEffectsExtended.GrandEffects:
-                case MorphEffectsExtended.LeverCurrent:
+                case MorphEffectsExtended.Lever:
+                case MorphEffectsExtended.LeverNow:
                 default:
                     break;
             }
@@ -654,7 +656,19 @@ namespace Roost.World.Recipes.Entities
                         }
                         break;
                     }
-                default: Birdsong.TweetLoud($"Unknown trigger '{MorphEffect}' for element stack '{reactingToken.PayloadEntityId}'"); break;
+
+                case MorphEffectsExtended.Lever:
+                    NoonUtility.LogWarning(this.Id, reactingToken.PayloadEntityId);
+                    Elegiast.Scribe.SetLeverForNextPlaythrough(this.Id, reactingToken.PayloadEntityId);
+                    break;
+
+                case MorphEffectsExtended.LeverNow:
+                    Elegiast.Scribe.SetLeverForCurrentPlaythrough(this.Id, reactingToken.PayloadEntityId);
+                    break;
+
+                default:
+                    Birdsong.TweetLoud($"Unknown trigger '{MorphEffect}' for element stack '{reactingToken.PayloadEntityId}'");
+                    break;
             }
 
             Crossroads.UnmarkLocalToken();
