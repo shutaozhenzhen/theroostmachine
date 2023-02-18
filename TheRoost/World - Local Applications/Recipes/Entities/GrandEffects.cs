@@ -222,7 +222,7 @@ namespace Roost.World.Recipes.Entities
                 Legerdemain.Deal(deckId, sphere, DeckEffects[deckId].value, DeckEffectsVFX);
 
             RecipeExecutionBuffer.ApplyMovements();
-            RecipeExecutionBuffer.ApplyRenews();
+            RecipeExecutionBuffer.ApplyDeckRenews();
         }
 
         private void RunEffects(Sphere sphere)
@@ -241,7 +241,7 @@ namespace Roost.World.Recipes.Entities
                         RecipeExecutionBuffer.ScheduleRetirement(token, DestroyVFX);
                 }
                 else
-                    RecipeExecutionBuffer.ScheduleCreation(sphere, effect.targetElement, level, CreateVFX);
+                    RecipeExecutionBuffer.ScheduleSpawn(sphere, effect.targetElement, level, CreateVFX);
             }
 
             RecipeExecutionBuffer.ApplyRetirements();

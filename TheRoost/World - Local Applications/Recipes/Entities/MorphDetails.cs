@@ -206,7 +206,7 @@ namespace Roost.World.Recipes.Entities
                     }
                     break;
                 case MorphEffectsExtended.Spawn:
-                    RecipeExecutionBuffer.ScheduleCreation(reactingToken.Sphere, this.Id, reactingElementQuantity * Level.value * catalystQuantity, VFX);
+                    RecipeExecutionBuffer.ScheduleSpawn(reactingToken.Sphere, this.Id, reactingElementQuantity * Level.value * catalystQuantity, VFX);
                     break;
                 case MorphEffectsExtended.SetMutation:
                     RecipeExecutionBuffer.ScheduleMutation(reactingToken, this.Id, Level.value * catalystQuantity * reactingElementQuantity, false, VFX);
