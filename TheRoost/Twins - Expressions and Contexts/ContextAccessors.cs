@@ -34,6 +34,8 @@ namespace Roost.Twins
             Machine.Patch(
                 original: typeof(CompleteState).GetMethodInvariant(nameof(CompleteState.Exit)),
                 postfix: typeof(Crossroads).GetMethodInvariant(nameof(ClearOutput)));
+
+            AtTimeOfPower.TabletopSceneInit.Schedule(ResetCache, PatchType.Prefix);
         }
 
         private static readonly string VERB_THRESHOLDS_SPHERE = SituationDominionEnum.VerbThresholds.ToString();

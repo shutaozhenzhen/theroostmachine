@@ -8,7 +8,6 @@ using SecretHistories.Entities;
 using SecretHistories.UI;
 using SecretHistories.Enums;
 using SecretHistories.Fucine;
-using SecretHistories.Logic;
 using SecretHistories.Services;
 
 using Roost.Twins;
@@ -25,9 +24,6 @@ namespace Roost.World.Recipes
 
         internal static void Enact()
         {
-            //reasonably should be somewhere else
-            AtTimeOfPower.TabletopSceneInit.Schedule(ResetCrossroadsOnTabletopEnter, PatchType.Prefix);
-
             //grand effects
             Machine.ClaimProperty<Recipe, GrandEffects>(GRAND_EFFECTS);
             Dictionary<string, Type> allRecipeEffectsProperties = new Dictionary<string, Type>();
@@ -57,11 +53,6 @@ namespace Roost.World.Recipes
             Machine.Patch(
                 original: typeof(TextRefiner).GetMethodInvariant(nameof(TextRefiner.RefineString)),
                 prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(OverrideRecipeRefinement)));
-        }
-
-        private static void ResetCrossroadsOnTabletopEnter()
-        {
-            Crossroads.ResetCache();
         }
 
         //Recipe.OnPostImportForSpecificEntity()
