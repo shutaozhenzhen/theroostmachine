@@ -20,7 +20,7 @@ namespace Roost.World.Recipes
 
             Machine.Patch(
                 original: typeof(Situation).GetMethodInvariant(nameof(Situation.GetAspects)),
-                prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(StoreSituationForReqs)));
+                prefix: typeof(GrandReqsMaster).GetMethodInvariant(nameof(StoreSituationForReqs)));
 
             AtTimeOfPower.RecipeRequirementsCheck.Schedule<Recipe, AspectsInContext>(CheckGrandReqsForSituation);
         }
