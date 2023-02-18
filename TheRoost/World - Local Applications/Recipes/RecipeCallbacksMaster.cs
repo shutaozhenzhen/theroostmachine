@@ -12,7 +12,7 @@ using SecretHistories.States;
 
 using HarmonyLib;
 
-namespace Roost.World
+namespace Roost.World.Recipes
 {
     /**
      * What this does/patches:

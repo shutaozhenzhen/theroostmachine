@@ -85,6 +85,7 @@ namespace Roost.Enactors
             Roost.World.Recipes.RecipeEffectsMaster.Enact();
             Roost.World.Recipes.RecipeLinkMaster.Enact();
             Roost.World.Recipes.RecipeRandomWildcardMaster.Enact();
+            Roost.World.Recipes.RecipeCallbacksMaster.Enact();
 
             Roost.World.Elements.ElementRandomDecay.Enact();
             Roost.World.Elements.ElementVFXMaster.Enact();
@@ -98,8 +99,6 @@ namespace Roost.Enactors
             Roost.World.Slots.GreedySlotsMaster.Enact();
 
             Roost.World.Slots.RecipeMultipleSlotsMaster.Enact();
-
-            Roost.World.RecipeCallbacksMaster.Enact();
 
             Roost.World.Beauty.StartupQuoteMaster.Enact();
             Roost.World.Beauty.MainMenuStyleMaster.Enact();
