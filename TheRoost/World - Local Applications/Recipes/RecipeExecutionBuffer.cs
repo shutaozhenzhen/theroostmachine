@@ -12,9 +12,9 @@ namespace Roost.World.Recipes
     public static class RecipeExecutionBuffer
     {
         private static readonly HashSet<Token> retirements = new HashSet<Token>();
-        private static readonly Dictionary<ScheduledMutation, HashSet<IHasAspects>> mutations = new Dictionary<ScheduledMutation, HashSet<IHasAspects>>();
+        private static readonly Dictionary<MutationEffect, HashSet<IHasAspects>> mutations = new Dictionary<MutationEffect, HashSet<IHasAspects>>();
         private static readonly Dictionary<ElementStack, string> transformations = new Dictionary<ElementStack, string>();
-        private static readonly Dictionary<Sphere, List<ScheduledCreation>> creations = new Dictionary<Sphere, List<ScheduledCreation>>();
+        private static readonly Dictionary<Sphere, List<SpawnEffect>> spawns = new Dictionary<Sphere, List<SpawnEffect>>();
         //private static readonly Dictionary<Token, int> quantityChanges = new Dictionary<Token, int>();
         private static readonly Dictionary<Token, Sphere> movements = new Dictionary<Token, Sphere>();
         private static readonly Dictionary<Situation, List<LinkedRecipeDetails>> inductions = new Dictionary<Situation, List<LinkedRecipeDetails>>();
@@ -27,8 +27,7 @@ namespace Roost.World.Recipes
         public static void ApplyAllEffects()
         {
             ApplyRetirements();
-            //ApplyQuantityChanges();
-            ApplyRenews();
+            ApplyDeckRenews();
             ApplyMutations();
             ApplyTransformations();
             ApplyCreations();
@@ -45,22 +44,7 @@ namespace Roost.World.Recipes
             retirements.Clear();
         }
 
-        /*
-        public static void ApplyQuantityChanges()
-        {
-            foreach (Token token in quantityChanges.Keys)
-            {
-                if (token.Quantity + quantityChanges[token] <= 0)
-                    token.Retire(vfxs.ContainsKey(token) ? vfxs[token] : RetirementVFX.None);
-                else
-                    token.Payload.SetQuantity(token.Quantity + quantityChanges[token], situationEffectContext);
-
-                token.Sphere.MarkAsDirty();
-            }
-            quantityChanges.Clear();
-        }
-        */
-        public static void ApplyRenews()
+        public static void ApplyDeckRenews()
         {
             foreach (string deckId in deckRenews)
             {
@@ -73,7 +57,7 @@ namespace Roost.World.Recipes
 
         public static void ApplyMutations()
         {
-            foreach (ScheduledMutation mutation in mutations.Keys)
+            foreach (MutationEffect mutation in mutations.Keys)
                 foreach (IHasAspects payload in mutations[mutation])
                 {
                     mutation.Apply(payload);
@@ -97,17 +81,17 @@ namespace Roost.World.Recipes
 
         public static void ApplyCreations()
         {
-            foreach (Sphere sphere in creations.Keys)
+            foreach (Sphere sphere in spawns.Keys)
             {
                 if (sphere.SupportsVFX())
-                    foreach (ScheduledCreation creation in creations[sphere])
+                    foreach (SpawnEffect creation in spawns[sphere])
                         creation.ApplyWithVFX(sphere);
                 else
-                    foreach (ScheduledCreation creation in creations[sphere])
+                    foreach (SpawnEffect creation in spawns[sphere])
                         creation.ApplyWithoutVFX(sphere);
                 sphere.MarkAsDirty();
             }
-            creations.Clear();
+            spawns.Clear();
         }
 
         public static void ApplyMovements()
@@ -186,7 +170,7 @@ namespace Roost.World.Recipes
         public static void ScheduleUniqueMutation(Token token, string mutate, int level, bool additive, RetirementVFX vfx, string groupId)
         {
             if (!string.IsNullOrWhiteSpace(groupId))
-                foreach (ScheduledMutation mutation in mutations.Keys)
+                foreach (MutationEffect mutation in mutations.Keys)
                     if (mutation.uniqueGroupId == groupId)
                         return;
 
@@ -204,7 +188,7 @@ namespace Roost.World.Recipes
         {
             TryReplaceWithLever(ref mutate);
 
-            ScheduledMutation futureMutation = new ScheduledMutation(mutate, level, additive, groupId);
+            MutationEffect futureMutation = new MutationEffect(mutate, level, additive, groupId);
 
             mutations[futureMutation] = new HashSet<IHasAspects>();
             mutations[futureMutation].Add(payload);
@@ -214,7 +198,7 @@ namespace Roost.World.Recipes
         {
             TryReplaceWithLever(ref mutate);
 
-            ScheduledMutation futureMutation = new ScheduledMutation(mutate, level, additive, "");
+            MutationEffect futureMutation = new MutationEffect(mutate, level, additive, "");
             mutations[futureMutation] = new HashSet<IHasAspects>();
 
             foreach (Token token in tokens)
@@ -232,21 +216,21 @@ namespace Roost.World.Recipes
             ScheduleVFX(token, vfx);
         }
 
-        public static void ScheduleCreation(Sphere sphere, string elementId, int amount, RetirementVFX vfx)
+        public static void ScheduleSpawn(Sphere sphere, string elementId, int amount, RetirementVFX vfx)
         {
             TryReplaceWithLever(ref elementId);
 
-            if (creations.ContainsKey(sphere) == false)
-                creations[sphere] = new List<ScheduledCreation>();
+            if (spawns.ContainsKey(sphere) == false)
+                spawns[sphere] = new List<SpawnEffect>();
 
-            for (int i = 0; i < creations[sphere].Count; i++)
-                if (creations[sphere][i].IsSameEffect(elementId, vfx))
+            for (int i = 0; i < spawns[sphere].Count; i++)
+                if (spawns[sphere][i].IsSameEffect(elementId, vfx))
                 {
-                    creations[sphere][i] = creations[sphere][i].IncreaseAmount(amount);
+                    spawns[sphere][i] = spawns[sphere][i].IncreaseAmount(amount);
                     return;
                 }
 
-            creations[sphere].Add(new ScheduledCreation(elementId, amount, vfx));
+            spawns[sphere].Add(new SpawnEffect(elementId, amount, vfx));
         }
 
         public static void ScheduleMovement(Token token, Sphere toSphere, RetirementVFX vfx)
@@ -280,10 +264,10 @@ namespace Roost.World.Recipes
             return result;
         }
 
-        private struct ScheduledMutation
+        private struct MutationEffect
         {
             string mutate; int level; bool additive; public string uniqueGroupId;
-            public ScheduledMutation(string mutate, int level, bool additive, string uniqueGroupId)
+            public MutationEffect(string mutate, int level, bool additive, string uniqueGroupId)
             { this.mutate = mutate; this.level = level; this.additive = additive; this.uniqueGroupId = uniqueGroupId; }
 
             public void Apply(IHasAspects payload)
@@ -292,10 +276,10 @@ namespace Roost.World.Recipes
             }
         }
 
-        private struct ScheduledCreation
+        private struct SpawnEffect
         {
             string elementId; int quantity; RetirementVFX vfx;
-            public ScheduledCreation(string element, int quantity, RetirementVFX vfx)
+            public SpawnEffect(string element, int quantity, RetirementVFX vfx)
             { this.elementId = element; this.quantity = quantity; this.vfx = vfx; }
 
             public void ApplyWithoutVFX(Sphere onSphere)
@@ -311,9 +295,9 @@ namespace Roost.World.Recipes
             }
 
             public bool IsSameEffect(string element, RetirementVFX vfx) { return element == this.elementId && vfx == this.vfx; }
-            public ScheduledCreation IncreaseAmount(int add)
+            public SpawnEffect IncreaseAmount(int add)
             {
-                ScheduledCreation increasedAmount = this;
+                SpawnEffect increasedAmount = this;
                 increasedAmount.quantity += add;
                 return increasedAmount;
             }
@@ -342,7 +326,7 @@ namespace Roost.World.Recipes
             if (retirements.Contains(original))
                 retirements.Add(calved);
 
-            foreach (ScheduledMutation mutation in mutations.Keys)
+            foreach (MutationEffect mutation in mutations.Keys)
                 if (mutations[mutation].Contains(original.Payload))
                     mutations[mutation].Add(calved.Payload);
 
