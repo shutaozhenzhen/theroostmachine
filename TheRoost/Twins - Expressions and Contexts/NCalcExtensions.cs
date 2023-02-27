@@ -29,7 +29,7 @@ namespace Roost.Twins
                 return;
             }
 
-            throw Birdsong.Cack($"Too many parameters in Round({functionArgs.Parameters.UnpackCollection(exp => exp.ToString(), ",")})");
+            throw Birdsong.Cack($"Too many parameters in Round({functionArgs.Parameters.UnpackCollection(arg => arg.ParsedExpression.ToString(), ",")})");
         }
 
         internal static void Random(string name, FunctionArgs functionArgs)
@@ -37,12 +37,6 @@ namespace Roost.Twins
             if (name != "Random")
                 return;
 
-            //faster without?
-            if (functionArgs.Parameters.Length == 1)
-            {
-                functionArgs.Result = UnityEngine.Random.Range(0, functionArgs.Parameters[0].Evaluate().ConvertTo<int>());
-                return;
-            }
             if (functionArgs.Parameters.Length == 2)
             {
                 functionArgs.Result = UnityEngine.Random.Range(functionArgs.Parameters[0].Evaluate().ConvertTo<float>(), functionArgs.Parameters[1].Evaluate().ConvertTo<float>());
@@ -50,9 +44,14 @@ namespace Roost.Twins
             }
 
             if (functionArgs.Parameters.Length == 1)
-                throw Birdsong.Cack($"Not enough parameters in Random({functionArgs.Parameters.UnpackCollection(exp => (exp as Expression).Evaluate(), ",")})");
+            {
+                functionArgs.Result = UnityEngine.Random.Range(0, functionArgs.Parameters[0].Evaluate().ConvertTo<float>());
+                return;
+            }
 
-            throw Birdsong.Cack($"Too many parameters in Random({functionArgs.Parameters.UnpackCollection(exp => exp.ToString(), ",")})");
+            //if more than 2 arguments, pick a random number from them
+            int ind = UnityEngine.Random.Range(0, functionArgs.Parameters.Length);
+            functionArgs.Result = functionArgs.Parameters[ind].Evaluate().ConvertTo<float>();
         }
     }
 }
