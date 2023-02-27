@@ -37,7 +37,7 @@ namespace Roost.Twins.Entities
             try
             {
                 this.references = TwinsParser.LoadReferencesForExpression(ref data).ToArray();
-                this.expression = new Expression(data);
+                this.expression = new Expression(data, EvaluateOptions.BooleanCalculation);
 
                 this.expression.EvaluateFunction += NCalcExtensions.Round;
                 if (formula.Contains("Random("))
