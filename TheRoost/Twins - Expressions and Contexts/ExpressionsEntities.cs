@@ -602,29 +602,4 @@ namespace Roost.Twins.Entities
         }
     }
 
-    internal static class NCalcExtensions
-    {
-        internal static void Random(string name, FunctionArgs functionArgs)
-        {
-            if (name != "Random")
-                return;
-
-            //faster without?
-            /*if (functionArgs.Parameters.Length == 1)
-            {
-                functionArgs.Result = UnityEngine.Random.Range(0, functionArgs.Parameters[0].Evaluate().ConvertTo<int>());
-                return;
-            }*/
-            if (functionArgs.Parameters.Length == 2)
-            {
-                functionArgs.Result = UnityEngine.Random.Range(functionArgs.Parameters[0].Evaluate().ConvertTo<int>(), functionArgs.Parameters[1].Evaluate().ConvertTo<int>());
-                return;
-            }
-
-            if (functionArgs.Parameters.Length == 1)
-                throw Birdsong.Cack($"Not enough parameters in Random({functionArgs.Parameters.UnpackCollection(exp => (exp as Expression).Evaluate(), ",")})");
-
-            throw Birdsong.Cack($"Too many parameters in Random({functionArgs.Parameters.UnpackCollection(exp => (exp as Expression).Evaluate(), ",")})");
-        }
-    }
 }
