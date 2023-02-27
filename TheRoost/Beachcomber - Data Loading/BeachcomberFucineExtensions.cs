@@ -6,6 +6,7 @@ using Roost;
 
 namespace SecretHistories.Fucine
 {
+
     public class PropertyPanImporter : AbstractImporter
     {
         public override object Import(object data, Type type)
@@ -129,6 +130,37 @@ namespace SecretHistories.Fucine
         public Type ValueImporter { get; private set; }
         public FucineCustomDict(Type KeyImporter, Type ValueImporter) { this.KeyImporter = KeyImporter; this.ValueImporter = ValueImporter; }
         public override AbstractImporter CreateImporterInstance() { return new CustomDictPanImporter(KeyImporter, ValueImporter); }
+    }
+
+    public class ExtendedPathImporter : AbstractImporter
+    {
+        public override object Import(object importData, Type propertyType)
+        {
+            try
+            {
+                FucinePath fucinePath = Roost.Twins.TwinsParser.ParseSpherePath(importData.ToString());
+                if (fucinePath.IsValid())
+                    return fucinePath;
+
+                return FucinePath.Current();
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException(string.Format("MALFORMED FUCINE PATH '{0}': {1}", importData, ex.FormatException()));
+            }
+        }
+
+        public override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty)
+        {
+            if (cachedFucineProperty.FucineAttribute.DefaultValue != null)
+            {
+                FucinePath fucinePath = new FucinePath(cachedFucineProperty.FucineAttribute.DefaultValue.ToString());
+                if (fucinePath.IsValid())
+                    return fucinePath;
+            }
+
+            return FucinePath.Current();
+        }
     }
 
     public interface ICustomSpecEntity

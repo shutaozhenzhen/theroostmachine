@@ -38,6 +38,16 @@ namespace Roost.Beachcomber
             Machine.Patch(
                 original: typeof(AbstractEntity<Element>).GetMethodInvariant("<OnPostImportForProperties>g__OnPostImportSubDictionary|18_2"),
                 prefix: typeof(Usurper).GetMethodInvariant(nameof(SubDictNullCheck)));
+
+            Machine.Patch(
+                original: typeof(FucinePathValue).GetMethodInvariant(nameof(FucinePathValue.CreateImporterInstance)),
+                prefix: typeof(Usurper).GetMethodInvariant(nameof(ExtendFucinePathsImporting)));
+        }
+
+        private static bool ExtendFucinePathsImporting(ref AbstractImporter __result)
+        {
+            __result = new ExtendedPathImporter();
+            return false;
         }
 
         private static bool SubEntityNullCheck(IEntityWithId subEntity)
