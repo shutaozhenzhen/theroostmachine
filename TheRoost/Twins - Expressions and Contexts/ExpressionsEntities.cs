@@ -38,6 +38,8 @@ namespace Roost.Twins.Entities
             {
                 this.references = TwinsParser.LoadReferencesForExpression(ref data).ToArray();
                 this.expression = new Expression(data);
+
+                this.expression.EvaluateFunction += NCalcExtensions.Round;
                 if (formula.Contains("Random("))
                     this.expression.EvaluateFunction += NCalcExtensions.Random;
             }
