@@ -115,29 +115,22 @@ namespace Roost.Twins
 
         public static FucinePath ParseSpherePath(string path)
         {
-          if (string.IsNullOrWhiteSpace(path))
+            if (string.IsNullOrWhiteSpace(path))
                 return FucinePath.Current();
 
             path = path.Trim();
 
-            try
+            bool pathIsMultiPath = path.Contains("+") || path[path.Length - 1] == referenceClosing;
+
+            if (pathIsMultiPath)
             {
-                bool pathIsMultiPath = path.Contains("+") || path[path.Length - 1] == referenceClosing;
+                ParsePathPlusLimit(ref path, out int amount);
+                ParsePathTargetCategories(ref path, out List<SphereCategory> acceptedCategories, out List<SphereCategory> excludedCategories);
 
-                if (pathIsMultiPath)
-                {
-                    ParsePathPlusLimit(ref path, out int amount);
-                    ParsePathTargetCategories(ref path, out List<SphereCategory> acceptedCategories, out List<SphereCategory> excludedCategories);
-
-                    return new FucinePathPlus(path, amount, acceptedCategories, excludedCategories);
-                }
-
-                return new FucinePath(path);
+                return new FucinePathPlus(path, amount, acceptedCategories, excludedCategories);
             }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
+
+            return new FucinePath(path);
         }
 
         private static void ParsePathPlusLimit(ref string path, out int amount)
