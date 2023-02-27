@@ -55,13 +55,14 @@ namespace Roost.Twins
             if (cachedSpheres.ContainsKey(fullPath))
                 return new List<Sphere>(cachedSpheres[fullPath]);
 
-            List<Sphere> result;
+            List <Sphere> result;
             if (specialSpheres.ContainsKey(fullPath))
             {
                 result = specialSpheres[fullPath](); //special spheres are already wrapped in a new List
             }
             else if (fucinePath is FucinePathPlus)
             {
+               
                 result = new List<Sphere>();
                 FucinePathPlus pathPlus = fucinePath as FucinePathPlus;
 
@@ -296,7 +297,7 @@ namespace Roost.Twins
             try
             {
                 string formula = string.Concat(command);
-                Birdsong.TweetLoud(new FucineExp<float>(formula));
+                Birdsong.TweetLoud(new FucineExp<int>(formula));
                 Crossroads.ResetCache();
             }
             catch (Exception ex)
