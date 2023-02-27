@@ -39,14 +39,14 @@ namespace Roost.Vagabond
 
         private static void ExecuteCommand(string command)
         {
-            CommandLine.Log("executing command: '{0}'", command);
-
             command = command.Trim();
             if (string.IsNullOrWhiteSpace(command) || command[0] != '/')
             {
                 CommandLine.Log("Commands should always start with /");
                 return;
             }
+
+            CommandLine.Log("executing command: '{0}'", command);
 
             command = command.Trim().Substring(1);
             string[] commandParts = command.Split();
