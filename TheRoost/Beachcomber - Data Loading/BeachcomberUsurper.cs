@@ -42,7 +42,7 @@ namespace Roost.Beachcomber
 
         private static bool SubEntityNullCheck(IEntityWithId subEntity)
         {
-            return subEntity is null;
+            return !(subEntity is null);
         }
 
         private static bool SubListNullCheck(IList list)
