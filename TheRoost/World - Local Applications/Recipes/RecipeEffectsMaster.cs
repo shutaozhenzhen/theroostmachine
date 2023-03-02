@@ -9,6 +9,7 @@ using SecretHistories.UI;
 using SecretHistories.Enums;
 using SecretHistories.Fucine;
 using SecretHistories.Services;
+using SecretHistories.States;
 
 using Roost.Twins;
 using Roost.Twins.Entities;
@@ -53,6 +54,37 @@ namespace Roost.World.Recipes
             Machine.Patch(
                 original: typeof(TextRefiner).GetMethodInvariant(nameof(TextRefiner.RefineString)),
                 prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(OverrideRecipeRefinement)));
+
+            Machine.Patch(
+                original: Machine.GetMethod<OngoingState>(nameof(OngoingState.UpdateRecipePrediction)),
+                prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(MidRecipeVisualUpdate)));
+
+            Machine.Patch(
+                original: Machine.GetMethod<SituationWindow>(nameof(SituationWindow.Attach), typeof(Situation)),
+                prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(RememberWindowForSituation)));
+
+            Machine.Patch(
+                original: Machine.GetMethod<Situation>(nameof(Situation.Retire)),
+                prefix: typeof(RecipeEffectsMaster).GetMethodInvariant(nameof(ForgetWindowForSituatuin)));
+        }
+
+        static Action<Situation> TryOverrideVerbIcon = typeof(Situation).GetMethodInvariant(nameof(TryOverrideVerbIcon)).CreateAction<Situation>();
+        static Action<Token> UpdateVisuals = typeof(Token).GetMethodInvariant(nameof(UpdateVisuals)).CreateAction<Token>();
+        public static Dictionary<Situation, SituationWindow> situationsWindows = new Dictionary<Situation, SituationWindow>();
+        private static void MidRecipeVisualUpdate(Situation situation)
+        {
+            TryOverrideVerbIcon(situation);
+            UpdateVisuals(situation.GetToken());
+            situationsWindows[situation].DisplayIcon(situation.Icon);
+        }
+
+        private static void RememberWindowForSituation(Situation newSituation, SituationWindow __instance)
+        {
+            situationsWindows.Add(newSituation, __instance);
+        }
+        private static void ForgetWindowForSituatuin(Situation __instance)
+        {
+            situationsWindows.Remove(__instance);
         }
 
         //Recipe.OnPostImportForSpecificEntity()
