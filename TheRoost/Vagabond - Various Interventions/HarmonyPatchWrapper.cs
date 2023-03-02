@@ -430,5 +430,20 @@ namespace Roost
         {
             time.Schedule(func as Delegate, PatchType.Prefix);
         }
+
+        public static Action<T1> CreateAction<T1>(this MethodInfo method)
+        {
+            return method.CreateDelegate(typeof(Action<T1>)) as Action<T1>;
+        }
+
+        public static Action<T1,T2> CreateAction<T1,T2>(this MethodInfo method)
+        {
+            return method.CreateDelegate(typeof(Action<T1, T2>)) as Action<T1, T2>;
+        }
+
+        public static Action<T1, T2, T3> CreateAction<T1, T2, T3>(this MethodInfo method)
+        {
+            return method.CreateDelegate(typeof(Action<T1, T2, T3>)) as Action<T1, T2, T3>;
+        }
     }
 }

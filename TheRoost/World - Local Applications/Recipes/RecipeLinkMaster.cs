@@ -143,9 +143,9 @@ namespace Roost.World.Recipes
 
         static bool dontDisplayPreview = false;
         private static readonly Action<RecipeNote, string> predictionTitleSet = typeof(RecipeNote).GetPropertyInvariant(nameof(RecipeNote.Title)).GetSetMethod(true).
-            CreateDelegate(typeof(Action<RecipeNote, string>)) as Action<RecipeNote, string>;
+            CreateAction<RecipeNote, string>();
         private static readonly Action<RecipeNote, string> predictionDescriptionSet = typeof(RecipeNote).GetPropertyInvariant(nameof(RecipeNote.Description)).GetSetMethod(true).
-            CreateDelegate(typeof(Action<RecipeNote, string>)) as Action<RecipeNote, string>;
+            CreateAction<RecipeNote, string>();
         private static void DisplayPreview(Recipe recipe, Situation situation, ref RecipeNote __result)
         {
             if (dontDisplayPreview || situation.State.Identifier != SecretHistories.Enums.StateEnum.Unstarted)
