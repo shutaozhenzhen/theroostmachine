@@ -255,6 +255,9 @@ namespace Roost
 
         public static MethodInfo GetMethodInvariant(this Type definingClass, string methodName, params Type[] args)
         {
+            if (args.Contains(null))
+                Birdsong.TweetLoud($"Passed null as a desired parameter in GetMethod() for {definingClass.Name}.{methodName}()");
+
             return Vagabond.HarmonyMask.GetMethodInvariant(definingClass, methodName, args);
         }
 
@@ -270,10 +273,10 @@ namespace Roost
 
         public static MethodInfo GetMethod<T>(string methodName, params Type[] arguments)
         {
-            if (arguments == null)
-                return typeof(T).GetMethodInvariant(methodName);
-            else
+            if (arguments?.Length > 0)
                 return typeof(T).GetMethodInvariant(methodName, arguments);
+            else
+                return typeof(T).GetMethodInvariant(methodName);
         }
     }
 
