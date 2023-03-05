@@ -84,6 +84,7 @@ namespace Roost.Enactors
             Roost.World.Recipes.GrandReqsMaster.Enact();
             Roost.World.Recipes.RecipeEffectsMaster.Enact();
             Roost.World.Recipes.RecipeLinkMaster.Enact();
+            Roost.World.Recipes.RecipeNotesMaster.Enact();
             Roost.World.Recipes.RecipeRandomWildcardMaster.Enact();
             Roost.World.Recipes.RecipeCallbacksMaster.Enact();
 

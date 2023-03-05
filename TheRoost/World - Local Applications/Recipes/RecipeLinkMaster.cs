@@ -22,8 +22,6 @@ namespace Roost.World.Recipes
         const string CHANCE = "chance";
         const string LIMIT = "limit";
         const string FILTER = "filter";
-        const string PREVIEW = "previewDescription";
-        const string PREVIEW_LABEL = "previewLabel";
 
         internal static void Enact()
         {
@@ -48,16 +46,6 @@ namespace Roost.World.Recipes
             Machine.Patch(
                 original: typeof(Situation).GetMethodInvariant("AdditionalRecipeSpawnToken", new Type[] { typeof(Recipe), typeof(Expulsion), typeof(FucinePath) }),
                 transpiler: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(UseNewExpulsion)));
-
-            Machine.ClaimProperty<Recipe, string>(PREVIEW);
-            Machine.ClaimProperty<Recipe, string>(PREVIEW_LABEL);
-            Machine.Patch(
-                original: typeof(RecipeNote).GetMethodInvariant(nameof(RecipeNote.StartDescription)),
-                postfix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(DisplayPreview)));
-
-            Machine.Patch(
-                original: typeof(UnstartedState).GetMethodInvariant(nameof(UnstartedState.Exit)),
-                postfix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(DisplayStartDescription)));
         }
 
         private static bool GetRefRecipeChance(LinkedRecipeDetails __instance, ref int __result)
