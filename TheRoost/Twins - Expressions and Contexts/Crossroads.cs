@@ -279,12 +279,12 @@ namespace Roost.Twins
     {
         public static void TestReference(params string[] command)
         {
-            string path = string.Concat(command);
             try
             {
+                Crossroads.ResetCache();
+                string path = string.Concat(command);
                 FucineRef reference = new FucineRef(path);
                 Birdsong.TweetLoud($"Reference value '{reference.value}'");
-                Crossroads.ResetCache();
             }
             catch (Exception ex)
             {
@@ -296,9 +296,9 @@ namespace Roost.Twins
         {
             try
             {
+                Crossroads.ResetCache();
                 string formula = string.Concat(command);
                 Birdsong.TweetLoud(new FucineExp<int>(formula));
-                Crossroads.ResetCache();
             }
             catch (Exception ex)
             {

@@ -10,6 +10,7 @@ using SecretHistories.States;
 using SecretHistories.Fucine;
 
 using Roost.Twins.Entities;
+using Roost.Twins;
 
 using HarmonyLib;
 
@@ -129,14 +130,14 @@ namespace Roost.World.Recipes
             if (filter.isUndefined)
                 return new List<Token>();
 
-            Twins.Crossroads.MarkLocalSituation(situation);
+            Crossroads.MarkLocalSituation(situation);
             List<Token> tokens = situation.GetElementTokensInSituation().FilterTokens(filter);
 
             FucineExp<int> limit = expulsion.RetrieveProperty<FucineExp<int>>(LIMIT);
             if (!limit.isUndefined)
                 tokens = tokens.SelectRandom(limit.value);
 
-            Twins.Crossroads.ResetCache();
+            Crossroads.ResetCache();
 
             return tokens;
         }
