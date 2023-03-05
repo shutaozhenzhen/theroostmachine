@@ -18,11 +18,11 @@ namespace Roost.World.Recipes
             Machine.ClaimProperty<Recipe, string>(PREVIEW_LABEL);
             Machine.Patch(
                 original: typeof(RecipeNote).GetMethodInvariant(nameof(RecipeNote.StartDescription)),
-                postfix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(DisplayPreview)));
+                postfix: typeof(RecipeNotesMaster).GetMethodInvariant(nameof(DisplayPreview)));
 
             Machine.Patch(
                 original: typeof(UnstartedState).GetMethodInvariant(nameof(UnstartedState.Exit)),
-                postfix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(DisplayStartDescription)));
+                postfix: typeof(RecipeNotesMaster).GetMethodInvariant(nameof(DisplayStartDescription)));
         }
 
         static bool dontDisplayPreview = false;
