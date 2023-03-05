@@ -25,11 +25,6 @@ namespace Roost.World.Recipes
 
         internal static void Enact()
         {
-            //there are xtrigger links
-            Machine.Patch(
-                original: typeof(RequiresExecutionState).GetMethodInvariant(nameof(RequiresExecutionState.GetNextValidLink)),
-                prefix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(EvaluateTempLinks)));
-
             //chance is an expression
             Machine.ClaimProperty<LinkedRecipeDetails, FucineExp<int>>(CHANCE, false, "100");
             Machine.Patch(
@@ -46,6 +41,11 @@ namespace Roost.World.Recipes
             Machine.Patch(
                 original: typeof(Situation).GetMethodInvariant("AdditionalRecipeSpawnToken", new Type[] { typeof(Recipe), typeof(Expulsion), typeof(FucinePath) }),
                 transpiler: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(UseNewExpulsion)));
+
+            //xtrigger can add temporary links
+            Machine.Patch(
+                original: typeof(RequiresExecutionState).GetMethodInvariant(nameof(RequiresExecutionState.GetNextValidLink)),
+                prefix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(EvaluateTempLinks)));
         }
 
         private static bool GetRefRecipeChance(LinkedRecipeDetails __instance, ref int __result)
@@ -63,40 +63,7 @@ namespace Roost.World.Recipes
             return false;
         }
 
-
-        public static readonly SortedList<int, Recipe> temporaryLinks = new SortedList<int, Recipe>(new DuplicateKeyComparer<int>());
-        private class DuplicateKeyComparer<TKey> : IComparer<TKey> where TKey : IComparable
-        {
-            public int Compare(TKey x, TKey y)
-            {
-                int result = x.CompareTo(y);
-
-                if (result == 0)
-                    return 1;   // Handle equality as beeing greater
-                else
-                    return result;
-            }
-        }
-        //RecipeConductor.GetLinkedRecipe() prefix
-        private static bool EvaluateTempLinks(ref Recipe __result, Situation situation)
-        {
-            AspectsInContext aspectsInContext = situation.GetAspectsInContext(true);
-            foreach (Recipe recipe in temporaryLinks.Values)
-                if (recipe.RequirementsSatisfiedBy(aspectsInContext))
-                {
-                    __result = recipe;
-                    break;
-                }
-
-            temporaryLinks.Clear();
-            return __result == null;
-        }
-
-        internal static void PushTemporaryRecipeLink(Recipe recipe, int priority)
-        {
-            temporaryLinks.Add(priority, recipe);
-        }
-
+        //Situation.AdditionalRecipeSpawnToken()
         private static IEnumerable<CodeInstruction> UseNewExpulsion(IEnumerable<CodeInstruction> instructions)
         {
             List<CodeInstruction> myCode = new List<CodeInstruction>()
@@ -130,35 +97,39 @@ namespace Roost.World.Recipes
             return tokens;
         }
 
-        static bool dontDisplayPreview = false;
-        private static readonly Action<RecipeNote, string> predictionTitleSet = typeof(RecipeNote).GetPropertyInvariant(nameof(RecipeNote.Title)).GetSetMethod(true).
-            CreateAction<RecipeNote, string>();
-        private static readonly Action<RecipeNote, string> predictionDescriptionSet = typeof(RecipeNote).GetPropertyInvariant(nameof(RecipeNote.Description)).GetSetMethod(true).
-            CreateAction<RecipeNote, string>();
-        private static void DisplayPreview(Recipe recipe, Situation situation, ref RecipeNote __result)
+
+        public static readonly SortedList<int, Recipe> temporaryLinks = new SortedList<int, Recipe>(new DuplicateKeyComparer<int>());
+        private class DuplicateKeyComparer<TKey> : IComparer<TKey> where TKey : IComparable
         {
-            if (dontDisplayPreview || situation.State.Identifier != SecretHistories.Enums.StateEnum.Unstarted)
-                return;
+            public int Compare(TKey x, TKey y)
+            {
+                int result = x.CompareTo(y);
 
-            string previewLabel = recipe.RetrieveProperty<string>(PREVIEW_LABEL);
-            if (previewLabel != null)
-                predictionTitleSet(__result, previewLabel);
-
-            string previewDescription = recipe.RetrieveProperty<string>(PREVIEW);
-            if (previewDescription != null)
-                predictionDescriptionSet(__result, previewDescription);
+                if (result == 0)
+                    return 1;   // Handle equality as beeing greater
+                else
+                    return result;
+            }
         }
 
-        private static void DisplayStartDescription(Situation situation)
+        //RecipeConductor.GetLinkedRecipe() prefix
+        private static bool EvaluateTempLinks(ref Recipe __result, Situation situation)
         {
-            Recipe recipe = situation.CurrentRecipe;
-            if (!recipe.HasCustomProperty(PREVIEW) && !recipe.HasCustomProperty(PREVIEW_LABEL))
-                return;
+            AspectsInContext aspectsInContext = situation.GetAspectsInContext(true);
+            foreach (Recipe recipe in temporaryLinks.Values)
+                if (recipe.RequirementsSatisfiedBy(aspectsInContext))
+                {
+                    __result = recipe;
+                    break;
+                }
 
-            dontDisplayPreview = true;
-            RecipeNote notification = RecipeNote.StartDescription(recipe, situation, true);
-            situation.ReceiveNote(notification, Context.Metafictional());
-            dontDisplayPreview = false;
+            temporaryLinks.Clear();
+            return __result == null;
+        }
+
+        internal static void PushTemporaryRecipeLink(Recipe recipe, int priority)
+        {
+            temporaryLinks.Add(priority, recipe);
         }
     }
 }
