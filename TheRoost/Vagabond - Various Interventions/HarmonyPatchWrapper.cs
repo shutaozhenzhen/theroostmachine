@@ -127,44 +127,51 @@ namespace Roost.Vagabond
             return property;
         }
 
-        private static readonly Dictionary<AtTimeOfPower, MethodBase> methodsToPatch = new Dictionary<AtTimeOfPower, MethodBase>()
+
+        public static MethodBase GetMethod(this AtTimeOfPower time)
         {
- { AtTimeOfPower.QuoteSceneInit, typeof(SplashScreen).GetMethodInvariant("Start") },
- { AtTimeOfPower.MenuSceneInit, typeof(MenuScreenController).GetMethodInvariant("InitialiseServices") },
- { AtTimeOfPower.TabletopSceneInit, typeof(GameGateway).GetMethodInvariant("PopulateEnvironment") },
- { AtTimeOfPower.GameOverSceneInit, typeof(GameOverScreenController).GetMethodInvariant("OnEnable") },
- { AtTimeOfPower.NewGameSceneInit, typeof(NewGameScreenController).GetMethodInvariant("Start") },
+            switch (time)
+            {
+                case AtTimeOfPower.QuoteSceneInit: return typeof(SplashScreen).GetMethodInvariant("Start");
+                case AtTimeOfPower.MenuSceneInit: return typeof(MenuScreenController).GetMethodInvariant("InitialiseServices");
+                case AtTimeOfPower.TabletopSceneInit: return typeof(GameGateway).GetMethodInvariant("PopulateEnvironment");
+                case AtTimeOfPower.GameOverSceneInit: return typeof(GameOverScreenController).GetMethodInvariant("OnEnable");
+                case AtTimeOfPower.NewGameSceneInit: return typeof(NewGameScreenController).GetMethodInvariant("Start");
 
- { AtTimeOfPower.NewGame, typeof(MenuScreenController).GetMethodInvariant(nameof(MenuScreenController.BeginNewSaveWithSpecifiedLegacy)) },
+                case AtTimeOfPower.NewGame: return typeof(MenuScreenController).GetMethodInvariant(nameof(MenuScreenController.BeginNewSaveWithSpecifiedLegacy));
 
- { AtTimeOfPower.RecipeRequirementsCheck, typeof(Recipe).GetMethodInvariant(nameof(Recipe.RequirementsSatisfiedBy)) },
+                case AtTimeOfPower.RecipeRequirementsCheck: return typeof(Recipe).GetMethodInvariant(nameof(Recipe.RequirementsSatisfiedBy));
 
- { AtTimeOfPower.RecipeExecution, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("Execute", typeof(Situation)) },
- { AtTimeOfPower.RecipePortals, typeof(RecipeCompletionEffectCommand).GetMethodInvariant("OpenPortals") },
+                case AtTimeOfPower.RecipeExecution: return typeof(RecipeCompletionEffectCommand).GetMethodInvariant("Execute", typeof(Situation));
+                case AtTimeOfPower.RecipePortals: return typeof(RecipeCompletionEffectCommand).GetMethodInvariant("OpenPortals");
 
- { AtTimeOfPower.OnPostImportCulture, typeof(Culture).GetMethodInvariant("OnPostImportForSpecificEntity") },
- { AtTimeOfPower.OnPostImportDeck, typeof(DeckSpec).GetMethodInvariant("OnPostImportForSpecificEntity") },
- { AtTimeOfPower.OnPostImportElement, typeof(Element).GetMethodInvariant("OnPostImportForSpecificEntity") },
- { AtTimeOfPower.OnPostImportEnding, typeof(Ending).GetMethodInvariant("OnPostImportForSpecificEntity") },
- { AtTimeOfPower.OnPostImportExpulsion, typeof(Expulsion).GetMethodInvariant("OnPostImportForSpecificEntity") },
- { AtTimeOfPower.OnPostImportLegacy, typeof(Legacy).GetMethodInvariant("OnPostImportForSpecificEntity") },
- { AtTimeOfPower.OnPostImportLink, typeof(LinkedRecipeDetails).GetMethodInvariant("OnPostImportForSpecificEntity") },
- { AtTimeOfPower.OnPostImportXTrigger, typeof(MorphDetails).GetMethodInvariant("OnPostImportForSpecificEntity") },
- { AtTimeOfPower.OnPostImportMutation, typeof(MutationEffect).GetMethodInvariant("OnPostImportForSpecificEntity") },
- { AtTimeOfPower.OnPostImportPortal, typeof(Portal).GetMethodInvariant("OnPostImportForSpecificEntity") },
- { AtTimeOfPower.OnPostImportRecipe, typeof(Recipe).GetMethodInvariant("OnPostImportForSpecificEntity") },
- { AtTimeOfPower.OnPostImpostSetting, typeof(Setting).GetMethodInvariant("OnPostImportForSpecificEntity") },
- { AtTimeOfPower.OnPostImportSlot, typeof(SphereSpec).GetMethodInvariant("OnPostImportForSpecificEntity") },
- { AtTimeOfPower.OnPostImportVerb, typeof(Verb).GetMethodInvariant("OnPostImportForSpecificEntity") },
- { AtTimeOfPower.CompendiumLoad, typeof(CompendiumLoader).GetMethodInvariant("PopulateCompendium") }
-        };
+                case AtTimeOfPower.OnPostImportCulture: return typeof(Culture).GetMethodInvariant("OnPostImportForSpecificEntity");
+                case AtTimeOfPower.OnPostImportDeck: return typeof(DeckSpec).GetMethodInvariant("OnPostImportForSpecificEntity");
+                case AtTimeOfPower.OnPostImportElement: return typeof(Element).GetMethodInvariant("OnPostImportForSpecificEntity");
+                case AtTimeOfPower.OnPostImportEnding: return typeof(Ending).GetMethodInvariant("OnPostImportForSpecificEntity");
+                case AtTimeOfPower.OnPostImportExpulsion: return typeof(Expulsion).GetMethodInvariant("OnPostImportForSpecificEntity");
+                case AtTimeOfPower.OnPostImportLegacy: return typeof(Legacy).GetMethodInvariant("OnPostImportForSpecificEntity");
+                case AtTimeOfPower.OnPostImportLink: return typeof(LinkedRecipeDetails).GetMethodInvariant("OnPostImportForSpecificEntity");
+                case AtTimeOfPower.OnPostImportXTrigger: return typeof(MorphDetails).GetMethodInvariant("OnPostImportForSpecificEntity");
+                case AtTimeOfPower.OnPostImportMutation: return typeof(MutationEffect).GetMethodInvariant("OnPostImportForSpecificEntity");
+                case AtTimeOfPower.OnPostImportPortal: return typeof(Portal).GetMethodInvariant("OnPostImportForSpecificEntity");
+                case AtTimeOfPower.OnPostImportRecipe: return typeof(Recipe).GetMethodInvariant("OnPostImportForSpecificEntity");
+                case AtTimeOfPower.OnPostImpostSetting: return typeof(Setting).GetMethodInvariant("OnPostImportForSpecificEntity");
+                case AtTimeOfPower.OnPostImportSlot: return typeof(SphereSpec).GetMethodInvariant("OnPostImportForSpecificEntity");
+                case AtTimeOfPower.OnPostImportVerb: return typeof(Verb).GetMethodInvariant("OnPostImportForSpecificEntity");
+                case AtTimeOfPower.CompendiumLoad: return typeof(CompendiumLoader).GetMethodInvariant("PopulateCompendium");
+                default: 
+                    Birdsong.TweetLoud($"Corresponding method for time of power {time} isn't set; returning null"); 
+                    return null;
+            }
+        }
 
         internal static void Unite(AtTimeOfPower time, Delegate patchMethod, PatchType patchType, string patchId)
         {
             if (patchType == PatchType.Prefix)
-                Machine.Patch(methodsToPatch[time], prefix: patchMethod.Method, patchId: patchId);
+                Machine.Patch(time.GetMethod(), prefix: patchMethod.Method, patchId: patchId);
             else if (patchType == PatchType.Postfix)
-                Machine.Patch(methodsToPatch[time], postfix: patchMethod.Method, patchId: patchId);
+                Machine.Patch(time.GetMethod(), postfix: patchMethod.Method, patchId: patchId);
             else
                 Birdsong.TweetLoud($"Trying to schedule method {patchMethod.Method.Name} at Time of Power '{time}' with patch type '{patchType}' - which is not a valid PatchType (not a prefix, not a postfix). No fooling around with the Times of Power, please.");
         }
