@@ -91,9 +91,9 @@ namespace Roost.Vagabond
                             }
 
                         if (success)
-                            return method; 
+                            return method;
                     }
-             
+
                 throw Birdsong.Cack("Method not found");
             }
             catch (Exception ex)
@@ -446,7 +446,7 @@ namespace Roost
             return method.CreateDelegate(typeof(Action<T1>)) as Action<T1>;
         }
 
-        public static Action<T1,T2> CreateAction<T1,T2>(this MethodInfo method)
+        public static Action<T1, T2> CreateAction<T1, T2>(this MethodInfo method)
         {
             return method.CreateDelegate(typeof(Action<T1, T2>)) as Action<T1, T2>;
         }

@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection.Emit;
-using HarmonyLib;
-
-using SecretHistories.UI;
+﻿using SecretHistories.UI;
 using SecretHistories.Spheres;
-using SecretHistories.Entities;
-using SecretHistories.Commands;
 
 namespace Roost.World
 {
