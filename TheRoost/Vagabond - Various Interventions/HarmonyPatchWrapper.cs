@@ -160,8 +160,8 @@ namespace Roost.Vagabond
                 case AtTimeOfPower.OnPostImportSlot: return typeof(SphereSpec).GetMethodInvariant("OnPostImportForSpecificEntity");
                 case AtTimeOfPower.OnPostImportVerb: return typeof(Verb).GetMethodInvariant("OnPostImportForSpecificEntity");
                 case AtTimeOfPower.CompendiumLoad: return typeof(CompendiumLoader).GetMethodInvariant("PopulateCompendium");
-                default: 
-                    Birdsong.TweetLoud($"Corresponding method for time of power {time} isn't set; returning null"); 
+                default:
+                    Birdsong.TweetLoud($"Corresponding method for time of power {time} isn't set; returning null");
                     return null;
             }
         }
@@ -176,7 +176,9 @@ namespace Roost.Vagabond
                 Birdsong.TweetLoud($"Trying to schedule method {patchMethod.Method.Name} at Time of Power '{time}' with patch type '{patchType}' - which is not a valid PatchType (not a prefix, not a postfix). No fooling around with the Times of Power, please.");
         }
 
-        internal static IEnumerable<CodeInstruction> TranspilerInsertAtMethod(IEnumerable<CodeInstruction> instructions, MethodInfo referenceMethodCall, List<CodeInstruction> myCode, bool deleteOriginalMethod, int skipCallsCount)
+        internal static IEnumerable<CodeInstruction> TranspilerInsertAtMethod(IEnumerable<CodeInstruction> instructions, MethodInfo referenceMethodCall,
+            List<CodeInstruction> myCode,
+            bool deleteOriginalMethod, int skipCallsCount)
         {
             List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
             //will only work for simple parameters, not other method calls
@@ -206,7 +208,10 @@ namespace Roost.Vagabond
             return codes.AsEnumerable();
         }
 
-        internal static IEnumerable<CodeInstruction> TranspilerReplaceSegment(IEnumerable<CodeInstruction> instructions, CodeInstructionMask startSegmentMask, CodeInstructionMask endSegmentMask, List<CodeInstruction> myCode, bool removeStart, bool removeEnd, int startShift)
+        //used for both replacing and inserting
+        internal static IEnumerable<CodeInstruction> TranspilerReplaceSegment(IEnumerable<CodeInstruction> instructions,
+            CodeInstructionMask startSegmentMask, CodeInstructionMask endSegmentMask,
+            List<CodeInstruction> myCode, bool removeStart, bool removeEnd, int startShift)
         {
             if (myCode == null || myCode.Count == 0)
             {
