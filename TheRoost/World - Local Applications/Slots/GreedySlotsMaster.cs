@@ -23,9 +23,9 @@ namespace Roost.World.Slots
         private static bool TryGrabStackTrulyRandom(SphereSpec slotSpec, Sphere sphereToSearch, ref Token __result)
         {
             List<Token> tokens = sphereToSearch.GetElementTokens();
+            Crossroads.ResetCache();
             Crossroads.MarkAllLocalTokens(tokens);
             var candidateTokens = tokens.Where(token => token.CanBePulled() && slotSpec.CheckPayloadAllowedHere(token.Payload).MatchType == SlotMatchForAspectsType.Okay);
-            Crossroads.ResetCache();
 
             __result = candidateTokens.SelectSingleToken();
 

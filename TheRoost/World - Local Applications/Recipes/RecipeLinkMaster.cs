@@ -85,14 +85,14 @@ namespace Roost.World.Recipes
             if (filter.isUndefined)
                 return new List<Token>();
 
+            Crossroads.ResetCache();
             Crossroads.MarkLocalSituation(situation);
+
             List<Token> tokens = situation.GetElementTokensInSituation().FilterTokens(filter);
 
             FucineExp<int> limit = expulsion.RetrieveProperty<FucineExp<int>>(LIMIT);
             if (!limit.isUndefined)
                 tokens = tokens.SelectRandom(limit.value);
-
-            Crossroads.ResetCache();
 
             return tokens;
         }

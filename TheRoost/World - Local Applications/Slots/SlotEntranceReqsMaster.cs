@@ -26,10 +26,10 @@ namespace Roost.World.Slots
         private static bool SlotFilterSatisfied(SphereSpec __instance, ITokenPayload payload, ref ContainerMatchForStack __result)
         {
             Token token = payload.GetToken();
+            Crossroads.ResetCache();
             Crossroads.MarkLocalToken(token);
             FucineExp<bool> filter = __instance.RetrieveProperty<FucineExp<bool>>(SLOT_ENTRANCE_REQS);
             bool filterFailed = !filter.isUndefined && filter.value == false;
-            Crossroads.ResetCache();
 
             if (filterFailed)
             {

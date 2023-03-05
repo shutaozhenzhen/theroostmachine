@@ -152,6 +152,7 @@ namespace Roost.World.Recipes
         private static void RefEffects(Situation situation)
         {
             //Birdsong.Sing(VerbosityLevel.SystemChatter, 0, $"EXECUTING: {command.Recipe.Id}");
+            Crossroads.ResetCache();
             Crossroads.MarkLocalSituation(situation);
 
             GrandEffects grandEffects = situation.CurrentRecipe.RetrieveProperty<GrandEffects>(GRAND_EFFECTS);
@@ -159,8 +160,6 @@ namespace Roost.World.Recipes
                 GrandEffects.RunElementTriggersOnly(situation, situation.GetSingleSphereByCategory(SphereCategory.SituationStorage));
             else
                 grandEffects.RunGrandEffects(situation, situation.GetSingleSphereByCategory(SphereCategory.SituationStorage), true);
-
-            Crossroads.ResetCache();
         }
 
 

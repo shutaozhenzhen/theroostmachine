@@ -55,14 +55,14 @@ namespace Roost.Twins
             if (cachedSpheres.ContainsKey(fullPath))
                 return new List<Sphere>(cachedSpheres[fullPath]);
 
-            List <Sphere> result;
+            List<Sphere> result;
             if (specialSpheres.ContainsKey(fullPath))
             {
                 result = specialSpheres[fullPath](); //special spheres are already wrapped in a new List
             }
             else if (fucinePath is FucinePathPlus)
             {
-               
+
                 result = new List<Sphere>();
                 FucinePathPlus pathPlus = fucinePath as FucinePathPlus;
 
@@ -104,6 +104,9 @@ namespace Roost.Twins
             return tokens;
         }
 
+        //due to how much pain it is to properly reset context after each action
+        //we're adopting the inverse approach
+        //context should be reset each time we mark something as top-level local
         public static void MarkLocalSituation(Situation situation)
         {
             cachedSpheres[currentSituation] = situation.GetSpheresActiveForCurrentState();

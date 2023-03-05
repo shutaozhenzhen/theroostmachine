@@ -82,6 +82,7 @@ namespace Roost.World.Slots
 
             string verbId = situation.VerbId;
 
+            Crossroads.ResetCache();
             Crossroads.MarkLocalSituation(situation);
 
             foreach (SphereSpec slot in compendium.GetEntityById<Element>(tokenInFirstSlot.PayloadEntityId).Slots)
@@ -106,8 +107,6 @@ namespace Roost.World.Slots
                                 result.Add(slot.Duplicate(n));
                     }
             }
-
-            Crossroads.ResetCache();
 
             return result;
         }
@@ -143,13 +142,12 @@ namespace Roost.World.Slots
         {
             List<SphereSpec> slots = new List<SphereSpec>();
 
+            Crossroads.ResetCache();
             Crossroads.MarkLocalSituation(situation);
 
             foreach (SphereSpec sphere in situation.FallbackRecipe.Slots)
                 if (sphere.SuitsVerbAndSatisfiedReqs(situation.VerbId))
                     slots.Add(sphere);
-
-            Crossroads.ResetCache();
 
             if (slots.Count == 0)
             {

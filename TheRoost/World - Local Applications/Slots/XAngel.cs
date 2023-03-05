@@ -119,13 +119,15 @@ namespace SecretHistories.Spheres.Angels
             if (context.actionSource == Context.ActionSource.FlushingTokens)
             {
                 Situation situation = _watchingOverThreshold.GetContainer() as Situation;
+
+                Crossroads.ResetCache();
                 Crossroads.MarkLocalSituation(situation);
                 Crossroads.MarkLocalToken(token);
+
                 GrandEffects.RunXTriggers(token, situation, new Dictionary<string, int>() { { _trigger, 1 } });
 
                 RecipeExecutionBuffer.ApplyAllEffects();
                 RecipeExecutionBuffer.ApplyVFX();
-                Crossroads.ResetCache();
 
                 return true;
             }
