@@ -44,7 +44,7 @@ namespace Roost.World.Slots
                 prefix: typeof(SlotPresenceReqsMaster).GetMethodInvariant(nameof(SphereIsDependent)));
 
             Machine.Patch(
-                 original: typeof(StartingState).GetMethodInvariant("PopulateRecipeSlots"),
+                 original: typeof(StartingState).GetMethodInvariant(nameof(PopulateRecipeSlots)),
                  prefix: typeof(SlotPresenceReqsMaster).GetMethodInvariant(nameof(PopulateRecipeSlots)));
         }
 
