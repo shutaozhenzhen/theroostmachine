@@ -15,6 +15,7 @@ namespace Roost.World
             if (filter.isUndefined || tokens.Count == 0)
                 return tokens;
 
+            //filtering happens only when we already reset the crossroads for the current context
             Twins.Crossroads.MarkAllLocalTokens(tokens);
 
             List<Token> result = new List<Token>();

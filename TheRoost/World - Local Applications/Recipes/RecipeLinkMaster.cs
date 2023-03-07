@@ -81,12 +81,12 @@ namespace Roost.World.Recipes
 
         private static List<Token> FilterTokensWithExpulsion(Situation situation, Expulsion expulsion)
         {
+            //Situation context was already set for links evaluation
+            //so no need to resetcontext/mark situation here
+
             FucineExp<bool> filter = expulsion.RetrieveProperty<FucineExp<bool>>(FILTER);
             if (filter.isUndefined)
                 return new List<Token>();
-
-            //Crossroads.ResetCache();
-            //Crossroads.MarkLocalSituation(situation);
 
             List<Token> tokens = situation.GetElementTokensInSituation().FilterTokens(filter);
 

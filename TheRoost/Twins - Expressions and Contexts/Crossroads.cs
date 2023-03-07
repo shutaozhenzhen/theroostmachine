@@ -124,9 +124,9 @@ namespace Roost.Twins
             MarkLocalScope(singleLocalToken);
         }
 
-        public static void MarkLocalScope(List<Sphere> sphere)
+        public static void MarkLocalScope(List<Sphere> spheres)
         {
-            cachedSpheres[currentScope] = sphere;
+            cachedSpheres[currentScope] = spheres;
         }
 
         public static void UnmarkLocalSphere()
