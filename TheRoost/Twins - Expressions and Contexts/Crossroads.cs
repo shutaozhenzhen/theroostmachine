@@ -154,6 +154,27 @@ namespace Roost.Twins
             MarkLocalScope(cachedSpheres[currentSphere]);
         }
 
+        public static Situation GetLocalSituation()
+        {
+            var spheres = GetCachedContext(currentScope);
+
+            if (spheres.Count > 0)
+                return spheres.First().GetContainer() as Situation;
+
+            return NullSituation.Create();
+        }
+
+        public static List<Sphere> GetCachedContext(string context)
+        {
+            if (!cachedSpheres.ContainsKey(context) || !cachedSpheres[context].Any())
+            {
+                Birdsong.TweetLoud($"No local context '{context}' set");
+                return new List<Sphere>();
+            }
+
+            return cachedSpheres[context];
+        }
+
         public const string currentSituation = "~/situation";
         public const string currentSphere = "~/sphere";
         public const string currentTokens = "~/tokens";
