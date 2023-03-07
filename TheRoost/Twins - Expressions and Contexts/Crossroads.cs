@@ -21,32 +21,26 @@ namespace Roost.Twins
     {
         internal static void Enact()
         {
-            Roost.Vagabond.CommandLine.AddCommand("ref", TwinsDebug.TestReference);
-            Roost.Vagabond.CommandLine.AddCommand("exp", TwinsDebug.TestExpression);
-            Roost.Vagabond.CommandLine.AddCommand("sphere", TwinsDebug.SphereFind);
-            Roost.Vagabond.CommandLine.AddCommand("spheres", TwinsDebug.SphereFind);
-            Roost.Vagabond.CommandLine.AddCommand("tokens", TwinsDebug.SphereContent);
+            Vagabond.CommandLine.AddCommand("ref", TwinsDebug.TestReference);
+            Vagabond.CommandLine.AddCommand("exp", TwinsDebug.TestExpression);
+            Vagabond.CommandLine.AddCommand("sphere", TwinsDebug.SphereFind);
+            Vagabond.CommandLine.AddCommand("spheres", TwinsDebug.SphereFind);
+            Vagabond.CommandLine.AddCommand("tokens", TwinsDebug.SphereContent);
 
-            //the game keeps slot and output spheres even when they are unused; to avoid confusion in references, clear them
+            //we rely on SituationState.IsActiveInThisState(Sphere) to correctly get the current Situation Spheres
+            //it's a super peripheral feature for the vanilla, though, and its methods are written carelessly
+            //so we need to fix the requiring execution state manually
             Machine.Patch(
-                original: typeof(StartingState).GetMethodInvariant(nameof(StartingState.Enter)),
-                postfix: typeof(Crossroads).GetMethodInvariant(nameof(ClearVerbThresholds)));
-            Machine.Patch(
-                original: typeof(CompleteState).GetMethodInvariant(nameof(CompleteState.Exit)),
-                postfix: typeof(Crossroads).GetMethodInvariant(nameof(ClearOutput)));
+                original: typeof(RequiresExecutionState).GetMethodInvariant(nameof(SituationState.IsActiveInThisState)),
+                prefix: typeof(Crossroads).GetMethodInvariant(nameof(IsSphereActiveInExecutingState)));
 
             AtTimeOfPower.TabletopSceneInit.Schedule(ResetCache, PatchType.Prefix);
         }
 
-        private static readonly string VERB_THRESHOLDS_SPHERE = SituationDominionEnum.VerbThresholds.ToString();
-        private static readonly string OUTPUT_SPHERE = SituationDominionEnum.Output.ToString();
-        static void ClearVerbThresholds(Situation situation)
+        static bool IsSphereActiveInExecutingState(Sphere s, ref bool __result)
         {
-            situation.AddCommand(new ClearDominionCommand(VERB_THRESHOLDS_SPHERE, SphereRetirementType.Graceful));
-        }
-        static void ClearOutput(Situation situation)
-        {
-            situation.AddCommand(new ClearDominionCommand(OUTPUT_SPHERE, SphereRetirementType.Graceful));
+            __result = s.SphereCategory == SphereCategory.SituationStorage || (s.SphereCategory == SphereCategory.Threshold && s.GoverningSphereSpec.IsActiveInState(StateEnum.Ongoing));
+            return false;
         }
 
         public static List<Sphere> GetSpheresByPath(this FucinePath fucinePath)
