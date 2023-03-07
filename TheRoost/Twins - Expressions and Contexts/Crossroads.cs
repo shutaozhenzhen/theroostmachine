@@ -104,6 +104,7 @@ namespace Roost.Twins
         public static void MarkLocalSituation(Situation situation)
         {
             cachedSpheres[currentSituation] = situation.GetSpheresActiveForCurrentState();
+            cachedSpheres[currentSphere] = cachedSpheres[currentSituation];
             MarkLocalScope(cachedSpheres[currentSituation]);
         }
 
