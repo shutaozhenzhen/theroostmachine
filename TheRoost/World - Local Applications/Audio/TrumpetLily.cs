@@ -28,6 +28,8 @@ namespace Roost.World.Audio
         const string PLAY_MUSIC = "playAudioTrack";
         const string SET_BG_MUSIC = "setBGMusic";
 
+        const string RECIPE_MUSIC = "signalMusic";
+
         internal static void Enact()
         {
             Machine.Patch(typeof(ModManager).GetMethodInvariant(nameof(ModManager.TryLoadImagesForEnabledMods)),
@@ -49,6 +51,10 @@ namespace Roost.World.Audio
 
             Vagabond.CommandLine.AddCommand("music", MusicPlay);
             Vagabond.CommandLine.AddCommand("sfx", SFXPlay);
+
+            Machine.ClaimProperty<Recipe, string>(RECIPE_MUSIC);
+            Machine.Patch(typeof(Situation).GetMethodInvariant(nameof(Situation.UpdateRecipePrediction)),
+                postfix: typeof(TrumpetLily).GetMethodInvariant(nameof(PlayRecipeMusic)));
         }
 
         static List<AudioClip> tabletopBGMusic;
@@ -125,6 +131,23 @@ namespace Roost.World.Audio
                 tabletopMusicAudioSource.volume = startingVolume;
                 PlayClip(clip);
             }
+        }
+
+        //Situation.UpdateRecipePrediction() prefix
+        private static void PlayRecipeMusic(Situation __instance)
+        {
+            string signalClipName = __instance.CurrentRecipe.RetrieveProperty<string>(RECIPE_MUSIC);
+
+            if (string.IsNullOrWhiteSpace(signalClipName))
+                return;
+
+            if (!TryGetCustomClip(signalClipName, out AudioClip clip))1
+                return;
+
+            if (GetCurrentClip().name == clip.name)
+                return;
+
+            PlayClip(clip);
         }
 
         private static void PlayEndingMusic(Ending ending, AudioSource ___audioSource)
