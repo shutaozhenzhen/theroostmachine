@@ -53,24 +53,29 @@ namespace Roost.World.Audio
 
         static List<AudioClip> tabletopBGMusic;
         static List<AudioClip> legacyDefaultBGMusic;
+        static List<AudioClip> vanillaMusic;
+
         static AudioSource tabletopMusicAudioSource;
         static AudioClip emptyClip = AudioClip.Create("", 1, 1, 1000, false);
         private static void HandleTabletopBGMusic()
         {
-            var bgMusField = typeof(BackgroundMusic).GetFieldInvariant("backgroundMusic");
-            tabletopBGMusic = (bgMusField.GetValue(Watchman.Get<BackgroundMusic>()) as IEnumerable<AudioClip>).ToList();
-            bgMusField.SetValue(Watchman.Get<BackgroundMusic>(), tabletopBGMusic);
-
             tabletopMusicAudioSource = typeof(BackgroundMusic).GetFieldInvariant("audioSource").GetValue(Watchman.Get<BackgroundMusic>()) as AudioSource;
 
-            List<string> trackList;
-            if (Watchman.Get<Stable>().Protag().ActiveLegacy.RetrieveProperty<bool>(OVERRIDE_MUSIC))
-            {
-                tabletopBGMusic.Clear();
-                tabletopBGMusic.Add(emptyClip);
-            }
+            //remembering initial audio clips
+            var bgMusField = typeof(BackgroundMusic).GetFieldInvariant("backgroundMusic");
+            vanillaMusic = (bgMusField.GetValue(Watchman.Get<BackgroundMusic>()) as IEnumerable<AudioClip>).ToList();
 
-            if (Watchman.Get<Stable>().Protag().ActiveLegacy.TryRetrieveProperty(MUSIC, out trackList))
+            //hijacking the initial array of bg tracks with our own for easier operation
+            tabletopBGMusic = new List<AudioClip>();
+            bgMusField.SetValue(Watchman.Get<BackgroundMusic>(), tabletopBGMusic);
+
+            //the game will freak out if there are 0 tracks in the list, so let's prevent that
+            tabletopBGMusic.Add(emptyClip);
+
+            if (!Watchman.Get<Stable>().Protag().ActiveLegacy.RetrieveProperty<bool>(OVERRIDE_MUSIC))
+                tabletopBGMusic.AddRange(vanillaMusic);
+
+            if (Watchman.Get<Stable>().Protag().ActiveLegacy.TryRetrieveProperty(MUSIC, out List<string> trackList))
                 foreach (string trackName in trackList)
                 {
                     if (!TryGetCustomClip(trackName, out AudioClip clip))
@@ -88,39 +93,25 @@ namespace Roost.World.Audio
 
             if (recipe.TryRetrieveProperty(SET_BG_MUSIC, out List<string> trackNames))
             {
-                List<AudioClip> trackList;
-
-                if (trackNames == null || trackNames.Count == 0)
-                    trackList = legacyDefaultBGMusic;
-                else
-                {
-                    trackList = new List<AudioClip>();
-
-                    foreach (string trackName in trackNames)
-                        if (TryGetCustomClip(trackName, out AudioClip track))
-                            trackList.Add(track);
-                }
-
-
                 tabletopBGMusic.Clear();
                 tabletopBGMusic.Add(emptyClip);
-                tabletopBGMusic.AddRange(trackList);
 
-                if (trackList.Count > 0)
-                {
-                    AudioClip track = trackList[UnityEngine.Random.Range(0, trackList.Count)];
-                    FadeToTrack(track, 3);
-                }
+                if (trackNames == null || trackNames.Count == 0)
+                    tabletopBGMusic.AddRange(legacyDefaultBGMusic);
+                else foreach (string trackName in trackNames)
+                        if (TryGetCustomClip(trackName, out AudioClip track))
+                            tabletopBGMusic.Add(track);
+
+                AudioClip initialTrack = tabletopBGMusic[UnityEngine.Random.Range(0, tabletopBGMusic.Count)];
+                FadeToTrack(initialTrack, 3);
             }
 
-            if (recipe.TryRetrieveProperty(PLAY_MUSIC, out string playTrack))
-            {
-                if (TryGetCustomClip(playTrack, out AudioClip track))
-                    FadeToTrack(track, 3);
-            }
+            if (recipe.TryRetrieveProperty(PLAY_MUSIC, out string playTrackName))
+                if (TryGetCustomClip(playTrackName, out AudioClip playTrack))
+                    FadeToTrack(playTrack, 3);
         }
 
-        public static void FadeToTrack(AudioClip track, float duration)
+        public static void FadeToTrack(AudioClip clip, float duration)
         {
             Watchman.Get<BackgroundMusic>().StartCoroutine(Transit());
 
@@ -132,11 +123,9 @@ namespace Roost.World.Audio
                 yield return new WaitForSeconds(duration);
 
                 tabletopMusicAudioSource.volume = startingVolume;
-                tabletopMusicAudioSource.Stop();
-                tabletopMusicAudioSource.PlayOneShot(track);
+                PlayClip(clip);
             }
         }
-
 
         private static void PlayEndingMusic(Ending ending, AudioSource ___audioSource)
         {
@@ -157,17 +146,37 @@ namespace Roost.World.Audio
         }
 
         static Dictionary<string, AudioClip> audioClips;
-        public static bool TryGetCustomClip(string name, out AudioClip clip)
+        public static bool TryGetCustomClip(string name, out AudioClip result)
         {
-            if (!audioClips.ContainsKey(name))
+            AudioClip vanillaClip = vanillaMusic.Find(clip => clip.name == name);
+            if (vanillaClip != null)
             {
-                Birdsong.TweetLoud($"Trying to get audio clip '{name}', but it's not loaded");
-                clip = null;
-                return false;
+                result = vanillaClip;
+                return true;
             }
 
-            clip = audioClips[name];
-            return true;
+            if (audioClips.ContainsKey(name))
+            {
+                result = audioClips[name];
+                return true;
+            }
+
+            Birdsong.TweetLoud($"Trying to get audio clip '{name}', but it's not loaded");
+            result = null;
+            return false;
+        }
+
+        static System.Reflection.FieldInfo tabletopMusicCurrentClip = typeof(BackgroundMusic).GetFieldInvariant("currentClip");
+        public static void PlayClip(AudioClip clip)
+        {
+            tabletopMusicCurrentClip.SetValue(Watchman.Get<BackgroundMusic>(), clip);
+            tabletopMusicAudioSource.Stop();
+            tabletopMusicAudioSource.PlayOneShot(clip);
+        }
+
+        public static AudioClip GetCurrentClip()
+        {
+            return tabletopMusicCurrentClip.GetValue(Watchman.Get<BackgroundMusic>()) as AudioClip;
         }
 
         public static void MusicPlay(params string[] command)
