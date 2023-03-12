@@ -141,7 +141,7 @@ namespace Roost.World.Audio
             if (string.IsNullOrWhiteSpace(signalClipName))
                 return;
 
-            if (!TryGetCustomClip(signalClipName, out AudioClip clip))1
+            if (!TryGetCustomClip(signalClipName, out AudioClip clip))
                 return;
 
             if (GetCurrentClip().name == clip.name)
