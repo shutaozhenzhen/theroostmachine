@@ -426,7 +426,7 @@ namespace Roost.Twins.Entities
             private static int Achievement(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
                 var achievement = Watchman.Get<Compendium>().GetEntityById<Achievement>(target);
-                
+
                 if (achievement == null)
                     achievement = Watchman.Get<Compendium>().GetEntityById<Achievement>(target.ToUpper());
 
@@ -441,16 +441,24 @@ namespace Roost.Twins.Entities
 
             private static int Lever(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
-                if (Watchman.Get<Stable>().Protag().GetFutureLegacyEventRecord(target) == null)
+                var lever = Watchman.Get<Stable>().Protag().GetFutureLegacyEventRecord(target);
+                if (lever == null)
                     return 0;
+
+                if (int.TryParse(lever, out int value))
+                    return value;
 
                 return 1;
             }
 
             private static int LeverNow(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
-                if (Watchman.Get<Stable>().Protag().GetPastLegacyEventRecord(target) == null)
+                var lever = Watchman.Get<Stable>().Protag().GetPastLegacyEventRecord(target);
+                if (lever == null)
                     return 0;
+
+                if (int.TryParse(lever, out int value))
+                    return value;
 
                 return 1;
             }
