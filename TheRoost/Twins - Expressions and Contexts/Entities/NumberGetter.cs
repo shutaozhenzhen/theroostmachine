@@ -7,6 +7,7 @@ using SecretHistories.UI;
 using SecretHistories.Core;
 using SecretHistories.Enums;
 using SecretHistories.Fucine;
+using SecretHistories.Services;
 
 namespace Roost.Twins.Entities
 {
@@ -98,6 +99,9 @@ namespace Roost.Twins.Entities
             Max, Min, //max/min value among all tokens
             Rand, //single value of a random token
             Root, //value from FucineRoot mutations
+            Achievement, //check whether achievement is unlocked
+            Lever, //check whether lever is set
+            LeverNow, //check whether lever is set
             DeckSpecCount, //value from Deck spec
             Executions, //recipe execution count for the current character - NoArea
             Count, //number of tokens - NoArea and no target
@@ -327,6 +331,9 @@ namespace Roost.Twins.Entities
                     case ValueOperation.Min: return Min;
                     case ValueOperation.Rand: return Rand;
                     case ValueOperation.Root: return Root;
+                    case ValueOperation.Achievement: return Achievement;
+                    case ValueOperation.Lever: return Lever;
+                    case ValueOperation.LeverNow: return LeverNow;
                     //case ValueOperation.DeckSpec: return DeckSpec;
                     case ValueOperation.DeckSpecCount: return DeckSpecCount;
                     case ValueOperation.Executions: return Executions;
@@ -414,6 +421,31 @@ namespace Roost.Twins.Entities
             private static int Root(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
                 return FucineRoot.Get().Mutations.TryGetValue(target, out int result) ? result : 0;
+            }
+
+            private static int Achievement(List<Token> tokens, SingleTokenValue tokenValue, string target)
+            {
+                var achievement = Watchman.Get<Compendium>().GetEntityById<Achievement>(target);
+                if (achievement != null && Watchman.Get<AchievementsChronicler>().IsUnlocked(achievement))
+                    return 1;
+
+                return 0;
+            }
+
+            private static int Lever(List<Token> tokens, SingleTokenValue tokenValue, string target)
+            {
+                if (Watchman.Get<Stable>().Protag().GetFutureLegacyEventRecord(target) == null)
+                    return 0;
+
+                return 1;
+            }
+
+            private static int LeverNow(List<Token> tokens, SingleTokenValue tokenValue, string target)
+            {
+                if (Watchman.Get<Stable>().Protag().GetPastLegacyEventRecord(target) == null)
+                    return 0;
+
+                return 1;
             }
 
             private static int DeckSpec(List<Token> tokens, SingleTokenValue tokenValue, string target)
