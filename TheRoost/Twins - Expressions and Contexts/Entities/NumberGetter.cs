@@ -426,10 +426,17 @@ namespace Roost.Twins.Entities
             private static int Achievement(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
                 var achievement = Watchman.Get<Compendium>().GetEntityById<Achievement>(target);
-                if (achievement != null && Watchman.Get<AchievementsChronicler>().IsUnlocked(achievement))
-                    return 1;
+                
+                if (achievement == null)
+                    achievement = Watchman.Get<Compendium>().GetEntityById<Achievement>(target.ToUpper());
 
-                return 0;
+                if (achievement == null)
+                    return 0;
+
+                if (!Watchman.Get<AchievementsChronicler>().IsUnlocked(achievement))
+                    return 0;
+
+                return 1;
             }
 
             private static int Lever(List<Token> tokens, SingleTokenValue tokenValue, string target)
