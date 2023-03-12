@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 using SecretHistories.Abstract;
 using SecretHistories.Entities;
@@ -8,146 +7,9 @@ using SecretHistories.UI;
 using SecretHistories.Core;
 using SecretHistories.Enums;
 using SecretHistories.Fucine;
-using SecretHistories.Spheres;
-
-using Roost.World;
-
-using NCalc;
 
 namespace Roost.Twins.Entities
 {
-    public struct FucineExp<T> where T : IConvertible
-    {
-        readonly Expression expression;
-        readonly FucineRef[] references;
-        public readonly string formula;
-
-        public const string UNDEFINED = "undefined";
-        public FucineExp(string data)
-        {
-            if (data == UNDEFINED)
-            {
-                expression = null;
-                references = null;
-                formula = string.Empty;
-                return;
-            }
-
-            this.formula = data.Trim();
-            try
-            {
-                this.references = TwinsParser.LoadReferencesForExpression(ref data).ToArray();
-                this.expression = new Expression(data, EvaluateOptions.BooleanCalculation);
-
-                this.expression.EvaluateFunction += NCalcExtensions.Round;
-                if (formula.Contains("Random("))
-                    this.expression.EvaluateFunction += NCalcExtensions.Random;
-            }
-            catch (Exception ex)
-            {
-                throw Birdsong.Cack($"Unable to parse expression {this.formula} - {ex.FormatException()}");
-            }
-        }
-
-        public T value
-        {
-            get
-            {
-                foreach (FucineRef reference in references)
-                    expression.Parameters[reference.idInExpression] = reference.value;
-
-                object result = expression.Evaluate();
-                return result.ConvertTo<T>();
-            }
-        }
-
-        public string targetElement { get { return references[0].valueGetter.target; } }
-        public Sphere targetSphere { get { return references[0].targetSpheres.SingleOrDefault(); } }
-
-        public static implicit operator FucineExp<T>(string formula) { return new FucineExp<T>(formula); }
-
-        public bool isUndefined { get { return this.expression == null; } }
-
-        public override string ToString()
-        {
-            if (isUndefined)
-                return UNDEFINED;
-            return "'" + this.formula + "' = " + this.value;
-        }
-    }
-
-    public struct FucineRef
-    {
-        public readonly string idInExpression;
-
-        public readonly FucinePath path;
-        public readonly FucineExp<bool> filter;
-        public readonly FucineNumberGetter valueGetter;
-
-        public List<Sphere> targetSpheres { get { return Crossroads.GetSpheresByPath(path); } }
-        public List<Token> tokens { get { return Crossroads.GetTokensByPath(path).FilterTokens(filter); } }
-        public float value { get { return valueGetter.GetValueFromTokens(this.tokens); } }
-
-        public FucineRef(string referenceData, string referenceId)
-        {
-            this.idInExpression = referenceId;
-            TwinsParser.ParseFucineRef(referenceData, out path, out filter, out valueGetter);
-        }
-
-        public FucineRef(string referenceData)
-        {
-            idInExpression = null;
-            TwinsParser.ParseFucineRef(referenceData, out path, out filter, out valueGetter);
-        }
-
-        public bool Equals(FucineRef otherReference)
-        {
-            return otherReference.path == this.path && otherReference.filter.formula == this.filter.formula && otherReference.valueGetter.Equals(this.valueGetter);
-        }
-    }
-
-    public class FucinePathPlus : FucinePath
-    {
-        private readonly string fullPath;
-        public readonly string sphereMask;
-        public FucinePathPlus(string path, int maxSpheresToFind, List<SphereCategory> acceptable = null, List<SphereCategory> excluded = null) : base(path)
-        {
-            this.maxSpheresToFind = maxSpheresToFind;
-
-            if (excluded == null && acceptable == null)
-                acceptableCategories = defaultAcceptableCategories;
-            else
-            {
-                acceptable = acceptable ?? allCategories;
-                excluded = excluded ?? defaultExcludedCategories;
-                acceptableCategories = acceptable.Except(excluded).ToList();
-
-                if (acceptableCategories.SequenceEqual(defaultAcceptableCategories))
-                    acceptableCategories = defaultAcceptableCategories;
-            }
-
-            //guaranteeing that equivalent paths will have the same id for caching
-            fullPath = $"{path}[{string.Join(",", this.acceptableCategories)}]+{maxSpheresToFind}";
-            if (this.IsWild()) //removing asterisk so IndexOf() checks are correct
-                sphereMask = path.Substring(1);
-            else
-                sphereMask = path;
-        }
-
-        public bool AcceptsCategory(SphereCategory sphereCategory)
-        {
-            return acceptableCategories.Contains(sphereCategory);
-        }
-
-        public readonly int maxSpheresToFind;
-
-        public List<SphereCategory> acceptableCategories;
-
-        private static readonly List<SphereCategory> allCategories = new List<SphereCategory>((SphereCategory[])Enum.GetValues(typeof(SphereCategory)));
-        private static readonly List<SphereCategory> defaultExcludedCategories = new List<SphereCategory> { SphereCategory.Notes, SphereCategory.Null, SphereCategory.Meta };
-        private static readonly List<SphereCategory> defaultAcceptableCategories = allCategories.Except(defaultExcludedCategories).ToList();
-    }
-
     public struct FucineNumberGetter
     {
         public readonly ValueArea area;
