@@ -75,7 +75,8 @@ namespace Roost.World.Recipes
         {
             TryOverrideVerbIcon(situation);
             UpdateVisuals(situation.GetToken());
-            situationsWindows[situation].DisplayIcon(situation.Icon);
+            if (situationsWindows.ContainsKey(situation))
+                situationsWindows[situation].DisplayIcon(situation.Icon);
         }
 
         private static void RememberWindowForSituation(Situation newSituation, SituationWindow __instance)
