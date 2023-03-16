@@ -31,8 +31,9 @@ namespace Roost.Elegiast
             AtTimeOfPower.RecipeExecution.Schedule<RecipeCompletionEffectCommand, Situation>(RecipeEffectLevers, PatchType.Postfix);
         }
 
-        private static bool SkipNativeLevers()
+        private static bool SkipNativeLevers(Character populatedCharacter, ref Dictionary<string, string> ____pastLevers)
         {
+            ____pastLevers = typeof(Character).GetFieldInvariant("_previousCharacterHistoryRecords").GetValue(populatedCharacter) as Dictionary<string, string>;
             return false;
         }
 
