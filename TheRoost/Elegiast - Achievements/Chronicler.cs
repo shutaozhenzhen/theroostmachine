@@ -12,12 +12,12 @@ namespace Roost.Elegiast
 {
     public static class RoostChronicler
     {
-        private const string SET_LEVERS_CURRENT = "levers";
-        private const string SET_LEVERS_FUTURE = "leversNow";
+        private const string SET_LEVERS_PAST = "leversPast";
+        private const string SET_LEVERS_FUTURE = "leversFuture";
 
         internal static void Enact()
         {
-            Machine.ClaimProperty<Recipe, Dictionary<string, string>>(SET_LEVERS_CURRENT);
+            Machine.ClaimProperty<Recipe, Dictionary<string, string>>(SET_LEVERS_PAST);
             Machine.ClaimProperty<Recipe, Dictionary<string, string>>(SET_LEVERS_FUTURE);
 
             Machine.Patch(
@@ -85,18 +85,18 @@ namespace Roost.Elegiast
         {
             AspectsDictionary aspects = situation.GetSingleSphereByCategory(SphereCategory.SituationStorage)?.GetTotalAspects(true);
 
-            Dictionary<string, string> setLeversCurrent = __instance.Recipe.RetrieveProperty(SET_LEVERS_CURRENT) as Dictionary<string, string>;
-            if (setLeversCurrent != null)
-                foreach (string lever in setLeversCurrent.Keys)
+            Dictionary<string, string> setLeversPast = __instance.Recipe.RetrieveProperty(SET_LEVERS_PAST) as Dictionary<string, string>;
+            if (setLeversPast != null)
+                foreach (string lever in setLeversPast.Keys)
                     if (lever == "")
                         Scribe.RemoveLeverForCurrentPlaythrough(lever);
                     else
                     {
-                        string refinedString = Scribe.RefineString(setLeversCurrent[lever], aspects);
+                        string refinedString = Scribe.RefineString(setLeversPast[lever], aspects);
                         Scribe.SetLeverForCurrentPlaythrough(lever, refinedString);
                     }
 
-            Dictionary<string, string> setLeversFuture = __instance.Recipe.RetrieveProperty(SET_LEVERS_CURRENT) as Dictionary<string, string>;
+            Dictionary<string, string> setLeversFuture = __instance.Recipe.RetrieveProperty(SET_LEVERS_FUTURE) as Dictionary<string, string>;
             if (setLeversFuture != null)
                 foreach (string lever in setLeversFuture.Keys)
                     if (lever == "")

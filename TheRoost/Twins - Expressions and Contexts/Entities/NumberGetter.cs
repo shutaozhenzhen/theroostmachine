@@ -15,9 +15,7 @@ namespace Roost.Twins.Entities
     {
         public readonly ValueArea area;
         public readonly ValueOperation operation;
-        public readonly bool lever;
         public readonly string targetId;
-        public string target { get { return lever ? Elegiast.Scribe.GetLeverForCurrentPlaythrough(targetId) : targetId; } }
 
         public delegate int SingleTokenValue(Token token, string target);
         public SingleTokenValue GetValue;
@@ -28,7 +26,7 @@ namespace Roost.Twins.Entities
         public float GetValueFromTokens(List<Token> tokens)
         {
             //NB - not always tokens! sometimes Root or Char data
-            return HandleValues(tokens, GetValue, target);
+            return HandleValues(tokens, GetValue, targetId);
         }
 
         public bool Equals(FucineNumberGetter otherValueRef)
@@ -57,21 +55,15 @@ namespace Roost.Twins.Entities
                         Birdsong.TweetLoud($"{fromArea}{withOperation}/{target} - '*' is used, but {fromArea} doesn't support wildcards");
                 }
 
-                const string leverMark = "lever_";
-                if (targetId.StartsWith(leverMark))
-                {
-                    lever = true;
-                    targetId = targetId.Substring(leverMark.Length);
-                }
-                else
-                    lever = false;
-
-                if (lever == false &&
-                    (this.area == ValueArea.Aspect || this.operation == ValueOperation.Root))
+                if (this.area == ValueArea.Aspect
+                 || this.area == ValueArea.Mutation
+                 || this.area == ValueArea.RecipeAspect
+                 || this.operation == ValueOperation.Root)
                     Watchman.Get<Compendium>().SupplyIdForValidation(typeof(Element), this.targetId);
+
+                if (this.area == ValueArea.Recipe)
+                    Watchman.Get<Compendium>().SupplyIdForValidation(typeof(Recipe), this.targetId);
             }
-            else
-                lever = false;
 
             GetValue = AreaOperationsStorage.GetAreaHandler(area);
             HandleValues = ValueOperationsStorage.GetOperationHandler(operation);
@@ -100,8 +92,8 @@ namespace Roost.Twins.Entities
             Rand, //single value of a random token
             Root, //value from FucineRoot mutations
             Achievement, //check whether achievement is unlocked
-            Lever, //check whether lever is set
-            LeverNow, //check whether lever is set
+            LeverFuture, //check whether lever is set
+            LeverPast, //check whether lever is set
             DeckSpecCount, //value from Deck spec
             Executions, //recipe execution count for the current character - NoArea
             Count, //number of tokens - NoArea and no target
@@ -332,8 +324,8 @@ namespace Roost.Twins.Entities
                     case ValueOperation.Rand: return Rand;
                     case ValueOperation.Root: return Root;
                     case ValueOperation.Achievement: return Achievement;
-                    case ValueOperation.Lever: return Lever;
-                    case ValueOperation.LeverNow: return LeverNow;
+                    case ValueOperation.LeverFuture: return LeverFuture;
+                    case ValueOperation.LeverPast: return LeverPast;
                     //case ValueOperation.DeckSpec: return DeckSpec;
                     case ValueOperation.DeckSpecCount: return DeckSpecCount;
                     case ValueOperation.Executions: return Executions;
@@ -439,7 +431,7 @@ namespace Roost.Twins.Entities
                 return 1;
             }
 
-            private static int Lever(List<Token> tokens, SingleTokenValue tokenValue, string target)
+            private static int LeverFuture(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
                 var lever = Watchman.Get<Stable>().Protag().GetFutureLegacyEventRecord(target);
                 if (lever == null)
@@ -451,7 +443,7 @@ namespace Roost.Twins.Entities
                 return 1;
             }
 
-            private static int LeverNow(List<Token> tokens, SingleTokenValue tokenValue, string target)
+            private static int LeverPast(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
                 var lever = Watchman.Get<Stable>().Protag().GetPastLegacyEventRecord(target);
                 if (lever == null)

@@ -19,7 +19,7 @@ namespace Roost.World.Recipes.Entities
         Transform, Spawn, Mutate, //classic trio
         SetMutation, DeckDraw, DeckShuffle,  //makes sense, right?
         Destroy, Decay, //destructive forces
-        Lever, LeverNow, Lifetime, //exotique
+        LeverFuture, LeverPast, Lifetime, //exotique
         GrandEffects, //big boy
         Induce, Link //wot
     }
@@ -141,8 +141,8 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.Destroy:
                 case MorphEffectsExtended.GrandEffects:
                 case MorphEffectsExtended.Lifetime:
-                case MorphEffectsExtended.Lever:
-                case MorphEffectsExtended.LeverNow:
+                case MorphEffectsExtended.LeverFuture:
+                case MorphEffectsExtended.LeverPast:
                 default:
                     break;
             }
@@ -259,12 +259,11 @@ namespace Roost.World.Recipes.Entities
 
                     break;
 
-                case MorphEffectsExtended.Lever:
-                    NoonUtility.LogWarning(this.Id, reactingToken.PayloadEntityId);
+                case MorphEffectsExtended.LeverFuture:
                     Elegiast.Scribe.SetLeverForNextPlaythrough(this.Id, reactingToken.PayloadEntityId);
                     break;
 
-                case MorphEffectsExtended.LeverNow:
+                case MorphEffectsExtended.LeverPast:
                     Elegiast.Scribe.SetLeverForCurrentPlaythrough(this.Id, reactingToken.PayloadEntityId);
                     break;
 

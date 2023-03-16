@@ -31,7 +31,7 @@ namespace Roost.Elegiast
             _textLevers.Clear();
         }
 
-        private static readonly Func<object, object> _currentLevers = typeof(Character).GetFieldInvariant("_previousCharacterHistoryRecords").GetValue;
+        private static readonly Func<object, object> _pastLevers = typeof(Character).GetFieldInvariant("_previousCharacterHistoryRecords").GetValue;
         private static readonly Func<object, object> _futureLevers = typeof(Character).GetFieldInvariant("_inProgressHistoryRecords").GetValue;
 
         private static void SetLever(Dictionary<string, string> levers, string lever, string value)
@@ -59,7 +59,7 @@ namespace Roost.Elegiast
 
         internal static void SetLeverForCurrentPlaythrough(string lever, string value)
         {
-            SetLever(_currentLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>, lever, value);
+            SetLever(_pastLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>, lever, value);
         }
 
         internal static void SetLeverForNextPlaythrough(string lever, string value)
@@ -69,7 +69,7 @@ namespace Roost.Elegiast
 
         internal static string GetLeverForCurrentPlaythrough(string lever)
         {
-            return GetLever(_currentLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>, lever);
+            return GetLever(_pastLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>, lever);
         }
 
         internal static string GetLeverForNextPlaythrough(string lever)
@@ -79,7 +79,7 @@ namespace Roost.Elegiast
 
         internal static void RemoveLeverForCurrentPlaythrough(string lever)
         {
-            RemoveLever(_currentLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>, lever);
+            RemoveLever(_pastLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>, lever);
         }
 
         internal static void RemoveLeverForNextPlaythrough(string lever)
@@ -89,7 +89,7 @@ namespace Roost.Elegiast
 
         internal static void ClearLeversForCurrentPlaythrough()
         {
-            ClearLevers(_currentLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>);
+            ClearLevers(_pastLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>);
         }
 
         internal static void ClearLeversForNextPlaythrough()
