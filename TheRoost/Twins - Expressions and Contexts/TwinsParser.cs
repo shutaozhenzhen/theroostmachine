@@ -62,9 +62,9 @@ namespace Roost.Twins
 
         static bool isSingleReferenceExpression(string expression)
         {
-            return expression.IndexOf(referenceOpening) == -1
-                && expression.Any(char.IsLetter) == true
-                && expression.Contains("(") == false && expression.Contains(")") == false
+            return expression.Any(char.IsLetter) == true
+                && !expression.Contains(referenceOpening) //'['
+                && !expression.Contains('(') && !expression.Contains(')') == false
                 && expression.Equals("true", StringComparison.InvariantCultureIgnoreCase) == false
                 && expression.Equals("false", StringComparison.InvariantCultureIgnoreCase) == false;
         }
