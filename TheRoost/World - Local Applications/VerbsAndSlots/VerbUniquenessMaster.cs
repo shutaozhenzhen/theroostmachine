@@ -5,7 +5,6 @@ using System.Linq;
 
 using SecretHistories.Commands;
 using SecretHistories.UI;
-using SecretHistories.Abstract;
 using SecretHistories.Entities;
 
 using HarmonyLib;
@@ -15,7 +14,7 @@ namespace Roost.World.Verbs
     internal static class VerbUniquenessMaster
     {
 
-        private const string MAX = "max";
+        private const string MAX = "maxUnique";
 
         public static void Enact()
         {
