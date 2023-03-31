@@ -81,6 +81,8 @@ namespace Roost.Enactors
 
             Roost.World.CheckpointMaster.Enact();
 
+            Roost.World.Verbs.VerbUniquenessMaster.Enact();
+
             Roost.World.Recipes.GrandReqsMaster.Enact();
             Roost.World.Recipes.RecipeEffectsMaster.Enact();
             Roost.World.Recipes.RecipeLinkMaster.Enact();
