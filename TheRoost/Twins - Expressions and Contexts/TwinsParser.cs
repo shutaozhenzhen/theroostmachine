@@ -64,7 +64,7 @@ namespace Roost.Twins
         {
             return expression.Any(char.IsLetter) == true
                 && !expression.Contains(referenceOpening) //'['
-                && !expression.Contains('(') && !expression.Contains(')') == false
+                && !expression.Contains('(') && !expression.Contains(')')
                 && expression.Equals("true", StringComparison.InvariantCultureIgnoreCase) == false
                 && expression.Equals("false", StringComparison.InvariantCultureIgnoreCase) == false;
         }
