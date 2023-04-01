@@ -7,6 +7,8 @@ using SecretHistories.Commands;
 using SecretHistories.UI;
 using SecretHistories.Entities;
 
+using Roost.Twins.Entities;
+
 using HarmonyLib;
 
 namespace Roost.World.Verbs
@@ -18,7 +20,7 @@ namespace Roost.World.Verbs
 
         public static void Enact()
         {
-            Machine.ClaimProperty<Verb, int>(MAX, false, 1);
+            Machine.ClaimProperty<Verb, FucineExp<int>>(MAX, false, "1");
 
             Machine.Patch(
                 original: Machine.GetMethod<SituationCreationCommand>(nameof(SituationCreationCommand.Execute)),
@@ -47,7 +49,7 @@ namespace Roost.World.Verbs
             if (!verb.IsValid())
                 return false;
 
-            int maxCount = verb.RetrieveProperty<int>(MAX);
+            int maxCount = verb.RetrieveProperty<FucineExp<int>>(MAX).value;
             int matchingCount = Watchman.Get<HornedAxe>().GetRegisteredSituations().Count(situation => situation.Unique && situation.VerbId == verbId);
 
             return matchingCount >= maxCount;
