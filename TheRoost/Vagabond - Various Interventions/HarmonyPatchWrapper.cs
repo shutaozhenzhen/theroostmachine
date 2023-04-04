@@ -7,6 +7,8 @@ using SecretHistories.UI;
 using SecretHistories.Core;
 using SecretHistories.Entities;
 using SecretHistories.Infrastructure;
+using SecretHistories.Commands;
+using SecretHistories.Services;
 
 using HarmonyLib;
 
@@ -135,7 +137,7 @@ namespace Roost.Vagabond
                 case AtTimeOfPower.QuoteSceneInit: return typeof(SplashScreen).GetMethodInvariant("Start");
                 case AtTimeOfPower.MenuSceneInit: return typeof(MenuScreenController).GetMethodInvariant("InitialiseServices");
                 case AtTimeOfPower.TabletopSceneInit: return typeof(GameGateway).GetMethodInvariant("PopulateEnvironment");
-                case AtTimeOfPower.GameOverSceneInit: return typeof(GameOverScreenController).GetMethodInvariant("OnEnable");
+                case AtTimeOfPower.GameOverSceneInit: return typeof(GameOverScreenController).GetMethodInvariant("Start");
                 case AtTimeOfPower.NewGameSceneInit: return typeof(NewGameScreenController).GetMethodInvariant("Start");
 
                 case AtTimeOfPower.NewGame: return typeof(MenuScreenController).GetMethodInvariant(nameof(MenuScreenController.BeginNewSaveWithSpecifiedLegacy));

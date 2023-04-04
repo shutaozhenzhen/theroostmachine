@@ -47,13 +47,13 @@ namespace Roost.World.Audio
 
             Machine.ClaimProperty<Ending, string>(MUSIC);
             Machine.Patch(typeof(GameOverScreenController).GetMethodInvariant(nameof(PlayEndingMusic)),
-                postfix: typeof(TrumpetLily).GetMethodInvariant(nameof(PlayEndingMusic)));
+                prefix: typeof(TrumpetLily).GetMethodInvariant(nameof(PlayEndingMusic)));
 
             Vagabond.CommandLine.AddCommand("music", MusicPlay);
             Vagabond.CommandLine.AddCommand("sfx", SFXPlay);
 
             Machine.ClaimProperty<Recipe, string>(RECIPE_MUSIC);
-            Machine.Patch(typeof(Situation).GetMethodInvariant(nameof(Situation.UpdateRecipePrediction)),
+            Machine.Patch(typeof(Situation).GetMethodInvariant(nameof(Situation.RequestStartFX)),
                 postfix: typeof(TrumpetLily).GetMethodInvariant(nameof(PlayRecipeMusic)));
         }
 
@@ -62,7 +62,6 @@ namespace Roost.World.Audio
         static List<AudioClip> vanillaMusic;
 
         static AudioSource tabletopMusicAudioSource;
-        static AudioClip emptyClip = AudioClip.Create("", 1, 1, 1000, false);
         private static void HandleTabletopBGMusic()
         {
             tabletopMusicAudioSource = typeof(BackgroundMusic).GetFieldInvariant("audioSource").GetValue(Watchman.Get<BackgroundMusic>()) as AudioSource;
@@ -74,9 +73,6 @@ namespace Roost.World.Audio
             //hijacking the initial array of bg tracks with our own for easier operation
             tabletopBGMusic = new List<AudioClip>();
             bgMusField.SetValue(Watchman.Get<BackgroundMusic>(), tabletopBGMusic);
-
-            //the game will freak out if there are 0 tracks in the list, so let's prevent that
-            tabletopBGMusic.Add(emptyClip);
 
             if (!Watchman.Get<Stable>().Protag().ActiveLegacy.RetrieveProperty<bool>(OVERRIDE_MUSIC))
                 tabletopBGMusic.AddRange(vanillaMusic);
@@ -100,7 +96,6 @@ namespace Roost.World.Audio
             if (recipe.TryRetrieveProperty(SET_BG_MUSIC, out List<string> trackNames))
             {
                 tabletopBGMusic.Clear();
-                tabletopBGMusic.Add(emptyClip);
 
                 if (trackNames == null || trackNames.Count == 0)
                     tabletopBGMusic.AddRange(legacyDefaultBGMusic);
@@ -129,7 +124,7 @@ namespace Roost.World.Audio
                 yield return new WaitForSeconds(duration);
 
                 tabletopMusicAudioSource.volume = startingVolume;
-                PlayClip(clip);
+                Watchman.Get<BackgroundMusic>().PlayClip(clip);
             }
         }
 
@@ -147,20 +142,22 @@ namespace Roost.World.Audio
             if (GetCurrentClip().name == clip.name)
                 return;
 
-            PlayClip(clip);
+            Watchman.Get<BackgroundMusic>().PlayClip(clip);
         }
 
-        private static void PlayEndingMusic(Ending ending, AudioSource ___audioSource)
+        private static bool PlayEndingMusic(Ending ending)
         {
             if (ending.TryRetrieveProperty(MUSIC, out string trackName))
             {
                 if (!TryGetCustomClip(trackName, out AudioClip clip))
-                    return;
+                    return true;
 
-                ___audioSource.Stop();
-                ___audioSource.clip = clip;
-                ___audioSource.Play();
+                Watchman.Get<BackgroundMusic>().PlayClip(clip);
+
+                return false;
             }
+
+            return true;
         }
 
         private static void TryLoadAudioForEnabledMods(ContentImportLog log)
@@ -190,12 +187,6 @@ namespace Roost.World.Audio
         }
 
         static System.Reflection.FieldInfo tabletopMusicCurrentClip = typeof(BackgroundMusic).GetFieldInvariant("currentClip");
-        public static void PlayClip(AudioClip clip)
-        {
-            tabletopMusicCurrentClip.SetValue(Watchman.Get<BackgroundMusic>(), clip);
-            tabletopMusicAudioSource.Stop();
-            tabletopMusicAudioSource.PlayOneShot(clip);
-        }
 
         public static AudioClip GetCurrentClip()
         {
@@ -214,8 +205,8 @@ namespace Roost.World.Audio
 
             try
             {
-                int index = tabletopBGMusic.FindIndex(track => track.name == trackName);
-                Watchman.Get<BackgroundMusic>().PlayClip(index, tabletopBGMusic);
+                AudioClip clip = tabletopBGMusic.Find(track => track.name == trackName);
+                Watchman.Get<BackgroundMusic>().PlayClip(clip);
             }
             catch (Exception ex)
             {

@@ -7,6 +7,7 @@ using System.Reflection.Emit;
 using SecretHistories.Fucine;
 using SecretHistories.Fucine.DataImport;
 using SecretHistories.Entities.NullEntities;
+using SecretHistories.Services;
 
 using HarmonyLib;
 using UnityEngine;

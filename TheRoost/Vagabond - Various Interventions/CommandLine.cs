@@ -76,7 +76,7 @@ namespace Roost.Vagabond
             if (GameObject.FindObjectOfType<CommandLine>() != null)
                 return;
 
-            GameObject OGLog = GameObject.Find("LogDisplay");
+            GameObject OGLog = GameObject.Find("SecretHistory").transform.GetChild(0).gameObject;
 
             CommandLine vagabond = GameObject.FindObjectOfType<SecretHistory>().gameObject.AddComponent<CommandLine>();
             vagabond.console = new GameObject("AuxConsole", typeof(RectTransform), typeof(Image), typeof(TMP_InputField));

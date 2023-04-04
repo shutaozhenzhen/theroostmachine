@@ -7,6 +7,7 @@ using SecretHistories.Entities;
 using SecretHistories.Enums;
 using SecretHistories.Fucine;
 using SecretHistories.Fucine.DataImport;
+using SecretHistories.Commands;
 
 namespace Roost.Elegiast
 {

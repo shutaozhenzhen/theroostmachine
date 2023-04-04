@@ -21,7 +21,7 @@ namespace SecretHistories.Fucine
             if (propertyType.Namespace == "System" || propertyType.IsEnum)
                 return cachedFucineProperty.FucineAttribute.DefaultValue;
             else if (cachedFucineProperty.FucineAttribute.DefaultValue != null)
-                return ImportMethods.ConstructFromParameters(cachedFucineProperty.FucineAttribute.DefaultValue, propertyType);
+                return ImportMethods.ImportWithConstructor(cachedFucineProperty.FucineAttribute.DefaultValue, propertyType);
 
             return FactoryInstantiator.CreateObjectWithDefaultConstructor(propertyType);
         }
@@ -77,7 +77,7 @@ namespace SecretHistories.Fucine
             object result;
             try
             {
-                result = ImportMethods.ConstructFromParameters(importData, type);
+                result = ImportMethods.ImportWithConstructor(importData, type);
             }
             catch (Exception ex)
             {
@@ -88,7 +88,7 @@ namespace SecretHistories.Fucine
         public override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty)
         {
             if (cachedFucineProperty.FucineAttribute.DefaultValue != null)
-                return ImportMethods.ConstructFromParameters(cachedFucineProperty.FucineAttribute.DefaultValue, cachedFucineProperty.ThisPropInfo.PropertyType);
+                return ImportMethods.ImportWithConstructor(cachedFucineProperty.FucineAttribute.DefaultValue, cachedFucineProperty.ThisPropInfo.PropertyType);
 
             return FactoryInstantiator.CreateObjectWithDefaultConstructor(cachedFucineProperty.ThisPropInfo.PropertyType);
         }
