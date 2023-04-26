@@ -31,9 +31,6 @@ namespace Roost.Elegiast
             _textLevers.Clear();
         }
 
-        private static readonly Func<object, object> _pastLevers = typeof(Character).GetFieldInvariant("_previousCharacterHistoryRecords").GetValue;
-        private static readonly Func<object, object> _futureLevers = typeof(Character).GetFieldInvariant("_inProgressHistoryRecords").GetValue;
-
         private static void SetLever(Dictionary<string, string> levers, string lever, string value)
         {
             levers[lever] = value;
@@ -57,44 +54,54 @@ namespace Roost.Elegiast
             levers.Clear();
         }
 
+        private static readonly Func<object, object> _currentLevers = typeof(Character).GetFieldInvariant("_previousCharacterHistoryRecords").GetValue;
+        private static Dictionary<string, string> GetCurrentLevers() { return _currentLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>; }
+
+        private static readonly Func<object, object> _futureLevers = typeof(Character).GetFieldInvariant("_inProgressHistoryRecords").GetValue;
+        private static Dictionary<string, string> GetFutureLevers() { return _futureLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>; }
+
         internal static void SetLeverForCurrentPlaythrough(string lever, string value)
         {
-            SetLever(_pastLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>, lever, value);
+            Birdsong.Sing($"Setting lever for the current playthrough - '{lever}': '{value}'");
+            SetLever(GetCurrentLevers(), lever, value);
         }
 
         internal static void SetLeverForNextPlaythrough(string lever, string value)
         {
-            SetLever(_futureLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>, lever, value);
+            Birdsong.Sing($"Setting lever for the next playthrough - '{lever}': '{value}'");
+            SetLever(GetFutureLevers(), lever, value);
         }
 
         internal static string GetLeverForCurrentPlaythrough(string lever)
         {
-            return GetLever(_pastLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>, lever);
+            return GetLever(GetCurrentLevers(), lever);
         }
 
         internal static string GetLeverForNextPlaythrough(string lever)
         {
-            return GetLever(_futureLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>, lever);
+            return GetLever(GetFutureLevers(), lever);
         }
 
         internal static void RemoveLeverForCurrentPlaythrough(string lever)
         {
-            RemoveLever(_pastLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>, lever);
+            Birdsong.Sing($"Removing lever for the current playthrough - '{lever}'");
+            RemoveLever(GetCurrentLevers(), lever);
         }
 
         internal static void RemoveLeverForNextPlaythrough(string lever)
         {
-            RemoveLever(_futureLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>, lever);
+            Birdsong.Sing($"Removing lever for the future playthrough - '{lever}'");
+            RemoveLever(GetFutureLevers(), lever);
         }
 
         internal static void ClearLeversForCurrentPlaythrough()
         {
-            ClearLevers(_pastLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>);
+            ClearLevers(GetCurrentLevers());
         }
 
         internal static void ClearLeversForNextPlaythrough()
         {
-            ClearLevers(_futureLevers(Watchman.Get<Stable>().Protag()) as Dictionary<string, string>);
+            ClearLevers(GetFutureLevers());
         }
 
         internal static Dictionary<string, string> GetLeversForCurrentPlaythrough()
