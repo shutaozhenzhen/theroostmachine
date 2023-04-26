@@ -116,11 +116,11 @@ namespace Roost.World.Recipes
         public static void ClearAllCallbacksForSituation(Situation situation)
         {
             var storedValues = Machine.GetLeversForCurrentPlaythrough();
-            string situationCallbacks = situation.Id + ".callbacks.";
+            string situationCallbacks = CompleteCallbackId(situation, string.Empty);
 
             foreach (KeyValuePair<string, string> lever in storedValues)
             {
-                if (lever.Key.StartsWith(situationCallbacks))
+                if (lever.Key.StartsWith(situationCallbacks, StringComparison.InvariantCultureIgnoreCase))
                     Machine.RemoveLeverForCurrentPlaythrough(lever.Key);
             }
         }
@@ -132,8 +132,9 @@ namespace Roost.World.Recipes
             {
                 foreach (KeyValuePair<string, string> callback in callbacksToSet)
                 {
+                    string callbackFullId = CompleteCallbackId(situation, callback.Key);
+                    Machine.SetLeverForCurrentPlaythrough(callbackFullId, callback.Value);
                     //Birdsong.Sing("Set new callback:", CompleteCallbackId(situation, callback.Key), callback.Value);
-                    Machine.SetLeverForCurrentPlaythrough(CompleteCallbackId(situation, callback.Key), callback.Value);
                 }
             }
 
@@ -142,8 +143,9 @@ namespace Roost.World.Recipes
             {
                 foreach (string callbackId in callbacksToClear)
                 {
+                    string callbackFullId = CompleteCallbackId(situation, callbackId);
+                    Machine.RemoveLeverForCurrentPlaythrough(callbackFullId);
                     //Birdsong.Sing("Clearing callback", situation.Id, callbackId, CompleteCallbackId(situation, callbackId));
-                    Machine.RemoveLeverForCurrentPlaythrough(CompleteCallbackId(situation, callbackId));
                 }
             }
 
