@@ -19,7 +19,7 @@ namespace Roost.World.Recipes.Entities
         Transform, Spawn, Mutate, //classic trio
         SetMutation, DeckDraw, DeckShuffle,  //makes sense, right?
         Destroy, Decay, //destructive forces
-        LeverFuture, LeverPast, Lifetime, //exotique
+        LeverFuture, LeverPast, TimeSpend, TimeSet, //exotique
         GrandEffects, //big boy
         Induce, Link //wot
     }
@@ -66,7 +66,7 @@ namespace Roost.World.Recipes.Entities
 
         public RefMorphDetails() { }
         public RefMorphDetails(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
-        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
+        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium compendium)
         {
             switch (MorphEffect)
             {
@@ -78,7 +78,7 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.SetMutation:
                     if (Id == null)
                         foreach (object key in UnknownProperties.Keys)
-                            if (populatedCompendium.GetEntityById<Element>(key.ToString())?.IsValid() == true)
+                            if (compendium.GetEntityById<Element>(key.ToString())?.IsValid() == true)
                             {
                                 SetId(key.ToString());
                                 Level = new FucineExp<int>(UnknownProperties[key].ToString());
@@ -87,8 +87,8 @@ namespace Roost.World.Recipes.Entities
 
                     if (Id == null)
                         log.LogWarning($"ID FOR XTRIGGER '{this}' ISN'T SET");
-                    else if (populatedCompendium.GetEntityById<Element>(Id)?.IsValid() != true)
-                        log.LogWarning($"UNKNOWN ELEMENT ID IN XTRIGGER {this}");
+                    else
+                        compendium.SupplyIdForValidation(typeof(Element), Id);
 
                     break;
 
@@ -97,7 +97,7 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.Induce:
                     if (Id == null)
                         foreach (object key in UnknownProperties.Keys)
-                            if (populatedCompendium.GetEntityById<Recipe>(key.ToString())?.IsValid() == true)
+                            if (compendium.GetEntityById<Recipe>(key.ToString())?.IsValid() == true)
                             {
                                 SetId(key.ToString());
                                 Level = new FucineExp<int>(UnknownProperties[key].ToString());
@@ -105,14 +105,21 @@ namespace Roost.World.Recipes.Entities
                             }
 
                     if (Id == null)
-                        log.LogWarning($"ID FOR XTRIGGER '{this}' ISN'T SET");
-                    else if (populatedCompendium.GetEntityById<Recipe>(Id)?.IsValid() != true)
-                        log.LogWarning($"UNKNOWN RECIPE ID IN XTRIGGER {this}");
-                    else if (MorphEffect == MorphEffectsExtended.Induce)
                     {
-                        Induction = LinkedRecipeDetails.AsCurrentRecipe(populatedCompendium.GetEntityById<Recipe>(Id)); //no other way to construct it normally
-                        Induction.ToPath = this.ToPath;
-                        Induction.Expulsion = this.Expulsion;
+                        log.LogWarning($"ID FOR XTRIGGER '{this}' ISN'T SET");
+                    }
+                    else
+                    {
+                        compendium.SupplyIdForValidation(typeof(Recipe), Id);
+
+                        if (MorphEffect == MorphEffectsExtended.Induce)
+                        {
+                            Induction = new LinkedRecipeDetails();
+                            Induction.SetDefaultValues();
+                            Induction.SetId(Id);
+                            Induction.ToPath = ToPath;
+                            Induction.Expulsion = Expulsion;
+                        }
                     }
 
                     break;
@@ -122,7 +129,7 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.DeckShuffle:
                     if (Id == null)
                         foreach (object key in UnknownProperties.Keys)
-                            if (populatedCompendium.GetEntityById<DeckSpec>(key.ToString()) != null)
+                            if (compendium.GetEntityById<DeckSpec>(key.ToString()) != null)
                             {
                                 this.SetId(key.ToString());
                                 this.Level = new FucineExp<int>(UnknownProperties[key].ToString());
@@ -131,8 +138,8 @@ namespace Roost.World.Recipes.Entities
 
                     if (Id == null)
                         log.LogWarning($"ID FOR XTRIGGER '{this}' ISN'T SET");
-                    else if (populatedCompendium.GetEntityById<DeckSpec>(Id) == null)
-                        log.LogWarning($"UNKNOWN DECK ID IN XTRIGGER '{this}'");
+                    else
+                        compendium.SupplyIdForValidation(typeof(DeckSpec), Id);
 
                     break;
 
@@ -140,7 +147,8 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.Decay:
                 case MorphEffectsExtended.Destroy:
                 case MorphEffectsExtended.GrandEffects:
-                case MorphEffectsExtended.Lifetime:
+                case MorphEffectsExtended.TimeSpend:
+                case MorphEffectsExtended.TimeSet:
                 case MorphEffectsExtended.LeverFuture:
                 case MorphEffectsExtended.LeverPast:
                 default:
@@ -246,16 +254,35 @@ namespace Roost.World.Recipes.Entities
                         break;
                     }
 
-                case MorphEffectsExtended.Lifetime:
-                    ElementStack stack = reactingToken.Payload as ElementStack;
-                    Timeshadow timeshadow = stack.GetTimeshadow();
-                    float timeInSeconds = Level.value / 1000;
-                    timeshadow.SpendTime(-timeInSeconds);
+                case MorphEffectsExtended.TimeSpend:
+                    {
+                        ElementStack stack = reactingToken.Payload as ElementStack;
+                        Timeshadow timeshadow = stack.GetTimeshadow();
 
-                    if (timeshadow.LifetimeRemaining <= 0)
-                        RecipeExecutionBuffer.ScheduleDecay(reactingToken, VFX);
-                    else
-                        RecipeExecutionBuffer.ScheduleVFX(reactingToken, VFX);
+                        float timeInSeconds = Level.value / 1000;
+                        timeshadow.SpendTime(timeInSeconds);
+
+                        if (timeshadow.LifetimeRemaining <= 0)
+                            RecipeExecutionBuffer.ScheduleDecay(reactingToken, VFX);
+                        else
+                            RecipeExecutionBuffer.ScheduleVFX(reactingToken, VFX);
+                    }
+
+                    break;
+
+                case MorphEffectsExtended.TimeSet:
+                    {
+                        ElementStack stack = reactingToken.Payload as ElementStack;
+                        Timeshadow timeshadow = stack.GetTimeshadow();
+
+                        float timeInSeconds = Level.value / 1000;
+                        timeshadow.SpendTime(timeshadow.LifetimeRemaining - timeInSeconds);
+
+                        if (timeshadow.LifetimeRemaining <= 0)
+                            RecipeExecutionBuffer.ScheduleDecay(reactingToken, VFX);
+                        else
+                            RecipeExecutionBuffer.ScheduleVFX(reactingToken, VFX);
+                    }
 
                     break;
 
