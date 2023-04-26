@@ -84,13 +84,15 @@ namespace Roost.World.Recipes
             if (callbackId == null)
                 return;
 
-            var callbackRecipeId = Machine.GetLeverForCurrentPlaythrough(CompleteCallbackId(currentSituation, callbackId));
+            var fullCallbackId = CompleteCallbackId(currentSituation, callbackId);
+            var callbackRecipeId = Machine.GetLeverForCurrentPlaythrough(fullCallbackId);
             if (callbackRecipeId == null)
             {
                 Birdsong.TweetLoud($"Trying to use the callback '{callbackId}' in '{currentSituation.RecipeId}', but the callback is not set");
                 return;
             }
 
+            Birdsong.Sing($"Found the callback recipe '{callbackRecipeId}' for callback '{fullCallbackId}' in situation '{currentSituation.Id}'");
             //if the recipe id is wrong - or null, in case callback isn't set - default logger will display a message
             linkDetails.SetId(callbackRecipeId);
 
