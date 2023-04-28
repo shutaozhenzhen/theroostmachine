@@ -73,6 +73,7 @@ namespace Roost.Twins.Entities
         {
             Aspect, //returns aspect amount from an element token
             Mutation, //returns mutation amount from an element token
+            Container, //returns the aspects of a token's sphere's container
             Lifetime, //returns remaining lifetime from an element token, or remaining warmup from a situation token
             Lifespan, //returns max lifetime from an element token, or full warmup from a situation token
             SituationContent, //returns aspect amount from a situation token
@@ -107,6 +108,7 @@ namespace Roost.Twins.Entities
                 {
                     case ValueArea.Aspect: return ElementAspect;
                     case ValueArea.Mutation: return Mutation;
+                    case ValueArea.Container: return Container;
                     case ValueArea.Lifetime: return Lifetime;
                     case ValueArea.Lifespan: return Lifespan;
                     case ValueArea.SituationContent: return AspectInSituation;
@@ -134,6 +136,11 @@ namespace Roost.Twins.Entities
             private static int Mutation(Token token, string target)
             {
                 return token.GetCurrentMutations().TryGetValue(target, out int value) ? value : 0;
+            }
+
+            private static int Container(Token token, string target)
+            {
+                return token.Sphere.GetContainer().GetAspects(true).AspectValue(target);
             }
 
             private static int Lifetime(Token token, string target)
