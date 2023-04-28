@@ -50,6 +50,10 @@ namespace Roost.World.Verbs
                 return false;
 
             int maxCount = verb.RetrieveProperty<FucineExp<int>>(MAX).value;
+
+            if (maxCount < 0)
+                return false;
+
             int matchingCount = Watchman.Get<HornedAxe>().GetRegisteredSituations().Count(situation => situation.Unique && situation.VerbId == verbId);
 
             return matchingCount >= maxCount;
