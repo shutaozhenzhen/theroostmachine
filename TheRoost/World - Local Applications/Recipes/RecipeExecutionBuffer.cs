@@ -15,7 +15,7 @@ namespace Roost.World.Recipes
         private static readonly Dictionary<MutationEffect, HashSet<IHasAspects>> mutations = new Dictionary<MutationEffect, HashSet<IHasAspects>>();
         private static readonly Dictionary<ElementStack, string> transformations = new Dictionary<ElementStack, string>();
         private static readonly Dictionary<Sphere, List<SpawnEffect>> spawns = new Dictionary<Sphere, List<SpawnEffect>>();
-        //private static readonly Dictionary<Token, int> quantityChanges = new Dictionary<Token, int>();
+        private static readonly Dictionary<Token, int> quantityChanges = new Dictionary<Token, int>();
         private static readonly Dictionary<Token, Sphere> movements = new Dictionary<Token, Sphere>();
         private static readonly Dictionary<Situation, List<LinkedRecipeDetails>> inductions = new Dictionary<Situation, List<LinkedRecipeDetails>>();
         private static readonly HashSet<string> deckRenews = new HashSet<string>();
@@ -29,6 +29,7 @@ namespace Roost.World.Recipes
             ApplyRetirements();
             ApplyDeckRenews();
             ApplyMutations();
+            ApplyQuantityChanges();
             ApplyTransformations();
             ApplyCreations();
             ApplyMovements();
@@ -66,6 +67,18 @@ namespace Roost.World.Recipes
                         manifestablePayload?.GetToken().Sphere.MarkAsDirty();
                 }
             mutations.Clear();
+        }
+
+        public static void ApplyQuantityChanges()
+        {
+            foreach (var change in quantityChanges)
+            {
+                if (change.Key.Defunct)
+                    continue;
+
+                change.Key.Payload.ModifyQuantity(change.Value, new Context(Context.ActionSource.SituationEffect));
+            }
+            quantityChanges.Clear();
         }
 
         public static void ApplyTransformations()
@@ -151,7 +164,7 @@ namespace Roost.World.Recipes
             else
                 ScheduleTransformation(token, element.DecayTo, vfx);
         }
-        /*
+
         public static void ScheduleQuantityChange(Token token, int amount, RetirementVFX vfx)
         {
             if (quantityChanges.ContainsKey(token))
@@ -161,7 +174,7 @@ namespace Roost.World.Recipes
 
             ScheduleVFX(token, vfx);
         }
-        */
+
         public static void ScheduleDeckRenew(string deckId)
         {
             deckRenews.Add(deckId);

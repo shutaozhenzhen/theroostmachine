@@ -16,7 +16,7 @@ namespace Roost.World.Recipes.Entities
 {
     public enum MorphEffectsExtended
     {
-        Transform, Spawn, Mutate, //classic trio
+        Transform, Spawn, Mutate, Quantity, //vanilla
         SetMutation, DeckDraw, DeckShuffle,  //makes sense, right?
         Destroy, Decay, //destructive forces
         LeverFuture, LeverPast, TimeSpend, TimeSet, //exotique
@@ -144,6 +144,7 @@ namespace Roost.World.Recipes.Entities
                     break;
 
                 //doesn't use Id
+                case MorphEffectsExtended.Quantity:
                 case MorphEffectsExtended.Decay:
                 case MorphEffectsExtended.Destroy:
                 case MorphEffectsExtended.GrandEffects:
@@ -221,6 +222,10 @@ namespace Roost.World.Recipes.Entities
                     break;
                 case MorphEffectsExtended.Mutate:
                     RecipeExecutionBuffer.ScheduleMutation(reactingToken, this.Id, Level.value * catalystQuantity * reactingElementQuantity, true, VFX);
+                    break;
+
+                case MorphEffectsExtended.Quantity:
+                    RecipeExecutionBuffer.ScheduleQuantityChange(reactingToken, Level.value * catalystQuantity, VFX);
                     break;
 
                 case MorphEffectsExtended.DeckDraw:
