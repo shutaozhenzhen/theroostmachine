@@ -103,14 +103,24 @@ namespace Roost.Twins
         public static void MarkLocalSituation(Situation situation)
         {
             cachedSpheres[currentSituation] = situation.GetSpheresActiveForCurrentState();
-            cachedSpheres[currentSphere] = cachedSpheres[currentSituation];
-            MarkLocalScope(cachedSpheres[currentSituation]);
+            MarkLocalSphere(cachedSpheres[currentSituation]);
+        }
+
+        public static void MarkLocalSphere(List<Sphere> spheres)
+        {
+            cachedSpheres[currentSphere] = new List<Sphere>(spheres);
+            MarkLocalScope(cachedSpheres[currentSphere]);
         }
 
         public static void MarkLocalSphere(Sphere sphere)
         {
-            cachedSpheres[currentSphere][0] = sphere;
+            cachedSpheres[currentSphere] = new List<Sphere> { sphere };
             MarkLocalScope(cachedSpheres[currentSphere]);
+        }
+
+        public static void MarkLocalScope(List<Sphere> spheres)
+        {
+            cachedSpheres[currentScope] = new List<Sphere>(spheres);
         }
 
         public static void MarkAllLocalTokens(List<Token> tokens)
@@ -124,15 +134,11 @@ namespace Roost.Twins
             MarkLocalScope(singleLocalToken);
         }
 
-        public static void MarkLocalScope(List<Sphere> spheres)
-        {
-            cachedSpheres[currentScope] = spheres;
-        }
 
         public static void UnmarkLocalSphere()
         {
             cachedSpheres[currentSphere].Clear();
-            MarkLocalScope(cachedSpheres[currentSituation]);
+            MarkLocalSphere(cachedSpheres[currentSituation]);
         }
 
         public static void UnmarkAllLocalTokens()
@@ -150,7 +156,7 @@ namespace Roost.Twins
 
         public static Situation GetLocalSituation()
         {
-            var spheres = GetCachedContext(currentScope);
+            var spheres = GetCachedContext(currentSituation);
 
             if (spheres.Count > 0)
                 return spheres.First().GetContainer() as Situation;
@@ -175,7 +181,7 @@ namespace Roost.Twins
         public const string currentToken = "~/token";
         public const string currentScope = "~/local";
 
-        private static readonly List<Sphere> nullContainer = new List<Sphere>();
+
         private static readonly FakeSphereList singleLocalToken = new FakeSphereList();
         private static readonly FakeSphereList allLocalTokens = new FakeSphereList();
 
@@ -183,14 +189,11 @@ namespace Roost.Twins
         public static void ResetCache()
         {
             cachedSpheres.Clear();
-            nullContainer.Clear();
-            nullContainer.Add(NullSphere.Create());
 
-            cachedSpheres[currentSituation] = nullContainer;
+            cachedSpheres[currentSituation] = new List<Sphere>() { NullSphere.Create() };
             cachedSpheres[currentTokens] = allLocalTokens;
             cachedSpheres[currentToken] = singleLocalToken;
-            cachedSpheres[currentSphere] = specialSpheres["~/default"]();
-            cachedSpheres[currentScope] = cachedSpheres[currentSphere];
+            MarkLocalSphere(specialSpheres["~/default"]());
         }
 
         private static readonly Dictionary<string, Func<List<Sphere>>> specialSpheres = new Dictionary<string, Func<List<Sphere>>>
