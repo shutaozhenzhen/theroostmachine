@@ -33,8 +33,8 @@ namespace Roost.World.Recipes.Entities
 
         [FucineEverValue(DefaultValue = RetirementVFX.CardTransformWhite)] public RetirementVFX VFX { get; set; }
 
-        [FucineValue(false)] public bool IgnoreTargetQuantity { get; set; }
-        [FucineValue(false)] public bool IgnoreCatalystQuantity { get; set; }
+        [FucineValue(true)] public bool IgnoreTargetQuantity { get; set; }
+        [FucineValue(true)] public bool IgnoreCatalystQuantity { get; set; }
 
         private LinkedRecipeDetails Induction { get; set; }
         [FucinePathValue] public FucinePath ToPath { get; set; }
@@ -218,7 +218,7 @@ namespace Roost.World.Recipes.Entities
                     RecipeExecutionBuffer.ScheduleSpawn(reactingToken.Sphere, this.Id, reactingElementQuantity * Level.value * catalystQuantity, VFX);
                     break;
                 case MorphEffectsExtended.SetMutation:
-                    RecipeExecutionBuffer.ScheduleMutation(reactingToken, this.Id, Level.value * catalystQuantity * reactingElementQuantity, false, VFX);
+                    RecipeExecutionBuffer.ScheduleMutation(reactingToken, this.Id, Level.value * catalystQuantity, false, VFX);
                     break;
                 case MorphEffectsExtended.Mutate:
                     RecipeExecutionBuffer.ScheduleMutation(reactingToken, this.Id, Level.value * catalystQuantity * reactingElementQuantity, true, VFX);
