@@ -22,6 +22,7 @@ namespace Roost.World.Recipes.Entities
         [FucineDict] public Dictionary<string, FucineExp<int>> RootEffects { get; set; }
         [FucineList] public List<RefMutationEffect> Mutations { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> Aspects { get; set; }
+        [FucineDict] public Dictionary<string, FucineExp<int>> XPans { get; set; }
         [FucineList] public List<string> DeckShuffles { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> DeckEffects { get; set; }
         [FucineDict] public Dictionary<FucineExp<bool>, FucineExp<int>> Effects { get; set; }
@@ -57,6 +58,8 @@ namespace Roost.World.Recipes.Entities
             RunRecipeXTriggers(localSphere, situation);
             if (localXtriggers)
                 RunElementXTriggers(localSphere, situation);
+
+            RunXPans(localSphere, situation);
 
             RunDeckShuffles();
             RunDeckEffects(localSphere);
@@ -163,6 +166,29 @@ namespace Roost.World.Recipes.Entities
             RunXTriggers(tokens, situation, allCatalysts);
 
             RecipeExecutionBuffer.ApplyAllEffects();
+        }
+
+        public void RunXPans(Sphere initialSphere, Situation situation)
+        {
+            if (XPans == null || !XPans.Any())
+                return;
+
+            foreach (Sphere sphere in Watchman.Get<HornedAxe>().GetExteriorSpheres())
+            {
+                List<Token> tokens = sphere.GetElementTokens();
+
+                if (tokens.Count == 0)
+                    continue;
+
+                Crossroads.MarkLocalSphere(sphere);
+
+                allCatalysts.Clear();
+                foreach (KeyValuePair<string, FucineExp<int>> catalyst in XPans)
+                    allCatalysts.ApplyMutation(catalyst.Key, catalyst.Value.value);
+
+                RunXTriggers(tokens, situation, allCatalysts);
+                Crossroads.MarkLocalSphere(initialSphere);
+            }
         }
 
         public static void RunXTriggers(List<Token> tokens, Situation situation, Dictionary<string, int> catalysts)
