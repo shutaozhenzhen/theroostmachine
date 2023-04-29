@@ -26,11 +26,14 @@ namespace Roost.World.Slots
         const string SLOT_ENTRANCE_REQS = "filter";
         const string SLOT_PRESENCE_REQS = nameof(SphereSpec.IfAspectsPresent);
 
+        const string SLOT_CONTRIBUTES_TO_PRESENCE = "addsSlots";
+
         internal static void Enact()
         {
             //aspects can add slots
             Machine.ClaimProperty<Element, List<SphereSpec>>(ASPECT_SLOTS);
             Machine.ClaimProperty<SphereSpec, bool>(ASPECT_SLOT_USE_QUANTITY, false, false);
+            Machine.ClaimProperty<SphereSpec, bool>(SLOT_CONTRIBUTES_TO_PRESENCE, false, false);
 
             //slot's presence can be determined by expressions
             Machine.ClaimProperty<SphereSpec, Dictionary<FucineExp<int>, FucineExp<int>>>(SLOT_PRESENCE_REQS);
@@ -56,8 +59,9 @@ namespace Roost.World.Slots
                 return false;
 
             List<Sphere> spheresThatWereAlreadyActive = new List<Sphere>(____spheres);
+            List<SphereSpec> spheresToCreate = situation.DetermineActiveSlots(spheresThatWereAlreadyActive);
 
-            foreach (SphereSpec sphereSpec in situation.DetermineActiveSlots())
+            foreach (SphereSpec sphereSpec in spheresToCreate)
             {
                 Sphere activeSphere = __instance.TryCreateOrRetrieveSphere(sphereSpec);
 
@@ -70,7 +74,7 @@ namespace Roost.World.Slots
             return false;
         }
 
-        private static List<SphereSpec> DetermineActiveSlots(this Situation situation)
+        private static List<SphereSpec> DetermineActiveSlots(this Situation situation, List<Sphere> alreadyActiveSpheres)
         {
             Token tokenInFirstSlot = GetTokenInFirstSlot(situation);
 
@@ -90,6 +94,11 @@ namespace Roost.World.Slots
                     result.Add(slot);
 
             AspectsDictionary aspects = tokenInFirstSlot.GetAspects(false);
+
+            foreach (Sphere sphere in alreadyActiveSpheres)
+                if (sphere.GoverningSphereSpec.RetrieveProperty<bool>(SLOT_CONTRIBUTES_TO_PRESENCE))
+                    aspects.ApplyMutations(sphere.GetTotalAspects(true));
+
             foreach (string aspectId in aspects.Keys)
             {
                 List<SphereSpec> slots = compendium.GetEntityById<Element>(aspectId).RetrieveProperty(ASPECT_SLOTS) as List<SphereSpec>;
