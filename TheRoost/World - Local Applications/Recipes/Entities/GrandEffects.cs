@@ -191,6 +191,8 @@ namespace Roost.World.Recipes.Entities
                 RunXTriggers(tokens, situation, allCatalysts);
                 Crossroads.MarkLocalSphere(initialSphere);
             }
+
+            RecipeExecutionBuffer.ApplyAllEffects();
         }
 
         public static void RunXTriggers(List<Token> tokens, Situation situation, Dictionary<string, int> catalysts)
