@@ -85,7 +85,7 @@ namespace Roost.World.Elements
                 affectedStack.Retire(vfx);
             else
             {
-                ElementVFXMaster.StoreVFXForCurrentTransformation(vfx);
+                ElementVFXMaster.elementVFXOverride = vfx;
                 affectedStack.ChangeTo(displaceTo);
             }
 

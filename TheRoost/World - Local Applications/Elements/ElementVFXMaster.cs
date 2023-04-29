@@ -20,7 +20,7 @@ namespace Roost.World.Elements
         internal static void Enact()
         {
             //vfx for decay retirements and transformation
-            Machine.ClaimProperty<Element, RetirementVFX>(DECAY_VFX, false, RetirementVFX.CardBurn);
+            Machine.ClaimProperty<Element, RetirementVFX>(DECAY_VFX, false, RetirementVFX.CardTransformWhite);
 
             Machine.Patch(
                 original: typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.ExecuteHeartbeat)),
@@ -28,17 +28,8 @@ namespace Roost.World.Elements
 
             Machine.Patch(
                 original: typeof(Token).GetMethodInvariant("Remanifest"),
-                prefix: typeof(ElementVFXMaster).GetMethodInvariant(nameof(SetVFXForTransformation)));
+                prefix: typeof(ElementVFXMaster).GetMethodInvariant(nameof(RetrieveLastOverrideVFX)));
 
-        }
-
-
-        //the cleaner solution would be to pass VFX with TokenPayloadChangeArgs
-        //but the code has compiled in an absolutely atrocious way and transpiling is effectively rewriting it
-        private static RetirementVFX VFXforCurrentTransformation = RetirementVFX.CardBurn;
-        public static void StoreVFXForCurrentTransformation(RetirementVFX vfx)
-        {
-            VFXforCurrentTransformation = vfx;
         }
 
         private static IEnumerable<CodeInstruction> DecayElementStackWithVFX(IEnumerable<CodeInstruction> instructions)
@@ -61,7 +52,7 @@ namespace Roost.World.Elements
             {
               new CodeInstruction(OpCodes.Ldarg_0),
               new CodeInstruction(OpCodes.Call, typeof(ElementStack).GetMethodInvariant("get_Element")),
-              new CodeInstruction(OpCodes.Call, typeof(ElementVFXMaster).GetMethodInvariant(nameof(StoreVFXForStackDecayPayloadChange))),
+              new CodeInstruction(OpCodes.Call, typeof(ElementVFXMaster).GetMethodInvariant(nameof(OverrideVFXForChangeTo))),
             };
 
             instructions = instructions.InsertBeforeMethodCall(typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.ChangeTo)), changeToCode);
@@ -73,34 +64,19 @@ namespace Roost.World.Elements
             stack.Retire(element.RetrieveProperty<RetirementVFX>(DECAY_VFX));
         }
 
-        private static void StoreVFXForStackDecayPayloadChange(Element element)
+        private static void OverrideVFXForChangeTo(Element element)
         {
-            if (element.HasCustomProperty(DECAY_VFX))
-                StoreVFXForCurrentTransformation(element.RetrieveProperty<RetirementVFX>(DECAY_VFX));
-            else
-                StoreVFXForCurrentTransformation(RetirementVFX.CardTransformWhite);
+            elementVFXOverride = element.RetrieveProperty<RetirementVFX>(DECAY_VFX);
         }
 
-        public static void SetVFXForTransformation(ref RetirementVFX vfx)
+        public static RetirementVFX elementVFXOverride = RetirementVFX.Default;
+        public static void RetrieveLastOverrideVFX(ref RetirementVFX vfx)
         {
-            vfx = VFXforCurrentTransformation;
-        }
-
-        private static IEnumerable<CodeInstruction> RemanifestWithVFXTranspiler(IEnumerable<CodeInstruction> instructions)
-        {
-            List<CodeInstruction> myCode = new List<CodeInstruction>()
+            if (elementVFXOverride != RetirementVFX.Default)
             {
-              new CodeInstruction(OpCodes.Ldarg_0),
-              new CodeInstruction(OpCodes.Call, typeof(ElementVFXMaster).GetMethodInvariant(nameof(RemanifestWithVFX))),
-            };
-
-            Vagabond.CodeInstructionMask mask = instruction => instruction.operand as MethodInfo == typeof(Token).GetMethodInvariant(nameof(Token.Remanifest));
-            return instructions.ReplaceInstruction(mask, myCode);
-        }
-
-        private static void RemanifestWithVFX(Token token)
-        {
-            token.Remanifest(VFXforCurrentTransformation);
+                vfx = elementVFXOverride;
+                elementVFXOverride = RetirementVFX.Default;
+            }
         }
     }
 
