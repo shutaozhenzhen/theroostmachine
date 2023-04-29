@@ -54,7 +54,7 @@ namespace Roost.World.Recipes.Entities
             RunRootEffects();
             RunMutations(localSphere);
 
-            RunRecipeXTriggers(Aspects, localSphere, situation);
+            RunRecipeXTriggers(localSphere, situation);
             if (localXtriggers)
                 RunElementXTriggers(localSphere, situation);
 
@@ -109,7 +109,7 @@ namespace Roost.World.Recipes.Entities
 
         private void RunMutations(Sphere sphere)
         {
-            if (Mutations == null)
+            if (Mutations == null || !Mutations.Any())
                 return;
 
             List<Token> tokens = sphere.GetElementTokens();
@@ -127,9 +127,9 @@ namespace Roost.World.Recipes.Entities
         }
 
         private static readonly AspectsDictionary allCatalysts = new AspectsDictionary();
-        public static void RunRecipeXTriggers(Dictionary<string, FucineExp<int>> Aspects, Sphere sphere, Situation situation)
+        public void RunRecipeXTriggers(Sphere sphere, Situation situation)
         {
-            if (Aspects == null || Aspects.Count == 0)
+            if (Aspects == null || !Aspects.Any())
                 return;
 
             List<Token> tokens = sphere.GetElementTokens();
@@ -141,11 +141,10 @@ namespace Roost.World.Recipes.Entities
             foreach (KeyValuePair<string, FucineExp<int>> catalyst in Aspects)
                 allCatalysts.ApplyMutation(catalyst.Key, catalyst.Value.value);
 
-            if (allCatalysts.Count == 0)
+            if (!allCatalysts.Any())
                 return;
 
-            foreach (Token token in tokens)
-                RunXTriggers(token, situation, allCatalysts);
+            RunXTriggers(tokens, situation, allCatalysts);
 
             RecipeExecutionBuffer.ApplyAllEffects();
         }
@@ -161,10 +160,15 @@ namespace Roost.World.Recipes.Entities
             foreach (Token token in tokens)
                 allCatalysts.CombineAspects(token.GetAspects(true));
 
-            foreach (Token token in tokens)
-                RunXTriggers(token, situation, allCatalysts);
+            RunXTriggers(tokens, situation, allCatalysts);
 
             RecipeExecutionBuffer.ApplyAllEffects();
+        }
+
+        public static void RunXTriggers(List<Token> tokens, Situation situation, Dictionary<string, int> catalysts)
+        {
+            foreach (Token token in tokens)
+                RunXTriggers(token, situation, catalysts);
         }
 
         public static void RunXTriggers(Token token, Situation situation, Dictionary<string, int> catalysts)
@@ -196,7 +200,7 @@ namespace Roost.World.Recipes.Entities
 
         private void RunDeckShuffles()
         {
-            if (DeckShuffles == null)
+            if (DeckShuffles == null || !DeckShuffles.Any())
                 return;
 
             foreach (string deckId in DeckShuffles)
@@ -215,7 +219,7 @@ namespace Roost.World.Recipes.Entities
 
         private void RunDeckEffects(Sphere sphere)
         {
-            if (DeckEffects == null)
+            if (DeckEffects == null || !DeckEffects.Any())
                 return;
 
             foreach (string deckId in DeckEffects.Keys)
@@ -227,7 +231,7 @@ namespace Roost.World.Recipes.Entities
 
         private void RunEffects(Sphere sphere)
         {
-            if (Effects == null)
+            if (Effects == null || !Effects.Any())
                 return;
 
             List<Token> allTokens = sphere.Tokens;
@@ -250,7 +254,7 @@ namespace Roost.World.Recipes.Entities
 
         private void RunDecays(Sphere sphere)
         {
-            if (Decays == null)
+            if (Decays == null || !Decays.Any())
                 return;
 
             List<Token> tokens = sphere.GetElementTokens();
@@ -265,7 +269,7 @@ namespace Roost.World.Recipes.Entities
 
         private void RunVerbManipulations()
         {
-            if (HaltVerb != null)
+            if (HaltVerb != null && HaltVerb.Any())
             {
                 foreach (KeyValuePair<string, FucineExp<int>> haltVerbEffect in HaltVerb)
                     allCatalysts.Add(haltVerbEffect.Key, haltVerbEffect.Value.value);
@@ -276,7 +280,7 @@ namespace Roost.World.Recipes.Entities
                 allCatalysts.Clear();
             }
 
-            if (DeleteVerb != null)
+            if (DeleteVerb != null && DeleteVerb.Any())
             {
                 foreach (KeyValuePair<string, FucineExp<int>> deleteVerbEffect in DeleteVerb)
                     allCatalysts.Add(deleteVerbEffect.Key, deleteVerbEffect.Value.value);
@@ -290,7 +294,7 @@ namespace Roost.World.Recipes.Entities
 
         private void RunDistantEffects(Situation situation, Sphere localSphere)
         {
-            if (DistantEffects == null)
+            if (DistantEffects == null || !DistantEffects.Any())
                 return;
 
             foreach (GrandEffects distantEffect in DistantEffects)
@@ -303,7 +307,7 @@ namespace Roost.World.Recipes.Entities
 
         private void RunMovements(Sphere fromSphere)
         {
-            if (Movements == null)
+            if (Movements == null || !Movements.Any())
                 return;
 
             List<Token> tokens = fromSphere.GetElementTokens();
