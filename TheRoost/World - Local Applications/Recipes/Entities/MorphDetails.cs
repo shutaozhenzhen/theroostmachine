@@ -76,7 +76,7 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.Spawn:
                 case MorphEffectsExtended.Mutate:
                 case MorphEffectsExtended.SetMutation:
-                    if (Id == null)
+                    if (Id != null)
                         foreach (object key in UnknownProperties.Keys)
                             if (compendium.GetEntityById<Element>(key.ToString())?.IsValid() == true)
                             {
@@ -95,7 +95,7 @@ namespace Roost.World.Recipes.Entities
                 //links, id is a recipe
                 case MorphEffectsExtended.Link:
                 case MorphEffectsExtended.Induce:
-                    if (Id == null)
+                    if (Id != null)
                         foreach (object key in UnknownProperties.Keys)
                             if (compendium.GetEntityById<Recipe>(key.ToString())?.IsValid() == true)
                             {
@@ -127,7 +127,7 @@ namespace Roost.World.Recipes.Entities
                 //id is a deck
                 case MorphEffectsExtended.DeckDraw:
                 case MorphEffectsExtended.DeckShuffle:
-                    if (Id == null)
+                    if (Id != null)
                         foreach (object key in UnknownProperties.Keys)
                             if (compendium.GetEntityById<DeckSpec>(key.ToString()) != null)
                             {
