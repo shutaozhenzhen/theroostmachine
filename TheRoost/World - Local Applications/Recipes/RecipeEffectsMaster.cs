@@ -153,7 +153,6 @@ namespace Roost.World.Recipes
 
         private static void RefEffects(Situation situation)
         {
-            //Birdsong.Sing(VerbosityLevel.SystemChatter, 0, $"EXECUTING: {command.Recipe.Id}");
             Crossroads.ResetCache();
             Crossroads.MarkLocalSituation(situation);
 
