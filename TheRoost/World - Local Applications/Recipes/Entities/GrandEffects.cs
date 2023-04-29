@@ -123,11 +123,11 @@ namespace Roost.World.Recipes.Entities
             {
                 List<Token> targets = mutationEffect.Filter.GetTokens(tokens);
 
-                if (targets.Count > 0)
-                {
-                    RecipeExecutionBuffer.ScheduleMutation(targets, mutationEffect.Mutate, mutationEffect.Level.value, mutationEffect.Additive, mutationEffect.VFX);
-                    RecipeExecutionBuffer.ApplyMutations();
-                }
+                if (targets.Count == 0)
+                    continue;
+
+                RecipeExecutionBuffer.ScheduleMutation(targets, mutationEffect.Mutate, mutationEffect.Level.value, mutationEffect.Additive, mutationEffect.VFX);
+                RecipeExecutionBuffer.ApplyMutations();
             }
         }
 
