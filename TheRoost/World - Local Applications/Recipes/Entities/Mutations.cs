@@ -44,7 +44,6 @@ namespace Roost.World.Recipes.Entities
                 UnknownProperties.Remove(LIMIT);
             }
 
-
             if (Mutate == null)
             {
                 foreach (object key in UnknownProperties.Keys)

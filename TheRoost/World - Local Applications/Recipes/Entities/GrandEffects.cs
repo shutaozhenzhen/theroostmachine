@@ -20,12 +20,12 @@ namespace Roost.World.Recipes.Entities
     public class GrandEffects : AbstractEntity<GrandEffects>
     {
         [FucinePathValue(defaultValue: "~/sphere")] public FucinePath Target { get; set; }
-        [FucineDict] public Dictionary<string, FucineExp<int>> RootEffects { get; set; }
+        [FucineDict(ValidateKeysAs = typeof(Element))] public Dictionary<string, FucineExp<int>> RootEffects { get; set; }
         [FucineList] public List<RefMutationEffect> Mutations { get; set; }
-        [FucineDict] public Dictionary<string, FucineExp<int>> Aspects { get; set; }
-        [FucineDict] public Dictionary<string, FucineExp<int>> XPans { get; set; }
-        [FucineList] public List<string> DeckShuffles { get; set; }
-        [FucineDict] public Dictionary<string, FucineExp<int>> DeckEffects { get; set; }
+        [FucineDict(ValidateKeysAs = typeof(Element))] public Dictionary<string, FucineExp<int>> Aspects { get; set; }
+        [FucineDict(ValidateKeysAs = typeof(Element))] public Dictionary<string, FucineExp<int>> XPans { get; set; }
+        [FucineList(ValidateValueAs = typeof(DeckSpec))] public List<string> DeckShuffles { get; set; }
+        [FucineDict(ValidateKeysAs = typeof(DeckSpec))] public Dictionary<string, FucineExp<int>> DeckEffects { get; set; }
         [FucineDict] public Dictionary<FucineExp<bool>, FucineExp<int>> Effects { get; set; }
         [FucineList] public List<TokenFilterSpec> Decays { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> HaltVerb { get; set; }
@@ -40,7 +40,6 @@ namespace Roost.World.Recipes.Entities
         [FucineValue(DefaultValue = RetirementVFX.None)] public RetirementVFX MovementsVFX { get; set; }
 
         public GrandEffects() { }
-        public GrandEffects(ContentImportLog log) : base(new EntityData(), log) { }
         public GrandEffects(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
 
         public void RunGrandEffects(Situation situation, Sphere localSphere, bool localXtriggers)
@@ -357,45 +356,18 @@ namespace Roost.World.Recipes.Entities
 
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
         {
-            ContentImportLog subLog = new ContentImportLog();
-            foreach (RefMutationEffect mutation in Mutations)
-            {
-                mutation.OnPostImport(subLog, populatedCompendium);
-                mutation.Filter.OnPostImport(subLog, populatedCompendium);
-            }
-
-            foreach (string deckId in DeckShuffles)
-                if (populatedCompendium.GetEntityById<DeckSpec>(deckId) == null)
-                    log.LogWarning($"UNKNOWN DECK ID '{deckId}' TO SHUFFLE IN RECIPE EFFECTS '{Id}'");
-
-            foreach (string deckId in DeckEffects.Keys)
-                if (populatedCompendium.GetEntityById<DeckSpec>(deckId) == null)
-                    log.LogWarning($"UNKNOWN DECK ID '{deckId}' TO DRAW FROM IN RECIPE EFFECTS '{Id}'");
-
-            foreach (TokenFilterSpec filter in Decays)
-                filter.OnPostImport(subLog, populatedCompendium);
-
-            foreach (List<TokenFilterSpec> filters in Movements.Values)
-                foreach (TokenFilterSpec filter in filters)
-                    filter.OnPostImport(subLog, populatedCompendium);
-
-            foreach (ILogMessage message in subLog.GetMessages())
-                Birdsong.TweetLoud($"PROBLEM IN RECIPE '{this.Id}' - {message.Description}'");
-
             int i = 0;
             foreach (GrandEffects distantEffect in DistantEffects)
-            {
                 distantEffect.SetId(this.Id + " distant effect #" + i++);
-                distantEffect.OnPostImport(log, populatedCompendium);
-            }
 
+            /*
             //reducing amount of entities
             foreach (CachedFucineProperty<GrandEffects> property in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
             {
                 object value = property.GetViaFastInvoke(this);
                 if ((value as ICollection)?.Count == 0)
                     property.SetViaFastInvoke(this, null);
-            }
+            }*/
         }
     }
 }

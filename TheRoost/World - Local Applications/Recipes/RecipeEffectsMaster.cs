@@ -100,15 +100,17 @@ namespace Roost.World.Recipes
 
                 populatedCompendium.TryAddEntity(recipe.InternalDeck);
 
-                FucineExp<int> draws = recipe.InternalDeck.RetrieveProperty<FucineExp<int>>("draws");
-                if (recipe.HasCustomProperty("deckeffects") == false)
-                    recipe.SetCustomProperty("deckeffects", new Dictionary<string, FucineExp<int>>());
-                recipe.RetrieveProperty<Dictionary<string, FucineExp<int>>>("deckeffects").Add(recipe.InternalDeck.Id, draws);
+                FucineExp<int> draws = recipe.InternalDeck.RetrieveProperty<FucineExp<int>>(nameof(DeckSpec.Draws));
+                if (recipe.HasCustomProperty(nameof(Recipe.DeckEffects)) == false)
+                    recipe.SetCustomProperty(nameof(Recipe.DeckEffects), new Dictionary<string, FucineExp<int>>());
+                recipe.RetrieveProperty<Dictionary<string, FucineExp<int>>>(nameof(Recipe.DeckEffects)).Add(recipe.InternalDeck.Id, draws);
 
                 recipe.InternalDeck = new DeckSpec();
             }
 
-            GrandEffects firstPassEffects = new GrandEffects(log);
+            GrandEffects firstPassEffects = new GrandEffects();
+            firstPassEffects.SetDefaultValues();
+
             bool atLeastOneEffect = false;
             foreach (CachedFucineProperty<GrandEffects> cachedProperty in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
                 if (recipe.HasCustomProperty(cachedProperty.LowerCaseName))
