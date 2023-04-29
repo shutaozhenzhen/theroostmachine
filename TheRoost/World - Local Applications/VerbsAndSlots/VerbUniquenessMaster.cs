@@ -31,12 +31,14 @@ namespace Roost.World.Verbs
                 prefix: typeof(VerbUniquenessMaster).GetMethodInvariant(nameof(ClosePotentialDoubles)));
         }
 
-        private static void ClosePotentialDoubles()
+        private static void ClosePotentialDoubles(Situation __instance)
         {
             //CloseAllSituationWindowsExcept(null) accepts verb id
             //naturally, when there are multiple situations of the same verb, they all can be opened
             //so we close everything by hand
-            Watchman.Get<Meniscate>().CloseAllSituationWindowsExcept(null);
+            Situation currentlyOpen = Watchman.Get<Meniscate>().GetCurrentlyOpenSituation();
+            if (currentlyOpen.IsValid() && currentlyOpen != __instance)
+                Watchman.Get<Meniscate>().CloseAllSituationWindowsExcept(null);
         }
 
         private static IEnumerable<CodeInstruction> InjectVerbCounting(IEnumerable<CodeInstruction> instructions)
@@ -49,7 +51,7 @@ namespace Roost.World.Verbs
 
             Vagabond.CodeInstructionMask start = instruction => true;
             Vagabond.CodeInstructionMask end = instruction => instruction.opcode == OpCodes.Brfalse_S;
-            
+
             return instructions.ReplaceSegment(start, end, myCode, replaceStart: true, replaceEnd: false);
         }
 
