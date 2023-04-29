@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -69,6 +70,7 @@ namespace Roost.World.Recipes.Entities
             RunDistantEffects(situation, localSphere);
             RunMovements(localSphere);
 
+            allCatalysts.Clear();
             RecipeExecutionBuffer.ApplyVFX();
             RecipeExecutionBuffer.ApplyRecipeInductions();
         }
@@ -79,6 +81,7 @@ namespace Roost.World.Recipes.Entities
             Crossroads.MarkLocalSphere(localSphere);
             RunElementXTriggers(localSphere, situation);
 
+            allCatalysts.Clear();
             RecipeExecutionBuffer.ApplyVFX();
             RecipeExecutionBuffer.ApplyRecipeInductions();
         }
