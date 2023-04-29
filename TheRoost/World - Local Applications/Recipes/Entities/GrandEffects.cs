@@ -186,7 +186,7 @@ namespace Roost.World.Recipes.Entities
                         foreach (RefMorphDetails morphDetails in xtriggers[catalyst.Key])
                             morphDetails.Execute(situation, token, token.PayloadEntityId, token.Quantity, catalyst.Value, false);
 
-            AspectsDictionary tokenAspects = token.GetAspects(false);
+            AspectsDictionary tokenAspects = new AspectsDictionary(token.GetAspects(false));
             foreach (KeyValuePair<string, int> aspect in tokenAspects)
             {
                 xtriggers = compendium.GetEntityById<Element>(aspect.Key).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
