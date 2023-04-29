@@ -22,8 +22,6 @@ namespace Roost.World.Recipes
 
         private static readonly Dictionary<Token, RetirementVFX> vfxs = new Dictionary<Token, RetirementVFX>();
 
-        private static readonly HashSet<Sphere> dirtySpheres = new HashSet<Sphere>();
-
         public static void ApplyAllEffects()
         {
             ApplyRetirements();
@@ -48,36 +46,30 @@ namespace Roost.World.Recipes
         public static void ApplyDeckRenews()
         {
             foreach (string deckId in deckRenews)
-            {
-                Sphere drawSphere = Legerdemain.RenewDeck(deckId);
-                drawSphere.MarkAsDirty();
-            }
+                Legerdemain.RenewDeck(deckId);
 
             deckRenews.Clear();
         }
 
         public static void ApplyMutations()
         {
-            foreach (MutationEffect mutation in mutations.Keys)
-                foreach (IHasAspects payload in mutations[mutation])
-                {
-                    mutation.Apply(payload);
-                    IManifestable manifestablePayload = payload as IManifestable;
-                    if (manifestablePayload != null)
-                        manifestablePayload?.GetToken().Sphere.MarkAsDirty();
-                }
+            foreach (KeyValuePair<MutationEffect, HashSet<IHasAspects>> mutation in mutations)
+                foreach (IHasAspects payload in mutation.Value)
+                    mutation.Key.Apply(payload);
+
             mutations.Clear();
         }
 
         public static void ApplyQuantityChanges()
         {
-            foreach (var change in quantityChanges)
+            foreach (KeyValuePair<Token, int> change in quantityChanges)
             {
                 if (change.Key.Defunct)
                     continue;
 
                 change.Key.Payload.ModifyQuantity(change.Value, new Context(Context.ActionSource.SituationEffect));
             }
+
             quantityChanges.Clear();
         }
 
@@ -87,8 +79,8 @@ namespace Roost.World.Recipes
             {
                 stack.ChangeTo(transformations[stack]);
                 stack.Token.Unshroud();
-                stack.Token.Sphere.MarkAsDirty();
             }
+
             transformations.Clear();
         }
 
@@ -102,8 +94,8 @@ namespace Roost.World.Recipes
                 else
                     foreach (SpawnEffect creation in spawns[sphere])
                         creation.ApplyWithoutVFX(sphere);
-                sphere.MarkAsDirty();
             }
+
             spawns.Clear();
         }
 
@@ -117,9 +109,8 @@ namespace Roost.World.Recipes
                     sphere.ProcessEvictedToken(token, new Context(Context.ActionSource.SituationEffect));
                 else
                     sphere.AcceptToken(token, new Context(Context.ActionSource.SituationEffect));
-
-                sphere.MarkAsDirty();
             }
+
             movements.Clear();
         }
 
@@ -139,7 +130,8 @@ namespace Roost.World.Recipes
                         situation.AdditionalRecipeSpawnToken(recipeWhichCanExecuteInContext, link.Expulsion, link.ToPath);
                 }
             }
-                inductions.Clear();
+
+            inductions.Clear();
         }
 
         public static void ApplyVFX()
@@ -147,6 +139,7 @@ namespace Roost.World.Recipes
             foreach (Token token in vfxs.Keys)
                 if (token.Sphere.SupportsVFX())
                     token.Remanifest(vfxs[token]);
+
             vfxs.Clear();
         }
 
@@ -202,8 +195,9 @@ namespace Roost.World.Recipes
             TryReplaceWithLever(ref mutate);
 
             MutationEffect futureMutation = new MutationEffect(mutate, level, additive, groupId);
+            if (!mutations.ContainsKey(futureMutation))
+                mutations[futureMutation] = new HashSet<IHasAspects>();
 
-            mutations[futureMutation] = new HashSet<IHasAspects>();
             mutations[futureMutation].Add(payload);
         }
 
@@ -212,7 +206,8 @@ namespace Roost.World.Recipes
             TryReplaceWithLever(ref mutate);
 
             MutationEffect futureMutation = new MutationEffect(mutate, level, additive, "");
-            mutations[futureMutation] = new HashSet<IHasAspects>();
+            if (!mutations.ContainsKey(futureMutation))
+                mutations[futureMutation] = new HashSet<IHasAspects>();
 
             foreach (Token token in tokens)
             {
@@ -263,18 +258,6 @@ namespace Roost.World.Recipes
         {
             if (vfx != RetirementVFX.None && vfx != RetirementVFX.Default && !retirements.Contains(token))
                 vfxs[token] = vfx;
-        }
-
-        public static void MarkAsDirty(this Sphere sphere)
-        {
-            //dirtySpheres.Add(sphere);
-        }
-
-        public static HashSet<Sphere> FlushDirtySpheres()
-        {
-            HashSet<Sphere> result = new HashSet<Sphere>(dirtySpheres);
-            dirtySpheres.Clear();
-            return result;
         }
 
         private struct MutationEffect
