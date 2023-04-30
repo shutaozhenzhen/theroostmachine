@@ -30,7 +30,7 @@ namespace Roost.World.Recipes.Entities
         [FucineList] public List<TokenFilterSpec> Decays { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> HaltVerb { get; set; }
         [FucineDict] public Dictionary<string, FucineExp<int>> DeleteVerb { get; set; }
-        [FucineList] public List<GrandEffects> DistantEffects { get; set; }
+        [FucineList] public List<GrandEffects> Furthermore { get; set; }
         [FucineAutoValue] public Dictionary<FucinePath, List<TokenFilterSpec>> Movements { get; set; }
 
         [FucineValue(DefaultValue = RetirementVFX.None)] public RetirementVFX DeckEffectsVFX { get; set; }
@@ -66,7 +66,7 @@ namespace Roost.World.Recipes.Entities
             RunEffects(localSphere);
             RunDecays(localSphere);
             RunVerbManipulations();
-            RunDistantEffects(situation, localSphere);
+            RunFurthermores(situation, localSphere);
             RunMovements(localSphere);
 
             allCatalysts.Clear();
@@ -322,15 +322,15 @@ namespace Roost.World.Recipes.Entities
             }
         }
 
-        private void RunDistantEffects(Situation situation, Sphere localSphere)
+        private void RunFurthermores(Situation situation, Sphere localSphere)
         {
-            if (DistantEffects == null || !DistantEffects.Any())
+            if (Furthermore == null || !Furthermore.Any())
                 return;
 
-            foreach (GrandEffects distantEffect in DistantEffects)
-                foreach (Sphere sphere in distantEffect.Target.GetSpheresByPath())
+            foreach (GrandEffects furthermore in Furthermore)
+                foreach (Sphere sphere in furthermore.Target.GetSpheresByPath())
                 {
-                    distantEffect.RunGrandEffects(situation, sphere, false);
+                    furthermore.RunGrandEffects(situation, sphere, false);
                     Crossroads.MarkLocalSphere(localSphere);
                 }
         }
@@ -359,8 +359,8 @@ namespace Roost.World.Recipes.Entities
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
         {
             int i = 0;
-            foreach (GrandEffects distantEffect in DistantEffects)
-                distantEffect.SetId(this.Id + " distant effect #" + i++);
+            foreach (GrandEffects furthermore in Furthermore)
+                furthermore.SetId($"{this.Id} additional effect # {i++}");
 
             /*
             //reducing amount of entities
