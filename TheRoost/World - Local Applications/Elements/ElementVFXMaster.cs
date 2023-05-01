@@ -20,19 +20,19 @@ namespace Roost.World.Elements
         internal static void Enact()
         {
             //vfx for decay retirements and transformation
-            Machine.ClaimProperty<Element, RetirementVFX>(DECAY_VFX, false, RetirementVFX.CardTransformWhite);
+            Machine.ClaimProperty<Element, RetirementVFX>(DECAY_VFX, false, RetirementVFX.Default);
 
             Machine.Patch(
                 original: typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.ExecuteHeartbeat)),
-                transpiler: typeof(ElementVFXMaster).GetMethodInvariant(nameof(DecayElementStackWithVFX)));
+                transpiler: typeof(ElementVFXMaster).GetMethodInvariant(nameof(HeartbeatVFX)));
 
             Machine.Patch(
                 original: typeof(Token).GetMethodInvariant("Remanifest"),
-                prefix: typeof(ElementVFXMaster).GetMethodInvariant(nameof(RetrieveLastOverrideVFX)));
+                prefix: typeof(ElementVFXMaster).GetMethodInvariant(nameof(ReplaceRemanifestVFX)));
 
         }
 
-        private static IEnumerable<CodeInstruction> DecayElementStackWithVFX(IEnumerable<CodeInstruction> instructions)
+        private static IEnumerable<CodeInstruction> HeartbeatVFX(IEnumerable<CodeInstruction> instructions)
         {
             List<CodeInstruction> retireCode = new List<CodeInstruction>()
             {
@@ -61,7 +61,11 @@ namespace Roost.World.Elements
 
         private static void RetireWithVFX(ElementStack stack, Element element)
         {
-            stack.Retire(element.RetrieveProperty<RetirementVFX>(DECAY_VFX));
+            RetirementVFX VFX = element.RetrieveProperty<RetirementVFX>(DECAY_VFX);
+            if (VFX == RetirementVFX.Default)
+                VFX = RetirementVFX.CardBurn;
+
+            stack.Retire(VFX);
         }
 
         private static void OverrideVFXForChangeTo(Element element)
@@ -70,7 +74,7 @@ namespace Roost.World.Elements
         }
 
         public static RetirementVFX elementVFXOverride = RetirementVFX.Default;
-        public static void RetrieveLastOverrideVFX(ref RetirementVFX vfx)
+        public static void ReplaceRemanifestVFX(ref RetirementVFX vfx)
         {
             if (elementVFXOverride != RetirementVFX.Default)
             {
