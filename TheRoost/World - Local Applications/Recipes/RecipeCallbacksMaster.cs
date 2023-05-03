@@ -49,7 +49,6 @@ namespace Roost.World.Recipes
                 original: typeof(CompleteState).GetMethodInvariant(nameof(CompleteState.Enter)),
                 postfix: typeof(RecipeCallbacksMaster).GetMethodInvariant(nameof(ClearAllCallbacksForSituation)));
 
-
             Machine.Patch(
                 original: Machine.GetMethod<LinkedRecipeDetails>("OnPostImportForSpecificEntity"),
                 prefix: typeof(RecipeCallbacksMaster).GetMethodInvariant(nameof(SetDummyId)));
@@ -60,10 +59,9 @@ namespace Roost.World.Recipes
 
         private static void SetDummyId(LinkedRecipeDetails __instance, Compendium populatedCompendium)
         {
-            if (string.IsNullOrWhiteSpace(__instance.Id)
-                && __instance.RetrieveProperty<string>(USE_CALLBACK) != null)
+            if (__instance.RetrieveProperty<string>(USE_CALLBACK) != null)
             {
-                Recipe anyRecipe = populatedCompendium.GetSingleEntity<Recipe>();
+                Recipe anyRecipe = populatedCompendium.GetEntitiesAsList<Recipe>()[0];
                 //we're setting literally any id to it so it won't fail a validation
                 //the real links are cleared each time we evaluate the callback-link
                 __instance.SetId(anyRecipe.Id);
@@ -99,8 +97,10 @@ namespace Roost.World.Recipes
             if (callbackRecipeId == null)
             {
                 Birdsong.TweetLoud($"Trying to use the callback '{callbackId}' in '{SituationTracker.currentSituation.RecipeId}', but the callback is not set");
+
                 List<Recipe> cachedRecipes = getCachedRecipesList(linkDetails) as List<Recipe>;
                 cachedRecipes.Clear();
+
                 return;
             }
 
