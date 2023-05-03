@@ -26,8 +26,6 @@ namespace Roost.World.Recipes
      */
     static class RecipeCallbacksMaster
     {
-        static Situation currentSituation = null;
-
         const string ADD_CALLBACKS = "addCallbacks";
         const string CLEAR_CALLBACKS = "clearcallbacks";
         const string RESET_CALLBACKS = "resetcallbacks";
@@ -41,11 +39,6 @@ namespace Roost.World.Recipes
             Machine.ClaimProperty<Recipe, List<string>>(CLEAR_CALLBACKS);
             Machine.ClaimProperty<Recipe, bool>(RESET_CALLBACKS, defaultValue: false);
             Machine.ClaimProperty<LinkedRecipeDetails, string>(USE_CALLBACK);
-
-            // Patch: store current situation
-            Machine.Patch(
-                original: typeof(RequiresExecutionState).GetMethodInvariant(nameof(RequiresExecutionState.Continue)),
-                prefix: typeof(RecipeCallbacksMaster).GetMethodInvariant(nameof(StoreCurrentSituation)));
 
             Machine.Patch(
                 original: typeof(LinkedRecipeDetails).GetMethodInvariant(nameof(LinkedRecipeDetails.GetRecipeWhichCanExecuteInContext)),
@@ -132,10 +125,7 @@ namespace Roost.World.Recipes
             return situation.Id + ".callbacks." + callback.ToLower();
         }
 
-        private static void StoreCurrentSituation(Situation situation)
-        {
-            currentSituation = situation;
-        }
+
 
         public static void ClearAllCallbacksForSituation(Situation situation)
         {
