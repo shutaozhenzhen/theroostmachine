@@ -33,7 +33,7 @@ namespace Roost.World.Recipes.Entities
 
         [FucineEverValue(DefaultValue = RetirementVFX.CardTransformWhite)] public RetirementVFX VFX { get; set; }
 
-        [FucineValue(false)] public bool UseReactingQuantity { get; set; }
+        [FucineValue(false)] public bool UseMyQuantity { get; set; }
         [FucineValue(false)] public bool UseCatalystQuantity { get; set; }
 
         private LinkedRecipeDetails Induction { get; set; }
@@ -197,7 +197,7 @@ namespace Roost.World.Recipes.Entities
                 return;
             }
 
-            reactingElementQuantity = UseReactingQuantity ? reactingElementQuantity : 1;
+            reactingElementQuantity = UseMyQuantity ? reactingElementQuantity : 1;
             catalystQuantity = UseCatalystQuantity ? catalystQuantity: 1;
 
             switch (MorphEffect)
