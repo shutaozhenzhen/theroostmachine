@@ -56,8 +56,25 @@ namespace Roost.World.Recipes
                 original: typeof(CompleteState).GetMethodInvariant(nameof(CompleteState.Enter)),
                 postfix: typeof(RecipeCallbacksMaster).GetMethodInvariant(nameof(ClearAllCallbacksForSituation)));
 
+
+            Machine.Patch(
+                original: Machine.GetMethod<LinkedRecipeDetails>("OnPostImportForSpecificEntity"),
+                prefix: typeof(RecipeCallbacksMaster).GetMethodInvariant(nameof(SetDummyId)));
+
             // Patch: store callback ids
             AtTimeOfPower.RecipeExecution.Schedule<Situation>(RecipeCallbackOperations, PatchType.Postfix);
+        }
+
+        private static void SetDummyId(LinkedRecipeDetails __instance, Compendium populatedCompendium)
+        {
+            if (string.IsNullOrWhiteSpace(__instance.Id)
+                && __instance.RetrieveProperty<string>(USE_CALLBACK) != null)
+            {
+                Recipe anyRecipe = populatedCompendium.GetSingleEntity<Recipe>();
+                //we're setting literally any id to it so it won't fail a validation
+                //the real links are cleared each time we evaluate the callback-link
+                __instance.SetId(anyRecipe.Id);
+            }
         }
 
         //LinkedRecipeDetails.GetRecipeWhichCanExecuteInContext()
