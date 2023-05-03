@@ -84,20 +84,21 @@ namespace Roost.World.Recipes
             if (callbackId == null)
                 return;
 
-            var fullCallbackId = CompleteCallbackId(currentSituation, callbackId);
+            List<Recipe> cachedRecipes = getCachedRecipesList(linkDetails) as List<Recipe>;
+            cachedRecipes.Clear();
+
+            var fullCallbackId = CompleteCallbackId(SituationTracker.currentSituation, callbackId);
             var callbackRecipeId = Machine.GetLeverForCurrentPlaythrough(fullCallbackId);
             if (callbackRecipeId == null)
             {
-                Birdsong.TweetLoud($"Trying to use the callback '{callbackId}' in '{currentSituation.RecipeId}', but the callback is not set");
+                Birdsong.TweetLoud($"Trying to use the callback '{callbackId}' in '{SituationTracker.currentSituation.RecipeId}', but the callback is not set");
                 return;
             }
 
-            Birdsong.Sing($"Found the callback recipe '{callbackRecipeId}' for callback '{fullCallbackId}' in situation '{currentSituation.Id}'");
+            Birdsong.Sing($"Found the callback recipe '{callbackRecipeId}' for callback '{fullCallbackId}' in situation '{SituationTracker.currentSituation.Id}'");
             //if the recipe id is wrong - or null, in case callback isn't set - default logger will display a message
             linkDetails.SetId(callbackRecipeId);
 
-            List<Recipe> cachedRecipes = getCachedRecipesList(linkDetails) as List<Recipe>;
-            cachedRecipes.Clear();
             cachedRecipes.AddRange(Watchman.Get<Compendium>().GetEntitiesAsList<Recipe>().Where(r => r.WildcardMatchId(callbackRecipeId)));
 
             if (cachedRecipes.Count == 0)
