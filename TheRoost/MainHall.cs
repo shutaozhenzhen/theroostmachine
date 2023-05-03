@@ -90,6 +90,7 @@ namespace Roost.Enactors
             Roost.World.Recipes.RecipeNotesMaster.Enact();
             Roost.World.Recipes.RecipeRandomWildcardMaster.Enact();
             Roost.World.Recipes.RecipeCallbacksMaster.Enact();
+            Roost.World.Recipes.SituationTracker.Enact();
 
             Roost.World.Elements.ElementRandomDecay.Enact();
             Roost.World.Elements.ElementVFXMaster.Enact();
