@@ -11,7 +11,12 @@ namespace Roost.Twins.Entities
     {
         private readonly string fullPath;
         public readonly string sphereMask;
-        public FucinePathPlus(string path, int maxSpheresToFind, List<SphereCategory> acceptable = null, List<SphereCategory> excluded = null) : base(path)
+
+        public readonly int maxSpheresToFind;
+        public readonly SphereCategory[] acceptableCategories;
+        public readonly string[] sphereId;
+
+        public FucinePathPlus(string path, int maxSpheresToFind, SphereCategory[] acceptable = null, SphereCategory[] excluded = null) : base(path)
         {
             this.maxSpheresToFind = maxSpheresToFind;
 
@@ -21,7 +26,7 @@ namespace Roost.Twins.Entities
             {
                 acceptable = acceptable ?? allCategories;
                 excluded = excluded ?? defaultExcludedCategories;
-                acceptableCategories = acceptable.Except(excluded).ToList();
+                acceptableCategories = acceptable.Except(excluded).ToArray();
 
                 if (acceptableCategories.SequenceEqual(defaultAcceptableCategories))
                     acceptableCategories = defaultAcceptableCategories;
@@ -40,13 +45,9 @@ namespace Roost.Twins.Entities
             return acceptableCategories.Contains(sphereCategory);
         }
 
-        public readonly int maxSpheresToFind;
-
-        public List<SphereCategory> acceptableCategories;
-
-        private static readonly List<SphereCategory> allCategories = new List<SphereCategory>((SphereCategory[])Enum.GetValues(typeof(SphereCategory)));
-        private static readonly List<SphereCategory> defaultExcludedCategories = new List<SphereCategory> { SphereCategory.Notes, SphereCategory.Null, SphereCategory.Meta };
-        private static readonly List<SphereCategory> defaultAcceptableCategories = allCategories.Except(defaultExcludedCategories).ToList();
+        private static readonly SphereCategory[] allCategories = Enum.GetValues(typeof(SphereCategory)) as SphereCategory[];
+        private static readonly SphereCategory[] defaultExcludedCategories = new SphereCategory[] { SphereCategory.Notes, SphereCategory.Null, SphereCategory.Meta };
+        private static readonly SphereCategory[] defaultAcceptableCategories = allCategories.Except(defaultExcludedCategories).ToArray();
     }
 
 }

@@ -127,7 +127,7 @@ namespace Roost.Twins
                 ParsePathPlusLimit(ref path, out int amount);
                 ParsePathTargetCategories(ref path, out List<SphereCategory> acceptedCategories, out List<SphereCategory> excludedCategories);
 
-                return new FucinePathPlus(path, amount, acceptedCategories, excludedCategories);
+                return new FucinePathPlus(path, amount, acceptedCategories?.ToArray(), excludedCategories?.ToArray());
             }
 
             return new FucinePath(path);
