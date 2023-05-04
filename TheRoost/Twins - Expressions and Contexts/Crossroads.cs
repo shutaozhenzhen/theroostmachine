@@ -284,7 +284,7 @@ namespace Roost.Twins
                         _tokens[0].Sphere.ProcessEvictedToken(token, context);
                 }
                 else
-                    Watchman.Get<HornedAxe>().GetDefaultSphereForUnknownToken().ProcessEvictedToken(token, context);
+                    Watchman.Get<HornedAxe>().GetDefaultSphere(token).ProcessEvictedToken(token, context);
             }
 
             public override string ToString()
