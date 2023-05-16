@@ -70,7 +70,7 @@ namespace Roost.World.Recipes.Entities
             SetId(value);
             Mutate = value;
             Level = new FucineExp<int>("1");
-            Additive = false;
+            Additive = true;
             VFX = RetirementVFX.CardTransformWhite;
         }
 
