@@ -90,7 +90,7 @@ namespace Roost.World.Beauty
             AtTimeOfPower.NewGameSceneInit.Schedule(ResetIconAndLabelForElementStackSimple, PatchType.Prefix);
         }
 
-        private static bool GetAppropriateSpriteForElementManifestation(IManifestable manifestable, Sprite __result)
+        private static bool GetAppropriateSpriteForElementManifestation(IManifestable manifestable, ref Sprite __result)
         {
             Element element = Watchman.Get<Compendium>().GetEntityById<Element>(manifestable.EntityId);
             string icon = manifestable.Icon;

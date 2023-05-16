@@ -280,7 +280,7 @@ namespace Roost.World.Recipes
 
             public void ApplyWithoutVFX(Sphere onSphere)
             {
-                new TokenCreationCommand().WithElementStack(elementId, quantity).Execute(new Context(Context.ActionSource.SituationEffect), onSphere);
+                onSphere.ModifyElementQuantity(elementId, quantity);
             }
 
             public void ApplyWithVFX(Sphere onSphere)
