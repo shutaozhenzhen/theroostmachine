@@ -96,7 +96,7 @@ namespace Roost.World
 
                 if (selectedAmount < token.Quantity)
                 {
-                    Token newToken = token.CalveToken(selectedAmount, contextCalve);
+                    Token newToken = token.CalveToken(selectedAmount);
                     result.Add(newToken);
 
                     if (newToken.Sphere.SphereCategory == SecretHistories.Enums.SphereCategory.World)

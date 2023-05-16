@@ -33,7 +33,7 @@ namespace Roost.World.Elements
 
             AtTimeOfPower.TabletopSceneInit.Schedule(OnTabletop, PatchType.Prefix);
 
-            DominionPrefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<SituationWindow>().transform.Find("VerbThresholdsDominion").gameObject;
+            DominionPrefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<SituationWindow>("").transform.Find("VerbThresholdsDominion").gameObject;
         }
         private static void CreateSphere(ElementStackCreationCommand __instance)
         {

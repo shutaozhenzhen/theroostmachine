@@ -35,7 +35,7 @@ namespace Roost.World.Slots
                 original: typeof(SlotDetailsWindow).GetMethodInvariant("SetSlot"),
                 postfix: typeof(XAngelMaster).GetMethodInvariant(nameof(SetXAngelInfo)));
 
-            Transform thresholdSphere = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<ThresholdSphere>().transform;
+            Transform thresholdSphere = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<ThresholdSphere>("").transform;
             defaultConsumeSprite = thresholdSphere.Find("Icon-Slots").GetChild(0).GetChild(0).GetComponent<Image>().sprite;
         }
 

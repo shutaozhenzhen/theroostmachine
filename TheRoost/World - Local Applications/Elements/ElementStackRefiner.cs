@@ -70,18 +70,9 @@ namespace Roost.World.Beauty
                 original: typeof(TokenDetailsWindow).GetMethodInvariant("SetElementCard"),
                 transpiler: typeof(ElementStackRefiner).GetMethodInvariant(nameof(SetRefinedValuesForTokenDetailsWindow)));
 
-            //the refined icon is displayed correctly in StoredManifestation
             Machine.Patch(
-                original: typeof(CardManifestation).GetMethodInvariant(nameof(CardManifestation.Initialise)),
-                transpiler: typeof(ElementStackRefiner).GetMethodInvariant(nameof(SetIconFromManifestation)));
-
-            Machine.Patch(
-                original: typeof(CardManifestation).GetMethodInvariant(nameof(CardManifestation.Initialise)),
-                transpiler: typeof(ElementStackRefiner).GetMethodInvariant(nameof(SetAnimFromManifestation)));
-
-            Machine.Patch(
-                original: typeof(StoredManifestation).GetMethodInvariant(nameof(StoredManifestation.UpdateVisuals)),
-                transpiler: typeof(ElementStackRefiner).GetMethodInvariant(nameof(SetRefinedIconForStoredManifestation)));
+                original: typeof(ResourcesManager).GetMethodInvariant(nameof(GetAppropriateSpriteForElementManifestation)),
+                prefix: typeof(ElementStackRefiner).GetMethodInvariant(nameof(GetAppropriateSpriteForElementManifestation)));
 
             Machine.Patch(
                 original: typeof(ResourcesManager).GetMethodInvariant(nameof(ResourcesManager.GetSprite)),
@@ -97,6 +88,25 @@ namespace Roost.World.Beauty
                 postfix: typeof(ElementStackRefiner).GetMethodInvariant(nameof(SetIconAndLabelForMagnifyingGlass)));
 
             AtTimeOfPower.NewGameSceneInit.Schedule(ResetIconAndLabelForElementStackSimple, PatchType.Prefix);
+        }
+
+        private static bool GetAppropriateSpriteForElementManifestation(IManifestable manifestable, Sprite __result)
+        {
+            Element element = Watchman.Get<Compendium>().GetEntityById<Element>(manifestable.EntityId);
+            string icon = manifestable.Icon;
+
+            if (element.IsAspect)
+                __result = ResourcesManager.GetSpriteForAspect(icon);
+            else
+                __result = ResourcesManager.GetSpriteForElement(icon);
+
+
+            if (element.ManifestationType == "Card" || __result.name != "_x")
+                return false;
+
+            __result = ResourcesManager.GetSprite(ResourcesManager.GetFolderForManifestationSprites(element.ManifestationType), icon, true);
+
+            return false;
         }
 
         private static void ElementNeedsRefinements(SecretHistories.Fucine.DataImport.EntityData entityData)
@@ -277,24 +287,6 @@ namespace Roost.World.Beauty
                 return ResourcesManager.GetSpriteForElement(stack.Icon);
         }
 
-        private static IEnumerable<CodeInstruction> SetRefinedIconForStoredManifestation(IEnumerable<CodeInstruction> instructions)
-        {
-            List<CodeInstruction> myCode = new List<CodeInstruction>()
-            {
-                new CodeInstruction(OpCodes.Ldarg_0),
-                new CodeInstruction(OpCodes.Ldfld, typeof(StoredManifestation).GetFieldInvariant("aspectImage")),
-                new CodeInstruction(OpCodes.Ldloc_0),
-                new CodeInstruction(OpCodes.Ldarg_1),
-                new CodeInstruction(OpCodes.Isinst, typeof(ElementStack)),
-                new CodeInstruction(OpCodes.Call, typeof(ElementStackRefiner).GetMethodInvariant(nameof(GetRefinedSprite))),
-                new CodeInstruction(OpCodes.Callvirt, typeof(Image).GetPropertyInvariant(nameof(Image.sprite)).GetSetMethod())
-            };
-
-            Vagabond.CodeInstructionMask start = code => code.opcode == OpCodes.Ldarg_0;
-            Vagabond.CodeInstructionMask end = code => code.Calls(typeof(StoredManifestation).GetMethodInvariant("DisplayImage"));
-            return instructions.ReplaceSegment(start, end, myCode, true, true); ;
-        }
-
         static Sprite currentSprite = null;
         static string currentLabel = null;
         private static void StoreIconAndLabelForMagnifyingGlass(Image ___artwork, TextMeshProUGUI ___text)
@@ -312,40 +304,6 @@ namespace Roost.World.Beauty
                 ___text.text = currentLabel;
                 ___artwork.sprite = currentSprite;
             }
-        }
-
-        private static IEnumerable<CodeInstruction> SetIconFromManifestation(IEnumerable<CodeInstruction> instructions)
-        {
-            List<CodeInstruction> myCode = new List<CodeInstruction>()
-            {
-                new CodeInstruction(OpCodes.Ldarg_1),
-                new CodeInstruction(OpCodes.Call, typeof(ElementStackRefiner).GetMethodInvariant(nameof(GetElementIcon))),
-            };
-
-            var methodToReplace = typeof(ResourcesManager).GetMethodInvariant(nameof(ResourcesManager.GetSpriteForElement), new Type[] { typeof(Element) });
-            return instructions.ReplaceMethodCall(methodToReplace, myCode);
-        }
-
-        private static Sprite GetElementIcon(IManifestable manifestable)
-        {
-            if (Watchman.Get<Compendium>().GetEntityById<Element>(manifestable.EntityId).IsAspect)
-                return ResourcesManager.GetSpriteForAspect(manifestable.Icon);
-
-            return ResourcesManager.GetSpriteForElement(manifestable.Icon);
-        }
-
-        private static IEnumerable<CodeInstruction> SetAnimFromManifestation(IEnumerable<CodeInstruction> instructions)
-        {
-            List<CodeInstruction> myCode = new List<CodeInstruction>()
-            {
-                new CodeInstruction(OpCodes.Pop),
-                new CodeInstruction(OpCodes.Ldarg_1),
-                new CodeInstruction(OpCodes.Callvirt, typeof(IManifestable).GetPropertyInvariant(nameof(IManifestable.Icon)).GetGetMethod()),
-                new CodeInstruction(OpCodes.Call, typeof(ResourcesManager).GetMethodInvariant(nameof(ResourcesManager.GetAnimFramesForElement))),
-            };
-
-            var methodToReplace = typeof(ResourcesManager).GetMethodInvariant(nameof(ResourcesManager.GetAnimFramesForElement));
-            return instructions.ReplaceMethodCall(methodToReplace, myCode);
         }
 
         //in come context, unrefined icon can leak through all precations and end up in resource manager

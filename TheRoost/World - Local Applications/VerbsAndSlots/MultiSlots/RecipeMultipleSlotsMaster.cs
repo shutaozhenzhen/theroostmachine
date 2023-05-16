@@ -24,7 +24,7 @@ namespace Roost.World.Slots
          */
         private static void PatchVerbManifestationPrefab()
         {
-            VerbManifestation verbManifestationPrefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<VerbManifestation>();
+            VerbManifestation verbManifestationPrefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<VerbManifestation>("manifestations");
 
             List<MiniSlotManager> managers = new List<MiniSlotManager>();
 
@@ -62,7 +62,7 @@ namespace Roost.World.Slots
          */
         private static void PatchThresholdSpherePrefab()
         {
-            ThresholdSphere thresholdSpherePrefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<ThresholdSphere>();
+            ThresholdSphere thresholdSpherePrefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<ThresholdSphere>("");
             var le = thresholdSpherePrefab.gameObject.AddComponent<LayoutElement>();
             le.preferredWidth = 90;
 
@@ -82,7 +82,7 @@ namespace Roost.World.Slots
          */
         static void PatchSituationWindowPrefab()
         {
-            SituationWindow situationWindowPrefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<SituationWindow>();
+            SituationWindow situationWindowPrefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<SituationWindow>("");
 
             SituationDominion thresholdsDominion = situationWindowPrefab.transform.Find("RecipeThresholdsDominion").GetComponent<SituationDominion>();
             thresholdsDominion.transform.position = thresholdsDominion.transform.position + new Vector3(27, 0, 0);

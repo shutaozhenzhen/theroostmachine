@@ -29,43 +29,20 @@ namespace Roost.World.Elements
             Machine.Patch(
                 original: typeof(Token).GetMethodInvariant("Remanifest"),
                 prefix: typeof(ElementVFXMaster).GetMethodInvariant(nameof(ReplaceRemanifestVFX)));
-
         }
 
         private static IEnumerable<CodeInstruction> HeartbeatVFX(IEnumerable<CodeInstruction> instructions)
         {
-            List<CodeInstruction> retireCode = new List<CodeInstruction>()
-            {
-              new CodeInstruction(OpCodes.Ldarg_0),
-              new CodeInstruction(OpCodes.Ldarg_0),
-              new CodeInstruction(OpCodes.Call, typeof(ElementStack).GetMethodInvariant("get_Element")),
-              new CodeInstruction(OpCodes.Call, typeof(ElementVFXMaster).GetMethodInvariant(nameof(RetireWithVFX))),
-            };
-
-            //technically I can just pass the appropriate vfx to the original retire method instead of replacing it completely
-            //but it's safer to look for the method call
-            Vagabond.CodeInstructionMask startMask = instruction => instruction.Calls(typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.Retire), new System.Type[] { typeof(RetirementVFX) }));
-            Vagabond.CodeInstructionMask endMask = instruction => instruction.opcode == OpCodes.Pop;
-            instructions = instructions.ReplaceSegment(startMask, endMask, retireCode, true, true, -2);
-
             List<CodeInstruction> changeToCode = new List<CodeInstruction>()
             {
-              new CodeInstruction(OpCodes.Ldarg_0),
               new CodeInstruction(OpCodes.Call, typeof(ElementStack).GetMethodInvariant("get_Element")),
               new CodeInstruction(OpCodes.Call, typeof(ElementVFXMaster).GetMethodInvariant(nameof(OverrideVFXForChangeTo))),
+              new CodeInstruction(OpCodes.Ldarg_0),
             };
 
-            instructions = instructions.InsertBeforeMethodCall(typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.ChangeTo)), changeToCode);
+            Vagabond.CodeInstructionMask startMask = instruction => instruction.Calls(Machine.GetMethod<ElementStack>("ChangeOrRetire"));
+            instructions = instructions.InsertBefore(startMask, changeToCode, -4);
             return instructions;
-        }
-
-        private static void RetireWithVFX(ElementStack stack, Element element)
-        {
-            RetirementVFX VFX = element.RetrieveProperty<RetirementVFX>(DECAY_VFX);
-            if (VFX == RetirementVFX.Default)
-                VFX = RetirementVFX.CardBurn;
-
-            stack.Retire(VFX);
         }
 
         private static void OverrideVFXForChangeTo(Element element)

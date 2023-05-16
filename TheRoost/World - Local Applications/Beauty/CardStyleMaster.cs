@@ -38,7 +38,7 @@ namespace Roost.World.Beauty
                     postfix: typeof(CardStyleMaster).GetMethodInvariant(nameof(UpdateAnimFrames)));
 
             Machine.Patch(
-                    original: typeof(CardGhost).GetMethodInvariant(nameof(CardGhost.UpdateVisuals), typeof(IManifestable)),
+                    original: Machine.GetMethod<CardGhost>(nameof(CardGhost.UpdateVisuals), typeof(IManifestable), typeof(Sphere)),
                     postfix: typeof(CardStyleMaster).GetMethodInvariant(nameof(PatchTheCardContainingObject)));
 
 

@@ -67,7 +67,7 @@ namespace Roost.World.Recipes
                 if (change.Key.Defunct)
                     continue;
 
-                change.Key.Payload.ModifyQuantity(change.Value, new Context(Context.ActionSource.SituationEffect));
+                change.Key.Payload.ModifyQuantity(change.Value);
             }
 
             quantityChanges.Clear();
@@ -127,7 +127,7 @@ namespace Roost.World.Recipes
                 {
                     Recipe recipeWhichCanExecuteInContext = link.GetRecipeWhichCanExecuteInContext(aspectsInContext, protag);
                     if (recipeWhichCanExecuteInContext.IsValid())
-                        situation.AdditionalRecipeSpawnToken(recipeWhichCanExecuteInContext, link.Expulsion, link.ToPath);
+                        situation.AdditionalRecipeSpawnToken(recipeWhichCanExecuteInContext, link.Expulsion, link.ToPath, link.OutputPath);
                 }
             }
 

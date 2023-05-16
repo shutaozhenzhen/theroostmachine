@@ -39,13 +39,15 @@ namespace Roost.World.Recipes
             Machine.ClaimProperty<Expulsion, FucineExp<int>>(LIMIT, false);
 
             Machine.Patch(
-                original: typeof(Situation).GetMethodInvariant("AdditionalRecipeSpawnToken", new Type[] { typeof(Recipe), typeof(Expulsion), typeof(FucinePath) }),
+                original: Machine.GetMethod<Situation>("AdditionalRecipeSpawnToken"),
                 transpiler: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(UseNewExpulsion)));
 
             //xtrigger can add temporary links
             Machine.Patch(
                 original: typeof(RequiresExecutionState).GetMethodInvariant(nameof(RequiresExecutionState.GetNextValidLink)),
                 prefix: typeof(RecipeLinkMaster).GetMethodInvariant(nameof(EvaluateTempLinks)));
+
+            AtTimeOfPower.OnPostImportExpulsion.Schedule<Expulsion>(MarkLimitPresence, PatchType.Prefix);
         }
 
         private static bool GetRefRecipeChance(LinkedRecipeDetails __instance, ref int __result)
@@ -73,10 +75,10 @@ namespace Roost.World.Recipes
                 new CodeInstruction(OpCodes.Call, typeof(RecipeLinkMaster).GetMethodInvariant(nameof(RecipeLinkMaster.FilterTokensWithExpulsion))),
             };
 
-            Vagabond.CodeInstructionMask startMask = instruction => instruction.opcode == OpCodes.Ldnull;
-            Vagabond.CodeInstructionMask endMask = instruction => instruction.Calls(typeof(TokenSelector).GetMethodInvariant(nameof(TokenSelector.SelectRandomTokens)));
+            Vagabond.CodeInstructionMask startMask = instruction => instruction.Calls(Machine.GetMethod<Situation>(nameof(Situation.GetElementTokens)));
+            Vagabond.CodeInstructionMask endMask = instruction => instruction.opcode == OpCodes.Stloc_1;
 
-            return instructions.ReplaceSegment(startMask, endMask, myCode, true, true);
+            return instructions.ReplaceSegment(startMask, endMask, myCode, true, false, -2);
         }
 
         private static List<Token> FilterTokensWithExpulsion(Situation situation, Expulsion expulsion)
@@ -95,6 +97,13 @@ namespace Roost.World.Recipes
                 tokens = tokens.SelectRandom(limit.value);
 
             return tokens;
+        }
+
+        private static void MarkLimitPresence(Expulsion __instance)
+        {
+            FucineExp<int> limit = __instance.RetrieveProperty<FucineExp<int>>(LIMIT);
+            if (!limit.isUndefined)
+                __instance.Limit = 1;
         }
 
 

@@ -173,7 +173,7 @@ namespace Roost.World.Slots
         private static bool SuitsVerbAndSatisfiedReqs(this SphereSpec slot, string verbId)
         {
             if (!string.IsNullOrWhiteSpace(slot.ActionId))
-                if (!NoonUtility.WildcardMatchId(verbId, slot.ActionId))
+                if (!NoonExtensions.WildcardMatchId(verbId, slot.ActionId))
                     return false;
 
             Dictionary<FucineExp<int>, FucineExp<int>> presenceReqs = slot.RetrieveProperty(SLOT_PRESENCE_REQS) as Dictionary<FucineExp<int>, FucineExp<int>>;

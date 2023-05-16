@@ -268,7 +268,7 @@ namespace Roost.Twins
         class FakeSphere : Sphere
         {
             public override SphereCategory SphereCategory { get { return SphereCategory.Meta; } }
-            public override bool IsValid => false;
+            public override bool IsValid() => false;
             public void Set(List<Token> tokens)
             {
                 _tokens.Clear();

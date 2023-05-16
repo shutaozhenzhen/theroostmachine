@@ -25,13 +25,26 @@ namespace Roost.Vagabond
         protected override string GetSaveFileLocation()
         {
             string persistentDataPath = Watchman.Get<MetaInfo>().PersistentDataPath;
-            if(asCustom) return $"{persistentDataPath}/custom_save_{saveName}.json";
+            if (asCustom) return $"{persistentDataPath}/custom_save_{saveName}.json";
             return $"{persistentDataPath}/{saveName}.json";
+        }
+
+        protected override string GetSaveFileLocation(string save)
+        {
+            return GetSaveFileLocation();
         }
 
         public void PurgeSaveFileIrrevocably()
         {
             File.Delete(GetSaveFileLocation());
+        }
+
+        public override async Task<bool> SerialiseAndSaveAsyncWithDefaultSaveName()
+        {
+            var saveTask = SerialiseAndSaveAsync(saveName);
+            var result = await saveTask;
+
+            return result;
         }
     }
 
@@ -116,7 +129,7 @@ namespace Roost.Vagabond
         {
             var persistenceProvider = new CustomSavePersistenceProvider(saveName, asCustom);
             persistenceProvider.Encaust(Watchman.Get<Stable>(), FucineRoot.Get(), Watchman.Get<Xamanek>());
-            var saveTask = persistenceProvider.SerialiseAndSaveAsync();
+            var saveTask = persistenceProvider.SerialiseAndSaveAsync(saveName);
             var result = await saveTask;
             return result;
         }
