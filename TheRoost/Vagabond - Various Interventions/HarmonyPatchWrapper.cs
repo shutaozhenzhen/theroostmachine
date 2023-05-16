@@ -217,7 +217,7 @@ namespace Roost.Vagabond
         {
             if (myCode == null || myCode.Count == 0)
             {
-                Birdsong.TweetLoud("Trying to transpile with an empty myCode!");
+                Birdsong.TweetLoud("Trying to transpile with an empty myCode:", new System.Diagnostics.StackTrace());
                 return instructions;
             }
 
@@ -244,7 +244,7 @@ namespace Roost.Vagabond
                 }
             }
 
-            Birdsong.TweetLoud("Incorrect mask in transpiler!");
+            Birdsong.TweetLoud("Incorrect mask in transpiler:", new System.Diagnostics.StackTrace());
             return null;
         }
 
