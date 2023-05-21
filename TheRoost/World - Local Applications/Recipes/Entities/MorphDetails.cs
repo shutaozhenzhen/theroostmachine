@@ -203,16 +203,7 @@ namespace Roost.World.Recipes.Entities
             switch (MorphEffect)
             {
                 case MorphEffectsExtended.Transform:
-                    if (!aspectReacts)
-                        RecipeExecutionBuffer.ScheduleTransformation(reactingToken, this.Id, VFX);
-                    else
-                    {
-                        //if there are several chanced transforms on a single aspect, we don't want mutations to happen several times
-                        //(it is TRANSFORM, previous aspect must end up being a single thing, not multiply into several different things)
-                        //thus we're making use of "mutation groups" - if one transform did trigger and registered a mutation, then other won't happen
-                        RecipeExecutionBuffer.ScheduleUniqueMutation(reactingToken, reactingElementId, -reactingElementQuantity, true, RetirementVFX.None, "-" + reactingToken.PayloadEntityId + reactingElementId);
-                        RecipeExecutionBuffer.ScheduleUniqueMutation(reactingToken, this.Id, reactingElementQuantity, true, VFX, reactingToken.PayloadEntityId + reactingElementId);
-                    }
+                    RecipeExecutionBuffer.ScheduleTransformation(reactingToken, this.Id, VFX);
                     break;
                 case MorphEffectsExtended.Spawn:
                     RecipeExecutionBuffer.ScheduleSpawn(reactingToken.Sphere, this.Id, Level.value * catalystQuantity * reactingElementQuantity, VFX);
