@@ -47,23 +47,22 @@ namespace Roost.World.Beauty
                 original: typeof(ElementStack).GetPropertyInvariant(nameof(ElementStack.Icon)).GetGetMethod(),
                 prefix: typeof(ElementStackRefiner).GetMethodInvariant(nameof(GetRefinedIcon)));
 
-            //illuminations are set on creation
+            //refinements are set on creation
             Machine.Patch(
-                original: typeof(ElementStackCreationCommand).GetMethodInvariant(nameof(ElementStackCreationCommand.Execute)),
-                transpiler: typeof(ElementStackRefiner).GetMethodInvariant(nameof(RefineStackOnCreation)));
+                original: Machine.GetMethod<ElementStackCreationCommand>(nameof(ElementStackCreationCommand.Execute)), 
+                prefix: typeof(ElementStackRefiner).GetMethodInvariant(nameof(UpdateRefinementsOnCreation)));
 
-            //illuminations are updated on Element change
+            //...updated on Element change
             Machine.Patch(
-                original: typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.ChangeTo)),
-                transpiler: typeof(ElementStackRefiner).GetMethodInvariant(nameof(RefineStackOnTransformation)));
+                original: Machine.GetMethod<ElementStack>(nameof(ElementStack.ChangeTo)),
+                postfix: typeof(ElementStackRefiner).GetMethodInvariant(nameof(UpdateRefinementsOnChange)));
 
             //...and after each mutation
-            //it's a rare thing in this set of changes that is not optimal - refinement process will happen several times if several mutations were applied
-            //but I doubt that refined cards will be heavily mutated in one go
-            //and besides, it's harder to accesss illuminations from other contexts
             Machine.Patch(
                 original: typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.SetMutation)),
-                transpiler: typeof(ElementStackRefiner).GetMethodInvariant(nameof(RefineStackOnMutation)));
+                postfix: typeof(ElementStackRefiner).GetMethodInvariant(nameof(UpdateRefinementsOnChange)));
+            //not optimal - refinement process will happen several times if several mutations were applied
+            //but it's harder to accesss illuminations from other contexts
 
             //hooking the refined elements to TokenDetailsWindow
             Machine.Patch(
@@ -133,22 +132,8 @@ namespace Roost.World.Beauty
             }
         }
 
-        private static void UpdateRefinementsForStack(Dictionary<string, string> illuminations, ElementStack stack, Element element)
+        private static void UpdateRefinementsForStack(Element element, ElementStack stack, AspectsDictionary currentAspects, Dictionary<string, string> illuminations)
         {
-            element.TryRetrieveProperty(REFINED, out bool refined);
-
-            if (!refined)
-            {
-                illuminations.Remove(DYNAMIC_LABEL);
-                illuminations.Remove(DYNAMIC_ICON);
-                illuminations.Remove(DYNAMIC_DESCRIPTION);
-                return;
-            }
-
-            AspectsDictionary currentAspects = new AspectsDictionary() { { element.Id, 1 } };
-            currentAspects.CombineAspects(element.Aspects);
-            currentAspects.ApplyMutations(stack.Mutations);
-
             string refinedString;
 
             refinedString = Scribe.RefineString(element.Label, currentAspects);
@@ -191,50 +176,46 @@ namespace Roost.World.Beauty
             return __result == null;
         }
 
-        private static IEnumerable<CodeInstruction> RefineStackOnCreation(IEnumerable<CodeInstruction> instructions)
+        public static void UpdateRefinementsOnCreation(ElementStackCreationCommand __instance)
         {
-            List<CodeInstruction> myCode = new List<CodeInstruction>()
-            {
-                new CodeInstruction(OpCodes.Call, typeof(ElementStackCreationCommand).GetPropertyInvariant(nameof(ElementStackCreationCommand.Illuminations)).GetGetMethod()),
-                new CodeInstruction(OpCodes.Ldloc_0),
-                new CodeInstruction(OpCodes.Ldloc_1),
-                new CodeInstruction(OpCodes.Call, typeof(ElementStackRefiner).GetMethodInvariant(nameof(UpdateRefinementsForStack))),
-                new CodeInstruction(OpCodes.Ldarg_0),
-            };
+            Element element = Watchman.Get<Compendium>().GetEntityById<Element>(__instance.EntityId);
+            Dictionary<string, string> illuminations = __instance.Illuminations;
 
-            Vagabond.CodeInstructionMask mask = code => code.Calls(typeof(ElementStackCreationCommand).GetPropertyInvariant(nameof(ElementStackCreationCommand.Illuminations)).GetGetMethod());
-            return instructions.InsertBefore(mask, myCode);
+            element.TryRetrieveProperty(REFINED, out bool refined);
+
+            if (!refined)
+            {
+                illuminations.Remove(DYNAMIC_LABEL);
+                illuminations.Remove(DYNAMIC_ICON);
+                illuminations.Remove(DYNAMIC_DESCRIPTION);
+                return;
+            }
+
+            AspectsDictionary aspects = new AspectsDictionary() { { element.Id, 1 } };
+            aspects.CombineAspects(element.Aspects);
+            aspects.ApplyMutations(__instance.Mutations);
+
+            UpdateRefinementsForStack(element, null, aspects, __instance.Illuminations);
         }
 
-        private static IEnumerable<CodeInstruction> RefineStackOnTransformation(IEnumerable<CodeInstruction> instructions)
+        public static void UpdateRefinementsOnChange(ElementStack __instance, Dictionary<string, string> ____illuminations)
         {
-            List<CodeInstruction> myCode = new List<CodeInstruction>()
+            __instance.Element.TryRetrieveProperty(REFINED, out bool refined);
+            Dictionary<string, string> illuminations = ____illuminations;
+
+            if (!refined)
             {
-                new CodeInstruction(OpCodes.Ldarg_0),
-                new CodeInstruction(OpCodes.Ldfld, typeof(ElementStack).GetFieldInvariant("_illuminations")),
-                new CodeInstruction(OpCodes.Ldarg_0),
-                new CodeInstruction(OpCodes.Ldloc_0),
-                new CodeInstruction(OpCodes.Call, typeof(ElementStackRefiner).GetMethodInvariant(nameof(UpdateRefinementsForStack))),
-            };
+                illuminations.Remove(DYNAMIC_LABEL);
+                illuminations.Remove(DYNAMIC_ICON);
+                illuminations.Remove(DYNAMIC_DESCRIPTION);
+                return;
+            }
 
-            Vagabond.CodeInstructionMask mask = code => code.opcode == OpCodes.Dup;
-            return instructions.InsertBefore(mask, myCode, -2);
-        }
+            AspectsDictionary aspects = new AspectsDictionary() { { __instance.Element.Id, 1 } };
+            aspects.CombineAspects(__instance.Element.Aspects);
+            aspects.ApplyMutations(__instance.Mutations);
 
-        private static IEnumerable<CodeInstruction> RefineStackOnMutation(IEnumerable<CodeInstruction> instructions)
-        {
-            List<CodeInstruction> myCode = new List<CodeInstruction>()
-            {
-                new CodeInstruction(OpCodes.Ldarg_0),
-                new CodeInstruction(OpCodes.Ldfld, typeof(ElementStack).GetFieldInvariant("_illuminations")),
-                new CodeInstruction(OpCodes.Ldarg_0),
-                new CodeInstruction(OpCodes.Ldarg_0),
-                new CodeInstruction(OpCodes.Call, typeof(ElementStack).GetPropertyInvariant("Element").GetGetMethod(true)),
-                new CodeInstruction(OpCodes.Call, typeof(ElementStackRefiner).GetMethodInvariant(nameof(UpdateRefinementsForStack))),
-            };
-
-            Vagabond.CodeInstructionMask mask = code => code.opcode == OpCodes.Ret;
-            return instructions.InsertBefore(mask, myCode);
+            UpdateRefinementsForStack(__instance.Element, __instance, aspects, ____illuminations);
         }
 
         private static void UpdateRefinedLabel(this ElementStack stack, string labelRefined)
