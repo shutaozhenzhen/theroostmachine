@@ -237,9 +237,8 @@ namespace Roost.World.Recipes.Entities
             {
                 if (deckId[deckId.Length - 1] == '*')
                 {
-                    string wildDeckId = deckId.Remove(deckId.Length - 1);
                     foreach (DrawPile pile in Watchman.Get<DealersTable>().GetDrawPiles())
-                        if (pile.GetDeckSpecId().StartsWith(wildDeckId))
+                        if (NoonExtensions.WildcardMatchId(pile.GetDeckSpecId(), deckId))
                             Legerdemain.RenewDeck(deckId);
                 }
                 else
