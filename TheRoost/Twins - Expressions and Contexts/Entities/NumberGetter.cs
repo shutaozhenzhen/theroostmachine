@@ -44,17 +44,6 @@ namespace Roost.Twins.Entities
 
             if (!string.IsNullOrEmpty(targetId))
             {
-                if (target[target.Length - 1] == '*')
-                {
-                    if (Enum.TryParse(fromArea.ToString() + "Wild", out ValueArea wildArea))
-                    {
-                        this.area = wildArea;
-                        this.targetId = target.Remove(target.Length - 1);
-                    }
-                    else
-                        Birdsong.TweetLoud($"{fromArea}{withOperation}/{target} - '*' is used, but {fromArea} doesn't support wildcards");
-                }
-
                 if (this.area == ValueArea.Aspect
                  || this.area == ValueArea.Mutation
                  || this.area == ValueArea.RecipeAspect
@@ -78,10 +67,11 @@ namespace Roost.Twins.Entities
             Lifespan, //returns max lifetime from an element token, or full warmup from a situation token
             SituationContent, //returns aspect amount from a situation token
             AnySourceAspect, //returns aspect amount from any token
-            Verb, VerbWild, //retuns a quantity (likely 1) if the token is a verb
             RecipeAspect, //retuns quantity (likely 1) if the token is a verb running a recipe with the defined aspect
-            Recipe, RecipeWild, //retuns a quantity (likely 1) if the token is a verb running a recipe
-            Token, Payload, Entity, //return token/its payload/payload entity property; incredibly hacky (and probably slow) rn, but work
+            Entity, //returns a quantity (likely 1) if the token is an entity of a specified id
+            Verb, //returns a quantity (likely 1) if the token is a verb of a specified id
+            Recipe, //retuns a quantity (likely 1) if the token is a verb running a recipe
+            Token, Payload, Property, //return token/its payload/payload entity property; incredibly hacky (and probably slow) rn, but work
             NoArea
         };
 
@@ -114,13 +104,12 @@ namespace Roost.Twins.Entities
                     case ValueArea.SituationContent: return AspectInSituation;
                     case ValueArea.AnySourceAspect: return AspectOnAnyToken;
                     case ValueArea.Verb: return VerbId;
-                    case ValueArea.VerbWild: return VerbWild;
                     case ValueArea.Recipe: return RecipeId;
-                    case ValueArea.RecipeWild: return RecipeWild;
+                    case ValueArea.Entity: return EntityId;
                     case ValueArea.RecipeAspect: return RecipeAspect;
                     case ValueArea.Token: return Token;
                     case ValueArea.Payload: return Payload;
-                    case ValueArea.Entity: return Entity;
+                    case ValueArea.Property: return EntityProperty;
                     case ValueArea.NoArea: return null;
                     default:
                         Birdsong.TweetLoud($"Value area '{area}' doesn't have a matching method; will always return zero");
@@ -181,12 +170,7 @@ namespace Roost.Twins.Entities
 
             private static int VerbId(Token token, string target)
             {
-                return (IsSituation(token.Payload) && token.PayloadEntityId == target) ? token.Quantity : 0;
-            }
-
-            private static int VerbWild(Token token, string target)
-            {
-                return (IsSituation(token.Payload) && token.PayloadEntityId.StartsWith(target)) ? token.Quantity : 0;
+                return IsSituation(token.Payload) ? EntityId(token, target) : 0;
             }
 
             private static int RecipeId(Token token, string target)
@@ -199,26 +183,15 @@ namespace Roost.Twins.Entities
                 if (situation.StateIdentifier == StateEnum.Unstarted)
                     return 0;
 
-                if (situation.CurrentRecipe.Id == target)
+                if (NoonExtensions.WildcardMatchId(situation.CurrentRecipe.Id, target))
                     return token.Quantity;
 
                 return 0;
             }
 
-            private static int RecipeWild(Token token, string target)
+            private static int EntityId(Token token, string target)
             {
-                Situation situation = token.Payload as Situation;
-
-                if (situation == null)
-                    return 0;
-
-                if (situation.StateIdentifier == StateEnum.Unstarted)
-                    return 0;
-
-                if (situation.CurrentRecipe.Id.StartsWith(target))
-                    return token.Quantity;
-
-                return 0;
+                return NoonExtensions.WildcardMatchId(token.PayloadEntityId, target) ? 1 : 0;
             }
 
             private static int RecipeAspect(Token token, string target)
@@ -259,7 +232,7 @@ namespace Roost.Twins.Entities
                 }
             }
 
-            private static int Entity(Token token, string target)
+            private static int EntityProperty(Token token, string target)
             {
                 if (token.IsValidElementStack())
                 {
