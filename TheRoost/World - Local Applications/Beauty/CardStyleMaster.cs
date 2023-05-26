@@ -46,11 +46,14 @@ namespace Roost.World.Beauty
 
         public static void PatchTheCardContainingObject(MonoBehaviour __instance, IManifestable manifestable)
         {
-            ApplyStyle(manifestable, __instance.gameObject);
+            ApplyStyle(manifestable, __instance?.gameObject);
         }
 
         public static void ApplyStyle(IManifestable manifestable, GameObject o)
         {
+            if (o == null)
+                return;
+
             ElementStack stack = (ElementStack)manifestable;
             Element element = Watchman.Get<Compendium>().GetEntityById<Element>(stack.EntityId);
 
