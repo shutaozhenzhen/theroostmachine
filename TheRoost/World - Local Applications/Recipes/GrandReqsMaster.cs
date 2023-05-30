@@ -20,7 +20,7 @@ namespace Roost.World.Recipes
             //wherever we get aspects in context for situation, that means we're going to evaluate recipes for it
             //that means we need to provide the context
             Machine.Patch(
-                original: typeof(Situation).GetMethodInvariant(nameof(Situation.GetAspectsInContext)),
+                original: typeof(Situation).GetMethodInvariant(nameof(Situation.GetAspects)),
                 prefix: typeof(GrandReqsMaster).GetMethodInvariant(nameof(MarkSituation)));
 
             AtTimeOfPower.RecipeRequirementsCheck.Schedule<Recipe, AspectsInContext>(CheckGrandReqsForSituation);

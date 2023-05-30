@@ -124,7 +124,7 @@ namespace Roost.World.Recipes
         //RecipeConductor.GetLinkedRecipe() prefix
         private static bool EvaluateTempLinks(ref Recipe __result, Situation situation)
         {
-            AspectsInContext aspectsInContext = situation.GetAspectsInContext(true);
+            AspectsInContext aspectsInContext = Watchman.Get<HornedAxe>().GetAspectsInContext(situation);
             foreach (Recipe recipe in temporaryLinks.Values)
                 if (recipe.RequirementsSatisfiedBy(aspectsInContext))
                 {

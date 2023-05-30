@@ -121,7 +121,7 @@ namespace Roost.World.Recipes
 
             foreach (Situation situation in inductions.Keys)
             {
-                AspectsInContext aspectsInContext = Watchman.Get<HornedAxe>().GetAspectsInContext(situation.GetAspects(true), null);
+                AspectsInContext aspectsInContext = Watchman.Get<HornedAxe>().GetAspectsInContext(situation);
 
                 foreach (LinkedRecipeDetails link in inductions[situation])
                 {
