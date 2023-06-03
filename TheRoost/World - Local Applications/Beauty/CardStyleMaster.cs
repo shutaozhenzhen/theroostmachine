@@ -46,6 +46,7 @@ namespace Roost.World.Beauty
 
         public static void PatchTheCardContainingObject(MonoBehaviour __instance, IManifestable manifestable)
         {
+            if (__instance == null || manifestable == null) return;
             ApplyStyle(manifestable, __instance?.gameObject);
         }
 
