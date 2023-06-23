@@ -24,6 +24,7 @@ namespace Roost.World.Recipes.Entities
         [FucineList] public List<RefMutationEffect> Mutations { get; set; }
         [FucineDict(ValidateKeysAs = typeof(Element))] public Dictionary<string, FucineExp<int>> Aspects { get; set; }
         [FucineDict(ValidateKeysAs = typeof(Element))] public Dictionary<string, FucineExp<int>> XPans { get; set; }
+        //[FucineDict(ValidateValueAs = typeof(Element))] public Dictionary<TokenFilterSpec, List<string>> Triggers { get; set; }
         [FucineList(ValidateValueAs = typeof(DeckSpec))] public List<string> DeckShuffles { get; set; }
         [FucineDict(ValidateKeysAs = typeof(DeckSpec))] public Dictionary<string, FucineExp<int>> DeckEffects { get; set; }
         [FucineDict] public Dictionary<FucineExp<bool>, FucineExp<int>> Effects { get; set; }
@@ -61,6 +62,8 @@ namespace Roost.World.Recipes.Entities
 
             RunXPans(localSphere, situation);
 
+            //RunDirectTriggers(localSphere, situation);
+
             RunDeckShuffles();
             RunDeckEffects(localSphere);
             RunEffects(localSphere);
@@ -69,7 +72,6 @@ namespace Roost.World.Recipes.Entities
             RunFurthermores(situation, localSphere);
             RunMovements(localSphere);
 
-            allCatalysts.Clear();
             RecipeExecutionBuffer.ApplyVFX();
             RecipeExecutionBuffer.ApplyRecipeInductions();
         }
@@ -80,7 +82,6 @@ namespace Roost.World.Recipes.Entities
             Crossroads.MarkLocalSphere(localSphere);
             RunElementXTriggers(localSphere, situation);
 
-            allCatalysts.Clear();
             RecipeExecutionBuffer.ApplyVFX();
             RecipeExecutionBuffer.ApplyRecipeInductions();
         }
@@ -131,7 +132,6 @@ namespace Roost.World.Recipes.Entities
             }
         }
 
-        private static readonly AspectsDictionary allCatalysts = new AspectsDictionary();
         public void RunRecipeXTriggers(Sphere sphere, Situation situation)
         {
             if (Aspects == null || !Aspects.Any())
@@ -142,7 +142,7 @@ namespace Roost.World.Recipes.Entities
             if (tokens.Count == 0)
                 return;
 
-            allCatalysts.Clear();
+            AspectsDictionary allCatalysts = new AspectsDictionary();
             foreach (KeyValuePair<string, FucineExp<int>> catalyst in Aspects)
                 allCatalysts.ApplyMutation(catalyst.Key, catalyst.Value.value);
 
@@ -161,7 +161,7 @@ namespace Roost.World.Recipes.Entities
             if (tokens.Count == 0)
                 return;
 
-            allCatalysts.Clear();
+            AspectsDictionary allCatalysts = new AspectsDictionary();
             foreach (Token token in tokens)
                 allCatalysts.CombineAspects(token.GetAspects(true));
 
@@ -184,7 +184,7 @@ namespace Roost.World.Recipes.Entities
 
                 Crossroads.MarkLocalSphere(sphere);
 
-                allCatalysts.Clear();
+                AspectsDictionary allCatalysts = new AspectsDictionary();
                 foreach (KeyValuePair<string, FucineExp<int>> catalyst in XPans)
                     allCatalysts.ApplyMutation(catalyst.Key, catalyst.Value.value);
 
@@ -194,6 +194,30 @@ namespace Roost.World.Recipes.Entities
 
             RecipeExecutionBuffer.ApplyAllEffects();
         }
+
+        /*
+        public void RunDirectTriggers(Sphere sphere, Situation situation)
+        {
+            if (Triggers == null || !Triggers.Any())
+                return;
+
+            List<Token> tokens = sphere.GetElementTokens();
+
+            foreach (TokenFilterSpec filterSpec in Triggers.Keys)
+            {
+                List<Token> targets = filterSpec.GetTokens(tokens);
+
+                if (targets.Count == 0)
+                    continue;
+
+                allCatalysts.Clear();
+                foreach (string trigger in Triggers[filterSpec])
+                    allCatalysts.Add(trigger, 1);
+
+                foreach (Token token in targets)
+                    RunXTriggers(token, situation, allCatalysts);
+            }
+        }*/
 
         public static void RunXTriggers(List<Token> tokens, Situation situation, Dictionary<string, int> catalysts)
         {
@@ -298,26 +322,28 @@ namespace Roost.World.Recipes.Entities
 
         private void RunVerbManipulations()
         {
+
+
             if (HaltVerb != null && HaltVerb.Any())
             {
+                AspectsDictionary allCatalysts = new AspectsDictionary();
+
                 foreach (KeyValuePair<string, FucineExp<int>> haltVerbEffect in HaltVerb)
                     allCatalysts.Add(haltVerbEffect.Key, haltVerbEffect.Value.value);
 
                 foreach (KeyValuePair<string, int> haltVerbEffect in allCatalysts)
                     Watchman.Get<HornedAxe>().HaltSituation(haltVerbEffect.Key, haltVerbEffect.Value);
-
-                allCatalysts.Clear();
             }
 
             if (DeleteVerb != null && DeleteVerb.Any())
             {
+                AspectsDictionary allCatalysts = new AspectsDictionary();
+
                 foreach (KeyValuePair<string, FucineExp<int>> deleteVerbEffect in DeleteVerb)
                     allCatalysts.Add(deleteVerbEffect.Key, deleteVerbEffect.Value.value);
 
                 foreach (KeyValuePair<string, int> deleteVerbEffect in allCatalysts)
                     Watchman.Get<HornedAxe>().HaltSituation(deleteVerbEffect.Key, deleteVerbEffect.Value);
-
-                allCatalysts.Clear();
             }
         }
 
