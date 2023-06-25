@@ -58,8 +58,8 @@ namespace Roost.World.Slots
             if (situation == null)
                 return false;
 
-            List<Sphere> spheresThatWereAlreadyActive = new List<Sphere>(____spheres);
-            List<SphereSpec> spheresToCreate = situation.DetermineActiveSlots(spheresThatWereAlreadyActive);
+            List<Sphere> alreadyActiveSpheres = new List<Sphere>(____spheres);
+            List<SphereSpec> spheresToCreate = situation.DetermineActiveSlots(alreadyActiveSpheres);
 
             foreach (SphereSpec sphereSpec in spheresToCreate)
             {
@@ -67,7 +67,7 @@ namespace Roost.World.Slots
 
                 //if sphere is newly created (ie it wasn't present in dominion's spheres before)
                 //then its presence is dependent on the modified sphere (and we will retire it once the owner sphere is emptied)
-                if (!spheresThatWereAlreadyActive.Contains(activeSphere))
+                if (!alreadyActiveSpheres.Contains(activeSphere))
                     activeSphere.OwnerSphereIdentifier = sphere.Id;
             }
 
@@ -99,9 +99,11 @@ namespace Roost.World.Slots
                 if (sphere.GoverningSphereSpec.RetrieveProperty<bool>(SLOT_CONTRIBUTES_TO_PRESENCE))
                     aspects.ApplyMutations(sphere.GetTotalAspects(true));
 
-            foreach (string aspectId in aspects.Keys)
+            var aspectsOrdered = aspects.OrderBy(aspect => aspect.Key);
+
+            foreach (var aspect in aspectsOrdered)
             {
-                List<SphereSpec> slots = compendium.GetEntityById<Element>(aspectId).RetrieveProperty(ASPECT_SLOTS) as List<SphereSpec>;
+                List<SphereSpec> slots = compendium.GetEntityById<Element>(aspect.Key).RetrieveProperty(ASPECT_SLOTS) as List<SphereSpec>;
 
                 if (slots == null)
                     continue;
@@ -112,7 +114,7 @@ namespace Roost.World.Slots
                         result.Add(slot);
 
                         if (slot.RetrieveProperty<bool>(ASPECT_SLOT_USE_QUANTITY))
-                            for (int n = 1; n < aspects[aspectId]; n++)
+                            for (int n = 1; n < aspect.Value; n++)
                                 result.Add(slot.Duplicate(n));
                     }
             }
