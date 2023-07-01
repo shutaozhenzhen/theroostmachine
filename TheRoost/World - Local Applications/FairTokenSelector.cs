@@ -56,7 +56,7 @@ namespace Roost.World
             return null;
         }
 
-        public static List<Token> SelectRandom(this List<Token> fromTokens, int Limit)
+        public static List<Token> SelectRandom(this IEnumerable<Token> fromTokens, int Limit)
         {
             if (Limit <= 0)
                 return new List<Token>();
