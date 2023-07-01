@@ -49,6 +49,8 @@ namespace Roost.World.Slots
             Machine.Patch(
                  original: typeof(StartingState).GetMethodInvariant(nameof(PopulateRecipeSlots)),
                  prefix: typeof(SlotPresenceReqsMaster).GetMethodInvariant(nameof(PopulateRecipeSlots)));
+
+            LockDominionsOnThresholdFlush.Enact();
         }
 
         private static bool AddDependentSpheres(Sphere sphere, IManifestable ____manifestable, SituationDominion __instance, List<Sphere> ____spheres)
@@ -197,5 +199,40 @@ namespace Roost.World.Slots
 
             return copy;
         }
+    }
+
+    internal static class LockDominionsOnThresholdFlush
+    {
+        internal static void Enact()
+        {
+            Machine.Patch<FlushTokensToCategoryCommand>(
+                original: nameof(FlushTokensToCategoryCommand.Execute),
+                prefix: typeof(LockDominionsOnThresholdFlush).GetMethodInvariant(nameof(LockDominions)),
+                postfix: typeof(LockDominionsOnThresholdFlush).GetMethodInvariant(nameof(UnlockDominions)));
+
+            Machine.Patch<SituationDominion>(
+                original: nameof(SituationDominion.OnTokensChangedForSphere),
+                prefix: typeof(LockDominionsOnThresholdFlush).GetMethodInvariant(nameof(DontTouchSpheresIfLocked)));
+        }
+
+        static bool DominionsLocked = false;
+        private static void LockDominions()
+        {
+            DominionsLocked = true;
+        }
+
+        private static void UnlockDominions()
+        {
+            DominionsLocked = false;
+        }
+
+        private static bool DontTouchSpheresIfLocked()
+        {
+            if (DominionsLocked)
+                return false;
+
+            return true;
+        }
+
     }
 }
