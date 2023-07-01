@@ -299,10 +299,10 @@ namespace Roost
     {
         private const string DEFAULT_PATCH_ID = "theroostmachine";
 
-        public static void Patch<T>(string methodName, MethodInfo prefix = null, MethodInfo postfix = null, MethodInfo transpiler = null, MethodInfo finalizer = null, string patchId = DEFAULT_PATCH_ID)
+        public static void Patch<T>(string original, MethodInfo prefix = null, MethodInfo postfix = null, MethodInfo transpiler = null, MethodInfo finalizer = null, string patchId = DEFAULT_PATCH_ID)
         {
-            MethodInfo original = typeof(T).GetMethodInvariant(methodName);
-            Vagabond.HarmonyMask.Patch(original, prefix, postfix, transpiler, finalizer, patchId);
+            MethodInfo originalMethod = typeof(T).GetMethodInvariant(original);
+            Vagabond.HarmonyMask.Patch(originalMethod, prefix, postfix, transpiler, finalizer, patchId);
         }
 
         public static void Patch(MethodBase original, MethodInfo prefix = null, MethodInfo postfix = null, MethodInfo transpiler = null, MethodInfo finalizer = null, string patchId = DEFAULT_PATCH_ID)
