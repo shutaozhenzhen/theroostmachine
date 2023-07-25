@@ -5,7 +5,7 @@ namespace Roost.Piebald
     using TMPro;
     using UnityEngine;
 
-    public static class ResourceHack
+    internal static class ResourceHack
     {
         private static readonly Dictionary<string, Material> MaterialCache = new();
         private static readonly Dictionary<string, TMP_FontAsset> FontCache = new();
