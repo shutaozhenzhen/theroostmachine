@@ -3,6 +3,7 @@ namespace Roost.Piebald
     using SecretHistories.Manifestations;
     using SecretHistories.Services;
     using SecretHistories.UI;
+    using System;
     using UnityEngine;
     using UnityEngine.UI;
 
@@ -13,38 +14,30 @@ namespace Roost.Piebald
 
         public void Awake()
         {
-            // HACK: Cant get glow from resources, get it from a prefab.
-            var prefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<VerbManifestation>("manifestations");
-            if (prefab == null)
+            var sprite = LoadGlowSprite();
+            if (sprite == null)
             {
-                NoonUtility.LogWarning("Could not find prefab for VerbManifestation");
                 return;
             }
 
+            // FIXME: This takes a while to work... No errors are thrown, so the sprite is properly loaded.
+            // However, the glow does not appear until windows are opened and closed and views are changed several times.
+
             WidgetMountPoint.On(this.gameObject, mountPoint =>
             {
-                // We can't rely resourceHack here as we might get spawned in before any verbs.
-                var tokenOutline = prefab.gameObject.transform.Find("Glow")?.GetComponent<Image>()?.sprite;
-                if (tokenOutline == null)
-                {
-                    NoonUtility.LogWarning("Could not find token outline sprite");
-                }
-                else
-                {
-                    this.glowImage = mountPoint.AddImage("Glow")
-                        .SetLeft(0, -8)
-                        .SetRight(1, 8)
-                        .SetTop(1, 8)
-                        .SetBottom(0, -8)
-                        .SetSprite(tokenOutline)
-                        .SliceImage()
-                        .WithBehavior<GraphicFader>(fader =>
-                        {
-                            this.glowFader = fader;
-                            fader.Hide(true);
-                        });
-                    this.glowImage.GameObject.transform.SetAsFirstSibling();
-                }
+                this.glowImage = mountPoint.AddImage("Glow")
+                    .SetLeft(0, -8)
+                    .SetRight(1, 8)
+                    .SetTop(1, 8)
+                    .SetBottom(0, -8)
+                    .SetSprite(sprite)
+                    .SliceImage()
+                    .WithBehavior<GraphicFader>(fader =>
+                    {
+                        this.glowFader = fader;
+                        fader.Hide(true);
+                    });
+                this.glowImage.GameObject.transform.SetAsFirstSibling();
             });
         }
 
@@ -56,6 +49,40 @@ namespace Roost.Piebald
         public void Hide()
         {
             this.glowFader.Hide();
+        }
+
+        private static Sprite LoadGlowSprite()
+        {
+            // HACK: Cant get glow from resources, and we cant use our resource hack as it might not have loaded yet.  Get it from a prefab.
+            var prefab = Watchman.Get<PrefabFactory>().GetPrefabObjectFromResources<VerbManifestation>("manifestations");
+            if (prefab == null)
+            {
+                NoonUtility.LogWarning("Could not find prefab for VerbManifestation");
+                return null;
+            }
+
+            var tokenOutline = prefab.gameObject.transform.Find("Glow")?.GetComponent<Image>()?.sprite;
+            if (tokenOutline == null)
+            {
+                NoonUtility.LogWarning("Could not find token outline sprite");
+                return null;
+            }
+
+            return tokenOutline;
+        }
+    }
+
+    public static class GlowWidgetExtensions
+    {
+        public static TWidget WithGlow<TWidget>(this TWidget widget, Action<Glow> configure = null)
+            where TWidget : UIGameObjectWidget
+        {
+            widget.WithBehavior<Glow>(glow =>
+            {
+                configure?.Invoke(glow);
+            });
+
+            return widget;
         }
     }
 }

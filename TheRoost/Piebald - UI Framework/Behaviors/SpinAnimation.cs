@@ -1,5 +1,6 @@
 namespace Roost.Piebald
 {
+    using System;
     using UnityEngine;
 
     [RequireComponent(typeof(RectTransform))]
@@ -50,6 +51,21 @@ namespace Roost.Piebald
             }
 
             this.rectTransform.Rotate(0f, 0f, this.Speed * Time.deltaTime);
+        }
+    }
+
+    public static class SpinAnimationWidgetExtensions
+    {
+        public static TWidget WithSpinAnimation<TWidget>(this TWidget widget, float degreesPerSecond, Action<SpinAnimation> configure = null)
+            where TWidget : UIGameObjectWidget
+        {
+            widget.WithBehavior<SpinAnimation>(spin =>
+            {
+                spin.Speed = degreesPerSecond;
+                configure?.Invoke(spin);
+            });
+
+            return widget;
         }
     }
 }

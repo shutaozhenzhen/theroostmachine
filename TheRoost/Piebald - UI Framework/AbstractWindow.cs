@@ -175,9 +175,10 @@ namespace Roost.Piebald
 
             // FIXME: Auto size window to content.
             // Should get ConstrainedLayoutElement working too, so we can specify a max size.
-            // var fitter = this.gameObject.AddComponent<ContentSizeFitter>();
-            // fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-            // fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            // Note: Even though we have a fixed min size, and auto size does not work, this is still somehow load bearing for some reason.
+            var fitter = this.gameObject.AddComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             this.canvasGroupFader = this.gameObject.AddComponent<CanvasGroupFader>();
             this.canvasGroupFader.durationTurnOn = 0.3f;
@@ -195,15 +196,6 @@ namespace Roost.Piebald
                     .SetSprite("internal:window_bg_top")
                     .SliceImage()
                     .SetColor(BgColorHeader);
-
-                var iconSize = 65;
-                var iconOffsetX = -10;
-                var iconOffsetY = 10;
-                this.Icon = mountPoint.AddSizingLayout("IconContainer")
-                    .SetTop(1, iconOffsetY)
-                    .SetBottom(1, iconOffsetY - iconSize)
-                    .SetLeft(0, iconOffsetX)
-                    .SetRight(0, iconOffsetX + iconSize);
 
                 this.title = mountPoint.AddText("TitleText")
                     .SetAnchor(Vector2.zero)
@@ -234,6 +226,15 @@ namespace Roost.Piebald
                     .SetRight(1, 0)
                     .SetBottom(0, 50)
                     .SetPivot(0.5f, 0.5f);
+
+                var iconSize = 65;
+                var iconOffsetX = -10;
+                var iconOffsetY = 10;
+                this.Icon = mountPoint.AddSizingLayout("IconContainer")
+                    .SetTop(1, iconOffsetY)
+                    .SetBottom(1, iconOffsetY - iconSize)
+                    .SetLeft(0, iconOffsetX)
+                    .SetRight(0, iconOffsetX + iconSize);
 
                 mountPoint.AddSizingLayout("Footer")
                     .SetLeft(0, 0)
