@@ -21,6 +21,9 @@ namespace Roost.Piebald
             fadeDuration = 0.1f,
         };
 
+        private Coroutine scrollHorizontalCoroutine;
+        private Coroutine scrollVerticalCoroutine;
+
         public ScrollRegionWidget(string key)
             : this(new GameObject(key))
         {
@@ -181,13 +184,25 @@ namespace Roost.Piebald
 
         public ScrollRegionWidget ScrollToHorizontal(float value)
         {
-            this.ScrollRect.StartCoroutine(this.JankfestScrollHorizontal(value));
+            if (this.scrollHorizontalCoroutine != null)
+            {
+                this.ScrollRect.StopCoroutine(this.scrollHorizontalCoroutine);
+            }
+
+            this.scrollHorizontalCoroutine = this.ScrollRect.StartCoroutine(this.JankfestScrollHorizontal(value));
+
             return this;
         }
 
         public ScrollRegionWidget ScrollToVertical(float value)
         {
-            this.ScrollRect.StartCoroutine(this.JankfestScrollVertical(value));
+            if (this.scrollVerticalCoroutine != null)
+            {
+                this.ScrollRect.StopCoroutine(this.scrollVerticalCoroutine);
+            }
+
+            this.scrollVerticalCoroutine = this.ScrollRect.StartCoroutine(this.JankfestScrollVertical(value));
+
             return this;
         }
 
@@ -323,6 +338,12 @@ namespace Roost.Piebald
             }
 
             this.SetContent(content);
+        }
+
+        protected override void OnContentAdded()
+        {
+            this.ScrollToHorizontal(0);
+            this.ScrollToVertical(1);
         }
 
         public class ScrollValueChangedEventArgs : EventArgs

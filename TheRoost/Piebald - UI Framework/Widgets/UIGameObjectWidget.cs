@@ -271,6 +271,7 @@ namespace Roost.Piebald
         public UIGameObjectWidget AddContent(GameObject gameObject)
         {
             gameObject.transform.SetParent(this.MountPoint, false);
+            this.OnContentAdded();
             return this;
         }
 
@@ -280,8 +281,11 @@ namespace Roost.Piebald
         public UIGameObjectWidget AddContent(Action<WidgetMountPoint> factory)
         {
             factory(this.MountPoint);
+            this.OnContentAdded();
             return this;
         }
+
+        protected virtual void OnContentAdded() { }
     }
 
     /// <summary>
