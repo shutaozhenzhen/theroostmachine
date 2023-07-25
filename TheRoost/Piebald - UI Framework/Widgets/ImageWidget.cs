@@ -1,8 +1,5 @@
 namespace Roost.Piebald
 {
-    using System.IO;
-    using SecretHistories.Infrastructure.Modding;
-    using SecretHistories.UI;
     using UnityEngine;
     using UnityEngine.UI;
 
@@ -15,6 +12,9 @@ namespace Roost.Piebald
         public ImageWidget(GameObject gameObject) : base(gameObject) { }
     }
 
+    /// <summary>
+    /// A base class for UI widgets that display an image.
+    /// </summary>
     public abstract class ImageWidget<TCoreType> : SizingLayoutWidget<TCoreType>
         where TCoreType : ImageWidget<TCoreType>
     {
