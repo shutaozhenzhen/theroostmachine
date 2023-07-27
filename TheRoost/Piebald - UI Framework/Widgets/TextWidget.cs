@@ -6,7 +6,7 @@ namespace Roost.Piebald
     /// <summary>
     /// A UI widget that displays text.
     /// </summary>
-    public class TextWidget : SizingLayoutWidget<TextWidget>, ITextWidget<TextWidget>
+    public class TextWidget : LayoutItemWidget<TextWidget>, ITextWidget<TextWidget>
     {
         private static readonly Color DefaultFontColor = new Color(0.5765f, 0.8824f, 0.9373f, 1);
 

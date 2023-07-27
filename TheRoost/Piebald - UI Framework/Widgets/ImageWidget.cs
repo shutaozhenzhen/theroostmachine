@@ -15,7 +15,7 @@ namespace Roost.Piebald
     /// <summary>
     /// A base class for UI widgets that display an image.
     /// </summary>
-    public abstract class ImageWidget<TCoreType> : SizingLayoutWidget<TCoreType>
+    public abstract class ImageWidget<TCoreType> : LayoutItemWidget<TCoreType>
         where TCoreType : ImageWidget<TCoreType>
     {
         public ImageWidget(string key)
@@ -69,6 +69,19 @@ namespace Roost.Piebald
             }
         }
 
+        public float PixelsPerUnit
+        {
+            get
+            {
+                return this.Image.pixelsPerUnitMultiplier;
+            }
+
+            set
+            {
+                this.Image.pixelsPerUnitMultiplier = value;
+            }
+        }
+
         public Image.Type ImageType
         {
             get
@@ -104,6 +117,19 @@ namespace Roost.Piebald
         public TCoreType SetColor(Color color)
         {
             this.Image.color = color;
+            return this as TCoreType;
+        }
+
+        public TCoreType SetPixelsPerUnit(float pixelsPerUnit)
+        {
+            this.Image.pixelsPerUnitMultiplier = pixelsPerUnit;
+            return this as TCoreType;
+        }
+
+        public TCoreType TileImage()
+        {
+            this.Image.type = Image.Type.Tiled;
+            this.Image.preserveAspect = true;
             return this as TCoreType;
         }
 

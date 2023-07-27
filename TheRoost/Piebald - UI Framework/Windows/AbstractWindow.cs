@@ -16,9 +16,9 @@ namespace Roost.Piebald
         private WindowPositioner positioner;
         private TextWidget title;
 
-        public AbstractWindow()
+        public AbstractWindow(bool includeShadow)
         {
-            this.BuildWindowFrame();
+            this.BuildWindowFrame(includeShadow);
         }
 
         public event EventHandler Opened;
@@ -52,34 +52,6 @@ namespace Roost.Piebald
         protected WidgetMountPoint Content { get; private set; }
 
         protected WidgetMountPoint Footer { get; private set; }
-
-        public static T CreateTabletopWindow<T>(string key)
-            where T : AbstractWindow
-        {
-            var mountPoint = MountPoints.TabletopWindowLayer;
-            if (mountPoint == null)
-            {
-                throw new Exception("Cannot find Tabletop window mount point.");
-            }
-
-            var gameObject = new GameObject(key);
-            gameObject.transform.SetParent(mountPoint, false);
-            return gameObject.AddComponent<T>();
-        }
-
-        public static T CreateMetaWindow<T>(string key)
-            where T : AbstractWindow
-        {
-            var mountPoint = MountPoints.MetaWindowLayer;
-            if (mountPoint == null)
-            {
-                throw new Exception("Cannot find CanvasMeta.");
-            }
-
-            var gameObject = new GameObject(key);
-            gameObject.transform.SetParent(mountPoint, false);
-            return gameObject.AddComponent<T>();
-        }
 
         public void Awake()
         {
@@ -157,9 +129,9 @@ namespace Roost.Piebald
             this.Footer.Clear();
         }
 
-        private void BuildWindowFrame()
+        private void BuildWindowFrame(bool includeShadow)
         {
-            var root = new SizingLayoutWidget(this.gameObject)
+            var root = new LayoutItemWidget(this.gameObject)
                 .SetPivot(0.5f, 0.5f)
                 .SetLeft(.5f, 0)
                 .SetTop(.5f, 0)
@@ -187,8 +159,17 @@ namespace Roost.Piebald
 
             WidgetMountPoint.On(this.gameObject, mountPoint =>
             {
+                if (includeShadow)
+                {
+                    mountPoint.AddImage("Shadow")
+                        .SetZOffset(100)
+                        .SetOffset(-20)
+                        .SetColor(new Color(0, 0, 0, 0.359f))
+                        .SliceImage()
+                        .SetSprite("internal:window_bg");
+                }
+
                 mountPoint.AddImage("BG_Top")
-                    .SetAnchor(0, 0)
                     .SetLeft(0, 0)
                     .SetTop(1, 0)
                     .SetRight(1, 0)
@@ -197,20 +178,33 @@ namespace Roost.Piebald
                     .SliceImage()
                     .SetColor(BgColorHeader);
 
-                this.title = mountPoint.AddText("TitleText")
-                    .SetAnchor(Vector2.zero)
+                mountPoint.AddSizedItem("TextContainer")
                     .SetLeft(0, 57.5f)
                     .SetTop(1, 0)
                     .SetRight(1, -57.5f)
-                    .SetBottom(1, -45)
-                    .SetPreferredHeight(25)
-                    .SetMinFontSize(10)
-                    .SetMaxFontSize(30)
-                    .SetOverflowMode(TextOverflowModes.Ellipsis)
-                    .SetTextAlignment(TextAlignmentOptions.BottomLeft);
+                    .SetBottom(1, -47)
+                    .AddContent(mountPoint =>
+                    {
+                        this.title = mountPoint.AddText("TitleText")
+                            .SetPreferredHeight(25)
+                            .SetMinFontSize(12)
+                            .SetMaxFontSize(30)
+                            .SetBottom(0, 7)
+                            .SetOverflowMode(TextOverflowModes.Ellipsis)
+                            .SetTextAlignment(TextAlignmentOptions.BottomLeft)
+                            .SetVerticalAlignment(VerticalAlignmentOptions.Bottom)
+                            .SetFontStyle(FontStyles.Bold);
+
+                        mountPoint.AddImage("TitleUnderline")
+                            .SetLeft(0, 0)
+                            .SetRight(1, 0)
+                            .SetTop(0, 6)
+                            .SetBottom(0, 4)
+                            .SetSprite((Sprite)null)
+                            .SetColor(new Color(0.5804f, 0.8863f, 0.9373f, 1));
+                    });
 
                 mountPoint.AddImage("BG_Body")
-                    .SetAnchor(0, -50)
                     .SetLeft(0, 0)
                     .SetTop(1, -50)
                     .SetRight(1, 0)
@@ -219,8 +213,7 @@ namespace Roost.Piebald
                     .SliceImage()
                     .SetColor(BgColorBody);
 
-                this.Content = mountPoint.AddSizingLayout("Content")
-                    .SetAnchor(0, -50)
+                this.Content = mountPoint.AddLayoutItem("Content")
                     .SetLeft(0, 0)
                     .SetTop(1, -50)
                     .SetRight(1, 0)
@@ -230,13 +223,13 @@ namespace Roost.Piebald
                 var iconSize = 65;
                 var iconOffsetX = -10;
                 var iconOffsetY = 10;
-                this.Icon = mountPoint.AddSizingLayout("IconContainer")
-                    .SetTop(1, iconOffsetY)
-                    .SetBottom(1, iconOffsetY - iconSize)
-                    .SetLeft(0, iconOffsetX)
-                    .SetRight(0, iconOffsetX + iconSize);
+                this.Icon = mountPoint.AddLayoutItem("IconContainer")
+                    .SetAnchorAndSize(
+                        new Vector2(0, 1),
+                        new Vector2(iconOffsetX + iconSize / 2, iconOffsetY - iconSize / 2),
+                        new Vector2(iconSize, iconSize));
 
-                mountPoint.AddSizingLayout("Footer")
+                mountPoint.AddLayoutItem("Footer")
                     .SetLeft(0, 0)
                     .SetTop(0, 50)
                     .SetRight(1, 0)
@@ -248,16 +241,14 @@ namespace Roost.Piebald
                             .SliceImage()
                             .SetColor(BgColorFooter);
 
-                        this.Footer = mountPoint.AddSizingLayout("FooterContent");
+                        this.Footer = mountPoint.AddLayoutItem("FooterContent");
                     });
 
                 mountPoint.AddIconButton("CloseButton")
-                    .SetAnchor(-25, -25)
-                    .SetLeft(1, -37)
-                    .SetTop(1, -13)
-                    .SetRight(1, -13)
-                    .SetBottom(1, -37)
-                    .SetSize(24, 24)
+                    .SetAnchorAndSize(
+                        Vector2.one,
+                        new Vector2(-25, -25),
+                        new Vector2(24, 24))
                     .SetSprite("internal:icon_close")
                     .CenterImage()
                     .SetColor(new Color(0.3804f, 0.7294f, 0.7922f, 1))

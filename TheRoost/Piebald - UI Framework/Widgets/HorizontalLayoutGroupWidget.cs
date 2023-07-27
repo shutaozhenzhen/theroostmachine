@@ -7,7 +7,7 @@ namespace Roost.Piebald
     /// <summary>
     /// A UI widget that arranges its children horizontally.
     /// </summary>
-    public class HorizontalLayoutGroupWidget : SizingLayoutWidget<HorizontalLayoutGroupWidget>
+    public class HorizontalLayoutGroupWidget : LayoutItemWidget<HorizontalLayoutGroupWidget>
     {
         public HorizontalLayoutGroupWidget(string key)
             : this(new GameObject(key))

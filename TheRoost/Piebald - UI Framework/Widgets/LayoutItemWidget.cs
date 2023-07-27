@@ -6,27 +6,27 @@ namespace Roost.Piebald
     /// <summary>
     /// A UI widget that dynamically determines its size.
     /// </summary>
-    public class SizingLayoutWidget : SizingLayoutWidget<SizingLayoutWidget>
+    public class LayoutItemWidget : LayoutItemWidget<LayoutItemWidget>
     {
-        public SizingLayoutWidget(string key) : base(key) { }
-        public SizingLayoutWidget(GameObject gameObject) : base(gameObject) { }
+        public LayoutItemWidget(string key) : base(key) { }
+        public LayoutItemWidget(GameObject gameObject) : base(gameObject) { }
     }
 
     /// <summary>
     /// A base class for UI widgets that dynamically determine their size.
     /// </summary>
-    public abstract class SizingLayoutWidget<TCoreType> : RectTransformWidget<TCoreType>
-        where TCoreType : SizingLayoutWidget<TCoreType>
+    public abstract class LayoutItemWidget<TCoreType> : SizedItemWidget<TCoreType>
+        where TCoreType : LayoutItemWidget<TCoreType>
     {
         private LayoutElement layoutElement;
         private ContentSizeFitter contentSizeFitter;
 
-        public SizingLayoutWidget(string key)
+        public LayoutItemWidget(string key)
             : this(new GameObject(key))
         {
         }
 
-        public SizingLayoutWidget(GameObject gameObject)
+        public LayoutItemWidget(GameObject gameObject)
             : base(gameObject)
         {
             // Always do this, in case we find ourselves in a dreaded childControlsWidth/Height group.
@@ -153,9 +153,9 @@ namespace Roost.Piebald
             }
         }
 
-        public static implicit operator SizingLayoutWidget(SizingLayoutWidget<TCoreType> widget)
+        public static implicit operator LayoutItemWidget(LayoutItemWidget<TCoreType> widget)
         {
-            return new SizingLayoutWidget(widget.GameObject);
+            return new LayoutItemWidget(widget.GameObject);
         }
 
         public TCoreType SetIgnoreLayout()

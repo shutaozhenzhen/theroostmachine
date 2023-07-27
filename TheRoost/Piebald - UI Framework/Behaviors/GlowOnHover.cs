@@ -1,6 +1,5 @@
 namespace Roost.Piebald
 {
-    using System;
     using UnityEngine;
     using UnityEngine.EventSystems;
 
@@ -11,7 +10,7 @@ namespace Roost.Piebald
 
         public void Awake()
         {
-            this.glow = this.GetComponent<Glow>();
+            this.glow = this.gameObject.GetOrAddComponent<Glow>();
         }
 
         public void OnPointerEnter(PointerEventData eventData)

@@ -7,9 +7,9 @@ namespace Roost.Piebald
         /// </summary>
         /// <param name="mountPoint">The mount point to add the widget to.</param>
         /// <param name="key">The key to use for the new widget's game object.</param>
-        public static RectTransformWidget AddRectTransform(this WidgetMountPoint mountPoint, string key = "RectTransform")
+        public static SizedItemWidget AddSizedItem(this WidgetMountPoint mountPoint, string key = "RectTransform")
         {
-            var widget = new RectTransformWidget(key);
+            var widget = new SizedItemWidget(key);
             mountPoint.AddWidget(widget);
             return widget;
         }
@@ -19,9 +19,9 @@ namespace Roost.Piebald
         /// </summary>
         /// <param name="mountPoint">The mount point to add the widget to.</param>
         /// <param name="key">The key to use for the new widget's game object.</param>
-        public static SizingLayoutWidget AddSizingLayout(this WidgetMountPoint mountPoint, string key = "SizingLayout")
+        public static LayoutItemWidget AddLayoutItem(this WidgetMountPoint mountPoint, string key = "SizingLayout")
         {
-            var widget = new SizingLayoutWidget(key);
+            var widget = new LayoutItemWidget(key);
             mountPoint.AddWidget(widget);
             return widget;
         }

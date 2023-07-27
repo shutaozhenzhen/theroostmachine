@@ -8,7 +8,7 @@ namespace Roost.Piebald
     /// <summary>
     /// A UI widget that contains its children in a vertically or horizontally scrolling region.
     /// </summary>
-    public class ScrollRegionWidget : SizingLayoutWidget<ScrollRegionWidget>
+    public class ScrollRegionWidget : LayoutItemWidget<ScrollRegionWidget>
     {
         private static readonly ColorBlock ScrollbarColors = new ColorBlock
         {

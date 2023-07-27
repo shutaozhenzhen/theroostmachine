@@ -7,7 +7,7 @@ namespace Roost.Piebald
     /// <summary>
     /// A UI widget that displays a button with text.
     /// </summary>
-    public class TextButtonWidget : SizingLayoutWidget<TextButtonWidget>, ITextWidget<TextButtonWidget>
+    public class TextButtonWidget : LayoutItemWidget<TextButtonWidget>, ITextWidget<TextButtonWidget>
     {
         // Color taken from the Verb window start button font.
         private static readonly Color DefaultFontColor = new Color(0.2392f, 0.1961f, 0.0667f, 1);

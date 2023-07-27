@@ -10,7 +10,7 @@ namespace Roost.Piebald
     /// When deriving this class, you must also provide an interface derived from <see cref="IWindowViewHost{TWindowHost}"/> and
     /// implement it onto your derived class.  This will provide the API to manipulate your window from the views.
     /// </remarks>
-    public abstract class ViewWindow<TWindowHost> : AbstractWindow, IWindowViewHost<TWindowHost>
+    public abstract class AbstractViewWindow<TWindowHost> : AbstractWindow, IWindowViewHost<TWindowHost>
         where TWindowHost : class, IWindowViewHost<TWindowHost>
     {
         private IWindowView<TWindowHost> view;
@@ -29,6 +29,11 @@ namespace Roost.Piebald
         protected virtual IWindowView<TWindowHost> DefaultView { get; } = null;
 
         protected virtual bool PersistViewOnClose { get; } = false;
+
+        protected AbstractViewWindow(bool includeShadow)
+            : base(includeShadow)
+        {
+        }
 
         protected IWindowView<TWindowHost> View
         {

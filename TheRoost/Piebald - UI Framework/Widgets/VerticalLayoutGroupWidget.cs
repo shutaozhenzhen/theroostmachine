@@ -16,7 +16,7 @@ namespace Roost.Piebald
     /// <summary>
     /// A base class for UI widgets that arrange their children vertically.
     /// </summary>
-    public abstract class VerticalLayoutGroupWidget<TCoreType> : SizingLayoutWidget<TCoreType>
+    public abstract class VerticalLayoutGroupWidget<TCoreType> : LayoutItemWidget<TCoreType>
         where TCoreType : VerticalLayoutGroupWidget<TCoreType>
     {
         public VerticalLayoutGroupWidget(string key)
