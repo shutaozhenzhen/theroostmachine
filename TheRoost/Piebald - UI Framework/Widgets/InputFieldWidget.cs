@@ -154,6 +154,12 @@ namespace Roost.Piebald
             set => this.SetColor(value);
         }
 
+        public int MaxLength
+        {
+            get => this.InputField.characterLimit;
+            set => this.SetMaxLength(value);
+        }
+
         public InputFieldWidget SetFontMaterial(string resourceName)
         {
             this.TextMesh.fontMaterial = ResourceHack.FindMaterial(resourceName);
@@ -238,6 +244,12 @@ namespace Roost.Piebald
         public InputFieldWidget SetColor(Color color)
         {
             this.TextMesh.color = color;
+            return this;
+        }
+
+        public InputFieldWidget SetMaxLength(int length)
+        {
+            this.InputField.characterLimit = length;
             return this;
         }
 
