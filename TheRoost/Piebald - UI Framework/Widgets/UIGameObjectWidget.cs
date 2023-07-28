@@ -192,6 +192,16 @@ namespace Roost.Piebald
         }
 
         /// <summary>
+        /// Adds a behavior to the widget, if it is not already added.
+        /// </summary>
+        public UIGameObjectWidget WithBehavior<T>(out T behavior)
+            where T : MonoBehaviour
+        {
+            behavior = this.GameObject.GetOrAddComponent<T>();
+            return this;
+        }
+
+        /// <summary>
         /// Adds a behavior to the widget, if it is not already added, and then invokes an action on it.
         /// </summary>
         /// <param name="action">The action to invoke on the behavior.</param>
