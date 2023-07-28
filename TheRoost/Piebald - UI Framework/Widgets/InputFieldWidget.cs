@@ -25,6 +25,8 @@ namespace Roost.Piebald
             image.sprite = null;
             image.color = baseColor;
 
+            gameObject.GetOrAddComponent<RectMask2D>();
+
             this.InputField = gameObject.GetOrAddComponent<TMP_InputField>();
             this.InputField.asteriskChar = asteriskChar;
             this.InputField.caretBlinkRate = caretBlinkRate;
@@ -38,13 +40,15 @@ namespace Roost.Piebald
             var textObject = new GameObject("Text");
             this.InputField.textComponent = this.TextMesh = textObject.AddComponent<TextMeshProUGUI>();
             this.InputField.textComponent.horizontalAlignment = HorizontalAlignmentOptions.Left;
-            this.InputField.textComponent.verticalAlignment = VerticalAlignmentOptions.Middle;
+            this.InputField.textComponent.verticalAlignment = VerticalAlignmentOptions.Bottom;
+            this.InputField.textComponent.autoSizeTextContainer = true;
             var textRt = textObject.GetComponent<RectTransform>();
             textRt.SetParent(this.InputField.transform, false);
             textRt.anchorMin = Vector2.zero;
-            textRt.anchorMax = Vector2.one;
-            textRt.offsetMin = new Vector2(5, 2);
-            textRt.offsetMax = new Vector2(5, 2);
+            textRt.anchorMax = new Vector2(1, 0);
+            textRt.offsetMin = new Vector2(5, 0);
+            textRt.offsetMax = new Vector2(5, 0);
+            textRt.pivot = new Vector2(.5f, 0);
 
             // Apparently the caret is created automatically on OnEnable, but we need to toggle it to re-trigger once
             // everything is ready.
