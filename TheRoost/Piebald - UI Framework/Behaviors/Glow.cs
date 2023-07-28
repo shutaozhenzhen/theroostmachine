@@ -71,6 +71,13 @@ namespace Roost.Piebald
 
     public static class GlowWidgetExtensions
     {
+        public static TWidget WithGlow<TWidget>(this TWidget widget, out Glow glow)
+            where TWidget : UIGameObjectWidget
+        {
+            glow = widget.GameObject.GetOrAddComponent<Glow>();
+            return widget;
+        }
+
         public static TWidget WithGlow<TWidget>(this TWidget widget, Action<Glow> configure = null)
             where TWidget : UIGameObjectWidget
         {

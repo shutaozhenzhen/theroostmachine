@@ -56,6 +56,14 @@ namespace Roost.Piebald
 
     public static class SpinAnimationWidgetExtensions
     {
+        public static TWidget WithSpinAnimation<TWidget>(this TWidget widget, float degreesPerSecond, out SpinAnimation spinAnimation)
+            where TWidget : UIGameObjectWidget
+        {
+            spinAnimation = widget.GameObject.GetOrAddComponent<SpinAnimation>();
+            spinAnimation.Speed = degreesPerSecond;
+            return widget;
+        }
+
         public static TWidget WithSpinAnimation<TWidget>(this TWidget widget, float degreesPerSecond, Action<SpinAnimation> configure = null)
             where TWidget : UIGameObjectWidget
         {
