@@ -317,7 +317,6 @@ namespace Roost.Piebald
             {
                 sizer.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-                // FIXME: Items are centering in this.  Implicit property of LayoutGroups?
                 var group = content.AddComponent<VerticalLayoutGroup>();
                 group.spacing = 0;
                 group.childControlHeight = true;

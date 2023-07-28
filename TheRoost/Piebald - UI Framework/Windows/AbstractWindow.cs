@@ -145,7 +145,7 @@ namespace Roost.Piebald
             typeof(WindowPositioner).GetFieldInvariant("canvasGroup").SetValue(this.positioner, canvasGroup);
             typeof(WindowPositioner).GetFieldInvariant("rectTrans").SetValue(this.positioner, root.RectTransform);
 
-            // FIXME: Auto size window to content.
+            // TODO: Support auto-sizing window to content.
             // Should get ConstrainedLayoutElement working too, so we can specify a max size.
             // Note: Even though we have a fixed min size, and auto size does not work, this is still somehow load bearing for some reason.
             var fitter = this.gameObject.AddComponent<ContentSizeFitter>();

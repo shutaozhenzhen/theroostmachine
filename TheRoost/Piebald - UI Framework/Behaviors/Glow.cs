@@ -20,9 +20,6 @@ namespace Roost.Piebald
                 return;
             }
 
-            // FIXME: This takes a while to work... No errors are thrown, so the sprite is properly loaded.
-            // However, the glow does not appear until windows are opened and closed and views are changed several times.
-
             WidgetMountPoint.On(this.gameObject, mountPoint =>
             {
                 this.glowImage = mountPoint.AddImage("Glow")
