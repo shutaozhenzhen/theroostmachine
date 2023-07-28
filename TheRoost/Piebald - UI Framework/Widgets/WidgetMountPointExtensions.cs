@@ -109,5 +109,17 @@ namespace Roost.Piebald
             mountPoint.AddWidget(widget);
             return widget;
         }
+
+        /// <summary>
+        /// Adds a new input field widget to the mount point.
+        /// </summary>
+        /// <param name="mountPoint">The mount point to add the widget to.</param>
+        /// <param name="key">The key to use for the new widget's game object.</param>
+        public static InputFieldWidget AddInputField(this WidgetMountPoint mountPoint, string key = "InputField")
+        {
+            var widget = new InputFieldWidget(key);
+            mountPoint.AddWidget(widget);
+            return widget;
+        }
     }
 }
