@@ -31,7 +31,7 @@ namespace Roost.Piebald
             this.InputField.caretColor = caretColor;
             this.InputField.contentType = TMP_InputField.ContentType.Standard;
             this.InputField.inputType = TMP_InputField.InputType.Standard;
-            this.InputField.lineType = TMP_InputField.LineType.SingleLine;
+            this.InputField.lineType = TMP_InputField.LineType.MultiLineSubmit;
             this.InputField.pointSize = 14;
             this.InputField.selectionColor = selectionColor;
 
@@ -43,8 +43,8 @@ namespace Roost.Piebald
             textRt.SetParent(this.InputField.transform, false);
             textRt.anchorMin = Vector2.zero;
             textRt.anchorMax = Vector2.one;
-            textRt.offsetMin = Vector2.zero;
-            textRt.offsetMax = Vector2.zero;
+            textRt.offsetMin = new Vector2(5, 2);
+            textRt.offsetMax = new Vector2(5, 2);
 
             // Apparently the caret is created automatically on OnEnable, but we need to toggle it to re-trigger once
             // everything is ready.
