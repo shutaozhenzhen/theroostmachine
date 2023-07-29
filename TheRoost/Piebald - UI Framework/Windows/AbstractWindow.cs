@@ -183,9 +183,9 @@ namespace Roost.Piebald
                     .SetTop(1, 0)
                     .SetRight(1, -57.5f)
                     .SetBottom(1, -47)
-                    .AddContent(mountPoint =>
+                    .AddContent(mp =>
                     {
-                        this.title = mountPoint.AddText("TitleText")
+                        this.title = mp.AddText("TitleText")
                             .SetPreferredHeight(25)
                             .SetMinFontSize(12)
                             .SetMaxFontSize(30)
@@ -195,7 +195,7 @@ namespace Roost.Piebald
                             .SetVerticalAlignment(VerticalAlignmentOptions.Bottom)
                             .SetFontStyle(FontStyles.Bold);
 
-                        mountPoint.AddImage("TitleUnderline")
+                        mp.AddImage("TitleUnderline")
                             .SetLeft(0, 0)
                             .SetRight(1, 0)
                             .SetTop(0, 6)
@@ -234,14 +234,14 @@ namespace Roost.Piebald
                     .SetTop(0, 50)
                     .SetRight(1, 0)
                     .SetBottom(0, 0)
-                    .AddContent(mountPoint =>
+                    .AddContent(mp =>
                     {
-                        mountPoint.AddImage("BG_Footer")
+                        mp.AddImage("BG_Footer")
                             .SetSprite("internal:window_bg_bottom")
                             .SliceImage()
                             .SetColor(BgColorFooter);
 
-                        this.Footer = mountPoint.AddLayoutItem("FooterContent");
+                        this.Footer = mp.AddLayoutItem("FooterContent");
                     });
 
                 mountPoint.AddIconButton("CloseButton")

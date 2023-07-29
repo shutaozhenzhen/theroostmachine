@@ -7,9 +7,9 @@ namespace Roost.Piebald
 
     internal static class ResourceHack
     {
-        private static readonly Dictionary<string, Material> MaterialCache = new();
-        private static readonly Dictionary<string, TMP_FontAsset> FontCache = new();
-        private static readonly Dictionary<string, Sprite> SpriteCache = new();
+        private static readonly Dictionary<string, Material> MaterialCache = new Dictionary<string, Material>();
+        private static readonly Dictionary<string, TMP_FontAsset> FontCache = new Dictionary<string, TMP_FontAsset>();
+        private static readonly Dictionary<string, Sprite> SpriteCache = new Dictionary<string, Sprite>();
 
         public static Material FindMaterial(string name)
         {

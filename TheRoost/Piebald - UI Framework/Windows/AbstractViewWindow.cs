@@ -16,7 +16,7 @@ namespace Roost.Piebald
         private IWindowView<TWindowHost> view;
         private IWindowView<TWindowHost> persistedView;
 
-        private Stack<IWindowView<TWindowHost>> viewStack = new();
+        private Stack<IWindowView<TWindowHost>> viewStack = new Stack<IWindowView<TWindowHost>>();
 
         WidgetMountPoint IWindowViewHost<TWindowHost>.Content => this.Content;
 
