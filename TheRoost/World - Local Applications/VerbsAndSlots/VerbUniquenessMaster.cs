@@ -50,7 +50,8 @@ namespace Roost.World.Verbs
             };
 
             Vagabond.CodeInstructionMask start = instruction => true;
-            Vagabond.CodeInstructionMask end = instruction => instruction.opcode == OpCodes.Brfalse_S;
+            // Note: HarmonyX replaces all short jumps with regular jumps, so search for both
+            Vagabond.CodeInstructionMask end = instruction => instruction.opcode == OpCodes.Brfalse_S || instruction.opcode == OpCodes.Brfalse;
 
             return instructions.ReplaceSegment(start, end, myCode, replaceStart: true, replaceEnd: false);
         }
