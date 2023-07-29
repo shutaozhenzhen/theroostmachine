@@ -21,7 +21,7 @@ namespace Roost.World.Beauty
             var s = Sprite.Create(
                 t,
                 new Rect(x, y, width, height),
-                Vector2.zero
+                new Vector2(0f, 0.25f)
             );
             s.name = name;
             return s;
