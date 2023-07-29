@@ -10,7 +10,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace Roost.Vagabond
+namespace Roost.Vagabond.Saves
 { 
     class CustomSavePersistenceProvider : GamePersistenceProvider
     {
@@ -49,7 +49,7 @@ namespace Roost.Vagabond
     }
 
 
-    class CustomSavesMaster
+    static class CustomSavesMaster
     {
         static string persistentDataPath = null;
         internal static void Enact()

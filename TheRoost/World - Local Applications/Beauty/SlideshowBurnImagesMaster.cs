@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 
-namespace Roost.World.Beauty
+namespace Roost.World.Beauty.BurnImages
 {
     class BurnImageData : AbstractEntity<BurnImageData>, IQuickSpecEntity
     {

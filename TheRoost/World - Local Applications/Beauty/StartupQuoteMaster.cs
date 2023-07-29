@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Roost.World.Beauty
 {
-    class StartupQuoteMaster
+    static class StartupQuoteMaster
     {
         internal static void Enact()
         {

@@ -6,11 +6,11 @@ using SecretHistories.UI;
 using UnityEngine;
 using UnityEngine.UI;
 using static UnityEngine.ParticleSystem;
-using Roost.World.Legacies.Entities;
+using Roost.World.Beauty.Entities;
 
 namespace Roost.World.Beauty
 {
-    class MainMenuStyleMaster
+    static class MainMenuStyleMaster
     {
         public static void setSpriteAndTransform(string objectName, Sprite sprite, Vector2 position)
         {

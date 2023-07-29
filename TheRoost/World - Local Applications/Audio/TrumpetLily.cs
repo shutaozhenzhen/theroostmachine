@@ -15,7 +15,7 @@ using UnityEngine.Networking;
 
 namespace Roost.World.Audio
 {
-    internal class TrumpetLily
+    internal static class TrumpetLily
     {
         internal const string AUDIO = "audio";
 

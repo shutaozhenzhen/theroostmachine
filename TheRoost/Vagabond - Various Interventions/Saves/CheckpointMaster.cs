@@ -10,9 +10,9 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using SecretHistories.Services;
 
-namespace Roost.World
+namespace Roost.Vagabond.Saves
 {
-    class CheckpointMaster
+    static class CheckpointMaster
     {
         const string USE_CHECKPOINTS = "useCheckpoints";
         const string SAVE_CHECKPOINT = "saveCheckpoint";

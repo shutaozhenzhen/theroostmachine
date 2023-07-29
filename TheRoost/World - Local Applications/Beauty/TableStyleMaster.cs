@@ -23,7 +23,7 @@ namespace Roost.World.Beauty
         }
     }
 
-    class TableStyleMaster
+    internal static class TableStyleMaster
     {
         static GameObject tabletop = null;
         static GameObject leather = null;

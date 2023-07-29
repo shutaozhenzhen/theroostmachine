@@ -2,7 +2,7 @@
 using SecretHistories.Fucine.DataImport;
 using UnityEngine;
 
-namespace Roost.World.Legacies.Entities
+namespace Roost.World.Beauty.Entities
 {
     public class LegacyMenuVisualsOverride : AbstractEntity<LegacyMenuVisualsOverride>
     {
