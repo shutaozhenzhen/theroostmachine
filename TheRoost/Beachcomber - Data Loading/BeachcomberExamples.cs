@@ -6,14 +6,17 @@ using SecretHistories.Fucine.DataImport;
 using SecretHistories.Entities;
 using UnityEngine;
 
-namespace Roost.Beachcomber.Entities
+namespace Roost.Beachcomber
 {
     //All custom classes need to have FucineImportable attribute followed by a string-tag
     //The tag is how the game understands what type of entity each JSON file loads
     //ex. Elements are annotated as [FucineImportable("elements")] which means they are loaded from JSON of the form 
     //{"elements":[ { first element definition }, { second element definition } ...etc ]}
     //Accordingly, entities of this type will be loaded from JSON of the form {"beachcomberexample":[ content ]}
-    [FucineImportable("beachcomberexample")]
+
+    ///commented out because we don't actually want to infect the loader with a dummy class
+    ///[FucineImportable("beachcomberexample")]
+
     //the class itself needs to derive from AbstractEntity<T> where T is the name of the class
     //IQuickSpecEntit, ICustomSpecEntity and IMalleable are optional, explained below
     public class ExampleFucineClass : AbstractEntity<ExampleFucineClass>, IQuickSpecEntity, ICustomSpecEntity, IMalleable
