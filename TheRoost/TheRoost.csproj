@@ -125,6 +125,10 @@
       <HintPath>$([System.IO.Path]::Combine($(CSDataDir), 'Managed\UnityEngine.UnityWebRequestModule.dll'))</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="NCalc">
+      <HintPath>.\externals\NCalc.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="2.2.1" />
