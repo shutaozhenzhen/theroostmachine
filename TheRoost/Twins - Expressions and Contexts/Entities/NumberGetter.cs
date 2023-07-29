@@ -26,6 +26,9 @@ namespace Roost.Twins.Entities
         public float GetValueFromTokens(List<Token> tokens)
         {
             //NB - not always tokens! sometimes Root or Char data
+            //if (tokens == null || tokens.Count == 0)
+                //return 0;
+
             return HandleValues(tokens, GetValue, targetId);
         }
 
@@ -70,7 +73,7 @@ namespace Roost.Twins.Entities
             RecipeAspect, //retuns quantity (likely 1) if the token is a verb running a recipe with the defined aspect
             Entity, //returns a quantity (likely 1) if the token is an entity of a specified id
             Verb, //returns a quantity (likely 1) if the token is a verb of a specified id
-            Recipe, //retuns a quantity (likely 1) if the token is a verb running a recipe
+            Recipe, //retuns a quantity (likely 1) if the token is a verb running a recipe with a specified id
             Token, Payload, Property, //return token/its payload/payload entity property; incredibly hacky (and probably slow) rn, but work
             NoArea
         };
@@ -107,8 +110,8 @@ namespace Roost.Twins.Entities
                     case ValueArea.Recipe: return RecipeId;
                     case ValueArea.Entity: return EntityId;
                     case ValueArea.RecipeAspect: return RecipeAspect;
-                    case ValueArea.Token: return Token;
-                    case ValueArea.Payload: return Payload;
+                    case ValueArea.Token: return TokenProperty;
+                    case ValueArea.Payload: return PayloadProperty;
                     case ValueArea.Property: return EntityProperty;
                     case ValueArea.NoArea: return null;
                     default:
@@ -134,13 +137,7 @@ namespace Roost.Twins.Entities
 
             private static int Lifetime(Token token, string target)
             {
-                float value;
-                if (IsSituation(token.Payload))
-                    value = (token.Payload as Situation).GetTimeshadow().LifetimeRemaining;
-                else if (token.IsValidElementStack())
-                    value = (token.Payload as ElementStack).GetTimeshadow().LifetimeRemaining;
-                else
-                    return 0;
+                float value = token.Payload.GetTimeshadow().LifetimeRemaining;
 
                 return ConvertToInt(value * 1000);
             }
@@ -148,10 +145,10 @@ namespace Roost.Twins.Entities
             private static int Lifespan(Token token, string target)
             {
                 float value;
-                if (IsSituation(token.Payload))
-                    value = (token.Payload as Situation).Warmup;
-                else if (token.IsValidElementStack())
-                    value = (token.Payload as ElementStack).Element.Lifetime;
+                if (token.Payload is Situation situation)
+                    value = situation.Warmup;
+                else if (token.Payload is ElementStack stack)
+                    value = stack.Element.Lifetime;
                 else
                     return 0;
 
@@ -191,18 +188,23 @@ namespace Roost.Twins.Entities
 
             private static int EntityId(Token token, string target)
             {
-                return NoonExtensions.WildcardMatchId(token.PayloadEntityId, target) ? 1 : 0;
+                return NoonExtensions.WildcardMatchId(token.PayloadEntityId, target) ? token.Quantity : 0;
             }
 
             private static int RecipeAspect(Token token, string target)
             {
-                if (!IsSituation(token.Payload))
+                Situation situation = token.Payload as Situation;
+
+                if (situation == null)
+                    return 0;
+
+                if (situation.StateIdentifier == StateEnum.Unstarted)
                     return 0;
 
                 return (token.Payload as Situation).CurrentRecipe.Aspects.AspectValue(target);
             }
 
-            private static int Payload(Token token, string target)
+            private static int PayloadProperty(Token token, string target)
             {
                 object value = token.Payload.GetType().GetProperty(target).GetValue(token.Payload);
 
@@ -217,7 +219,7 @@ namespace Roost.Twins.Entities
                 }
             }
 
-            private static int Token(Token token, string target)
+            private static int TokenProperty(Token token, string target)
             {
                 object value = token.Payload.GetType().GetProperty(target).GetValue(token.Payload);
 
@@ -251,9 +253,9 @@ namespace Roost.Twins.Entities
                     }
                 }
 
-                if (IsSituation(token.Payload))
+                if (token.Payload is Situation situation)
                 {
-                    Recipe recipe = Watchman.Get<Compendium>().GetEntityById<Recipe>((token.Payload as Situation).RecipeId);
+                    Recipe recipe = Watchman.Get<Compendium>().GetEntityById<Recipe>(situation.CurrentRecipeId);
                     object value = typeof(Recipe).GetProperty(target).GetValue(recipe);
 
                     try
@@ -364,7 +366,7 @@ namespace Roost.Twins.Entities
                     if (token.IsValidElementStack())
                     {
                         currentTokenValue = tokenValue(token, target) / token.Quantity;
-                        if (currentTokenValue != 0 && (currentTokenValue < minValue || (currentTokenValue == minValue && UnityEngine.Random.Range(0, 100) > 50)))
+                        if (currentTokenValue != 0 && (currentTokenValue < minValue || (currentTokenValue == minValue && UnityEngine.Random.Range(0, 99) > 50)))
                             minValue = currentTokenValue;
                     }
                 return minValue == int.MaxValue ? 0 : minValue;
@@ -397,15 +399,14 @@ namespace Roost.Twins.Entities
 
             private static int Achievement(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
-                var achievement = Watchman.Get<Compendium>().GetEntityById<Achievement>(target);
-
-                if (achievement == null)
-                    achievement = Watchman.Get<Compendium>().GetEntityById<Achievement>(target.ToUpper());
+                var achievement = 
+                    Watchman.Get<Compendium>().GetEntityById<Achievement>(target)
+                    ?? Watchman.Get<Compendium>().GetEntityById<Achievement>(target.ToUpper());
 
                 if (achievement == null)
                     return 0;
 
-                if (!Watchman.Get<AchievementsChronicler>().IsUnlocked(achievement))
+                if (Watchman.Get<AchievementsChronicler>().IsUnlocked(achievement) == false)
                     return 0;
 
                 return 1;
@@ -440,7 +441,7 @@ namespace Roost.Twins.Entities
                 var deck = Watchman.Get<Compendium>().GetEntityById<DeckSpec>(target);
                 if (deck == null)
                 {
-                    Birdsong.TweetLoud($"Trying to access non-existent deck spec {target}");
+                    Birdsong.TweetLoud($"Trying to access non-existent deck spec '{target}'");
                     return 0;
                 }
 
@@ -461,7 +462,7 @@ namespace Roost.Twins.Entities
                 var deck = Watchman.Get<Compendium>().GetEntityById<DeckSpec>(target);
                 if (deck == null)
                 {
-                    Birdsong.TweetLoud($"Trying to access non-existent deck spec {target}");
+                    Birdsong.TweetLoud($"Trying to access non-existent deck spec '{target}'");
                     return 0;
                 }
 
