@@ -52,7 +52,9 @@ namespace Roost.Enactors
             Roost.Vagabond.MenuMask.Enact();
             Roost.Vagabond.ConfigMask.Enact();
             Roost.Vagabond.CommandLine.Enact();
-            Roost.Vagabond.CustomSavesMaster.Enact();
+
+            Roost.Vagabond.Saves.CustomSavesMaster.Enact();
+            Roost.Vagabond.Saves.CheckpointMaster.Enact();
         }
     }
 
@@ -78,8 +80,6 @@ namespace Roost.Enactors
         internal static void Enact()
         {
             Roost.World.Optimizations.Enact();
-
-            Roost.World.CheckpointMaster.Enact();
 
             Roost.World.Verbs.VerbUniquenessMaster.Enact();
             Roost.World.Verbs.VerbStickySlotsMaster.Enact();
@@ -109,7 +109,7 @@ namespace Roost.Enactors
             Roost.World.Beauty.MainMenuStyleMaster.Enact();
             Roost.World.Beauty.TableStyleMaster.Enact();
 
-            Roost.World.Beauty.SlideshowBurnImagesMaster.Enact();
+            Roost.World.Beauty.BurnImages.SlideshowBurnImagesMaster.Enact();
             Roost.World.Beauty.TMPSpriteManager.Enact();
             Roost.World.Beauty.CardStyleMaster.Enact();
             Roost.World.Beauty.ElementStackRefiner.Enact();
