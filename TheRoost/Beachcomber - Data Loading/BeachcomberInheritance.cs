@@ -10,20 +10,29 @@ namespace Roost.Beachcomber
         {
             Machine.Patch<Element>(
                     original: nameof(Element.InheritFrom),
-                    postfix: typeof(CuckooJr).GetMethodInvariant(nameof(CuckooJr.InheritClaimedProperties)));
+                    postfix: typeof(CuckooJr).GetMethodInvariant(nameof(CuckooJr.InheritClaimedPropertiesElement)));
 
             Machine.Patch<Recipe>(
                     original: nameof(Element.InheritFrom),
-                    postfix: typeof(CuckooJr).GetMethodInvariant(nameof(CuckooJr.InheritClaimedProperties)));
+                    postfix: typeof(CuckooJr).GetMethodInvariant(nameof(CuckooJr.InheritClaimedPropertiesRecipe)));
         }
 
-        private static void InheritClaimedProperties(IEntityWithId __instance, IEntityWithId inheritFromElement)
+        private static void InheritClaimedPropertiesElement(Element __instance, Element inheritFromElement)
         {
-            var inheritingProperties = inheritFromElement.GetCustomProperties();
+            InheritClaimedProperties(inheritFromElement, __instance);
+        }
+        private static void InheritClaimedPropertiesRecipe(Recipe __instance, Element inheritFromRecipe)
+        {
+            InheritClaimedProperties(inheritFromRecipe, __instance);
+        }
+
+        private static void InheritClaimedProperties(IEntityWithId inheritFrom, IEntityWithId receiver)
+        {
+            var inheritingProperties = inheritFrom.GetCustomProperties();
 
             if (inheritingProperties != null)
                 foreach (var inheritingProperty in inheritingProperties)
-                    MergeCustomProperty(__instance, inheritingProperty.Key, inheritingProperty.Value);
+                    MergeCustomProperty(receiver, inheritingProperty.Key, inheritingProperty.Value);
         }
 
         public static void MergeCustomProperty(IEntityWithId owner, string propertyName, object inheritingValue)
