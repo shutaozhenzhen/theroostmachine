@@ -12,6 +12,8 @@ using SecretHistories.Logic;
 using Roost.Twins;
 using Roost.Twins.Entities;
 
+using SecretHistories.Meta;
+
 namespace Roost.World.Recipes.Entities
 {
     public enum MorphEffectsExtended
@@ -56,6 +58,9 @@ namespace Roost.World.Recipes.Entities
             //it adds an overhead when executing, but should go much easier on the memory
 
             //but actually I'll do that later!!
+
+            Machine.Patch<ElementsMalleary>(nameof(ElementsMalleary.CrossTrigger),
+                prefix: typeof(RefMorphDetails).GetMethodInvariant(nameof(RefMorphDetails.CrossTriggerInMalleary)));
         }
 
         public void QuickSpec(string value)
@@ -313,6 +318,15 @@ namespace Roost.World.Recipes.Entities
                     foreach (RefMorphDetails morphDetails in xtriggers[catalyst])
                         morphDetails.OnPostImport(log, populatedCompendium);
             }
+        }
+
+        static bool CrossTriggerInMalleary(AutoCompletingInput ___input, DrydockSphere ____elementDrydock)
+        {
+            var catalyst = new Dictionary<string, int>() { { ___input.text.Trim(), 1 } };
+            GrandEffects.RunXTriggers(____elementDrydock.Tokens, null, catalyst);
+            RecipeExecutionBuffer.ApplyAllEffects();
+            RecipeExecutionBuffer.ApplyVFX();
+            return false;
         }
     }
 }
