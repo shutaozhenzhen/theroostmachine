@@ -198,7 +198,7 @@ namespace Roost.World.Recipes.Entities
             }
 
             reactingElementQuantity = UseMyQuantity ? reactingElementQuantity : 1;
-            catalystQuantity = UseCatalystQuantity ? catalystQuantity: 1;
+            catalystQuantity = UseCatalystQuantity ? catalystQuantity : 1;
 
             switch (MorphEffect)
             {

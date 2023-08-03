@@ -41,6 +41,7 @@ namespace Roost.Enactors
         internal static void Enact()
         {
             Roost.Beachcomber.Cuckoo.Enact();
+            Roost.Beachcomber.CuckooJr.Enact();
             Roost.Beachcomber.Usurper.OverthrowNativeImportingButNotCompletely();
         }
     }
