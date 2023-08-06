@@ -19,7 +19,7 @@ using Roost.Elegiast;
 
 namespace Roost.World.Beauty
 {
-    static class ElementStackRefiner
+    public static class ElementStackRefiner
     {
         const string DYNAMIC_LABEL = "dynamiclabel";
         const string DYNAMIC_ICON = "dynamicicon";

@@ -14,7 +14,7 @@ using UnityEngine;
 namespace Roost.World.Elements
 {
     //currently unused and doesnt work
-    static class ElementSlotMaster
+    internal static class ElementSlotMaster
     {
 
         internal static void Enact()

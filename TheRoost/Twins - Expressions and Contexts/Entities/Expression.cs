@@ -64,5 +64,10 @@ namespace Roost.Twins.Entities
                 return UNDEFINED;
             return "'" + this.formula + "' = " + this.value;
         }
+
+        public bool isSimpleNumber()
+        {
+            return references.Length == 0;
+        }
     }
 }
