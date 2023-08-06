@@ -25,10 +25,10 @@ namespace Roost.World.Verbs
             Machine.Patch(
                 original: Machine.GetMethod<SituationCreationCommand>(nameof(SituationCreationCommand.Execute)),
                 transpiler: typeof(VerbUniquenessMaster).GetMethodInvariant(nameof(InjectVerbCounting)));
-
+            /*
             Machine.Patch(
                 original: Machine.GetMethod<Situation>("OpenAt"),
-                prefix: typeof(VerbUniquenessMaster).GetMethodInvariant(nameof(ClosePotentialDoubles)));
+                prefix: typeof(VerbUniquenessMaster).GetMethodInvariant(nameof(ClosePotentialDoubles)));*/
         }
 
         private static void ClosePotentialDoubles(Situation __instance)
