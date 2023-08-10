@@ -25,20 +25,17 @@ namespace Roost.World.Verbs
             Machine.Patch(
                 original: Machine.GetMethod<SituationCreationCommand>(nameof(SituationCreationCommand.Execute)),
                 transpiler: typeof(VerbUniquenessMaster).GetMethodInvariant(nameof(InjectVerbCounting)));
-            /*
+
             Machine.Patch(
                 original: Machine.GetMethod<Situation>("OpenAt"),
-                prefix: typeof(VerbUniquenessMaster).GetMethodInvariant(nameof(ClosePotentialDoubles)));*/
+                prefix: typeof(VerbUniquenessMaster).GetMethodInvariant(nameof(CloseCurrentSituationWindow)));
         }
 
-        private static void ClosePotentialDoubles(Situation __instance)
+        private static void CloseCurrentSituationWindow(Situation __instance)
         {
-            //CloseAllSituationWindowsExcept(null) accepts verb id
-            //naturally, when there are multiple situations of the same verb, they all can be opened
-            //so we close everything by hand
             Situation currentlyOpen = Watchman.Get<Meniscate>().GetCurrentlyOpenSituation();
-            if (currentlyOpen.IsValid() && currentlyOpen != __instance)
-                Watchman.Get<Meniscate>().CloseAllSituationWindowsExcept(null);
+            if (currentlyOpen?.IsValid() == true && currentlyOpen != __instance)
+                currentlyOpen.Close();
         }
 
         private static IEnumerable<CodeInstruction> InjectVerbCounting(IEnumerable<CodeInstruction> instructions)
