@@ -8,6 +8,7 @@ using Steamworks;
 using SecretHistories.UI;
 using SecretHistories.Services;
 using SecretHistories.Constants;
+using SecretHistories.Enums;
 
 using UnityEngine;
 
@@ -80,7 +81,7 @@ namespace Roost.Elegiast
         private static string[] GetCloudLegacyData()
         {
             StorefrontServicesProvider storefront = Watchman.Get<StorefrontServicesProvider>();
-            if (storefront.IsAvailable(StoreClient.Steam) && SteamRemoteStorage.FileExists(ACHIEVEMENTS_FILE))
+            if (storefront.IsAvailable(Storefront.Steam) && SteamRemoteStorage.FileExists(ACHIEVEMENTS_FILE))
             {
                 int size = SteamRemoteStorage.GetFileSize(ACHIEVEMENTS_FILE);
                 byte[] bytes = new byte[size];
