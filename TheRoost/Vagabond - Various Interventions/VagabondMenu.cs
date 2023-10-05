@@ -2,6 +2,7 @@
 using SecretHistories.UI;
 using UnityEngine;
 using UnityEngine.UI;
+using SecretHistories.Infrastructure;
 
 namespace Roost.Vagabond
 {

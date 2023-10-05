@@ -78,7 +78,7 @@ namespace Roost.World.Recipes
             foreach (ElementStack stack in transformations.Keys)
             {
                 stack.ChangeTo(transformations[stack]);
-                stack.Token.Unshroud();
+                stack.Token.Payload.Unshroud();
             }
 
             transformations.Clear();

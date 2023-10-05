@@ -32,8 +32,8 @@ namespace Roost.World.Elements
 
         private static void OutputShroudOverride(Token token)
         {
-            if (token.Shrouded && !Watchman.Get<Compendium>().GetEntityById<Element>(token.PayloadEntityId).RetrieveProperty<bool>(SHROUDED))
-                token.Unshroud();
+            if (token.Payload.IsShrouded && !Watchman.Get<Compendium>().GetEntityById<Element>(token.PayloadEntityId).RetrieveProperty<bool>(SHROUDED))
+                token.Payload.Unshroud();
         }
     }
 

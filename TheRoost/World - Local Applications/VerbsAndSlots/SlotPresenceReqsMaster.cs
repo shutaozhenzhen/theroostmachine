@@ -11,6 +11,7 @@ using SecretHistories.Abstract;
 using SecretHistories.Fucine;
 using SecretHistories.States;
 using SecretHistories.Commands.SituationCommands;
+using SecretHistories;
 
 using Roost.Twins;
 using Roost.Twins.Entities;

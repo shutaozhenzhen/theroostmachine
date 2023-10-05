@@ -11,6 +11,7 @@ using SecretHistories.Entities;
 using SecretHistories.Core;
 using SecretHistories.Spheres;
 using SecretHistories.Infrastructure;
+using SecretHistories;
 
 using Roost.Twins;
 using Roost.Twins.Entities;

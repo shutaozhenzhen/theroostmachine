@@ -37,7 +37,7 @@ namespace Roost.Vagabond.Saves
         const string DISABLE_CHECKPOINTS = "disableCheckpoints";
         private static bool CheckpointsAllowedInSettings()
         {
-            return Watchman.Get<Config>().GetConfigValueAsInt(DISABLE_CHECKPOINTS) != 1;
+            return Watchman.Get<Config>().GetConfigValue(DISABLE_CHECKPOINTS,0) != 1;
         }
 
         private static bool LegacyAllowsCheckpoints()

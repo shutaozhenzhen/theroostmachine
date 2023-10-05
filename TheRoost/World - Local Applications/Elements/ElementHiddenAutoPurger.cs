@@ -16,7 +16,6 @@ namespace Roost.World.Elements
             Machine.Patch<OutputSphere>(
                 original: nameof(Sphere.AcceptToken),
                 prefix: typeof(ElementHiddenAutoPurger).GetMethodInvariant(nameof(AcceptToken)));
-
         }
 
         static bool AcceptToken(Token token)

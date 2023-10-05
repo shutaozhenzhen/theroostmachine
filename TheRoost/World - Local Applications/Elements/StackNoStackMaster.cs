@@ -76,7 +76,7 @@ namespace Roost.World.Elements
                 var newToken = token.CalveToken(1);
 
                 if (shrouded)
-                    newToken.Shroud(true);
+                    newToken.Payload.Shroud(true);
             }
 
             alreadyCalvingNoStack = false;
