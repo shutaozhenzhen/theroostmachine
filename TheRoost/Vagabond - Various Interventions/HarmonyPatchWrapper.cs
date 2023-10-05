@@ -198,8 +198,13 @@ namespace Roost.Vagabond
 
                     if (deleteOriginalMethod)
                     {
+                        codes[i].MoveLabelsTo(myCode[0]);
+
                         while (!codes[i].Calls(referenceMethodCall))
                             codes.RemoveAt(i);
+
+                        codes[i].MoveLabelsTo(myCode[myCode.Count - 1]);
+
                         codes.RemoveAt(i);
                     }
 
@@ -250,11 +255,15 @@ namespace Roost.Vagabond
 
         internal static void LogILCodes(IEnumerable<CodeInstruction> instructions)
         {
+            int i = 0;
             Birdsong.TweetLoud("IL CODE:");
             foreach (CodeInstruction instruction in instructions)
-                Birdsong.TweetLoud($"{instruction.opcode} {(instruction.operand == null ? string.Empty : $": {instruction.operand} ({instruction.operand.GetType().Name})")} {instruction.labels.UnpackCollection()}");
+            {
+                Birdsong.TweetLoud($"{i} {instruction.opcode} {(instruction.operand == null ? string.Empty : $": {instruction.operand} ({instruction.operand.GetType().Name})")} {instruction.labels.UnpackCollection()}");
+                i++;
+            }
+            }
         }
-    }
 }
 
 namespace Roost
