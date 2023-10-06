@@ -37,12 +37,15 @@ namespace Roost.World.Elements
             List<CodeInstruction> myCode = new List<CodeInstruction>()
             {
               new CodeInstruction(OpCodes.Ldarg_1),
-              new CodeInstruction(OpCodes.Ldloc_3),
-              new CodeInstruction(OpCodes.Call, typeof(StackDisplaceMaster).GetMethodInvariant(nameof(DisplaceStack)))
+              new CodeInstruction(OpCodes.Ldloc_2),
+              new CodeInstruction(OpCodes.Call, typeof(StackDisplaceMaster).GetMethodInvariant(nameof(DisplaceStack))),
             };
 
+            //do it twice for two calls
             MethodInfo retireMethod = typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.Retire), new System.Type[] { typeof(RetirementVFX) });
             instructions = instructions.ReplaceMethodCall(retireMethod, myCode);
+            instructions = instructions.ReplaceMethodCall(retireMethod, myCode);
+
             return instructions;
         }
 
