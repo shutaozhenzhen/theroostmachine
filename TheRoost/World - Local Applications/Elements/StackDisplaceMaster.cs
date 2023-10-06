@@ -28,7 +28,7 @@ namespace Roost.World.Elements
             Machine.ClaimProperty<Element, bool>(DISPLACEMENT_REVERSE, false, false);
 
             Machine.Patch(
-                original: typeof(HornedAxe).GetMethodInvariant(nameof(HornedAxe.EnforceUniquenessIfStackIsUnique)),
+                original: typeof(Sphere).GetMethodInvariant(nameof(Sphere.EnforceUniquenessForIncomingStack)),
                 transpiler: typeof(StackDisplaceMaster).GetMethodInvariant(nameof(TryDisplaceDuplicate)));
         }
 
@@ -74,15 +74,15 @@ namespace Roost.World.Elements
                     element = Machine.GetEntity<Element>(displaceTo);
                 }
 
-            if (element.Id == NullElement.NULL_ELEMENT_ID)
+
+            if (string.IsNullOrWhiteSpace(displaceTo))
+                affectedStack.Retire(vfx);
+            else if (element.Id == NullElement.NULL_ELEMENT_ID)
             {
                 Birdsong.TweetLoud($"Trying to displace {affectedStack.EntityId} into non-existent element {displaceTo}");
                 affectedStack.Retire(RetirementVFX.CardHide);
                 return false;
             }
-
-            if (string.IsNullOrWhiteSpace(displaceTo))
-                affectedStack.Retire(vfx);
             else
             {
                 ElementVFXMaster.elementVFXOverride = vfx;
