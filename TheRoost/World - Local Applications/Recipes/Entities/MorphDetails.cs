@@ -209,6 +209,7 @@ namespace Roost.World.Recipes.Entities
             {
                 case MorphEffectsExtended.Transform:
                     RecipeExecutionBuffer.ScheduleTransformation(reactingToken, this.Id, VFX);
+                    RecipeExecutionBuffer.ScheduleQuantityChange(reactingToken, reactingToken.Quantity * Level.value * reactingElementQuantity * catalystQuantity, RetirementVFX.None);
                     break;
                 case MorphEffectsExtended.Spawn:
                     RecipeExecutionBuffer.ScheduleSpawn(reactingToken.Sphere, this.Id, Level.value * catalystQuantity * reactingElementQuantity, VFX);
@@ -221,7 +222,7 @@ namespace Roost.World.Recipes.Entities
                     break;
 
                 case MorphEffectsExtended.Quantity:
-                    RecipeExecutionBuffer.ScheduleQuantityChange(reactingToken, Level.value * catalystQuantity, VFX);
+                    RecipeExecutionBuffer.ScheduleQuantityChange(reactingToken, Level.value * catalystQuantity * reactingElementQuantity, VFX);
                     break;
 
                 case MorphEffectsExtended.DeckDraw:
