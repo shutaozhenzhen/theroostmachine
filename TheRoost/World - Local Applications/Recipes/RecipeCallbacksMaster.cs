@@ -104,7 +104,6 @@ namespace Roost.World.Recipes
                 return;
             }
 
-            Birdsong.Sing($"Found the callback recipe '{callbackRecipeId}' for callback '{fullCallbackId}' in situation '{SituationTracker.currentSituation.Id}'");
             //if the recipe id is wrong - or null, in case callback isn't set - default logger will display a message
 
             if (linkDetails.Id != callbackRecipeId)

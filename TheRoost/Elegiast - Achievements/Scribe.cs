@@ -62,13 +62,11 @@ namespace Roost.Elegiast
 
         internal static void SetLeverForCurrentPlaythrough(string lever, string value)
         {
-            Birdsong.Sing($"Setting lever for the current playthrough - '{lever}': '{value}'");
             SetLever(GetCurrentLevers(), lever, value);
         }
 
         internal static void SetLeverForNextPlaythrough(string lever, string value)
         {
-            Birdsong.Sing($"Setting lever for the next playthrough - '{lever}': '{value}'");
             SetLever(GetFutureLevers(), lever, value);
         }
 
@@ -84,13 +82,11 @@ namespace Roost.Elegiast
 
         internal static void RemoveLeverForCurrentPlaythrough(string lever)
         {
-            Birdsong.Sing($"Removing lever for the current playthrough - '{lever}'");
             RemoveLever(GetCurrentLevers(), lever);
         }
 
         internal static void RemoveLeverForNextPlaythrough(string lever)
         {
-            Birdsong.Sing($"Removing lever for the future playthrough - '{lever}'");
             RemoveLever(GetFutureLevers(), lever);
         }
 
