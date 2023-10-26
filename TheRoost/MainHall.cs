@@ -80,8 +80,6 @@ namespace Roost.Enactors
     {
         internal static void Enact()
         {
-            Roost.World.Optimizations.Enact();
-
             Roost.World.Verbs.VerbUniquenessMaster.Enact();
             Roost.World.Verbs.VerbStickySlotsMaster.Enact();
 
