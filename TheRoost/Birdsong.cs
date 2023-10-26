@@ -9,6 +9,7 @@ namespace Roost
     {
         public static VerbosityLevel sensivity = VerbosityLevel.Essential;
         public static object secret;
+        public static bool debug => secret == null ? false : (bool)secret ;
         public static void SetVerbosityFromConfig(int value)
         {
             switch (value)
