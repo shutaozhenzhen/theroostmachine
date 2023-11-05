@@ -195,6 +195,7 @@ namespace Roost.World.Recipes.Entities
                 return;
 
             Crossroads.MarkLocalToken(reactingToken);
+            Crossroads.MarkSource(reactingToken);
 
             if (UnityEngine.Random.Range(1, 101) > Chance.value)
             {
@@ -304,6 +305,7 @@ namespace Roost.World.Recipes.Entities
             }
 
             Crossroads.UnmarkLocalToken();
+            Crossroads.UnmarkSource();
         }
 
         public override string ToString()
