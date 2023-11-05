@@ -176,6 +176,10 @@ namespace Roost.World.Recipes.Entities
             if (XPans == null || !XPans.Any())
                 return;
 
+            AspectsDictionary allCatalysts = new AspectsDictionary();
+            foreach (KeyValuePair<string, FucineExp<int>> catalyst in XPans)
+                allCatalysts.ApplyMutation(catalyst.Key, catalyst.Value.value);
+
             foreach (Sphere sphere in Watchman.Get<HornedAxe>().GetExteriorSpheres())
             {
                 List<Token> tokens = sphere.GetElementTokens();
@@ -184,10 +188,6 @@ namespace Roost.World.Recipes.Entities
                     continue;
 
                 Crossroads.MarkLocalSphere(sphere);
-
-                AspectsDictionary allCatalysts = new AspectsDictionary();
-                foreach (KeyValuePair<string, FucineExp<int>> catalyst in XPans)
-                    allCatalysts.ApplyMutation(catalyst.Key, catalyst.Value.value);
 
                 RunXTriggers(tokens, situation, allCatalysts);
                 Crossroads.MarkLocalSphere(initialSphere);
