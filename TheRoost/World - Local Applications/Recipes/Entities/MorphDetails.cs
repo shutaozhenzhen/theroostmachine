@@ -210,7 +210,7 @@ namespace Roost.World.Recipes.Entities
             {
                 case MorphEffectsExtended.Transform:
                     RecipeExecutionBuffer.ScheduleTransformation(reactingToken, this.Id, VFX);
-                    var resultingQuantity = reactingToken.Quantity * Level.value * reactingElementQuantity * catalystQuantity;
+                    var resultingQuantity = Level.value * reactingElementQuantity * catalystQuantity;
                     var needChange = resultingQuantity - reactingToken.Quantity;
                     RecipeExecutionBuffer.ScheduleQuantityChange(reactingToken, needChange, RetirementVFX.None);
                     break;
