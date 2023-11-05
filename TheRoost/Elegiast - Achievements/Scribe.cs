@@ -205,7 +205,7 @@ namespace Roost.Elegiast
             { "$label", (aspectId, aspects) => Watchman.Get<Compendium>().GetEntityById<Element>(aspectId).Label },
             { "$description", (aspectId, aspects) => Watchman.Get<Compendium>().GetEntityById<Element>(aspectId).Description },
             { "$icon", (aspectId, aspects) => Watchman.Get<Compendium>().GetEntityById<Element>(aspectId).Icon },
-            { "$sprite", (aspectId, aspects) => "<sprite name =" + Watchman.Get<Compendium>().GetEntityById<Element>(aspectId).Icon + ">" },
+            { "$sprite", (aspectId, aspects) => "<sprite name=" + Watchman.Get<Compendium>().GetEntityById<Element>(aspectId).Icon + ">" },
             { "$value", (aspectId, aspects) => aspects.AspectValue(aspectId).ToString() },
 
         };
@@ -216,7 +216,7 @@ namespace Roost.Elegiast
             { "$labelOf", (args, aspects, fromRefinementAspect) => Watchman.Get<Compendium>().GetEntityById<Element>(args[1]).Label },
             { "$descriptionOf", (args, aspects, fromRefinementAspect) => Watchman.Get<Compendium>().GetEntityById<Element>(args[1]).Description },
             { "$iconOf", (args, aspects, fromRefinementAspect) => Watchman.Get<Compendium>().GetEntityById<Element>(args[1]).Icon },
-            { "$sprite", (args, aspects, fromRefinementAspect) => "<sprite name =" + Watchman.Get<Compendium>().GetEntityById<Element>(args[1]).Icon + ">" },
+            { "$sprite", (args, aspects, fromRefinementAspect) => "<sprite name=" + Watchman.Get<Compendium>().GetEntityById<Element>(args[1]).Icon + ">" },
             { "$valueOf", (args, aspects, fromRefinementAspect) => aspects.AspectValue(args[1]).ToString() },
         };
     }
