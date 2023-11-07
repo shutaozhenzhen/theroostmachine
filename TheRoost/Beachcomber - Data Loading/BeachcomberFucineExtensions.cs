@@ -2,7 +2,6 @@
 using System.Collections;
 using SecretHistories.Fucine.DataImport;
 using Roost.Beachcomber;
-using Roost;
 
 namespace SecretHistories.Fucine
 {
@@ -25,8 +24,6 @@ namespace SecretHistories.Fucine
 
             return FactoryInstantiator.CreateObjectWithDefaultConstructor(propertyType);
         }
-
-
     }
 
     class CustomListPanImporter : AbstractImporter
@@ -94,6 +91,56 @@ namespace SecretHistories.Fucine
         }
     }
 
+    public class ExtendedPathImporter : AbstractImporter
+    {
+        public override object Import(object importData, Type propertyType)
+        {
+            try
+            {
+                FucinePath fucinePath = Roost.Twins.TwinsParser.ParseSpherePath(importData.ToString());
+                if (fucinePath.IsValid())
+                    return fucinePath;
+
+                return FucinePath.Current();
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException(string.Format("MALFORMED FUCINE PATH '{0}': {1}", importData, ex.FormatException()));
+            }
+        }
+
+        public override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty)
+        {
+            if (cachedFucineProperty.FucineAttribute.DefaultValue != null)
+            {
+                FucinePath fucinePath = new FucinePath(cachedFucineProperty.FucineAttribute.DefaultValue.ToString());
+                if (fucinePath.IsValid())
+                    return fucinePath;
+            }
+
+            return FucinePath.Current();
+        }
+    }
+
+    public class NullableImporter : AbstractImporter
+    {
+        public override object Import(object data, Type type)
+        {
+            if (data == null || data.ToString() == "null")
+                return null;
+
+            Type underlyingType = Nullable.GetUnderlyingType(type);
+            return Hoard.ImportProperty(data, underlyingType);
+        }
+
+        public override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty)
+        {
+            return Import(cachedFucineProperty.FucineAttribute.DefaultValue, cachedFucineProperty.ThisPropInfo.PropertyType);
+        }
+
+
+    }
+
     //normal FucineValue won't accept array as DefaultValue; but we need that to construct some structs/classes
     [AttributeUsage(AttributeTargets.Property)]
     public class FucineEverValue : Fucine
@@ -132,35 +179,13 @@ namespace SecretHistories.Fucine
         public override AbstractImporter CreateImporterInstance() { return new CustomDictPanImporter(KeyImporter, ValueImporter); }
     }
 
-    public class ExtendedPathImporter : AbstractImporter
+    [AttributeUsage(AttributeTargets.Property)]
+    public class FucineNullable : Fucine
     {
-        public override object Import(object importData, Type propertyType)
-        {
-            try
-            {
-                FucinePath fucinePath = Roost.Twins.TwinsParser.ParseSpherePath(importData.ToString());
-                if (fucinePath.IsValid())
-                    return fucinePath;
+        public FucineNullable() { }
 
-                return FucinePath.Current();
-            }
-            catch (Exception ex)
-            {
-                throw new ApplicationException(string.Format("MALFORMED FUCINE PATH '{0}': {1}", importData, ex.FormatException()));
-            }
-        }
-
-        public override object GetDefaultValue<T>(CachedFucineProperty<T> cachedFucineProperty)
-        {
-            if (cachedFucineProperty.FucineAttribute.DefaultValue != null)
-            {
-                FucinePath fucinePath = new FucinePath(cachedFucineProperty.FucineAttribute.DefaultValue.ToString());
-                if (fucinePath.IsValid())
-                    return fucinePath;
-            }
-
-            return FucinePath.Current();
-        }
+        public FucineNullable(object defaultValue) { DefaultValue = defaultValue; }
+        public override AbstractImporter CreateImporterInstance() { return new NullableImporter(); }
     }
 
     public interface ICustomSpecEntity
