@@ -25,7 +25,15 @@ namespace Roost.Twins
 
                 expression = expression.Trim();
                 if (isSingleReferenceExpression(expression))
-                    expression = string.Concat(referenceOpening, expression, referenceClosing);
+                {
+                    if (expression.StartsWith("-"))
+                    {
+                        expression = string.Concat('-', referenceOpening, expression.Remove(0,1), referenceClosing);
+                        NoonUtility.LogWarning(expression);
+                    }
+                    else
+                        expression = string.Concat(referenceOpening, expression, referenceClosing);
+                }
 
                 List<FucineRef> references = new List<FucineRef>();
 
