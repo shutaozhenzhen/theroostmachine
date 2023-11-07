@@ -35,7 +35,7 @@ namespace Roost.World.Recipes.Entities
 
         [FucineEverValue(DefaultValue = RetirementVFX.CardTransformWhite)] public RetirementVFX VFX { get; set; }
 
-        [FucineValue(false)] public bool UseMyQuantity { get; set; }
+        [FucineNullable(null)] public bool? UseMyQuantity { get; set; }
         [FucineValue(false)] public bool UseCatalystQuantity { get; set; }
 
         private LinkedRecipeDetails Induction { get; set; }
@@ -78,6 +78,8 @@ namespace Roost.World.Recipes.Entities
 
                 //mundane, id is a element
                 case MorphEffectsExtended.Transform:
+                    UseMyQuantity = UseMyQuantity ?? true;
+                    break;
                 case MorphEffectsExtended.Spawn:
                 case MorphEffectsExtended.Mutate:
                 case MorphEffectsExtended.SetMutation:
