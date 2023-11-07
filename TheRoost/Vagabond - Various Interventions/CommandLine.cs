@@ -23,6 +23,7 @@ namespace Roost.Vagabond
 
             AddCommand("reimport", CommandsCollection.Reimport);
             AddCommand("compendium", CommandsCollection.CompendiumInfo);
+            AddCommand("root", CommandsCollection.RootInfo);
             AddCommand("unity", CommandsCollection.UnityObjectCommand);
         }
 
@@ -133,6 +134,24 @@ namespace Roost.Vagabond
             foreach (ILogMessage logMessage in loader.PopulateCompendium(compendium, Watchman.Get<Config>().GetConfigValue("Culture")).GetMessages())
                 Birdsong.TweetLoud(logMessage.VerbosityNeeded, logMessage.MessageLevel, logMessage.Description);
             CommandLine.Log("Total time to import: {0}", (DateTime.Now - now));
+        }
+
+        public static void RootInfo(string[] command)
+        {
+            if (command.Length == 0)
+            {
+                CommandLine.Log(SecretHistories.Entities.FucineRoot.Get().Mutations.UnpackCollection());
+                return;
+            }
+
+            if (command.Length == 1)
+            {
+                SecretHistories.Entities.FucineRoot.Get().Mutations.TryGetValue(command[0], out int result);
+                CommandLine.Log($"root/{command[0]} = {result}");
+                return;
+            }
+
+            CommandLine.Log($"Too many arguments");
         }
 
         public static void CompendiumInfo(string[] command)
