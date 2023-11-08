@@ -108,6 +108,7 @@ namespace Roost.Enactors
             Roost.World.Beauty.StartupQuoteMaster.Enact();
             Roost.World.Beauty.MainMenuStyleMaster.Enact();
             Roost.World.Beauty.TableStyleMaster.Enact();
+            Roost.World.Beauty.LookAndFeelMaster.Enact();
 
             Roost.World.Beauty.BurnImages.SlideshowBurnImagesMaster.Enact();
             Roost.World.Beauty.TMPSpriteManager.Enact();
