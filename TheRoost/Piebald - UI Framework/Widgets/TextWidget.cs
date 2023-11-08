@@ -1,5 +1,8 @@
 namespace Roost.Piebald
 {
+    using SecretHistories.Entities;
+    using SecretHistories.Services;
+    using SecretHistories.UI;
     using TMPro;
     using UnityEngine;
 
@@ -21,8 +24,7 @@ namespace Roost.Piebald
             : base(gameObject)
         {
             this.textMesh = this.GameObject.GetOrAddComponent<TextMeshProUGUI>();
-            this.textMesh.fontMaterial = ResourceHack.FindMaterial("Philosopher-Regular optimum Material");
-            this.textMesh.font = ResourceHack.FindFont("Text_Philosopher");
+            this.textMesh.font = Watchman.Get<ILocStringProvider>().GetFontForCurrentCulture();
             this.textMesh.color = DefaultFontColor;
         }
 
@@ -288,6 +290,12 @@ namespace Roost.Piebald
         public TextWidget SetText(string value)
         {
             this.textMesh.text = value;
+            return this;
+        }
+
+        public TextWidget SetUIText(string locKey)
+        {
+            this.textMesh.text = Watchman.Get<ILocStringProvider>().Get(locKey);
             return this;
         }
 
