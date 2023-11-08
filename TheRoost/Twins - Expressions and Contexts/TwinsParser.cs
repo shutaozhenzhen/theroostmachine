@@ -23,14 +23,15 @@ namespace Roost.Twins
                 if (string.IsNullOrWhiteSpace(expression))
                     throw Birdsong.Cack("Expression is empty");
 
+                //only numeric - no need to parse
+                if (!expression.Any(char.IsLetter))
+                    return new List<FucineRef>();
+
                 expression = expression.Trim();
                 if (isSingleReferenceExpression(expression))
                 {
                     if (expression.StartsWith("-"))
-                    {
                         expression = string.Concat('-', referenceOpening, expression.Remove(0,1), referenceClosing);
-                        NoonUtility.LogWarning(expression);
-                    }
                     else
                         expression = string.Concat(referenceOpening, expression, referenceClosing);
                 }
@@ -70,8 +71,8 @@ namespace Roost.Twins
 
         static bool isSingleReferenceExpression(string expression)
         {
-            return expression.Any(char.IsLetter) == true
-                && !expression.Contains(referenceOpening) //'['
+            //we check only for an opening, because if there's an opening, there's a closing, and if not, we catch that elsewhere
+            return !expression.Contains(referenceOpening) 
                 && !expression.Contains('(') && !expression.Contains(')')
                 && expression.Equals("true", StringComparison.InvariantCultureIgnoreCase) == false
                 && expression.Equals("false", StringComparison.InvariantCultureIgnoreCase) == false;
