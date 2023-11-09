@@ -286,7 +286,13 @@ namespace Roost.World.Recipes
             public void ApplyWithVFX(Sphere onSphere)
             {
                 Token token = new TokenCreationCommand().WithElementStack(elementId, quantity).Execute(new Context(Context.ActionSource.SituationEffect), onSphere);
-                onSphere.GetItineraryFor(token).WithDuration(0.3f).Depart(token, new Context(Context.ActionSource.SituationEffect));
+                token.transform.position = new UnityEngine.Vector3(0, 2000, 0);
+
+                if (onSphere.IsCategory(SphereCategory.World))
+                    onSphere.ProcessEvictedToken(token, Context.Unknown());
+                else
+                    onSphere.GetItineraryFor(token).WithDuration(0.3f).Depart(token, new Context(Context.ActionSource.SituationEffect));
+
                 token.Remanifest(vfx);
             }
 
@@ -301,7 +307,7 @@ namespace Roost.World.Recipes
 
         private static bool SupportsVFX(this Sphere sphere)
         {
-            return sphere.SphereCategory == SphereCategory.World || sphere.SphereCategory == SphereCategory.Threshold;
+            return sphere.IsExteriorSphere || sphere.SphereCategory == SphereCategory.Threshold; //thresholds aren't always exteriors but we want vfx nevertheless
         }
 
         private static void TryReplaceWithLever(ref string value)
