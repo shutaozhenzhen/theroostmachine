@@ -32,10 +32,9 @@ namespace Roost.Piebald
         public IconButtonWidget(GameObject gameObject)
             : base(gameObject)
         {
-            this.Button = this.GameObject.GetOrAddComponent<Button>();
+            this.Button = this.GameObject.GetOrAddComponent<BetterButton>();
             this.Button.transition = Selectable.Transition.ColorTint;
             this.Button.colors = ColorBlock;
-            this.Button.onClick.AddListener(() => this.Clicked?.Invoke(this, EventArgs.Empty));
 
             this.SoundTrigger = this.GameObject.GetOrAddComponent<ButtonSoundTrigger>();
 
@@ -50,9 +49,7 @@ namespace Roost.Piebald
             this.Button.image = this.Image;
         }
 
-        public event EventHandler Clicked;
-
-        public Button Button { get; private set; }
+        public BetterButton Button { get; private set; }
 
         public ButtonSoundTrigger SoundTrigger { get; private set; }
 
@@ -212,7 +209,13 @@ namespace Roost.Piebald
 
         public IconButtonWidget OnClick(UnityEngine.Events.UnityAction action)
         {
-            this.Clicked += (sender, e) => action();
+            this.Button.onClick.AddListener(action);
+            return this as IconButtonWidget;
+        }
+
+        public IconButtonWidget OnRightClick(UnityEngine.Events.UnityAction action)
+        {
+            this.Button.onRightClick.AddListener(action);
             return this as IconButtonWidget;
         }
     }
