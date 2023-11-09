@@ -5,7 +5,7 @@ namespace Roost.Piebald
 {
     public class BetterButton : Button
     {
-        public ButtonClickedEvent onRightClick = new();
+        public ButtonClickedEvent onRightClick = new ButtonClickedEvent();
 
         public override void OnPointerClick(PointerEventData eventData)
         {
