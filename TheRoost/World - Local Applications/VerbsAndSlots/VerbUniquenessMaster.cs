@@ -25,17 +25,6 @@ namespace Roost.World.Verbs
             Machine.Patch(
                 original: Machine.GetMethod<SituationCreationCommand>(nameof(SituationCreationCommand.Execute)),
                 transpiler: typeof(VerbUniquenessMaster).GetMethodInvariant(nameof(InjectVerbCounting)));
-
-            Machine.Patch(
-                original: Machine.GetMethod<Situation>("OpenAt"),
-                prefix: typeof(VerbUniquenessMaster).GetMethodInvariant(nameof(CloseCurrentSituationWindow)));
-        }
-
-        private static void CloseCurrentSituationWindow(Situation __instance)
-        {
-            Situation currentlyOpen = Watchman.Get<Meniscate>().GetCurrentlyOpenSituation();
-            if (currentlyOpen?.IsValid() == true && currentlyOpen != __instance)
-                currentlyOpen.Close();
         }
 
         private static IEnumerable<CodeInstruction> InjectVerbCounting(IEnumerable<CodeInstruction> instructions)
