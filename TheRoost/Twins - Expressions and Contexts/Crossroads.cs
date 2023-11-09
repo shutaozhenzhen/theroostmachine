@@ -42,6 +42,13 @@ namespace Roost.Twins
             return false;
         }
 
+        public static Sphere GetSpheresByPathAsSingleSphere(this FucinePath fucinePath)
+        {
+            var spheres = GetSpheresByPath(fucinePath);
+
+            return RedirectSphere.Create(spheres);
+        }
+
         public static List<Sphere> GetSpheresByPath(this FucinePath fucinePath)
         {
             string fullPath = fucinePath.ToString();
@@ -233,7 +240,7 @@ namespace Roost.Twins
         };
     }
 
-    public class FakeSphereList : List<Sphere>
+    class FakeSphereList : List<Sphere>
     {
         FakeSphere sphere;
 
@@ -254,7 +261,7 @@ namespace Roost.Twins
             //there are no words in this world to describe how wrong this is
 
             var fakeSphere = new GameObject();
-            fakeSphere.name = "Fake Token Sphere";
+            fakeSphere.name = nameof(FakeSphere);
             sphere = fakeSphere.AddComponent<FakeSphere>();
 
             UnityEngine.Object.DontDestroyOnLoad(fakeSphere);
@@ -276,46 +283,121 @@ namespace Roost.Twins
         {
             sphere.Reset();
         }
+    }
 
-        class FakeSphere : Sphere
+    class FakeSphere : Sphere
+    {
+        public void Set(List<Token> tokens)
         {
-            public override SphereCategory SphereCategory { get { return SphereCategory.Meta; } }
-            public override bool IsValid() => false;
-            public void Set(List<Token> tokens)
-            {
-                _tokens.Clear();
-                _tokens.AddRange(tokens);
-            }
+            _tokens.Clear();
+            _tokens.AddRange(tokens);
+        }
 
-            public void Set(Token token)
-            {
-                _tokens.Clear();
-                _tokens.Add(token);
-            }
+        public void Set(Token token)
+        {
+            _tokens.Clear();
+            _tokens.Add(token);
+        }
 
-            public void Reset()
-            {
-                _tokens.Clear();
-            }
+        public void Reset()
+        {
+            _tokens.Clear();
+        }
 
-            public override void AcceptToken(Token token, Context context)
+        public override void AcceptToken(Token token, Context context)
+        {
+            //in some occassions, FakeSphere is a local sphere and is targeted by the effects
+            //we don't want it to actually accept any tokens
+            if (_tokens.Count > 0)
             {
-                //in some occassions, FakeSphere is a local sphere and is targeted by the effects
-                //we don't want it to actually accept any tokens
-                if (_tokens.Count > 0)
-                {
-                    if (!_tokens[0].Sphere.TryAcceptToken(token, context))
-                        _tokens[0].Sphere.ProcessEvictedToken(token, context);
-                }
-                else
-                    Watchman.Get<HornedAxe>().GetDefaultSphere(token).ProcessEvictedToken(token, context);
+                if (!_tokens[0].Sphere.TryAcceptToken(token, context))
+                    _tokens[0].Sphere.ProcessEvictedToken(token, context);
             }
+            else
+                Watchman.Get<HornedAxe>().GetDefaultSphere(token).ProcessEvictedToken(token, context);
+        }
 
-            public override string ToString()
+        public override void Awake() { }
+        public override bool IsExteriorSphere => false;
+        public override bool IsValid() => false;
+        public override SphereCategory SphereCategory => SphereCategory.Meta;
+    }
+
+    class RedirectSphere : Sphere
+    {
+        protected List<Sphere> internalSpheres;
+        public override SphereCategory SphereCategory => SphereCategory.Meta;
+
+        Sphere _mainSphere;
+        public Sphere MainSphere
+        {
+            get
             {
-                return "FakeSphere";
+                _mainSphere = internalSpheres.FirstOrDefault(sphere => sphere is TabletopSphere)
+                    ?? internalSpheres.FirstOrDefault(sphere => sphere.CanHomeTokens)
+                    ?? internalSpheres.FirstOrDefault(sphere => sphere.IsCategory(SphereCategory.World))
+                    ?? internalSpheres.FirstOrDefault(sphere => sphere.IsCategory(SphereCategory.Threshold))
+                    ?? internalSpheres.FirstOrDefault(sphere => sphere.IsCategory(SphereCategory.Output))
+                    ?? internalSpheres.FirstOrDefault(sphere => sphere.IsCategory(SphereCategory.SituationStorage))
+                    ?? internalSpheres.FirstOrDefault()
+                    ?? NullSphere.Create();
+
+                return _mainSphere;
             }
         }
+
+        public static RedirectSphere Create(List<Sphere> spheres)
+        {
+            var goContainer = new GameObject();
+            goContainer.name = nameof(RedirectSphere);
+
+            var redirectSphere = goContainer.AddComponent<RedirectSphere>();
+            redirectSphere.internalSpheres = spheres;
+            redirectSphere._tokens.AddRange(spheres.SelectMany(sphere => sphere.GetTokens()));
+
+            return redirectSphere;
+        }
+
+        public override void AcceptToken(Token token, Context context)
+        {
+            if (!MainSphere.IsValid())
+                Watchman.Get<HornedAxe>().GetDefaultSphere(token).ProcessEvictedToken(token, context);
+            else if (!MainSphere.TryAcceptToken(token, context))
+                MainSphere.ProcessEvictedToken(token, context);
+        }
+
+        public override bool ProcessEvictedToken(Token token, Context context)
+        {
+            if (!MainSphere.IsValid())
+                return Watchman.Get<HornedAxe>().GetDefaultSphere(token).ProcessEvictedToken(token, context);
+            else
+                return MainSphere.ProcessEvictedToken(token, context);
+        }
+
+        public override TokenTravelItinerary GetItineraryFor(Token token)
+        {
+            if (!MainSphere.IsValid())
+                return Watchman.Get<HornedAxe>().GetDefaultSphere(token).GetItineraryFor(token);
+            else
+                return MainSphere.GetItineraryFor(token);
+        }
+
+        public override TokenTravelItinerary GetItineraryFor(Token token, Vector3 desiredPosition)
+        {
+            if (!MainSphere.IsValid())
+                return Watchman.Get<HornedAxe>().GetDefaultSphere(token).GetItineraryFor(token);
+            else
+                return MainSphere.GetItineraryFor(token, desiredPosition);
+        }
+
+        public override void Retire(SphereRetirementType sphereRetirementType)
+        {
+            Destroy(this.gameObject);
+        }
+
+
+        public override void Awake() { }
+        public override bool IsExteriorSphere => false;
     }
 
 
