@@ -46,6 +46,9 @@ namespace Roost.Twins
         {
             var spheres = GetSpheresByPath(fucinePath);
 
+            if (spheres.Count == 1)
+                return spheres[0];
+
             return RedirectSphere.Create(spheres);
         }
 
@@ -326,7 +329,8 @@ namespace Roost.Twins
     class RedirectSphere : Sphere
     {
         protected List<Sphere> internalSpheres;
-        public override SphereCategory SphereCategory => SphereCategory.Meta;
+        public override SphereCategory SphereCategory => MainSphere.SphereCategory;
+        public override bool IsExteriorSphere => MainSphere.IsExteriorSphere;
 
         Sphere _mainSphere;
         public Sphere MainSphere
@@ -397,7 +401,6 @@ namespace Roost.Twins
 
 
         public override void Awake() { }
-        public override bool IsExteriorSphere => false;
     }
 
 
