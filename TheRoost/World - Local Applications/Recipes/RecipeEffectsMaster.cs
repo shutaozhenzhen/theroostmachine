@@ -162,7 +162,13 @@ namespace Roost.World.Recipes
             if (grandEffects == null)
                 GrandEffects.RunElementTriggersOnly(situation, situation.GetSingleSphereByCategory(SphereCategory.SituationStorage));
             else
-                grandEffects.RunGrandEffects(situation, situation.GetSingleSphereByCategory(SphereCategory.SituationStorage), true);
+            {
+                var targetSphere = situation.GetSingleSphereByCategory(SphereCategory.SituationStorage);
+                if (grandEffects.Target != "~/sphere")
+                    targetSphere = grandEffects.Target.GetSpheresByPathAsSingleSphere();
+                    
+                grandEffects.RunGrandEffects(situation, targetSphere, true);
+            }
         }
 
         private static bool OverrideRecipeRefinement(string stringToRefine, AspectsDictionary ____aspectsInContext, ref string __result)
