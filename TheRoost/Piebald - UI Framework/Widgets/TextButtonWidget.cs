@@ -1,5 +1,6 @@
 namespace Roost.Piebald
 {
+    using SecretHistories.UI;
     using TMPro;
     using UnityEngine;
     using UnityEngine.UI;
@@ -30,7 +31,7 @@ namespace Roost.Piebald
             this.SetPreferredWidth(120);
             this.SetPreferredHeight(45);
 
-            this.Button = this.GameObject.GetOrAddComponent<Button>();
+            this.Button = this.GameObject.GetOrAddComponent<BetterButton>();
             this.Button.transition = Selectable.Transition.ColorTint;
             this.Button.colors = IconButtonWidget.ColorBlock;
 
@@ -68,7 +69,7 @@ namespace Roost.Piebald
 
         public TextMeshProUGUI TextMesh => this.TextWidget.TextMesh;
 
-        public Button Button { get; }
+        public BetterButton Button { get; }
 
         public ButtonSoundTrigger SoundTrigger { get; }
 
@@ -291,6 +292,12 @@ namespace Roost.Piebald
             return this as TextButtonWidget;
         }
 
+        public TextButtonWidget SetUIText(string locKey)
+        {
+            this.TextWidget.SetUIText(locKey);
+            return this as TextButtonWidget;
+        }
+
         public TextButtonWidget SetColor(Color color)
         {
             this.TextWidget.SetColor(color);
@@ -366,6 +373,12 @@ namespace Roost.Piebald
         public TextButtonWidget OnClick(UnityEngine.Events.UnityAction action)
         {
             this.Button.onClick.AddListener(action);
+            return this as TextButtonWidget;
+        }
+
+        public TextButtonWidget OnRightClick(UnityEngine.Events.UnityAction action)
+        {
+            this.Button.onRightClick.AddListener(action);
             return this as TextButtonWidget;
         }
 
