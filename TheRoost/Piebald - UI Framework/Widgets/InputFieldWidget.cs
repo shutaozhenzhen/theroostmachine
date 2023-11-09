@@ -1,5 +1,6 @@
 namespace Roost.Piebald
 {
+    using SecretHistories.UI;
     using System;
     using TMPro;
     using UnityEngine;
@@ -39,6 +40,7 @@ namespace Roost.Piebald
 
             var textObject = new GameObject("Text");
             this.InputField.textComponent = this.TextMesh = textObject.AddComponent<TextMeshProUGUI>();
+            this.InputField.textComponent.font = Watchman.Get<ILocStringProvider>().GetFontForCurrentCulture();
             this.InputField.textComponent.horizontalAlignment = HorizontalAlignmentOptions.Left;
             this.InputField.textComponent.verticalAlignment = VerticalAlignmentOptions.Bottom;
             this.InputField.textComponent.autoSizeTextContainer = true;
