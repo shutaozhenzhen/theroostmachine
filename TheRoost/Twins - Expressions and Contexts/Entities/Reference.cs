@@ -16,9 +16,9 @@ namespace Roost.Twins.Entities
         public readonly FucineExp<bool> filter;
         public readonly FucineNumberGetter valueGetter;
 
-        public List<Sphere> targetSpheres { get { return Crossroads.GetSpheresByPath(path); } }
-        public List<Token> tokens { get { return Crossroads.GetTokensByPath(path).FilterTokens(filter); } }
-        public float value { get { return valueGetter.GetValueFromTokens(this.tokens); } }
+        public List<Sphere> targetSpheres => Crossroads.GetSpheresByPath(path);
+        public List<Token> tokens => Crossroads.GetTokensByPath(path).FilterTokens(filter); 
+        public float value => valueGetter.GetValueFromTokens(this.tokens); 
 
         public FucineRef(string referenceData, string referenceId)
         {

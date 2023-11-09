@@ -165,7 +165,6 @@ namespace Roost.World.Recipes
                 grandEffects.RunGrandEffects(situation, situation.GetSingleSphereByCategory(SphereCategory.SituationStorage), true);
         }
 
-
         private static bool OverrideRecipeRefinement(string stringToRefine, AspectsDictionary ____aspectsInContext, ref string __result)
         {
             __result = Elegiast.Scribe.RefineString(stringToRefine, ____aspectsInContext);

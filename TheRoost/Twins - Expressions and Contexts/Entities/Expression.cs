@@ -51,12 +51,12 @@ namespace Roost.Twins.Entities
             }
         }
 
-        public string targetElement { get { return references[0].valueGetter.targetId; } }
-        public Sphere targetSphere { get { return references[0].targetSpheres.SingleOrDefault(); } }
+        public string targetElement => references[0].valueGetter.targetId;
+        public Sphere targetSphere => references[0].targetSpheres.SingleOrDefault();
 
         public static implicit operator FucineExp<T>(string formula) { return new FucineExp<T>(formula); }
 
-        public bool isUndefined { get { return this.expression == null; } }
+        public bool isUndefined => expression == null;
 
         public override string ToString()
         {
