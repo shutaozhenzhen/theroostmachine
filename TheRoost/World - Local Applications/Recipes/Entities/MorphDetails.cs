@@ -21,7 +21,7 @@ namespace Roost.World.Recipes.Entities
         Transform, Spawn, Mutate, Quantity, //vanilla
         SetMutation, DeckDraw, DeckShuffle,  //makes sense, right?
         Destroy, Decay, //destructive forces
-        LeverFuture, LeverPast, TimeSpend, TimeSet, //exotique
+        LeverFuture, LeverPast, TimeSpend, TimeSet, Trigger, Redirect, //exotique
         GrandEffects, //big boy
         Induce, Link //wot
     }
@@ -83,6 +83,7 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.Spawn:
                 case MorphEffectsExtended.Mutate:
                 case MorphEffectsExtended.SetMutation:
+                case MorphEffectsExtended.Trigger:
                     if (Id != null)
                         foreach (object key in UnknownProperties.Keys)
                             if (compendium.GetEntityById<Element>(key.ToString())?.IsValid() == true)
@@ -150,6 +151,16 @@ namespace Roost.World.Recipes.Entities
 
                     break;
 
+                case MorphEffectsExtended.Redirect:
+                    if (Id == null)
+                        log.LogWarning($"ID FOR XTRIGGER '{this}' ISN'T SET");
+
+                    Dictionary<string, List<RefMorphDetails>> xtriggers = Machine.GetEntity<Element>(this._container.Id).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
+                    if (!xtriggers.ContainsKey(this.Id))
+                        log.LogWarning($"FINAL CATALYST FOR A REDIRECTING XTRIGGER {this} ISN'T SET");
+
+                    break;
+
                 //doesn't use Id
                 case MorphEffectsExtended.Quantity:
                 case MorphEffectsExtended.Decay:
@@ -205,7 +216,7 @@ namespace Roost.World.Recipes.Entities
                 return;
             }
 
-            reactingElementQuantity = UseMyQuantity ? reactingElementQuantity : 1;
+            reactingElementQuantity = UseMyQuantity == true ? reactingElementQuantity : 1;
             catalystQuantity = UseCatalystQuantity ? catalystQuantity : 1;
 
             switch (MorphEffect)
@@ -300,6 +311,19 @@ namespace Roost.World.Recipes.Entities
                     Elegiast.Scribe.SetLeverForCurrentPlaythrough(this.Id, reactingToken.PayloadEntityId);
                     break;
 
+                case MorphEffectsExtended.Trigger:
+                    var triggerQuantity = Level.value * catalystQuantity * reactingElementQuantity;
+                    GrandEffects.RunXTriggers(reactingToken, situation, new Dictionary<string, int> { { Id, triggerQuantity } });
+                    break;
+
+                case MorphEffectsExtended.Redirect:
+                    Dictionary<string, List<RefMorphDetails>> xtriggers = Machine.GetEntity<Element>(reactingElementId).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
+                    if (xtriggers.TryGetValue(this.Id, out List<RefMorphDetails> redirects))
+                        foreach (RefMorphDetails effect in redirects)
+                            effect.Execute(situation, reactingToken, reactingElementId, reactingElementQuantity, catalystQuantity, aspectReacts);
+
+                    break;
+
                 default:
                     Birdsong.TweetLoud($"Unknown trigger '{MorphEffect}' for element stack '{reactingToken.PayloadEntityId}'");
                     break;
@@ -322,7 +346,10 @@ namespace Roost.World.Recipes.Entities
             {
                 foreach (string catalyst in xtriggers.Keys)
                     foreach (RefMorphDetails morphDetails in xtriggers[catalyst])
+                    {
+                        morphDetails.SetContainer(__instance);
                         morphDetails.OnPostImport(log, populatedCompendium);
+                    }
             }
         }
 
