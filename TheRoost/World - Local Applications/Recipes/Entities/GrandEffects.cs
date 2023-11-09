@@ -361,11 +361,12 @@ namespace Roost.World.Recipes.Entities
                 return;
 
             foreach (GrandEffects furthermore in Furthermore)
-                foreach (Sphere sphere in furthermore.Target.GetSpheresByPath())
-                {
-                    furthermore.RunGrandEffects(situation, sphere, false);
-                    Crossroads.MarkLocalSphere(localSphere);
-                }
+            {
+                var targetSpheresAsOne = furthermore.Target.GetSpheresByPathAsSingleSphere();
+                furthermore.RunGrandEffects(situation, targetSpheresAsOne, false);
+                Crossroads.MarkLocalSphere(localSphere);
+                targetSpheresAsOne.Retire(SphereRetirementType.Destructive);
+            }
         }
 
         private void RunMovements(Sphere fromSphere)

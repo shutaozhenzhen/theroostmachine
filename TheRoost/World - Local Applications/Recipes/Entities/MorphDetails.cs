@@ -253,11 +253,10 @@ namespace Roost.World.Recipes.Entities
 
                 case MorphEffectsExtended.GrandEffects:
                     {
-                        foreach (Sphere sphere in GrandEffects.Target.GetSpheresByPath())
-                        {
-                            GrandEffects.RunGrandEffects(situation, sphere, false);
-                            Crossroads.MarkLocalSphere(reactingToken.Sphere);
-                        }
+                        var targetSpheresAsOne = GrandEffects.Target.GetSpheresByPathAsSingleSphere();
+                        GrandEffects.RunGrandEffects(situation, targetSpheresAsOne, false);
+                        Crossroads.MarkLocalSphere(reactingToken.Sphere);
+                        targetSpheresAsOne.Retire(SphereRetirementType.Destructive);
                         break;
                     }
 
