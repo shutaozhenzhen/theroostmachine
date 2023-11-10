@@ -365,7 +365,9 @@ namespace Roost.World.Recipes.Entities
                 var targetSpheresAsOne = furthermore.Target.GetSpheresByPathAsSingleSphere();
                 furthermore.RunGrandEffects(situation, targetSpheresAsOne, false);
                 Crossroads.MarkLocalSphere(localSphere);
-                targetSpheresAsOne.Retire(SphereRetirementType.Destructive);
+
+                if (targetSpheresAsOne is RedirectSphere)
+                    targetSpheresAsOne.Retire(SphereRetirementType.Destructive);
             }
         }
 

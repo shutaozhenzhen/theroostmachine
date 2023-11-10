@@ -267,7 +267,10 @@ namespace Roost.World.Recipes.Entities
                         var targetSpheresAsOne = GrandEffects.Target.GetSpheresByPathAsSingleSphere();
                         GrandEffects.RunGrandEffects(situation, targetSpheresAsOne, false);
                         Crossroads.MarkLocalSphere(reactingToken.Sphere);
-                        targetSpheresAsOne.Retire(SphereRetirementType.Destructive);
+
+                        if (targetSpheresAsOne is RedirectSphere)
+                            targetSpheresAsOne.Retire(SphereRetirementType.Destructive);
+
                         break;
                     }
 

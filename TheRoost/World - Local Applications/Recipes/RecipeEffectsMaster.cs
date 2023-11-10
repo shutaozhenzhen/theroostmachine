@@ -108,6 +108,7 @@ namespace Roost.World.Recipes
 
             GrandEffects firstPassEffects = new GrandEffects();
             firstPassEffects.SetDefaultValues();
+            firstPassEffects.Target = null;
 
             bool atLeastOneEffect = false;
             foreach (CachedFucineProperty<GrandEffects> cachedProperty in TypeInfoCache<GrandEffects>.GetCachedFucinePropertiesForType())
@@ -162,11 +163,11 @@ namespace Roost.World.Recipes
             else
             {
                 SecretHistories.Spheres.Sphere targetSphere;
-                if (grandEffects.Target != "~/sphere")
-                    targetSphere = grandEffects.Target.GetSpheresByPathAsSingleSphere();
-                else
+                if (grandEffects.Target == null)
                     targetSphere = situation.GetSingleSphereByCategory(SphereCategory.SituationStorage);
-                    
+                else
+                    targetSphere = grandEffects.Target.GetSpheresByPathAsSingleSphere();
+
                 grandEffects.RunGrandEffects(situation, targetSphere, true);
             }
         }
