@@ -28,14 +28,13 @@ namespace Roost.World.Recipes.Entities
 
     public class RefMorphDetails : AbstractEntity<RefMorphDetails>, IQuickSpecEntity
     {
-        public enum TriggerMode { Default, TokenOnly, AspectOnly, Always }
         [FucineValue(DefaultValue = MorphEffectsExtended.Transform)] public MorphEffectsExtended MorphEffect { get; set; }
         [FucineConstruct("1")] public FucineExp<int> Level { get; set; }
         [FucineConstruct("100")] public FucineExp<int> Chance { get; set; }
 
         [FucineEverValue(DefaultValue = RetirementVFX.CardTransformWhite)] public RetirementVFX VFX { get; set; }
 
-        [FucineNullable(null)] public bool? UseMyQuantity { get; set; }
+        [FucineValue(false)] public bool UseMyQuantity { get; set; }
         [FucineValue(false)] public bool UseCatalystQuantity { get; set; }
 
         private LinkedRecipeDetails Induction { get; set; }
@@ -48,8 +47,6 @@ namespace Roost.World.Recipes.Entities
         public static void Enact()
         {
             Machine.ClaimProperty<Element, Dictionary<string, List<RefMorphDetails>>>("xtriggers");
-
-            Machine.ClaimProperty<Element, TriggerMode>(TRIGGER_MODE, false, TriggerMode.Default);
             AtTimeOfPower.OnPostImportElement.Schedule<Element, ContentImportLog, Compendium>(PostImportForTheNewXtriggers, PatchType.Postfix);
 
             //there are several properties that won't be used by the majority of the triggers
@@ -78,8 +75,6 @@ namespace Roost.World.Recipes.Entities
 
                 //mundane, id is a element
                 case MorphEffectsExtended.Transform:
-                    UseMyQuantity = UseMyQuantity ?? true;
-                    break;
                 case MorphEffectsExtended.Spawn:
                 case MorphEffectsExtended.Mutate:
                 case MorphEffectsExtended.SetMutation:
@@ -187,26 +182,8 @@ namespace Roost.World.Recipes.Entities
             ToPath = null;
         }
 
-        private bool ShouldReactInThisMode(string reactingElementId, bool aspectReacts)
+        public void Execute(Situation situation, Token reactingToken, string reactingElementId, int reactingElementQuantity, int catalystQuantity)
         {
-            Element affectedElement = Watchman.Get<Compendium>().GetEntityById<Element>(reactingElementId);
-            TriggerMode mode = affectedElement.RetrieveProperty<TriggerMode>(TRIGGER_MODE);
-
-            switch (mode)
-            {
-                case TriggerMode.Always: return true;
-                case TriggerMode.TokenOnly: return !aspectReacts;
-                case TriggerMode.AspectOnly: return aspectReacts;
-                case TriggerMode.Default: return aspectReacts ? affectedElement.IsAspect : true;
-                default: return false;
-            }
-        }
-
-        public void Execute(Situation situation, Token reactingToken, string reactingElementId, int reactingElementQuantity, int catalystQuantity, bool aspectReacts)
-        {
-            if (!ShouldReactInThisMode(reactingElementId, aspectReacts))
-                return;
-
             Crossroads.MarkLocalToken(reactingToken);
             Crossroads.MarkSource(reactingToken);
 
@@ -216,14 +193,15 @@ namespace Roost.World.Recipes.Entities
                 return;
             }
 
-            reactingElementQuantity = UseMyQuantity == true ? reactingElementQuantity : 1;
+            reactingElementQuantity = UseMyQuantity ? reactingElementQuantity : 1;
             catalystQuantity = UseCatalystQuantity ? catalystQuantity : 1;
 
             switch (MorphEffect)
             {
                 case MorphEffectsExtended.Transform:
+                    int initialQuantity = reactingToken.Quantity;
                     RecipeExecutionBuffer.ScheduleTransformation(reactingToken, this.Id, VFX);
-                    var resultingQuantity = Level.value * reactingElementQuantity * catalystQuantity;
+                    var resultingQuantity = initialQuantity * Level.value * reactingElementQuantity * catalystQuantity;
                     var needChange = resultingQuantity - reactingToken.Quantity;
                     RecipeExecutionBuffer.ScheduleQuantityChange(reactingToken, needChange, RetirementVFX.None);
                     break;
@@ -323,7 +301,7 @@ namespace Roost.World.Recipes.Entities
                     Dictionary<string, List<RefMorphDetails>> xtriggers = Machine.GetEntity<Element>(reactingElementId).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
                     if (xtriggers.TryGetValue(this.Id, out List<RefMorphDetails> redirects))
                         foreach (RefMorphDetails effect in redirects)
-                            effect.Execute(situation, reactingToken, reactingElementId, reactingElementQuantity, catalystQuantity, aspectReacts);
+                            effect.Execute(situation, reactingToken, reactingElementId, reactingElementQuantity, catalystQuantity);
 
                     break;
 

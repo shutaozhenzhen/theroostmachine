@@ -240,23 +240,17 @@ namespace Roost.World.Recipes.Entities
 
             Compendium compendium = Watchman.Get<Compendium>();
 
-            Dictionary<string, List<RefMorphDetails>> xtriggers = Machine.GetEntity<Element>(token.PayloadEntityId).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
-
-            if (xtriggers != null)
-                foreach (KeyValuePair<string, int> catalyst in catalysts)
-                    if (xtriggers.ContainsKey(catalyst.Key))
-                        foreach (RefMorphDetails morphDetails in xtriggers[catalyst.Key])
-                            morphDetails.Execute(situation, token, token.PayloadEntityId, token.Quantity, catalyst.Value, false);
-
-            var tokenAspects = new AspectsDictionary(token.GetAspects(false)).OrderBy(str => str.Key);
-            foreach (KeyValuePair<string, int> aspect in tokenAspects)
+            var allAspects = token.GetAspects(true);
+            var orderedAspects = allAspects.Keys.ToList().OrderBy(key => key);
+            Birdsong.Sing(allAspects.UnpackCollection());
+            foreach (string aspect in orderedAspects)
             {
-                xtriggers = compendium.GetEntityById<Element>(aspect.Key).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
+                var xtriggers = compendium.GetEntityById<Element>(aspect).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
                 if (xtriggers != null)
                     foreach (KeyValuePair<string, int> catalyst in catalysts)
                         if (xtriggers.ContainsKey(catalyst.Key))
                             foreach (RefMorphDetails morphDetails in xtriggers[catalyst.Key])
-                                morphDetails.Execute(situation, token, aspect.Key, aspect.Value, catalyst.Value, true);
+                                morphDetails.Execute(situation, token, aspect, allAspects[aspect], catalyst.Value);
             }
         }
 
