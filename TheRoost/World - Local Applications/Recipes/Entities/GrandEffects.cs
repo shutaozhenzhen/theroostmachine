@@ -242,7 +242,7 @@ namespace Roost.World.Recipes.Entities
 
             var allAspects = token.GetAspects(true);
             var orderedAspects = allAspects.Keys.ToList().OrderBy(key => key);
-            Birdsong.Sing(allAspects.UnpackCollection());
+
             foreach (string aspect in orderedAspects)
             {
                 var xtriggers = compendium.GetEntityById<Element>(aspect).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
