@@ -25,12 +25,12 @@ namespace Roost.World.Recipes
         public static void ApplyAllEffects()
         {
             ApplyRetirements();
-            ApplyDeckRenews();
             ApplyMutations();
             ApplyQuantityChanges();
             ApplyTransformations();
             ApplyCreations();
             ApplyMovements();
+            ApplyDeckRenews();
         }
 
         public static void ApplyRetirements()

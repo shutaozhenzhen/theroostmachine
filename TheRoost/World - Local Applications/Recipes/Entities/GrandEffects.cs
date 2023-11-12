@@ -265,10 +265,10 @@ namespace Roost.World.Recipes.Entities
                 {
                     foreach (DrawPile pile in Watchman.Get<DealersTable>().GetDrawPiles())
                         if (NoonExtensions.WildcardMatchId(pile.GetDeckSpecId(), deckId))
-                            Legerdemain.RenewDeck(deckId);
+                            RecipeExecutionBuffer.ScheduleDeckRenew(deckId);
                 }
                 else
-                    Legerdemain.RenewDeck(deckId);
+                    RecipeExecutionBuffer.ScheduleDeckRenew(deckId);
             }
         }
 
@@ -324,8 +324,6 @@ namespace Roost.World.Recipes.Entities
 
         private void RunVerbManipulations()
         {
-
-
             if (HaltVerb != null && HaltVerb.Any())
             {
                 AspectsDictionary allCatalysts = new AspectsDictionary();
