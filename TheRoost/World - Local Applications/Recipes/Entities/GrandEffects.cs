@@ -44,6 +44,28 @@ namespace Roost.World.Recipes.Entities
         public GrandEffects() { }
         public GrandEffects(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
 
+        public void StartGrandEffects(Situation situation)
+        {
+            Sphere targetSphere = Target == null 
+                ? situation.GetSingleSphereByCategory(SphereCategory.SituationStorage) 
+                : Target.GetSpheresByPathAsSingleSphere();
+
+            RunGrandEffects(situation, targetSphere, true);
+
+            RecipeExecutionBuffer.ApplyVFX();
+            RecipeExecutionBuffer.ApplyRecipeInductions();
+        }
+
+        //even if there are no effects for the recipe, aspect xtriggering should still happen
+        public static void RunElementTriggersOnly(Situation situation)
+        {
+            var localSphere = situation.GetSingleSphereByCategory(SphereCategory.SituationStorage);
+            RunElementXTriggers(localSphere, situation);
+
+            RecipeExecutionBuffer.ApplyVFX();
+            RecipeExecutionBuffer.ApplyRecipeInductions();
+        }
+
         public void RunGrandEffects(Situation situation, Sphere localSphere, bool localXtriggers)
         {
             //shouldn't happen, but happened
@@ -73,18 +95,6 @@ namespace Roost.World.Recipes.Entities
             RunFurthermores(situation, localSphere);
             RunMovements(localSphere);
 
-            RecipeExecutionBuffer.ApplyVFX();
-            RecipeExecutionBuffer.ApplyRecipeInductions();
-        }
-
-        public static void RunElementTriggersOnly(Situation situation, Sphere localSphere)
-        {
-            //even if there are no effects for the recipe, aspect xtriggering should still happen
-            Crossroads.MarkLocalSphere(localSphere);
-            RunElementXTriggers(localSphere, situation);
-
-            RecipeExecutionBuffer.ApplyVFX();
-            RecipeExecutionBuffer.ApplyRecipeInductions();
         }
 
         private void RunVerbXTriggers(Situation situation)

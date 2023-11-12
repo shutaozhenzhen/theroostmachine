@@ -159,17 +159,9 @@ namespace Roost.World.Recipes
 
             GrandEffects grandEffects = situation.CurrentRecipe.RetrieveProperty<GrandEffects>(GRAND_EFFECTS);
             if (grandEffects == null)
-                GrandEffects.RunElementTriggersOnly(situation, situation.GetSingleSphereByCategory(SphereCategory.SituationStorage));
+                GrandEffects.RunElementTriggersOnly(situation);
             else
-            {
-                SecretHistories.Spheres.Sphere targetSphere;
-                if (grandEffects.Target == null)
-                    targetSphere = situation.GetSingleSphereByCategory(SphereCategory.SituationStorage);
-                else
-                    targetSphere = grandEffects.Target.GetSpheresByPathAsSingleSphere();
-
-                grandEffects.RunGrandEffects(situation, targetSphere, true);
-            }
+                grandEffects.StartGrandEffects(situation);
         }
 
         private static bool OverrideRecipeRefinement(string stringToRefine, AspectsDictionary ____aspectsInContext, ref string __result)
