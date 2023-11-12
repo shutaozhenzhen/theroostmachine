@@ -124,7 +124,7 @@ namespace SecretHistories.Spheres.Angels
                 Crossroads.MarkLocalSituation(situation);
                 Crossroads.MarkLocalToken(token);
 
-                GrandEffects.RunXTriggers(token, situation, new Dictionary<string, int>() { { _trigger, 1 } });
+                GrandEffects.RunXTriggers(token, new Dictionary<string, int>() { { _trigger, 1 } });
 
                 RecipeExecutionBuffer.ApplyAllEffects();
                 RecipeExecutionBuffer.ApplyVFX();

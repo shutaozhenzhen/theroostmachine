@@ -21,6 +21,10 @@ namespace Roost.World.Recipes.Entities
     public class GrandEffects : AbstractEntity<GrandEffects>
     {
         [FucinePathValue(defaultValue: "~/sphere")] public FucinePath Target { get; set; }
+        public Sphere GetTargetSpheres(Situation currentSituation) => Target == null
+                ? currentSituation.GetSingleSphereByCategory(SphereCategory.SituationStorage)
+                : Target.GetSpheresByPathAsSingleSphere();
+
         [FucineDict(ValidateKeysAs = typeof(Element))] public Dictionary<string, FucineExp<int>> RootEffects { get; set; }
         [FucineList] public List<RefMutationEffect> Mutations { get; set; }
         [FucineDict(ValidateKeysAs = typeof(Element))] public Dictionary<string, FucineExp<int>> Aspects { get; set; }
@@ -46,9 +50,7 @@ namespace Roost.World.Recipes.Entities
 
         public void StartGrandEffects(Situation situation)
         {
-            Sphere targetSphere = Target == null 
-                ? situation.GetSingleSphereByCategory(SphereCategory.SituationStorage) 
-                : Target.GetSpheresByPathAsSingleSphere();
+            Sphere targetSphere = GetTargetSpheres(situation);
 
             RunGrandEffects(targetSphere, true);
 

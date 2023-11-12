@@ -22,7 +22,7 @@ namespace Roost.World.Recipes
 {
     public static class RecipeEffectsMaster
     {
-        const string GRAND_EFFECTS = "grandeffects";
+        public const string GRAND_EFFECTS = nameof(GrandEffects);
 
         internal static void Enact()
         {
