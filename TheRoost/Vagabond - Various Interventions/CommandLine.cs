@@ -286,7 +286,7 @@ namespace Roost.Vagabond
 
         private static UnityEngine.Object GetUnityObject(string[] path)
         {
-            GameObject go = Machine.FindGameObject(path[0], true);
+            GameObject go = GameObjectExtensions.FindGameObject(path[0], true);
 
             if (go == null)
                 return null;
@@ -347,45 +347,6 @@ namespace Roost.Vagabond
             CommandLine.Log("All children of {0}\n~~~~~~~", transform.gameObject);
             for (int n = 0; n < transform.childCount; n++)
                 CommandLine.Log(transform.GetChild(n).gameObject.name);
-        }
-    }
-}
-
-namespace Roost
-{
-    public static partial class Machine
-    {
-        public static GameObject FindGameObject(string name, bool includeInactive)
-        {
-            //NB - case sensitive
-            UnityEngine.GameObject result = GameObject.Find(name);
-
-            if (result == null)
-            {
-                GameObject[] allGO = Resources.FindObjectsOfTypeAll<GameObject>();
-                foreach (GameObject go in allGO)
-                    if (go.name == name)
-                        return go;
-            }
-
-            return result;
-        }
-
-        public static GameObject FindInChildren(this GameObject go, string name, bool nested = false)
-        {
-            //NB - case insensitive
-            Transform transform = go.transform;
-            for (int n = 0; n < transform.childCount; n++)
-                if (String.Equals(transform.GetChild(n).name, name, StringComparison.OrdinalIgnoreCase))
-                    return transform.GetChild(n).gameObject;
-                else if (nested)
-                {
-                    GameObject nestedFound = FindInChildren(transform.GetChild(n).gameObject, name, true);
-                    if (nestedFound != null)
-                        return nestedFound;
-                }
-
-            return null;
         }
     }
 }
