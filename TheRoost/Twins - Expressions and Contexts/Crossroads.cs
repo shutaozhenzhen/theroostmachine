@@ -42,14 +42,30 @@ namespace Roost.Twins
             return false;
         }
 
+        static Dictionary<string, RedirectSphere> activeRedirectSpheres = new Dictionary<string, RedirectSphere>();
         public static Sphere GetSpheresByPathAsSingleSphere(this FucinePath fucinePath)
         {
+            string path = fucinePath.ToString();
+            if (activeRedirectSpheres.ContainsKey(path))
+                return activeRedirectSpheres[path];
+
             var spheres = GetSpheresByPath(fucinePath);
 
             if (spheres.Count == 1)
                 return spheres[0];
 
-            return RedirectSphere.Create(spheres);
+            var redirectSphere = RedirectSphere.Create(spheres);
+            activeRedirectSpheres.Add(path, redirectSphere);
+
+            return redirectSphere;
+        }
+
+        public static void ClearRedirectSpheres()
+        {
+            foreach (string path in activeRedirectSpheres.Keys)
+                activeRedirectSpheres[path].Retire(SphereRetirementType.Destructive);
+
+            activeRedirectSpheres.Clear();
         }
 
         public static List<Sphere> GetSpheresByPath(this FucinePath fucinePath)

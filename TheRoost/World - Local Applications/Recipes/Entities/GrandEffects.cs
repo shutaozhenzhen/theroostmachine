@@ -54,6 +54,7 @@ namespace Roost.World.Recipes.Entities
 
             RecipeExecutionBuffer.ApplyVFX();
             RecipeExecutionBuffer.ApplyRecipeInductions();
+            Crossroads.ClearRedirectSpheres();
         }
 
         //even if there are no effects for the recipe, aspect xtriggering should still happen
@@ -64,6 +65,7 @@ namespace Roost.World.Recipes.Entities
 
             RecipeExecutionBuffer.ApplyVFX();
             RecipeExecutionBuffer.ApplyRecipeInductions();
+            Crossroads.ClearRedirectSpheres();
         }
 
         public void RunGrandEffects(Sphere localSphere, bool applyLocalXTriggers)
@@ -386,9 +388,6 @@ namespace Roost.World.Recipes.Entities
             {
                 var targetSpheresAsOne = furthermore.Target.GetSpheresByPathAsSingleSphere();
                 furthermore.RunGrandEffects(targetSpheresAsOne, false);
-
-                if (targetSpheresAsOne is RedirectSphere)
-                    targetSpheresAsOne.Retire(SphereRetirementType.Destructive);
             }
         }
 
