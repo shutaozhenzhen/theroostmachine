@@ -60,8 +60,8 @@ namespace Roost.World.Recipes.Entities
         public static void RunElementTriggersOnly(Situation situation)
         {
             var localSphere = situation.GetSingleSphereByCategory(SphereCategory.SituationStorage);
-            RunElementXTriggers(localSphere);
             RunVerbXTriggers();
+            RunElementXTriggers(localSphere);
 
             RecipeExecutionBuffer.ApplyVFX();
             RecipeExecutionBuffer.ApplyRecipeInductions();
@@ -81,8 +81,9 @@ namespace Roost.World.Recipes.Entities
             RunRecipeXTriggers(localSphere);
             if (localXtriggers)
             {
+                RunVerbXTriggers(); //NB - in vanilla, verb xtriggers actually react only to aspects the recipe started with
+                //so here we have a little theoretical discrepancy
                 RunElementXTriggers(localSphere);
-                RunVerbXTriggers();
             }
 
             RunXPans(localSphere);
