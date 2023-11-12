@@ -94,9 +94,8 @@ namespace Roost.World.Recipes.Entities
             RunEffects(localSphere);
             RunDecays(localSphere);
             RunVerbManipulations();
-            RunFurthermores(localSphere);
             RunMovements(localSphere);
-
+            RunFurthermores(localSphere);
         }
 
         private static void RunVerbXTriggers()
@@ -361,22 +360,6 @@ namespace Roost.World.Recipes.Entities
             }
         }
 
-        private void RunFurthermores(Situation situation, Sphere localSphere)
-        {
-            if (Furthermore == null || !Furthermore.Any())
-                return;
-
-            foreach (GrandEffects furthermore in Furthermore)
-            {
-                var targetSpheresAsOne = furthermore.Target.GetSpheresByPathAsSingleSphere();
-                furthermore.RunGrandEffects(situation, targetSpheresAsOne, false);
-                Crossroads.MarkLocalSphere(localSphere);
-
-                if (targetSpheresAsOne is RedirectSphere)
-                    targetSpheresAsOne.Retire(SphereRetirementType.Destructive);
-            }
-        }
-
         private void RunMovements(Sphere fromSphere)
         {
             if (Movements == null || !Movements.Any())
@@ -396,6 +379,21 @@ namespace Roost.World.Recipes.Entities
             }
 
             RecipeExecutionBuffer.ApplyMovements();
+        }
+
+        private void RunFurthermores(Sphere initialLocalSphere)
+        {
+            if (Furthermore == null || !Furthermore.Any())
+                return;
+
+            foreach (GrandEffects furthermore in Furthermore)
+            {
+                var targetSpheresAsOne = furthermore.Target.GetSpheresByPathAsSingleSphere();
+                furthermore.RunGrandEffects(targetSpheresAsOne, false);
+
+                if (targetSpheresAsOne is RedirectSphere)
+                    targetSpheresAsOne.Retire(SphereRetirementType.Destructive);
+            }
         }
 
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
