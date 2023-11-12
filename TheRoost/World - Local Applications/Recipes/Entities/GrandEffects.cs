@@ -50,7 +50,7 @@ namespace Roost.World.Recipes.Entities
                 ? situation.GetSingleSphereByCategory(SphereCategory.SituationStorage) 
                 : Target.GetSpheresByPathAsSingleSphere();
 
-            RunGrandEffects(situation, targetSphere, true);
+            RunGrandEffects(targetSphere, true);
 
             RecipeExecutionBuffer.ApplyVFX();
             RecipeExecutionBuffer.ApplyRecipeInductions();
@@ -60,13 +60,13 @@ namespace Roost.World.Recipes.Entities
         public static void RunElementTriggersOnly(Situation situation)
         {
             var localSphere = situation.GetSingleSphereByCategory(SphereCategory.SituationStorage);
-            RunElementXTriggers(localSphere, situation);
+            RunElementXTriggers(localSphere);
 
             RecipeExecutionBuffer.ApplyVFX();
             RecipeExecutionBuffer.ApplyRecipeInductions();
         }
 
-        public void RunGrandEffects(Situation situation, Sphere localSphere, bool localXtriggers)
+        public void RunGrandEffects(Sphere localSphere, bool localXtriggers)
         {
             //shouldn't happen, but happened
             if (localSphere == null)
@@ -74,17 +74,17 @@ namespace Roost.World.Recipes.Entities
 
             Crossroads.MarkLocalSphere(localSphere);
 
-            RunVerbXTriggers(situation);
-
             RunRootEffects();
             RunMutations(localSphere);
 
-            RunRecipeXTriggers(localSphere, situation);
+            RunRecipeXTriggers(localSphere);
             if (localXtriggers)
-                RunElementXTriggers(localSphere, situation);
+            {
+                RunElementXTriggers(localSphere);
+                RunVerbXTriggers();
+            }
 
-            RunXPans(localSphere, situation);
-
+            RunXPans(localSphere);
             //RunDirectTriggers(localSphere, situation);
 
             RunDeckShuffles();
@@ -92,13 +92,14 @@ namespace Roost.World.Recipes.Entities
             RunEffects(localSphere);
             RunDecays(localSphere);
             RunVerbManipulations();
-            RunFurthermores(situation, localSphere);
+            RunFurthermores(localSphere);
             RunMovements(localSphere);
 
         }
 
-        private void RunVerbXTriggers(Situation situation)
+        private static void RunVerbXTriggers()
         {
+            var situation = SituationTracker.currentSituation;
             AspectsDictionary aspectsPresent = situation.GetAspects(true);
             aspectsPresent.CombineAspects(situation.CurrentRecipe.Aspects);
             IDice dice = Watchman.Get<IDice>();
@@ -150,7 +151,7 @@ namespace Roost.World.Recipes.Entities
             }
         }
 
-        public void RunRecipeXTriggers(Sphere sphere, Situation situation)
+        public void RunRecipeXTriggers(Sphere sphere)
         {
             if (Aspects == null || !Aspects.Any())
                 return;
@@ -167,13 +168,13 @@ namespace Roost.World.Recipes.Entities
             if (!allCatalysts.Any())
                 return;
 
-            RunXTriggers(tokens, situation, allCatalysts);
+            RunXTriggers(tokens, allCatalysts);
 
             RecipeExecutionBuffer.ApplyAllEffects();
         }
 
 
-        public static void RunElementXTriggers(Sphere sphere, Situation situation)
+        public static void RunElementXTriggers(Sphere sphere)
         {
             List<Token> tokens = sphere.GetElementTokens();
             if (tokens.Count == 0)
@@ -183,12 +184,12 @@ namespace Roost.World.Recipes.Entities
             foreach (Token token in tokens)
                 allCatalysts.CombineAspects(token.GetAspects(true));
 
-            RunXTriggers(tokens, situation, allCatalysts);
+            RunXTriggers(tokens, allCatalysts);
 
             RecipeExecutionBuffer.ApplyAllEffects();
         }
 
-        public void RunXPans(Sphere initialSphere, Situation situation)
+        public void RunXPans(Sphere initialSphere)
         {
             if (XPans == null || !XPans.Any())
                 return;
@@ -206,7 +207,7 @@ namespace Roost.World.Recipes.Entities
 
                 Crossroads.MarkLocalSphere(sphere);
 
-                RunXTriggers(tokens, situation, allCatalysts);
+                RunXTriggers(tokens, allCatalysts);
                 Crossroads.MarkLocalSphere(initialSphere);
             }
 
@@ -237,13 +238,13 @@ namespace Roost.World.Recipes.Entities
             }
         }*/
 
-        public static void RunXTriggers(List<Token> tokens, Situation situation, Dictionary<string, int> catalysts)
+        public static void RunXTriggers(List<Token> tokens, Dictionary<string, int> catalysts)
         {
             foreach (Token token in tokens)
-                RunXTriggers(token, situation, catalysts);
+                RunXTriggers(token, catalysts);
         }
 
-        public static void RunXTriggers(Token token, Situation situation, Dictionary<string, int> catalysts)
+        public static void RunXTriggers(Token token, Dictionary<string, int> catalysts)
         {
             if (token.IsValidElementStack() == false)
                 return;
@@ -260,7 +261,7 @@ namespace Roost.World.Recipes.Entities
                     foreach (KeyValuePair<string, int> catalyst in catalysts)
                         if (xtriggers.ContainsKey(catalyst.Key))
                             foreach (RefMorphDetails morphDetails in xtriggers[catalyst.Key])
-                                morphDetails.Execute(situation, token, aspect, allAspects[aspect], catalyst.Value);
+                                morphDetails.Execute(token, aspect, allAspects[aspect], catalyst.Value);
             }
         }
 

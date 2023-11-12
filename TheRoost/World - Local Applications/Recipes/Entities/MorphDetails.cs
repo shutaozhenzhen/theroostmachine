@@ -295,6 +295,7 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.Trigger:
                     var triggerQuantity = Level.value * catalystQuantity * reactingElementQuantity;
                     GrandEffects.RunXTriggers(reactingToken, situation, new Dictionary<string, int> { { Id, triggerQuantity } });
+                    GrandEffects.RunXTriggers(reactingToken, new Dictionary<string, int> { { Id, triggerQuantity } });
                     break;
 
                 case MorphEffectsExtended.Redirect:
@@ -337,7 +338,7 @@ namespace Roost.World.Recipes.Entities
         static bool CrossTriggerInMalleary(AutoCompletingInput ___input, DrydockSphere ____elementDrydock)
         {
             var catalyst = new Dictionary<string, int>() { { ___input.text.Trim(), 1 } };
-            GrandEffects.RunXTriggers(____elementDrydock.Tokens, null, catalyst);
+            GrandEffects.RunXTriggers(____elementDrydock.Tokens, catalyst);
             RecipeExecutionBuffer.ApplyAllEffects();
             RecipeExecutionBuffer.ApplyVFX();
             return false;
