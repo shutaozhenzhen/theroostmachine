@@ -209,6 +209,11 @@ namespace Roost.Twins
             return NullSituation.Create();
         }
 
+        public static List<Sphere> GetLocalSphere()
+        {
+            return GetCachedContext(currentSphere);
+        }
+
         public static List<Sphere> GetCachedContext(string context)
         {
             if (!cachedSpheres.ContainsKey(context) || !cachedSpheres[context].Any())

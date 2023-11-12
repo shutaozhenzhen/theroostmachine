@@ -19,7 +19,7 @@ namespace Roost.World.Recipes.Entities
     public enum MorphEffectsExtended
     {
         Transform, Spawn, Mutate, Quantity, //vanilla
-        SetMutation, DeckDraw, DeckShuffle,  //makes sense, right?
+        SetMutation, DeckDraw, DeckShuffle, Recipe, //makes sense, right?
         Destroy, Decay, //destructive forces
         LeverFuture, LeverPast, TimeSpend, TimeSet, Trigger, Redirect, //exotique
         Induce, Link, Break //wot
@@ -95,6 +95,7 @@ namespace Roost.World.Recipes.Entities
                 //links, id is a recipe
                 case MorphEffectsExtended.Link:
                 case MorphEffectsExtended.Induce:
+                case MorphEffectsExtended.Recipe:
                     if (Id != null)
                         foreach (object key in UnknownProperties.Keys)
                             if (compendium.GetEntityById<Recipe>(key.ToString())?.IsValid() == true)
@@ -287,6 +288,33 @@ namespace Roost.World.Recipes.Entities
                                 break;
 
                     break;
+
+                case MorphEffectsExtended.Recipe:
+                    var initialSphere = Crossroads.GetLocalSphere();
+
+                    var situation = SituationTracker.currentSituation;
+                    var hornedAxe = Watchman.Get<HornedAxe>();
+                    Character character = Watchman.Get<Stable>().Protag();
+
+                    GrandReqsMaster.situationIsFresh = false;
+
+                    var recipeToExecute = Watchman.Get<Compendium>().GetEntityById<Recipe>(Id);
+                    while (recipeToExecute.IsValid())
+                    {
+                        var grandEffects = recipeToExecute.RetrieveProperty<GrandEffects>(RecipeEffectsMaster.GRAND_EFFECTS);
+                        var target = grandEffects.GetTargetSpheres(situation);
+                        grandEffects.RunGrandEffects(target, false);
+
+                        foreach (LinkedRecipeDetails linkedRecipeDetails in recipeToExecute.Linked)
+                        {
+                            AspectsInContext aspectsInContext = hornedAxe.GetAspectsInContext(situation);
+                            recipeToExecute = linkedRecipeDetails.GetRecipeWhichCanExecuteInContext(aspectsInContext, character);
+                        }
+                    }
+
+                    Crossroads.MarkLocalSphere(initialSphere);
+                    GrandReqsMaster.situationIsFresh = true;
+                    return false;
 
                 case MorphEffectsExtended.Break:
                     RecipeExecutionBuffer.ScheduleVFX(reactingToken, VFX);

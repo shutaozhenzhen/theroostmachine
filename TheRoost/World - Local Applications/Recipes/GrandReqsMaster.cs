@@ -27,10 +27,14 @@ namespace Roost.World.Recipes
         }
 
         //Situation.GetAspectsInContext()
+        public static bool situationIsFresh = true;
         private static void MarkSituation(Situation __instance)
         {
-            Crossroads.ResetCache();
-            Crossroads.MarkLocalSituation(__instance);
+            if (situationIsFresh)
+            {
+                Crossroads.ResetCache();
+                Crossroads.MarkLocalSituation(__instance);
+            }
         }
 
         private static bool CheckGrandReqsForSituation(Recipe __instance, AspectsInContext aspectsInContext)
