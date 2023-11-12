@@ -61,6 +61,7 @@ namespace Roost.World.Recipes.Entities
         {
             var localSphere = situation.GetSingleSphereByCategory(SphereCategory.SituationStorage);
             RunElementXTriggers(localSphere);
+            RunVerbXTriggers();
 
             RecipeExecutionBuffer.ApplyVFX();
             RecipeExecutionBuffer.ApplyRecipeInductions();
@@ -399,7 +400,7 @@ namespace Roost.World.Recipes.Entities
         {
             int i = 0;
             foreach (GrandEffects furthermore in Furthermore)
-                furthermore.SetId($"{this.Id} additional effect # {i++}");
+                furthermore.SetId($"{this.Id} furthermore #{i++}");
 
             /*
             //reducing amount of entities
