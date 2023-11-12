@@ -47,7 +47,10 @@ namespace Roost.Twins
         {
             string path = fucinePath.ToString();
             if (activeRedirectSpheres.ContainsKey(path))
+            {
+                activeRedirectSpheres[path].UpdateTokens();
                 return activeRedirectSpheres[path];
+            }
 
             var spheres = GetSpheresByPath(fucinePath);
 
@@ -378,9 +381,15 @@ namespace Roost.Twins
 
             var redirectSphere = goContainer.AddComponent<RedirectSphere>();
             redirectSphere.internalSpheres = spheres;
-            redirectSphere._tokens.AddRange(spheres.SelectMany(sphere => sphere.GetTokens()));
+            redirectSphere.UpdateTokens();
 
             return redirectSphere;
+        }
+
+        public void UpdateTokens()
+        {
+            _tokens.Clear();
+            _tokens.AddRange(internalSpheres.SelectMany(sphere => sphere.GetTokens()));
         }
 
         public override void AcceptToken(Token token, Context context)
