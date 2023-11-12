@@ -234,23 +234,11 @@ namespace Roost.World.Recipes.Entities
                     break;
 
                 case MorphEffectsExtended.Induce:
-                    RecipeExecutionBuffer.ScheduleRecipeInduction(situation, Induction);
+                    RecipeExecutionBuffer.ScheduleRecipeInduction(SituationTracker.currentSituation, Induction);
                     break;
                 case MorphEffectsExtended.Link:
                     Machine.PushTemporaryRecipeLink(this.Id, Level.value);
                     break;
-
-                case MorphEffectsExtended.GrandEffects:
-                    {
-                        var targetSpheresAsOne = GrandEffects.Target.GetSpheresByPathAsSingleSphere();
-                        GrandEffects.RunGrandEffects(situation, targetSpheresAsOne, false);
-                        Crossroads.MarkLocalSphere(reactingToken.Sphere);
-
-                        if (targetSpheresAsOne is RedirectSphere)
-                            targetSpheresAsOne.Retire(SphereRetirementType.Destructive);
-
-                        break;
-                    }
 
                 case MorphEffectsExtended.TimeSpend:
                     {
