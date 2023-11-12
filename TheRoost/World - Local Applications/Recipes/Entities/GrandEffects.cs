@@ -98,7 +98,7 @@ namespace Roost.World.Recipes.Entities
             RunDecays(localSphere);
             RunVerbManipulations();
             RunMovements(localSphere);
-            RunFurthermores(localSphere);
+            RunFurthermores();
         }
 
         private static void RunVerbXTriggers(Situation situation)
@@ -379,13 +379,17 @@ namespace Roost.World.Recipes.Entities
             RecipeExecutionBuffer.ApplyMovements();
         }
 
-        private void RunFurthermores(Sphere initialLocalSphere)
+        private void RunFurthermores()
         {
             if (Furthermore == null || !Furthermore.Any())
                 return;
 
             foreach (GrandEffects furthermore in Furthermore)
             {
+                //we don't want a local sphere from previous furthermores (or from the main grandeffects) to affect furthermore's target
+                //so, by default, all furthermores are executed locally in situation
+                Crossroads.UnmarkLocalSphere();
+
                 var targetSpheresAsOne = furthermore.Target.GetSpheresByPathAsSingleSphere();
                 furthermore.RunGrandEffects(targetSpheresAsOne, false);
             }
