@@ -262,7 +262,8 @@ namespace Roost.World.Recipes.Entities
                     foreach (KeyValuePair<string, int> catalyst in catalysts)
                         if (xtriggers.ContainsKey(catalyst.Key))
                             foreach (RefMorphDetails morphDetails in xtriggers[catalyst.Key])
-                                morphDetails.Execute(token, aspect, allAspects[aspect], catalyst.Value);
+                                if (morphDetails.Execute(token, aspect, allAspects[aspect], catalyst.Value))
+                                    break;
             }
         }
 

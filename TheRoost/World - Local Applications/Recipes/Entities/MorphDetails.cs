@@ -165,6 +165,7 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.TimeSet:
                 case MorphEffectsExtended.LeverFuture:
                 case MorphEffectsExtended.LeverPast:
+                case MorphEffectsExtended.Break:
                 default:
                     break;
             }
@@ -190,7 +191,7 @@ namespace Roost.World.Recipes.Entities
             if (UnityEngine.Random.Range(1, 101) > Chance.value)
             {
                 Crossroads.UnmarkLocalToken();
-                return;
+                return false;
             }
 
             reactingElementQuantity = UseMyQuantity ? reactingElementQuantity : 1;
@@ -290,9 +291,16 @@ namespace Roost.World.Recipes.Entities
                     Dictionary<string, List<RefMorphDetails>> xtriggers = Machine.GetEntity<Element>(reactingElementId).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
                     if (xtriggers.TryGetValue(this.Id, out List<RefMorphDetails> redirects))
                         foreach (RefMorphDetails effect in redirects)
-                            effect.Execute(situation, reactingToken, reactingElementId, reactingElementQuantity, catalystQuantity);
+                            if (effect.Execute(reactingToken, reactingElementId, reactingElementQuantity, catalystQuantity))
+                                break;
 
                     break;
+
+                case MorphEffectsExtended.Break:
+                    RecipeExecutionBuffer.ScheduleVFX(reactingToken, VFX);
+                    Crossroads.UnmarkLocalToken();
+                    Crossroads.UnmarkSource();
+                    return true;
 
                 default:
                     Birdsong.TweetLoud($"Unknown trigger '{MorphEffect}' for element stack '{reactingToken.PayloadEntityId}'");
@@ -301,6 +309,8 @@ namespace Roost.World.Recipes.Entities
 
             Crossroads.UnmarkLocalToken();
             Crossroads.UnmarkSource();
+
+            return false;
         }
 
         public override string ToString()
