@@ -22,8 +22,7 @@ namespace Roost.World.Recipes.Entities
         SetMutation, DeckDraw, DeckShuffle,  //makes sense, right?
         Destroy, Decay, //destructive forces
         LeverFuture, LeverPast, TimeSpend, TimeSet, Trigger, Redirect, //exotique
-        GrandEffects, //big boy
-        Induce, Link //wot
+        Induce, Link, Break //wot
     }
 
     public class RefMorphDetails : AbstractEntity<RefMorphDetails>, IQuickSpecEntity
@@ -40,8 +39,6 @@ namespace Roost.World.Recipes.Entities
         private LinkedRecipeDetails Induction { get; set; }
         [FucinePathValue] public FucinePath ToPath { get; set; }
         [FucineSubEntity] public Expulsion Expulsion { get; set; }
-
-        [FucineSubEntity] public GrandEffects GrandEffects { get; set; }
 
         public const string TRIGGER_MODE = "triggerMode";
         public static void Enact()
@@ -160,7 +157,6 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.Quantity:
                 case MorphEffectsExtended.Decay:
                 case MorphEffectsExtended.Destroy:
-                case MorphEffectsExtended.GrandEffects:
                 case MorphEffectsExtended.TimeSpend:
                 case MorphEffectsExtended.TimeSet:
                 case MorphEffectsExtended.LeverFuture:
@@ -171,9 +167,6 @@ namespace Roost.World.Recipes.Entities
             }
 
             UnknownProperties.Remove(this.Id);
-
-            if (MorphEffect != MorphEffectsExtended.GrandEffects)
-                GrandEffects = null;
 
             if (MorphEffect != MorphEffectsExtended.Induce)
                 Induction = null;
@@ -283,7 +276,6 @@ namespace Roost.World.Recipes.Entities
 
                 case MorphEffectsExtended.Trigger:
                     var triggerQuantity = Level.value * catalystQuantity * reactingElementQuantity;
-                    GrandEffects.RunXTriggers(reactingToken, situation, new Dictionary<string, int> { { Id, triggerQuantity } });
                     GrandEffects.RunXTriggers(reactingToken, new Dictionary<string, int> { { Id, triggerQuantity } });
                     break;
 
