@@ -261,8 +261,18 @@ namespace Roost.World.Recipes
 
         public static void ScheduleVFX(Token token, RetirementVFX vfx)
         {
-            if (vfx != RetirementVFX.None && vfx != RetirementVFX.Default && !retirements.Contains(token))
+            if (vfx == RetirementVFX.None) //default means "no vfx"
+                return;
+
+            if (vfx == RetirementVFX.Default) //none means "remove existing vfx"
+            {
+                vfxs.Remove(token);
+                return;
+            }
+
+            if (!retirements.Contains(token))
                 vfxs[token] = vfx;
+
         }
 
         private struct MutationEffect
