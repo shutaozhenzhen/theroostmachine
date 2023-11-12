@@ -182,7 +182,7 @@ namespace Roost.World.Recipes.Entities
             ToPath = null;
         }
 
-        public void Execute(Situation situation, Token reactingToken, string reactingElementId, int reactingElementQuantity, int catalystQuantity)
+        public bool Execute(Token reactingToken, string reactingElementId, int reactingElementQuantity, int catalystQuantity)
         {
             Crossroads.MarkLocalToken(reactingToken);
             Crossroads.MarkSource(reactingToken);
