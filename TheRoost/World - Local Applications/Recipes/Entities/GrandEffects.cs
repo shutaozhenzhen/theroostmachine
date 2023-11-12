@@ -59,15 +59,14 @@ namespace Roost.World.Recipes.Entities
         //even if there are no effects for the recipe, aspect xtriggering should still happen
         public static void RunElementTriggersOnly(Situation situation)
         {
-            var localSphere = situation.GetSingleSphereByCategory(SphereCategory.SituationStorage);
-            RunVerbXTriggers();
-            RunElementXTriggers(localSphere);
+            RunVerbXTriggers(situation);
+            RunElementXTriggers(situation);
 
             RecipeExecutionBuffer.ApplyVFX();
             RecipeExecutionBuffer.ApplyRecipeInductions();
         }
 
-        public void RunGrandEffects(Sphere localSphere, bool localXtriggers)
+        public void RunGrandEffects(Sphere localSphere, bool applyLocalXTriggers)
         {
             //shouldn't happen, but happened
             if (localSphere == null)
@@ -79,11 +78,13 @@ namespace Roost.World.Recipes.Entities
             RunMutations(localSphere);
 
             RunRecipeXTriggers(localSphere);
-            if (localXtriggers)
+            //local xtriggers aren't applied on furthermores, and work only within interior situation spheres
+            if (applyLocalXTriggers)
             {
-                RunVerbXTriggers(); //NB - in vanilla, verb xtriggers actually react only to aspects the recipe started with
+                var currentSituation = SituationTracker.currentSituation;
+                RunVerbXTriggers(currentSituation); //NB - in vanilla, verb xtriggers actually react only to aspects the recipe started with
                 //so here we have a little theoretical discrepancy
-                RunElementXTriggers(localSphere);
+                RunElementXTriggers(currentSituation);
             }
 
             RunXPans(localSphere);
@@ -98,9 +99,8 @@ namespace Roost.World.Recipes.Entities
             RunFurthermores(localSphere);
         }
 
-        private static void RunVerbXTriggers()
+        private static void RunVerbXTriggers(Situation situation)
         {
-            var situation = SituationTracker.currentSituation;
             AspectsDictionary aspectsPresent = situation.GetAspects(true);
             aspectsPresent.CombineAspects(situation.CurrentRecipe.Aspects);
             IDice dice = Watchman.Get<IDice>();
@@ -175,16 +175,13 @@ namespace Roost.World.Recipes.Entities
         }
 
 
-        public static void RunElementXTriggers(Sphere sphere)
+        public static void RunElementXTriggers(Situation situation)
         {
-            List<Token> tokens = sphere.GetElementTokens();
+            List<Token> tokens = situation.GetElementTokensInSituation();
             if (tokens.Count == 0)
                 return;
 
-            AspectsDictionary allCatalysts = new AspectsDictionary();
-            foreach (Token token in tokens)
-                allCatalysts.CombineAspects(token.GetAspects(true));
-
+            AspectsDictionary allCatalysts = situation.GetAspects(true);
             RunXTriggers(tokens, allCatalysts);
 
             RecipeExecutionBuffer.ApplyAllEffects();
@@ -207,11 +204,10 @@ namespace Roost.World.Recipes.Entities
                     continue;
 
                 Crossroads.MarkLocalSphere(sphere);
-
                 RunXTriggers(tokens, allCatalysts);
-                Crossroads.MarkLocalSphere(initialSphere);
             }
 
+            Crossroads.MarkLocalSphere(initialSphere);
             RecipeExecutionBuffer.ApplyAllEffects();
         }
 
