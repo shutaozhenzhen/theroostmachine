@@ -77,7 +77,15 @@ namespace Roost.World.Recipes
         {
             foreach (ElementStack stack in transformations.Keys)
             {
-                stack.ChangeTo(transformations[stack]);
+                var toElement = transformations[stack];
+                if (string.IsNullOrWhiteSpace(toElement))
+                {
+                    Token token = stack.GetToken();
+                    token.Retire(vfxs.ContainsKey(token) ? vfxs[token] : RetirementVFX.None);
+                }
+                else
+                    stack.ChangeTo(toElement);
+
                 stack.Token.Payload.Unshroud();
             }
 
@@ -152,10 +160,7 @@ namespace Roost.World.Recipes
         public static void ScheduleDecay(Token token, RetirementVFX vfx)
         {
             Element element = Machine.GetEntity<Element>(token.PayloadEntityId);
-            if (string.IsNullOrEmpty(element.DecayTo))
-                ScheduleRetirement(token, vfx);
-            else
-                ScheduleTransformation(token, element.DecayTo, vfx);
+            ScheduleTransformation(token, element.DecayTo, vfx);
         }
 
         public static void ScheduleQuantityChange(Token token, int amount, RetirementVFX vfx)
@@ -163,7 +168,7 @@ namespace Roost.World.Recipes
             if (quantityChanges.ContainsKey(token))
                 quantityChanges[token] += amount;
             else
-                quantityChanges.Add(token, amount);
+                quantityChanges[token] = amount;
 
             ScheduleVFX(token, vfx);
         }
