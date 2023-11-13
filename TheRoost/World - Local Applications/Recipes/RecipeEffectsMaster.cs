@@ -154,12 +154,15 @@ namespace Roost.World.Recipes
         {
             Crossroads.ResetCache();
             Crossroads.MarkLocalSituation(situation);
+            GrandReqsMaster.situationIsFresh = false;
 
             GrandEffects grandEffects = situation.CurrentRecipe.RetrieveProperty<GrandEffects>(GRAND_EFFECTS);
             if (grandEffects == null)
                 GrandEffects.RunElementTriggersOnly(situation);
             else
                 grandEffects.StartGrandEffects(situation);
+
+            GrandReqsMaster.situationIsFresh = true;
         }
 
         private static bool OverrideRecipeRefinement(string stringToRefine, AspectsDictionary ____aspectsInContext, ref string __result)
