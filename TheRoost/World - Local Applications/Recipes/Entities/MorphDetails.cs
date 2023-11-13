@@ -96,14 +96,25 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.Link:
                 case MorphEffectsExtended.Induce:
                 case MorphEffectsExtended.Recipe:
-                    if (Id != null)
-                        foreach (object key in UnknownProperties.Keys)
-                            if (compendium.GetEntityById<Recipe>(key.ToString())?.IsValid() == true)
-                            {
-                                SetId(key.ToString());
-                                Level = new FucineExp<int>(UnknownProperties[key].ToString());
-                                break;
-                            }
+                    if (MorphEffect == MorphEffectsExtended.Recipe)
+                        if (UnknownProperties.ContainsKey("recipe")
+                        && (UnknownProperties["recipe"] is EntityData recipeData))
+                        {
+                            Recipe recipe = new Recipe(recipeData, log);
+                            Id = "recipe." + this._container;
+                            recipe.SetId(Id);
+                            compendium.TryAddEntity(recipe);
+
+                            UnknownProperties.Remove("recipe");
+                        }
+
+                    foreach (object key in UnknownProperties.Keys)
+                        if (compendium.GetEntityById<Recipe>(key.ToString())?.IsValid() == true)
+                        {
+                            SetId(key.ToString());
+                            Level = new FucineExp<int>(UnknownProperties[key].ToString());
+                            break;
+                        }
 
                     if (Id == null)
                     {
@@ -305,10 +316,13 @@ namespace Roost.World.Recipes.Entities
                         var target = grandEffects.GetTargetSpheres(situation);
                         grandEffects.RunGrandEffects(target, false);
 
+                        recipeToExecute = NullRecipe.Create();
                         foreach (LinkedRecipeDetails linkedRecipeDetails in recipeToExecute.Linked)
                         {
                             AspectsInContext aspectsInContext = hornedAxe.GetAspectsInContext(situation);
                             recipeToExecute = linkedRecipeDetails.GetRecipeWhichCanExecuteInContext(aspectsInContext, character);
+                            if (recipeToExecute.IsValid())
+                                continue;
                         }
                     }
 
