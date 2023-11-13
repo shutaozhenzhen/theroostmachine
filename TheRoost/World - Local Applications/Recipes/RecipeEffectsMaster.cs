@@ -140,9 +140,6 @@ namespace Roost.World.Recipes
 
         private static IEnumerable<CodeInstruction> RunRefEffectsTranspiler(IEnumerable<CodeInstruction> instructions)
         {
-            ///transpiler is very simple this time - we just wait until the native code does the actual object creation
-            ///after it's done, we call InvokeGenericImporterForAbstractRootEntity() to modify the object as we please
-            ///all other native transmutations are skipped
             List<CodeInstruction> myCode = new List<CodeInstruction>()
             {
                 new CodeInstruction(OpCodes.Ldarg_1),
