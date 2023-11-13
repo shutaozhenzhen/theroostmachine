@@ -46,6 +46,7 @@ namespace Roost.Twins
         public static Sphere GetSpheresByPathAsSingleSphere(this FucinePath fucinePath)
         {
             string path = fucinePath.ToString();
+
             if (activeRedirectSpheres.ContainsKey(path))
             {
                 activeRedirectSpheres[path].UpdateTokens();
@@ -58,7 +59,8 @@ namespace Roost.Twins
                 return spheres[0];
 
             var redirectSphere = RedirectSphere.Create(spheres);
-            activeRedirectSpheres.Add(path, redirectSphere);
+            if (path != "~/sphere")
+                activeRedirectSpheres.Add(path, redirectSphere);
 
             return redirectSphere;
         }

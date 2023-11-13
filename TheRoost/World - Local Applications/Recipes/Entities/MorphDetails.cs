@@ -101,9 +101,14 @@ namespace Roost.World.Recipes.Entities
                         && (UnknownProperties["recipe"] is EntityData recipeData))
                         {
                             Recipe recipe = new Recipe(recipeData, log);
-                            Id = "recipe." + this._container;
-                            recipe.SetId(Id);
-                            compendium.TryAddEntity(recipe);
+                            int n = 0;
+                            do
+                            {
+                                Id = $"recipe.{n}.{this._container}";
+                                recipe.SetId(Id);
+                                n++;
+                            }
+                            while (!compendium.TryAddEntity(recipe));
 
                             UnknownProperties.Remove("recipe");
                         }

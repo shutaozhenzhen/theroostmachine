@@ -122,6 +122,7 @@ namespace Roost.World.Recipes
             if (atLeastOneEffect)
             {
                 firstPassEffects.SetId(recipe.Id);
+                firstPassEffects.SetContainer(recipe);
                 firstPassEffects.OnPostImport(log, populatedCompendium);
                 recipe.SetCustomProperty(GRAND_EFFECTS, firstPassEffects);
 
