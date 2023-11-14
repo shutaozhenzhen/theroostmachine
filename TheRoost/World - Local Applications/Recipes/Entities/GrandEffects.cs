@@ -283,6 +283,8 @@ namespace Roost.World.Recipes.Entities
                 else
                     RecipeExecutionBuffer.ScheduleDeckRenew(deckId);
             }
+
+            RecipeExecutionBuffer.ApplyDeckRenews();
         }
 
         private void RunDeckEffects(Sphere sphere)
