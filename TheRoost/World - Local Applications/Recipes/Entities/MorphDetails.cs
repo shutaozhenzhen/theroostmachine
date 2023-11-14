@@ -312,8 +312,6 @@ namespace Roost.World.Recipes.Entities
                     var hornedAxe = Watchman.Get<HornedAxe>();
                     Character character = Watchman.Get<Stable>().Protag();
 
-                    GrandReqsMaster.situationIsFresh = false;
-
                     var recipeToExecute = Watchman.Get<Compendium>().GetEntityById<Recipe>(Id);
                     while (recipeToExecute.IsValid())
                     {
@@ -332,7 +330,6 @@ namespace Roost.World.Recipes.Entities
                     }
 
                     Crossroads.MarkLocalSphere(initialSphere);
-                    GrandReqsMaster.situationIsFresh = true;
                     return false;
 
                 case MorphEffectsExtended.Break:
