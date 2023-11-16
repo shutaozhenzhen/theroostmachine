@@ -25,7 +25,7 @@ namespace Roost.World.Beauty
         internal static void Enact()
         {
             Birdsong.Sing(Birdsong.Incr(), "Hello world from LookAndFeelMaster!");
-            Machine.ClaimProperty<Legacy, LegacyTheme>("theme");
+            Machine.ClaimProperty<Legacy, LegacyTheme>(THEME_PROPERTY);
             Machine.ClaimProperty<Verb, VerbStyle>("style");
             AtTimeOfPower.TabletopSceneInit.Schedule(ApplyThemeToUI, PatchType.Postfix);
 
