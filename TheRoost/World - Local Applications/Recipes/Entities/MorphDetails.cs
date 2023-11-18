@@ -6,13 +6,14 @@ using SecretHistories.Enums;
 using SecretHistories.Fucine;
 using SecretHistories.Fucine.DataImport;
 using SecretHistories.Entities;
-using SecretHistories.Spheres;
 using SecretHistories.Logic;
+using SecretHistories.Meta;
+
+using Random = UnityEngine.Random;
 
 using Roost.Twins;
 using Roost.Twins.Entities;
 
-using SecretHistories.Meta;
 
 namespace Roost.World.Recipes.Entities
 {
@@ -35,6 +36,7 @@ namespace Roost.World.Recipes.Entities
 
         [FucineValue(false)] public bool UseMyQuantity { get; set; }
         [FucineValue(false)] public bool UseCatalystQuantity { get; set; }
+        [FucineNullable] public bool? UseTokenId { get; set; }
 
         private LinkedRecipeDetails Induction { get; set; }
         [FucinePathValue] public FucinePath ToPath { get; set; }
@@ -161,6 +163,7 @@ namespace Roost.World.Recipes.Entities
                     break;
 
                 case MorphEffectsExtended.Redirect:
+                    UseTokenId = UseTokenId ?? false;
                     if (Id == null)
                         log.LogWarning($"ID FOR XTRIGGER '{this}' ISN'T SET");
 
@@ -284,11 +287,11 @@ namespace Roost.World.Recipes.Entities
                     break;
 
                 case MorphEffectsExtended.LeverFuture:
-                    Elegiast.Scribe.SetLeverForNextPlaythrough(this.Id, reactingToken.PayloadEntityId);
+                    Elegiast.Scribe.SetLeverForNextPlaythrough(this.Id, ActingId());
                     break;
 
                 case MorphEffectsExtended.LeverPast:
-                    Elegiast.Scribe.SetLeverForCurrentPlaythrough(this.Id, reactingToken.PayloadEntityId);
+                    Elegiast.Scribe.SetLeverForCurrentPlaythrough(this.Id, ActingId());
                     break;
 
                 case MorphEffectsExtended.Trigger:
@@ -297,7 +300,7 @@ namespace Roost.World.Recipes.Entities
                     break;
 
                 case MorphEffectsExtended.Redirect:
-                    Dictionary<string, List<RefMorphDetails>> xtriggers = Machine.GetEntity<Element>(reactingElementId).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
+                    Dictionary<string, List<RefMorphDetails>> xtriggers = Machine.GetEntity<Element>(ActingId()).RetrieveProperty("xtriggers") as Dictionary<string, List<RefMorphDetails>>;
                     if (xtriggers.TryGetValue(this.Id, out List<RefMorphDetails> redirects))
                         foreach (RefMorphDetails effect in redirects)
                             if (effect.Execute(reactingToken, reactingElementId, reactingElementQuantity, catalystQuantity))
@@ -347,7 +350,9 @@ namespace Roost.World.Recipes.Entities
             Crossroads.UnmarkSource();
 
             return false;
-        }
+
+             string ActingId() => UseTokenId == false ? reactingElementId : reactingToken.PayloadEntityId;
+    }
 
         public override string ToString()
         {
