@@ -28,7 +28,7 @@ namespace Roost.Twins.Entities
         {
             //NB - not always tokens! sometimes Root or Char data
             //if (tokens == null || tokens.Count == 0)
-                //return 0;
+            //return 0;
 
             return HandleValues(tokens, GetValue, targetId);
         }
@@ -400,7 +400,7 @@ namespace Roost.Twins.Entities
 
             private static int Achievement(List<Token> tokens, SingleTokenValue tokenValue, string target)
             {
-                var achievement = 
+                var achievement =
                     Watchman.Get<Compendium>().GetEntityById<Achievement>(target)
                     ?? Watchman.Get<Compendium>().GetEntityById<Achievement>(target.ToUpper());
 
