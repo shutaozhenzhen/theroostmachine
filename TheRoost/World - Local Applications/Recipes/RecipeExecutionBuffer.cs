@@ -113,10 +113,7 @@ namespace Roost.World.Recipes
             {
                 Sphere sphere = movements[token];
 
-                if (sphere.SupportsVFX())
-                    sphere.ProcessEvictedToken(token, new Context(Context.ActionSource.SituationEffect));
-                else
-                    sphere.AcceptToken(token, new Context(Context.ActionSource.SituationEffect));
+                sphere.AcceptWithVFX(token, new Context(Context.ActionSource.SituationEffect));
             }
 
             movements.Clear();
@@ -318,11 +315,6 @@ namespace Roost.World.Recipes
                 increasedAmount.quantity += add;
                 return increasedAmount;
             }
-        }
-
-        public static bool SupportsVFX(this Sphere sphere)
-        {
-            return sphere.IsExteriorSphere || sphere.SphereCategory == SphereCategory.Threshold; //thresholds aren't always exteriors but we want vfx nevertheless
         }
 
         internal static void OnTokenCalved(Token __instance, Token __result)

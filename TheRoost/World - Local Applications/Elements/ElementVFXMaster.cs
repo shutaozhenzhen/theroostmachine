@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 
-using System.Reflection;
 using System.Reflection.Emit;
 
 using SecretHistories.Entities;
 using SecretHistories.UI;
 using SecretHistories.Enums;
+using SecretHistories.Spheres;
 
 using HarmonyLib;
 
@@ -61,4 +61,28 @@ namespace Roost.World.Elements
         }
     }
 
+}
+
+namespace Roost
+{
+    public partial class Machine
+    {
+        public static bool SupportsVFX(this Sphere sphere)
+        {
+            return sphere.IsExteriorSphere || sphere.SphereCategory == SphereCategory.Threshold; //thresholds aren't always exteriors but we want vfx nevertheless
+        }
+
+        public static void AcceptWithVFX(this Sphere sphere, Token token, Context context)
+        {
+            if (sphere.SupportsVFX())
+            {
+                if (sphere.IsCategory(SphereCategory.World))
+                    sphere.ProcessEvictedToken(token, context);
+                else
+                    sphere.GetItineraryFor(token).WithDuration(0.3f).Depart(token, context);
+            }
+            else
+                sphere.AcceptToken(token, context);
+        }
+    }
 }
