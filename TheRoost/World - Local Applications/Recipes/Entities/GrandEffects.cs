@@ -73,7 +73,7 @@ namespace Roost.World.Recipes.Entities
         public void RunGrandEffects(Sphere localSphere, bool applyLocalXTriggers)
         {
             //shouldn't happen, but happened
-            if (localSphere == null)
+            if (localSphere == null || !localSphere.IsValid())
                 return;
 
             Crossroads.MarkLocalSphere(localSphere);

@@ -55,6 +55,9 @@ namespace Roost.Twins
 
             var spheres = GetSpheresByPath(fucinePath);
 
+            if (spheres.Count == 0)
+                return NullSphere.Create();
+
             if (spheres.Count == 1)
                 return spheres[0];
 
