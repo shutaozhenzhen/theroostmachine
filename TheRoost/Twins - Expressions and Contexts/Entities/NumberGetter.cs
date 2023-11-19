@@ -123,16 +123,27 @@ namespace Roost.Twins.Entities
 
             private static int ElementAspect(Token token, string target)
             {
-                return token.IsValidElementStack() ? token.GetAspects(true).AspectValue(target) : 0;
+                if (!token.IsValidElementStack())
+                    return 0;
+
+                target = Elegiast.Scribe.TryReplaceWithLever(target);
+                return token.GetAspects(true).AspectValue(target);
             }
 
             private static int Mutation(Token token, string target)
             {
+                if (!token.IsValidElementStack())
+                    return 0;
+
+                target = Elegiast.Scribe.TryReplaceWithLever(target);
+
                 return token.GetCurrentMutations().TryGetValue(target, out int value) ? value : 0;
             }
 
             private static int Container(Token token, string target)
             {
+                target = Elegiast.Scribe.TryReplaceWithLever(target);
+
                 return token.Sphere.GetContainer().GetAspects(true).AspectValue(target);
             }
 
@@ -158,17 +169,27 @@ namespace Roost.Twins.Entities
 
             private static int AspectInSituation(Token token, string target)
             {
-                return IsSituation(token.Payload) ? token.GetAspects(true).AspectValue(target) : 0;
+                if (!IsSituation(token.Payload))
+                    return 0;
+
+                target = Elegiast.Scribe.TryReplaceWithLever(target);
+
+                return  token.GetAspects(true).AspectValue(target);
             }
 
             private static int AspectOnAnyToken(Token token, string target)
             {
+                target = Elegiast.Scribe.TryReplaceWithLever(target);
+
                 return token.GetAspects(true).AspectValue(target);
             }
 
             private static int VerbId(Token token, string target)
             {
-                return IsSituation(token.Payload) ? EntityId(token, target) : 0;
+                if (!IsSituation(token.Payload))
+                    return 0;
+
+                return EntityId(token, target);
             }
 
             private static int RecipeId(Token token, string target)
@@ -181,6 +202,7 @@ namespace Roost.Twins.Entities
                 if (situation.StateIdentifier == StateEnum.Unstarted)
                     return 0;
 
+                target = Elegiast.Scribe.TryReplaceWithLever(target);
                 if (NoonExtensions.WildcardMatchId(situation.CurrentRecipe.Id, target))
                     return token.Quantity;
 
@@ -189,6 +211,8 @@ namespace Roost.Twins.Entities
 
             private static int EntityId(Token token, string target)
             {
+                target = Elegiast.Scribe.TryReplaceWithLever(target);
+
                 return NoonExtensions.WildcardMatchId(token.PayloadEntityId, target) ? token.Quantity : 0;
             }
 
@@ -201,6 +225,8 @@ namespace Roost.Twins.Entities
 
                 if (situation.StateIdentifier == StateEnum.Unstarted)
                     return 0;
+
+                target = Elegiast.Scribe.TryReplaceWithLever(target);
 
                 return (token.Payload as Situation).CurrentRecipe.Aspects.AspectValue(target);
             }
