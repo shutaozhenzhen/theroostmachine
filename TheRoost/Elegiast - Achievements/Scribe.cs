@@ -25,6 +25,17 @@ namespace Roost.Elegiast
             _defaultValues.Add(lever, value);
         }
 
+        public static string TryReplaceWithLever(string value)
+        {
+            const string lever = "lever_";
+            if (value.StartsWith(lever))
+            {
+                value = value.Substring(lever.Length);
+                return GetLeverForCurrentPlaythrough(value);
+            }
+
+            return value;
+        }
         internal static void ResetRegisteredLevers()
         {
             _defaultValues.Clear();

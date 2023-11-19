@@ -197,7 +197,7 @@ namespace Roost.World.Recipes
 
         public static void ScheduleMutation(IHasAspects payload, string mutate, int level, bool additive, string groupId = "")
         {
-            TryReplaceWithLever(ref mutate);
+            mutate = Elegiast.Scribe.TryReplaceWithLever(mutate);
 
             MutationEffect futureMutation = new MutationEffect(mutate, level, additive, groupId);
             if (!mutations.ContainsKey(futureMutation))
@@ -208,7 +208,7 @@ namespace Roost.World.Recipes
 
         public static void ScheduleMutation(List<Token> tokens, string mutate, int level, bool additive, RetirementVFX vfx)
         {
-            TryReplaceWithLever(ref mutate);
+            mutate = Elegiast.Scribe.TryReplaceWithLever(mutate);
 
             MutationEffect futureMutation = new MutationEffect(mutate, level, additive, "");
             if (!mutations.ContainsKey(futureMutation))
@@ -223,7 +223,7 @@ namespace Roost.World.Recipes
 
         public static void ScheduleTransformation(Token token, string transformTo, RetirementVFX vfx)
         {
-            TryReplaceWithLever(ref transformTo);
+            transformTo = Elegiast.Scribe.TryReplaceWithLever(transformTo);
 
             transformations[token.Payload as ElementStack] = transformTo;
             ScheduleVFX(token, vfx);
@@ -231,7 +231,7 @@ namespace Roost.World.Recipes
 
         public static void ScheduleSpawn(Sphere sphere, string elementId, int amount, RetirementVFX vfx)
         {
-            TryReplaceWithLever(ref elementId);
+            elementId = Elegiast.Scribe.TryReplaceWithLever(elementId);
 
             if (spawns.ContainsKey(sphere) == false)
                 spawns[sphere] = new List<SpawnEffect>();
@@ -320,19 +320,9 @@ namespace Roost.World.Recipes
             }
         }
 
-        private static bool SupportsVFX(this Sphere sphere)
+        public static bool SupportsVFX(this Sphere sphere)
         {
             return sphere.IsExteriorSphere || sphere.SphereCategory == SphereCategory.Threshold; //thresholds aren't always exteriors but we want vfx nevertheless
-        }
-
-        private static void TryReplaceWithLever(ref string value)
-        {
-            const string lever = "lever_";
-            if (value.StartsWith(lever))
-            {
-                value = value.Substring(lever.Length);
-                value = Elegiast.Scribe.GetLeverForCurrentPlaythrough(value);
-            }
         }
 
         internal static void OnTokenCalved(Token __instance, Token __result)
