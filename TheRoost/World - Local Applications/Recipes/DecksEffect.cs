@@ -29,13 +29,16 @@ namespace Roost.World.Recipes
             if (deckSpec == null)
                 throw Birdsong.Cack($"TRYING TO DRAW FROM NON-EXISTENT DECK '{deckId}'");
 
-            Limbo limbo = Watchman.Get<Limbo>();
+            Context context = Context.Unknown();
+            DealersTable dealerstable = Watchman.Get<DealersTable>();
+            Sphere drawsphere = dealerstable.GetDrawPile(deckId) as Sphere;
+
             for (int i = 0; i < draws; i++)
             {
-                Token token  = Dealer.Deal(deckSpec, Watchman.Get<DealersTable>());
+                Token token = Dealer.Deal(deckSpec, dealerstable);
 
                 //need to exclude the token from the deck sphere right now so the next calculations and operations are correct
-                token.SetSphere(limbo, new Context(Context.ActionSource.SituationEffect));
+                drawsphere.RemoveToken(token, context);
                 RecipeExecutionBuffer.ScheduleMovement(token, toSphere, vfx);
             }
 
