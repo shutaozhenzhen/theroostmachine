@@ -76,10 +76,16 @@ namespace Roost
         {
             if (sphere.SupportsVFX())
             {
+                if (!token.Sphere.SupportsVFX())
+                {
+                    token.Payload.GetEnRouteSphere().AcceptToken(token, context);
+                    token.transform.position = UnityEngine.Vector3.up * 1000;
+                }
+
                 if (sphere.IsCategory(SphereCategory.World))
                     sphere.ProcessEvictedToken(token, context);
                 else
-                    sphere.GetItineraryFor(token).WithDuration(0.3f).Depart(token, context);
+                    sphere.GetItineraryFor(token).WithDuration(0.2f).Depart(token, context);
             }
             else
                 sphere.AcceptToken(token, context);
