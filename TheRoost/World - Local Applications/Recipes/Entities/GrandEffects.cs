@@ -149,7 +149,7 @@ namespace Roost.World.Recipes.Entities
                 {
                     Crossroads.MarkLocalToken(token); //we want token values to be accessible
                     Crossroads.MarkLocalSphere(sphere); //but we still want "default" scope to be the sphere, not the token
-                    RecipeExecutionBuffer.ScheduleMutation(targets, mutationEffect.Mutate, mutationEffect.Level.value, mutationEffect.Additive, mutationEffect.VFX);
+                    RecipeExecutionBuffer.ScheduleMutation(token, mutationEffect.Mutate, mutationEffect.Level.value, mutationEffect.Additive, mutationEffect.VFX);
                     RecipeExecutionBuffer.ApplyMutations();
                 }
                 Crossroads.UnmarkAllLocalTokens();
