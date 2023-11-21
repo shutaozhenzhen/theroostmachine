@@ -328,7 +328,7 @@ namespace Roost.World.Recipes.Entities
                             AspectsInContext aspectsInContext = hornedAxe.GetAspectsInContext(situation);
                             recipeToExecute = linkedRecipeDetails.GetRecipeWhichCanExecuteInContext(aspectsInContext, character);
                             if (recipeToExecute.IsValid())
-                                continue;
+                                break;
                         }
                     }
 
