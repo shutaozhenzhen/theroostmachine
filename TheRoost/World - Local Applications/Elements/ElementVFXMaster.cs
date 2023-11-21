@@ -75,20 +75,21 @@ namespace Roost
         public static void AcceptWithVFX(this Sphere sphere, Token token, Context context)
         {
             if (sphere.SupportsVFX())
-            {
-                if (!token.Sphere.SupportsVFX())
-                {
-                    token.Payload.GetEnRouteSphere().AcceptToken(token, context);
-                    token.transform.position = UnityEngine.Vector3.up * 1000;
-                }
-
-                if (sphere.IsCategory(SphereCategory.World))
-                    sphere.ProcessEvictedToken(token, context);
-                else
-                    sphere.GetItineraryFor(token).WithDuration(0.2f).Depart(token, context);
-            }
-            else
+                SphereMovementVFX(token, sphere, context);
+            else if (token.Sphere != sphere)
                 sphere.AcceptToken(token, context);
+        }
+
+        public static void SphereMovementVFX(this Token token, Sphere sphere, Context context)
+        {
+            if (!token.Sphere.SupportsVFX())
+                token.transform.position = UnityEngine.Vector3.up * 1200;
+            token.Payload.GetEnRouteSphere().AcceptToken(token, context);
+
+            if (sphere.IsCategory(SphereCategory.World) || !sphere.CanAcceptToken(token))
+                sphere.ProcessEvictedToken(token, context);
+            else
+                sphere.GetItineraryFor(token).WithDuration(0.2f).Depart(token, context);
         }
     }
 }

@@ -109,11 +109,17 @@ namespace Roost.World.Recipes
 
         public static void ApplyMovements()
         {
+            Token draggedToken = Watchman.Get<Meniscate>().GetCurrentlyDraggedToken();
+            if (movements.ContainsKey(draggedToken))
+                draggedToken.ForceEndDrag();
+
+            Xamanek xamanek = Watchman.Get<Xamanek>();
             foreach (Token token in movements.Keys)
             {
-                Sphere sphere = movements[token];
+                xamanek.TokenItineraryCompleted(token);
+                token.Stabilise();
 
-                sphere.AcceptWithVFX(token, new Context(Context.ActionSource.SituationEffect));
+                movements[token].AcceptWithVFX(token, new Context(Context.ActionSource.SituationEffect));
             }
 
             movements.Clear();
@@ -297,13 +303,10 @@ namespace Roost.World.Recipes
 
             public void ApplyWithVFX(Sphere onSphere)
             {
-                Token token = new TokenCreationCommand().WithElementStack(elementId, quantity).Execute(new Context(Context.ActionSource.SituationEffect), onSphere);
-                token.transform.position = new UnityEngine.Vector3(0, 2000, 0);
+                Context context = new Context(Context.ActionSource.SituationEffect);
 
-                if (onSphere.IsCategory(SphereCategory.World))
-                    onSphere.ProcessEvictedToken(token, Context.Unknown());
-                else
-                    onSphere.GetItineraryFor(token).WithDuration(0.3f).Depart(token, new Context(Context.ActionSource.SituationEffect));
+                Token token = new TokenCreationCommand().WithElementStack(elementId, quantity).Execute(context, Watchman.Get<Limbo>());
+                onSphere.AcceptWithVFX(token, context);
 
                 token.Remanifest(vfx);
             }
