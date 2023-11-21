@@ -23,7 +23,8 @@ namespace Roost.World.Recipes.Entities
         SetMutation, DeckDraw, DeckShuffle, Recipe, //makes sense, right?
         Destroy, Decay, //destructive forces
         LeverFuture, LeverPast, TimeSpend, TimeSet, Trigger, Redirect, //exotique
-        Induce, Link, Break //wot
+        Induce, Link, Move, //wot
+        Apply, Break, CustomOp //wotter
     }
 
     public class RefMorphDetails : AbstractEntity<RefMorphDetails>, IQuickSpecEntity
@@ -181,6 +182,7 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.TimeSet:
                 case MorphEffectsExtended.LeverFuture:
                 case MorphEffectsExtended.LeverPast:
+                case MorphEffectsExtended.Apply:
                 case MorphEffectsExtended.Break:
                 default:
                     break;
@@ -193,7 +195,9 @@ namespace Roost.World.Recipes.Entities
 
             //even if these properties are needed, they are safely wrapped inside the Induction by now
             Expulsion = null;
-            ToPath = null;
+
+            if (MorphEffect != MorphEffectsExtended.Move)
+                ToPath = null;
         }
 
         public bool Execute(Token reactingToken, string reactingElementId, int reactingElementQuantity, int catalystQuantity)
@@ -334,6 +338,10 @@ namespace Roost.World.Recipes.Entities
 
                     Crossroads.MarkLocalSphere(initialSphere);
                     return false;
+
+                case MorphEffectsExtended.Apply:
+                    RecipeExecutionBuffer.ApplyAllEffects();
+                    break;
 
                 case MorphEffectsExtended.Break:
                     RecipeExecutionBuffer.ScheduleVFX(reactingToken, VFX);
