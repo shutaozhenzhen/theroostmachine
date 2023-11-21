@@ -22,13 +22,14 @@ namespace Roost.World.Elements
             //vfx for decay retirements and transformation
             Machine.ClaimProperty<Element, RetirementVFX>(DECAY_VFX, false, RetirementVFX.Default);
 
-            Machine.Patch(
-                original: typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.ExecuteHeartbeat)),
+            Machine.Patch<ElementStack>(nameof(ElementStack.ExecuteHeartbeat),
                 transpiler: typeof(ElementVFXMaster).GetMethodInvariant(nameof(HeartbeatVFX)));
 
-            Machine.Patch(
-                original: typeof(Token).GetMethodInvariant("Remanifest"),
+            Machine.Patch<Token>("Remanifest",
                 prefix: typeof(ElementVFXMaster).GetMethodInvariant(nameof(ReplaceRemanifestVFX)));
+
+            Machine.Patch<Xamanek>("DestroyTravelAnimationForToken",
+                prefix: typeof(ElementVFXMaster).GetMethodInvariant(nameof(SafeTokenAnimationRetire)));
         }
 
         private static IEnumerable<CodeInstruction> HeartbeatVFX(IEnumerable<CodeInstruction> instructions)
@@ -58,6 +59,12 @@ namespace Roost.World.Elements
                 vfx = elementVFXOverride;
                 elementVFXOverride = RetirementVFX.Default;
             }
+        }
+
+        public static bool SafeTokenAnimationRetire(Token token)
+        {
+            token.gameObject.GetComponent<TokenTravelAnimation>()?.Retire();
+            return false;
         }
     }
 
