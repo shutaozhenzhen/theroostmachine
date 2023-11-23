@@ -43,6 +43,7 @@ namespace Roost.World.Recipes.Entities
         [FucineValue(DefaultValue = RetirementVFX.CardTransformWhite)] public RetirementVFX CreateVFX { get; set; }
         [FucineValue(DefaultValue = RetirementVFX.CardBurn)] public RetirementVFX DestroyVFX { get; set; }
         [FucineValue(DefaultValue = RetirementVFX.CardLight)] public RetirementVFX DecaysVFX { get; set; }
+        [FucineValue(DefaultValue = RetirementVFX.Default)] public RetirementVFX DecaysVFX { get; set; }
         [FucineValue(DefaultValue = RetirementVFX.None)] public RetirementVFX MovementsVFX { get; set; }
 
         public GrandEffects() { }
@@ -331,9 +332,14 @@ namespace Roost.World.Recipes.Entities
 
             foreach (TokenFilterSpec tokenFilterSpec in Decays)
                 foreach (Token token in tokenFilterSpec.GetTokens(tokens))
-                    RecipeExecutionBuffer.ScheduleDecay(token, DecaysVFX);
+                {
+                    RetirementVFX vfx = DecaysVFX != RetirementVFX.Default 
+                        ? DecaysVFX 
+                        : Watchman.Get<Compendium>().GetEntityById<Element>(token.PayloadEntityId).RetrieveProperty<RetirementVFX>("decayvfx");
 
-            RecipeExecutionBuffer.ApplyRetirements();
+                    RecipeExecutionBuffer.ScheduleDecay(token, vfx);
+                }
+
             RecipeExecutionBuffer.ApplyTransformations();
         }
 
