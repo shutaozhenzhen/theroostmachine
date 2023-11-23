@@ -69,7 +69,7 @@ namespace Roost.World.Elements
         {
             alreadyCalvingNoStack = true;
 
-            bool shrouded = token.Sphere is SituationStorageSphere;
+            bool shrouded = token.Sphere is SituationStorageSphere || token.Payload.IsShrouded;
 
             while (token.Quantity > 1)
             {
