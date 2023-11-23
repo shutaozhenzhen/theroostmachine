@@ -24,8 +24,7 @@ namespace Roost.World.Elements
             {
 
                 var element = Machine.GetEntity<Element>(token.PayloadEntityId);
-                if (element.RetrieveProperty<bool>(AUTOPURGE)
-                    || (element.IsHidden && Watchman.Get<Config>().GetConfigValue(AUTOPURGE) == "1"))
+                if (element.RetrieveProperty<bool>(AUTOPURGE))
                 {
                     token.Retire(SecretHistories.Enums.RetirementVFX.None);
                     return false;
