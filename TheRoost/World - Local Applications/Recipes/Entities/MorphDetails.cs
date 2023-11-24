@@ -40,7 +40,7 @@ namespace Roost.World.Recipes.Entities
         [FucineNullable] public bool? UseTokenId { get; set; }
 
         private LinkedRecipeDetails Induction { get; set; }
-        [FucinePathValue] public FucinePath ToPath { get; set; }
+        [FucinePathValue(DefaultValue = null)] public FucinePath ToPath { get; set; }
         [FucineSubEntity] public Expulsion Expulsion { get; set; }
 
         public const string TRIGGER_MODE = "triggerMode";
@@ -348,6 +348,12 @@ namespace Roost.World.Recipes.Entities
                     Crossroads.UnmarkLocalToken();
                     Crossroads.UnmarkSource();
                     return true;
+
+                case MorphEffectsExtended.Move:
+                    var targetSpheres = ToPath.GetSpheresByPath();
+                    if (targetSpheres.Count > 0)
+                        RecipeExecutionBuffer.ScheduleMovement(reactingToken, targetSpheres[Random.Range(0, targetSpheres.Count)], VFX);
+                    break;
 
                 default:
                     Birdsong.TweetLoud($"Unknown trigger '{MorphEffect}' for element stack '{reactingToken.PayloadEntityId}'");
