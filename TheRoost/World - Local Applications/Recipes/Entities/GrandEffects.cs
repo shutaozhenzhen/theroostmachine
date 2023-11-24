@@ -42,7 +42,6 @@ namespace Roost.World.Recipes.Entities
         [FucineValue(DefaultValue = RetirementVFX.None)] public RetirementVFX DeckEffectsVFX { get; set; }
         [FucineValue(DefaultValue = RetirementVFX.CardTransformWhite)] public RetirementVFX CreateVFX { get; set; }
         [FucineValue(DefaultValue = RetirementVFX.CardBurn)] public RetirementVFX DestroyVFX { get; set; }
-        [FucineValue(DefaultValue = RetirementVFX.CardLight)] public RetirementVFX DecaysVFX { get; set; }
         [FucineValue(DefaultValue = RetirementVFX.Default)] public RetirementVFX DecaysVFX { get; set; }
         [FucineValue(DefaultValue = RetirementVFX.None)] public RetirementVFX MovementsVFX { get; set; }
 
@@ -313,13 +312,13 @@ namespace Roost.World.Recipes.Entities
                 {
                     List<Token> affectedTokens = allTokens.FilterTokens(effect).SelectRandom(Math.Abs(level));
                     foreach (Token token in affectedTokens)
-                        RecipeExecutionBuffer.ScheduleRetirement(token, DestroyVFX);
+                        RecipeExecutionBuffer.ScheduleTransformation(token, string.Empty, DestroyVFX);
                 }
                 else
                     RecipeExecutionBuffer.ScheduleSpawn(sphere, effect.targetElement, level, CreateVFX);
             }
 
-            RecipeExecutionBuffer.ApplyRetirements();
+            RecipeExecutionBuffer.ApplyTransformations();
             RecipeExecutionBuffer.ApplyCreations();
         }
 

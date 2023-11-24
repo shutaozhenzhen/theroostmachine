@@ -245,7 +245,7 @@ namespace Roost.World.Recipes.Entities
                     break;
 
                 case MorphEffectsExtended.Destroy:
-                    RecipeExecutionBuffer.ScheduleRetirement(reactingToken, VFX);
+                    RecipeExecutionBuffer.ScheduleTransformation(reactingToken, string.Empty, VFX);
                     break;
                 case MorphEffectsExtended.Decay:
                     RecipeExecutionBuffer.ScheduleDecay(reactingToken, VFX);
@@ -359,8 +359,8 @@ namespace Roost.World.Recipes.Entities
 
             return false;
 
-             string ActingId() => UseTokenId == false ? reactingElementId : reactingToken.PayloadEntityId;
-    }
+            string ActingId() => UseTokenId == false ? reactingElementId : reactingToken.PayloadEntityId;
+        }
 
         public override string ToString()
         {

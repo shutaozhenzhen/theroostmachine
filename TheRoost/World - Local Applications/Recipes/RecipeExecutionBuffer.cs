@@ -11,9 +11,8 @@ namespace Roost.World.Recipes
 {
     public static class RecipeExecutionBuffer
     {
-        private static readonly HashSet<Token> retirements = new HashSet<Token>();
         private static readonly Dictionary<MutationEffect, HashSet<IHasAspects>> mutations = new Dictionary<MutationEffect, HashSet<IHasAspects>>();
-        private static readonly Dictionary<ElementStack, string> transformations = new Dictionary<ElementStack, string>();
+        private static readonly Dictionary<Token, string> transformations = new Dictionary<Token, string>();
         private static readonly Dictionary<Sphere, List<SpawnEffect>> spawns = new Dictionary<Sphere, List<SpawnEffect>>();
         private static readonly Dictionary<Token, int> quantityChanges = new Dictionary<Token, int>();
         private static readonly Dictionary<Token, Sphere> movements = new Dictionary<Token, Sphere>();
@@ -24,23 +23,12 @@ namespace Roost.World.Recipes
 
         public static void ApplyAllEffects()
         {
-            ApplyRetirements();
             ApplyMutations();
             ApplyQuantityChanges();
             ApplyTransformations();
             ApplyCreations();
             ApplyMovements();
             ApplyDeckRenews();
-        }
-
-        public static void ApplyRetirements()
-        {
-            foreach (Token token in retirements)
-            {
-                token.Retire(vfxs.ContainsKey(token) ? vfxs[token] : RetirementVFX.None);
-                vfxs.Remove(token);
-            }
-            retirements.Clear();
         }
 
         public static void ApplyDeckRenews()
@@ -75,18 +63,17 @@ namespace Roost.World.Recipes
 
         public static void ApplyTransformations()
         {
-            foreach (ElementStack stack in transformations.Keys)
+            foreach (Token token in transformations.Keys)
             {
-                var toElement = transformations[stack];
+                var toElement = transformations[token];
                 if (string.IsNullOrWhiteSpace(toElement))
-                {
-                    Token token = stack.GetToken();
                     token.Retire(vfxs.ContainsKey(token) ? vfxs[token] : RetirementVFX.None);
-                }
                 else
+                {
+                    ElementStack stack = token.Payload as ElementStack;
                     stack.ChangeTo(toElement);
-
-                stack.Token.Payload.Unshroud();
+                    token.Payload.Unshroud();
+                }
             }
 
             transformations.Clear();
@@ -154,18 +141,6 @@ namespace Roost.World.Recipes
             vfxs.Clear();
         }
 
-        public static void ScheduleRetirement(Token token, RetirementVFX vfx)
-        {
-            ScheduleVFX(token, vfx);
-            retirements.Add(token);
-        }
-
-        public static void ScheduleDecay(Token token, RetirementVFX vfx)
-        {
-            Element element = Machine.GetEntity<Element>(token.PayloadEntityId);
-            ScheduleTransformation(token, element.DecayTo, vfx);
-        }
-
         public static void ScheduleQuantityChange(Token token, int amount, RetirementVFX vfx)
         {
             if (quantityChanges.ContainsKey(token))
@@ -224,11 +199,23 @@ namespace Roost.World.Recipes
             }
         }
 
+        public static void ScheduleDecay(Token token, RetirementVFX vfx)
+        {
+            Element element = Machine.GetEntity<Element>(token.PayloadEntityId);
+            ScheduleTransformation(token, element.DecayTo, vfx);
+        }
+
         public static void ScheduleTransformation(Token token, string transformTo, RetirementVFX vfx)
         {
             transformTo = Elegiast.Scribe.TryReplaceWithLever(transformTo);
 
-            transformations[token.Payload as ElementStack] = transformTo;
+            if (!token.Payload.IsValidElementStack() && string.IsNullOrWhiteSpace(transformTo) == false)
+            {
+                Birdsong.TweetLoud($"Trying to apply non-destructive transformation on {token.Payload}, but it's not an element stack and doesn't know what to do with them");
+                return;
+            }
+
+            transformations[token] = transformTo;
             ScheduleVFX(token, vfx);
         }
 
@@ -273,9 +260,7 @@ namespace Roost.World.Recipes
                 return;
             }
 
-            if (!retirements.Contains(token))
-                vfxs[token] = vfx;
-
+            vfxs[token] = vfx;
         }
 
         private struct MutationEffect
@@ -325,16 +310,12 @@ namespace Roost.World.Recipes
             Token original = __instance;
             Token calved = __result;
 
-            if (retirements.Contains(original))
-                retirements.Add(calved);
-
             foreach (MutationEffect mutation in mutations.Keys)
                 if (mutations[mutation].Contains(original.Payload))
                     mutations[mutation].Add(calved.Payload);
 
-            ElementStack originalStack = original.Payload as ElementStack;
-            if (transformations.ContainsKey(originalStack))
-                transformations.Add(calved.Payload as ElementStack, transformations[originalStack]);
+            if (transformations.ContainsKey(original))
+                transformations.Add(calved, transformations[original]);
 
             if (movements.ContainsKey(original))
                 movements.Add(calved, movements[original]);
