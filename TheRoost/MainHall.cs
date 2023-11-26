@@ -97,6 +97,7 @@ namespace Roost.Enactors
             Roost.World.Elements.StackShroudMaster.Enact();
             Roost.World.Elements.StackNoStackMaster.Enact();
             Roost.World.Elements.ElementHiddenAutoPurger.Enact();
+            Roost.World.Elements.SelectedStackService.Enact();
 
             Roost.World.Slots.XAngelMaster.Enact();
             Roost.World.Slots.SlotPresenceReqsMaster.Enact();
@@ -113,6 +114,7 @@ namespace Roost.Enactors
             Roost.World.Beauty.BurnImages.SlideshowBurnImagesMaster.Enact();
             Roost.World.Beauty.TMPSpriteManager.Enact();
             Roost.World.Beauty.CardStyleMaster.Enact();
+            Roost.World.Beauty.OverlaysMaster.Enact();
             Roost.World.Beauty.ElementStackRefiner.Enact();
 
             Roost.World.Audio.TrumpetLily.Enact();
