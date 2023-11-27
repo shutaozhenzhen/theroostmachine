@@ -296,6 +296,14 @@ namespace Roost.World.Recipes
             }
         }
 
+        public static void ScheduleOverlay(Token token)
+        {
+            if (!overlayUpdates.Contains(token))
+            {
+                overlayUpdates.Add(token);
+            }
+        }
+
         private struct MutationEffect
         {
             string mutate; int level; bool additive; public string uniqueGroupId;
