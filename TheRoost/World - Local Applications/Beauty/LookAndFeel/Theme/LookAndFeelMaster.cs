@@ -15,6 +15,8 @@ namespace Roost.World.Beauty
     static class LookAndFeelMaster
     {
         public static string THEME_PROPERTY = "theme";
+        public static string STYLE_PROPERTY = "style";
+
         public static Color? HexToColor(string hexCode)
         {
             if (hexCode == null) return null;
@@ -25,7 +27,8 @@ namespace Roost.World.Beauty
         internal static void Enact()
         {
             Machine.ClaimProperty<Legacy, LegacyTheme>(THEME_PROPERTY);
-            Machine.ClaimProperty<Verb, VerbStyle>("style");
+            Machine.ClaimProperty<Verb, VerbStyle>(STYLE_PROPERTY);
+
             AtTimeOfPower.TabletopSceneInit.Schedule(ApplyThemeToUI, PatchType.Postfix);
 
             Machine.Patch(
@@ -76,7 +79,7 @@ namespace Roost.World.Beauty
         public static VerbStyle GetComputedVerbStyle(string verbId)
         {
             Verb verbEntity = Watchman.Get<Compendium>().GetEntityById<Verb>(verbId);
-            VerbStyle verbSpecificStyle = verbEntity.RetrieveProperty<VerbStyle>("style");
+            VerbStyle verbSpecificStyle = verbEntity.RetrieveProperty<VerbStyle>(STYLE_PROPERTY);
 
             LegacyTheme theme = GetCurrentTheme();
             VerbStyle baseVerbStyle = theme?.Verbs;
