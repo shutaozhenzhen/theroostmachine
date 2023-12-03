@@ -250,7 +250,10 @@ namespace Roost.Vagabond
                 if (command.Length == 1)
                 {
                     if (unityObject.GetType() == typeof(GameObject))
+                    {
                         LogAllComponents(unityObject as GameObject);
+                        LogAllChildren((unityObject as GameObject).transform);
+                    }
                     else
                         LogAllProperties(unityObject as Component);
 

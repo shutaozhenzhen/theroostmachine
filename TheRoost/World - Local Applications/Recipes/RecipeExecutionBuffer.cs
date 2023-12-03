@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 using SecretHistories.Entities;
 using SecretHistories.UI;
@@ -6,6 +6,8 @@ using SecretHistories.Spheres;
 using SecretHistories.Enums;
 using SecretHistories.Abstract;
 using SecretHistories.Commands;
+using Roost.Beauty;
+using Roost.World.Beauty;
 
 namespace Roost.World.Recipes
 {
@@ -20,6 +22,7 @@ namespace Roost.World.Recipes
         private static readonly HashSet<string> deckRenews = new HashSet<string>();
 
         private static readonly Dictionary<Token, RetirementVFX> vfxs = new Dictionary<Token, RetirementVFX>();
+        private static readonly HashSet<Token> overlayUpdates = new HashSet<Token>();
 
         public static void ApplyAllEffects()
         {
@@ -28,7 +31,7 @@ namespace Roost.World.Recipes
             ApplyTransformations();
             ApplyCreations();
             ApplyMovements();
-            ApplyDeckRenews();
+            ApplyOverlayUpdates();
         }
 
         public static void ApplyDeckRenews()
@@ -139,6 +142,28 @@ namespace Roost.World.Recipes
                     token.Remanifest(vfxs[token]);
 
             vfxs.Clear();
+        }
+
+        public static void ApplyOverlayUpdates()
+        {
+            foreach (Token token in overlayUpdates)
+            {
+                if (token == null) continue;
+                OverlaysMaster.ApplyOverlaysToManifestation(token);
+            }
+            overlayUpdates.Clear();
+        }
+
+        public static void ScheduleRetirement(Token token, RetirementVFX vfx)
+        {
+            ScheduleVFX(token, vfx);
+            retirements.Add(token);
+        }
+
+        public static void ScheduleDecay(Token token, RetirementVFX vfx)
+        {
+            Element element = Machine.GetEntity<Element>(token.PayloadEntityId);
+            ScheduleTransformation(token, element.DecayTo, vfx);
         }
 
         public static void ScheduleQuantityChange(Token token, int amount, RetirementVFX vfx)
@@ -261,6 +286,22 @@ namespace Roost.World.Recipes
             }
 
             vfxs[token] = vfx;
+        }
+
+        public static void ScheduleOverlay(Token token)
+        {
+            if (!overlayUpdates.Contains(token))
+            {
+                overlayUpdates.Add(token);
+            }
+        }
+
+        public static void ScheduleOverlay(Token token)
+        {
+            if (!overlayUpdates.Contains(token))
+            {
+                overlayUpdates.Add(token);
+            }
         }
 
         private struct MutationEffect

@@ -121,5 +121,12 @@ namespace Roost.Piebald
             mountPoint.AddWidget(widget);
             return widget;
         }
+
+        public static CollapsibleDrawerWidget AddCollapsibleDrawer(this WidgetMountPoint mountPoint, string key = "CollapsibleDrawer")
+        {
+            var widget = new CollapsibleDrawerWidget(key);
+            mountPoint.AddWidget(widget);
+            return widget;
+        }
     }
 }
