@@ -24,7 +24,6 @@ namespace Roost.World.Beauty
 
         internal static void Enact()
         {
-            Birdsong.Sing(Birdsong.Incr(), "Hello world from LookAndFeelMaster!");
             Machine.ClaimProperty<Legacy, LegacyTheme>(THEME_PROPERTY);
             Machine.ClaimProperty<Verb, VerbStyle>("style");
             AtTimeOfPower.TabletopSceneInit.Schedule(ApplyThemeToUI, PatchType.Postfix);
@@ -69,13 +68,8 @@ namespace Roost.World.Beauty
             foreach(Transform settingTransform in settingsList.transform)
             {
                 GameObject setting = settingTransform.gameObject;
-                Birdsong.Sing(Birdsong.Incr(), "Setting:");
-                Birdsong.Sing(Birdsong.Incr(), setting.name);
                 if(setting.name.StartsWith("SliderSetting") && theme?.SecondaryButtons?._Color != null)
-                {
-                    Birdsong.Sing(Birdsong.Incr(), "It's a slider setting!");
                     setting.FindInChildren("Fill").GetComponent<Image>().color = theme.SecondaryButtons._Color.Value;
-                }
             }
         }
 

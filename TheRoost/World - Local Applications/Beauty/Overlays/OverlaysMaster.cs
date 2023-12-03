@@ -23,7 +23,6 @@ namespace Roost.World.Beauty
 
         internal static void Enact()
         {
-            Birdsong.Sing("Hello world from OverlaysMaster!");
             Machine.ClaimProperty<Element, List<OverlayEntity>>(OVERLAYS_PROPERTY);
 
             // When a mutation gets applied to a token, add it the scheduled tokens to update visually.
