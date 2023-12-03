@@ -31,7 +31,18 @@ namespace Roost.World.Beauty
         [FucineValue(DefaultValue = null)] public string StatusBarColor { get; set; }
         public Color? _StatusBarColor => LookAndFeelMaster.HexToColor(StatusBarColor);
 
+        VerbStyle _defaultVerbStyle;
+        public VerbStyle DefaultVerbStyle => _defaultVerbStyle;
+
         public LegacyTheme(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
-        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
+        protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) 
+        {
+            _defaultVerbStyle = new VerbStyle(new EntityData(), null)
+            {
+                Window = WindowStyle.DefaultFromTheme(this)
+            };
+        }
+
+
     }
 }

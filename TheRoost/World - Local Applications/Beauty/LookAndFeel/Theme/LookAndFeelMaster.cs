@@ -76,19 +76,21 @@ namespace Roost.World.Beauty
         public static VerbStyle GetComputedVerbStyle(string verbId)
         {
             Verb verbEntity = Watchman.Get<Compendium>().GetEntityById<Verb>(verbId);
-            LegacyTheme theme = GetCurrentTheme();
-
-            VerbStyle defaultStyle = VerbStyle.DefaultFromTheme(theme);
-            VerbStyle baseVerbStyle = theme?.Verbs;
             VerbStyle verbSpecificStyle = verbEntity.RetrieveProperty<VerbStyle>("style");
 
-            if (baseVerbStyle == null && verbSpecificStyle == null && defaultStyle == null) return null;
-/*
-            Birdsong.Sing(Birdsong.Incr(), "Verb id:", verbId);
-            Birdsong.Sing(Birdsong.Incr(), "Default verbstyle:", defaultStyle != null);
-            Birdsong.Sing(Birdsong.Incr(), "Base verbstyle:", baseVerbStyle != null);
-            Birdsong.Sing(Birdsong.Incr(), "Specific verbstyle:", verbSpecificStyle != null);*/
-            VerbStyle computedStyle = defaultStyle?.OverrideWith(baseVerbStyle)?.OverrideWith(verbSpecificStyle);
+            LegacyTheme theme = GetCurrentTheme();
+            VerbStyle baseVerbStyle = theme?.Verbs;
+            VerbStyle defaultStyle = theme?.DefaultVerbStyle;
+
+            if (baseVerbStyle == null && verbSpecificStyle == null && defaultStyle == null) 
+                return null;
+
+            /*
+            Birdsong.Sing("Verb id:", verbId);
+            Birdsong.Sing("Default verbstyle:", defaultStyle != null);
+            Birdsong.Sing("Base verbstyle:", baseVerbStyle != null);
+            Birdsong.Sing("Specific verbstyle:", verbSpecificStyle != null);*/
+            VerbStyle computedStyle = defaultStyle.OverrideWith(baseVerbStyle).OverrideWith(verbSpecificStyle);
             return computedStyle;
         }
 

@@ -62,15 +62,5 @@ namespace Roost.World.Beauty
 
             return mergedStyle;
         }
-
-        public static VerbStyle DefaultFromTheme(LegacyTheme theme)
-        {
-            EntityData data = new EntityData();
-            VerbStyle defaultStyle = new VerbStyle(data, null)
-            {
-                Window = WindowStyle.DefaultFromTheme(theme)
-            };
-            return defaultStyle;
-        } 
     }
 }
