@@ -15,8 +15,8 @@ namespace Roost.World
         private static List<Situation> currentSituations = new List<Situation>() { NullSituation.Create() };
         public static Situation currentSituation => currentSituations[currentSituations.Count - 1];
 
-        public static ElementStack lastClickedElementStack { get; private set; }
-        public static ElementStack lastHoveredElementStack { get; private set; }
+        public static Token lastClickedElementStack { get; private set; }
+        public static Token lastHoveredElementStack { get; private set; }
 
         internal static void Enact()
         {
@@ -62,18 +62,20 @@ namespace Roost.World
 
         public static void SetSelectedToken(ElementStack __instance)
         {
-            lastClickedElementStack = __instance;
+            lastClickedElementStack = __instance.GetToken();
         }
 
         public static void SetHoveredToken(Token __instance)
         {
-            if (__instance.Payload.GetType() != typeof(ElementStack)) return;
-            lastHoveredElementStack = __instance.Payload as ElementStack;
+            lastHoveredElementStack = __instance;
+
+            if (!(lastHoveredElementStack.Payload is ElementStack))
+                return;
 
             // Not clean, but we call the Meniscate accessibility window again for reasons.
             // (the reasons: we can't easily patch the right method so SetHoveredToken is called after the event fires up and the magnifying glass appears.
             // Because of that, we force it to appear again and update itself a second time right after the first event fired. In practice, this is unnoticeable.)
-            var manifestation = (__instance.GetManifestation() as CardManifestation);
+            var manifestation = __instance.GetManifestation() as BasicManifestation;
             var meniscate = Watchman.Get<Meniscate>();
             if (meniscate != null) //eg we might have a face down card on the credits page - in the longer term, of course, this should get interfaced
             {

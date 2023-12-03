@@ -86,7 +86,7 @@ namespace Roost.World.Beauty
                 //Birdsong.Sing(Birdsong.Incr(), $"No hovered element. Aborting.");
                 return;
             }
-            ApplyOverlaysToManifestation(RavensEye.lastHoveredElementStack.GetToken(), baseImageGO: baseImageGO);
+            ApplyOverlaysToManifestation(RavensEye.lastHoveredElementStack, baseImageGO: baseImageGO);
         }
 
         public static void UpdateDetailsWindowOverlays(AbstractDetailsWindow __instance, Sprite image)
@@ -96,7 +96,7 @@ namespace Roost.World.Beauty
             if (__instance.gameObject.name != "TokenDetailsWindow") return;
             //Birdsong.Sing(Birdsong.Incr(), $"Displaying details of an element!");
 
-            Token token = RavensEye.lastClickedElementStack.GetToken();
+            Token token = RavensEye.lastClickedElementStack;
 
             GameObject artworkGO = __instance.gameObject.FindInChildren("Artwork", true);
 
