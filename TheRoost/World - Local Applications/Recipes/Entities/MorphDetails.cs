@@ -252,7 +252,7 @@ namespace Roost.World.Recipes.Entities
                     break;
 
                 case MorphEffectsExtended.Induce:
-                    RecipeExecutionBuffer.ScheduleRecipeInduction(SituationTracker.currentSituation, Induction);
+                    RecipeExecutionBuffer.ScheduleRecipeInduction(RavensEye.currentSituation, Induction);
                     break;
                 case MorphEffectsExtended.Link:
                     Machine.PushTemporaryRecipeLink(this.Id, Level.value);
@@ -315,7 +315,7 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.Recipe:
                     var initialSphere = Crossroads.GetLocalSphere();
 
-                    var situation = SituationTracker.currentSituation;
+                    var situation = RavensEye.currentSituation;
                     var hornedAxe = Watchman.Get<HornedAxe>();
                     Character character = Watchman.Get<Stable>().Protag();
 

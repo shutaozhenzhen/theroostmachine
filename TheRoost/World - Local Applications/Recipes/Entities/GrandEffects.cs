@@ -85,7 +85,7 @@ namespace Roost.World.Recipes.Entities
             //local xtriggers aren't applied on furthermores, and work only within interior situation spheres
             if (applyLocalXTriggers)
             {
-                var currentSituation = SituationTracker.currentSituation;
+                var currentSituation = RavensEye.currentSituation;
                 RunVerbXTriggers(currentSituation); //NB - in vanilla, verb xtriggers actually react only to aspects the recipe started with
                 //so here we have a little theoretical discrepancy
                 RunElementXTriggers(currentSituation);

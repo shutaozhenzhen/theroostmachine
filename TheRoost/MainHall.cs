@@ -80,6 +80,8 @@ namespace Roost.Enactors
     {
         internal static void Enact()
         {
+            Roost.World.RavensEye.Enact();
+
             Roost.World.Verbs.VerbUniquenessMaster.Enact();
             Roost.World.Verbs.VerbStickySlotsMaster.Enact();
 
@@ -89,7 +91,6 @@ namespace Roost.Enactors
             Roost.World.Recipes.RecipeNotesMaster.Enact();
             Roost.World.Recipes.RecipeRandomWildcardMaster.Enact();
             Roost.World.Recipes.RecipeCallbacksMaster.Enact();
-            Roost.World.Recipes.SituationTracker.Enact();
 
             Roost.World.Elements.ElementRandomDecay.Enact();
             Roost.World.Elements.ElementVFXMaster.Enact();
@@ -97,7 +98,6 @@ namespace Roost.Enactors
             Roost.World.Elements.StackShroudMaster.Enact();
             Roost.World.Elements.StackNoStackMaster.Enact();
             Roost.World.Elements.ElementHiddenAutoPurger.Enact();
-            Roost.World.Elements.SelectedStackService.Enact();
 
             Roost.World.Slots.XAngelMaster.Enact();
             Roost.World.Slots.SlotPresenceReqsMaster.Enact();

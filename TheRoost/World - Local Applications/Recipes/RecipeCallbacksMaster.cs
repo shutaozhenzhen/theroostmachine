@@ -92,11 +92,11 @@ namespace Roost.World.Recipes
             if (callbackId == null)
                 return;
 
-            var fullCallbackId = CompleteCallbackId(SituationTracker.currentSituation, callbackId);
+            var fullCallbackId = CompleteCallbackId(RavensEye.currentSituation, callbackId);
             var callbackRecipeId = Machine.GetLeverForCurrentPlaythrough(fullCallbackId);
             if (callbackRecipeId == null)
             {
-                Birdsong.TweetLoud($"Trying to use the callback '{callbackId}' in '{SituationTracker.currentSituation.RecipeId}', but the callback is not set");
+                Birdsong.TweetLoud($"Trying to use the callback '{callbackId}' in '{RavensEye.currentSituation.RecipeId}', but the callback is not set");
 
                 List<Recipe> cachedRecipes = getCachedRecipesList(linkDetails) as List<Recipe>;
                 cachedRecipes.Clear();
