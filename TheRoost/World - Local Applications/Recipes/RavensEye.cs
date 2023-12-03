@@ -28,8 +28,6 @@ namespace Roost.World
                  original: Machine.GetMethod<RequiresExecutionState>(nameof(SituationState.Exit)),
                  prefix: typeof(RavensEye).GetMethodInvariant(nameof(PopCurrentSituation)));
 
-            //unused?
-            
             Machine.Patch(
                 original: typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.OpenAt)),
                 prefix: typeof(RavensEye).GetMethodInvariant(nameof(SetSelectedToken))
