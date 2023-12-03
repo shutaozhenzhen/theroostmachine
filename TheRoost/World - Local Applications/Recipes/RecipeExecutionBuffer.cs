@@ -154,11 +154,6 @@ namespace Roost.World.Recipes
             overlayUpdates.Clear();
         }
 
-        public static void ScheduleRetirement(Token token, RetirementVFX vfx)
-        {
-            ScheduleVFX(token, vfx);
-            retirements.Add(token);
-        }
 
         public static void ScheduleDecay(Token token, RetirementVFX vfx)
         {
@@ -224,12 +219,6 @@ namespace Roost.World.Recipes
             }
         }
 
-        public static void ScheduleDecay(Token token, RetirementVFX vfx)
-        {
-            Element element = Machine.GetEntity<Element>(token.PayloadEntityId);
-            ScheduleTransformation(token, element.DecayTo, vfx);
-        }
-
         public static void ScheduleTransformation(Token token, string transformTo, RetirementVFX vfx)
         {
             transformTo = Elegiast.Scribe.TryReplaceWithLever(transformTo);
@@ -286,14 +275,6 @@ namespace Roost.World.Recipes
             }
 
             vfxs[token] = vfx;
-        }
-
-        public static void ScheduleOverlay(Token token)
-        {
-            if (!overlayUpdates.Contains(token))
-            {
-                overlayUpdates.Add(token);
-            }
         }
 
         public static void ScheduleOverlay(Token token)

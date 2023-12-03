@@ -20,7 +20,7 @@ namespace Roost.World.Beauty
                 return true;
 
             //filtering happens only when we already reset the crossroads for the current context
-            Twins.Crossroads.MarkAllLocalTokens(new(){ token });
+            Twins.Crossroads.MarkAllLocalTokens(new List<Token>(){ token });
             Twins.Crossroads.MarkLocalToken(token);
             bool result = expression.value;
             Crossroads.UnmarkAllLocalTokens();

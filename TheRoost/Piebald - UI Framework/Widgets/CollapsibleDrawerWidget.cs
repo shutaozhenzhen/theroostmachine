@@ -42,22 +42,22 @@
             SetFitContentHeight();
             SetExpandWidth();
             this.VerticalFit = ContentSizeFitter.FitMode.MinSize;
-            AddContent(mountPoint =>
+            AddContent(mountPoint0 =>
             {
-                mountPoint.AddVerticalLayoutGroup($"Collapsible_row")
+                mountPoint0.AddVerticalLayoutGroup($"Collapsible_row")
                 .SetExpandWidth()
                 .SetFitContentHeight()
-                .AddContent(mountPoint =>
+                .AddContent(mountPoint1 =>
                 {
                     // header row
-                    Header = mountPoint.AddHorizontalLayoutGroup($"Collapsible_row_header")
+                    Header = mountPoint1.AddHorizontalLayoutGroup($"Collapsible_row_header")
                     .SetExpandWidth()
                     .SetMinHeight(40)
                     .WithPointerSounds()
                     .SetPadding(5)
-                    .AddContent(mountPoint =>
+                    .AddContent(mountPoint2 =>
                     {
-                        HeaderBackground = mountPoint.AddImage("Background")
+                        HeaderBackground = mountPoint2.AddImage("Background")
                             .SetIgnoreLayout()
                             .SetLeft(0, 0)
                             .SetRight(1, 0)
@@ -67,7 +67,7 @@
                             .SliceImage()
                             .SetSprite("internal:window_bg");
 
-                        HeaderText = mountPoint.AddText("Label")
+                        HeaderText = mountPoint2.AddText("Label")
                             .SetExpandWidth()
                             .SetExpandHeight()
                             .SetFontSize(20)
@@ -75,7 +75,7 @@
                             .SetOverflowMode(TextOverflowModes.Ellipsis)
                             .SetVerticalAlignment(VerticalAlignmentOptions.Middle);
 
-                        ExpandButton = mountPoint.AddIconButton("ExpandButton")
+                        ExpandButton = mountPoint2.AddIconButton("ExpandButton")
                             .SetAnchorAndSize(new Vector2(1, 0), new Vector2(40, 40))
                             .SetPreferredWidth(40)
                             .SetPreferredHeight(40)
@@ -86,8 +86,8 @@
                     });
 
                     // The drawer itself
-                    Drawer = mountPoint;
-                    DrawerContent = mountPoint.AddVerticalLayoutGroup()
+                    Drawer = mountPoint1;
+                    DrawerContent = mountPoint1.AddVerticalLayoutGroup()
                     .SetPadding(20, 0, 0, 0)
                     .SetExpandWidth()
                     .SetFitContentHeight();

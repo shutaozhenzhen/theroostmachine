@@ -62,8 +62,8 @@ namespace Roost.World.Beauty
 
         public static WindowStyle DefaultFromTheme(LegacyTheme theme)
         {
-            EntityData data = new();
-            WindowStyle defaultStyle = new(data, null)
+            EntityData data = new EntityData();
+            WindowStyle defaultStyle = new WindowStyle(data, null)
             {
                 BodyColor = theme?.BodyColor,
                 HeaderColor = theme?.HeaderColor,

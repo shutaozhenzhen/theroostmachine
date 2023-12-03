@@ -40,8 +40,8 @@ namespace Roost.World.Beauty
 
         public static NoteStyle DefaultFromTheme(LegacyTheme theme)
         {
-            EntityData data = new();
-            NoteStyle defaultStyle = new(data, null)
+            EntityData data = new EntityData();
+            NoteStyle defaultStyle = new NoteStyle(data, null)
             {
                 Color = theme?.HeaderColor,
                 PreviousButton = theme?.SecondaryButtons,

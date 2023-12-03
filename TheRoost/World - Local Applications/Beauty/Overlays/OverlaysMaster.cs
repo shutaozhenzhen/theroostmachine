@@ -63,7 +63,7 @@ namespace Roost.World.Beauty
         {
             // You have to do it in two loops, otherwise calling DestroyImmediate on the content of the very list you're looping over
             // leads to missed children
-            List<GameObject> toDestroy = new();
+            List<GameObject> toDestroy = new List<GameObject>();
             foreach (Transform child in imageGameObject.transform)
             {
                 if (child.gameObject.name.StartsWith("Overlay_")) toDestroy.Add(child.gameObject);
@@ -141,8 +141,8 @@ namespace Roost.World.Beauty
 
             if (overlays == null || overlays.Count == 0 || element.Lifetime != 0) return;
 
-            manifestationGO ??= token.gameObject;
-            baseImageGO ??= GetImageGOBasedOnManifestationType(token, manifestationGO);
+            manifestationGO = manifestationGO ?? token.gameObject;
+            baseImageGO = baseImageGO ?? GetImageGOBasedOnManifestationType(token, manifestationGO);
 
             ApplyOverlaysToGO(token, baseImageGO, overlays);
         }
@@ -150,7 +150,7 @@ namespace Roost.World.Beauty
         public static void ApplyOverlaysToGO(Token token, GameObject baseImageGO, List<OverlayEntity> overlays)
         { 
             int implicitLayerId = 1;
-            HashSet<GameObject> alreadyAssignedLayers = new();
+            HashSet<GameObject> alreadyAssignedLayers = new HashSet<GameObject>();
 
             foreach (OverlayEntity overlay in overlays)
             {
@@ -227,7 +227,7 @@ namespace Roost.World.Beauty
             layer.name = layerName;
             layer.GetComponent<Image>().sprite = null;
 
-            List<GameObject> toDestroy = new();
+            List<GameObject> toDestroy = new List<GameObject>();
             foreach (Transform child in layer.transform)
             {
                 toDestroy.Add(child.gameObject);

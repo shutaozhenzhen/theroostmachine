@@ -65,8 +65,8 @@ namespace Roost.World.Beauty
 
         public static VerbStyle DefaultFromTheme(LegacyTheme theme)
         {
-            EntityData data = new();
-            VerbStyle defaultStyle = new(data, null)
+            EntityData data = new EntityData();
+            VerbStyle defaultStyle = new VerbStyle(data, null)
             {
                 Window = WindowStyle.DefaultFromTheme(theme)
             };
