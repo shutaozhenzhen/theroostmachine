@@ -81,6 +81,7 @@ namespace Roost.Enactors
         internal static void Enact()
         {
             Roost.World.RavensEye.Enact();
+            Roost.World.OffstageInstantiator.Enact();
 
             Roost.World.Verbs.VerbUniquenessMaster.Enact();
             Roost.World.Verbs.VerbStickySlotsMaster.Enact();
