@@ -97,7 +97,7 @@ namespace Roost.Enactors
             Roost.World.Elements.StackDisplaceMaster.Enact();
             Roost.World.Elements.StackShroudMaster.Enact();
             Roost.World.Elements.StackNoStackMaster.Enact();
-            Roost.World.Elements.ElementHiddenAutoPurger.Enact();
+            Roost.World.Elements.ElementAutoPurger.Enact();
 
             Roost.World.Slots.XAngelMaster.Enact();
             Roost.World.Slots.SlotPresenceReqsMaster.Enact();

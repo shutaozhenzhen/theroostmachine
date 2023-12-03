@@ -5,7 +5,7 @@ using SecretHistories.Services;
 
 namespace Roost.World.Elements
 {
-    static class ElementHiddenAutoPurger
+    static class ElementAutoPurger
     {
         const string AUTOPURGE = "autopurge";
 
@@ -15,7 +15,7 @@ namespace Roost.World.Elements
 
             Machine.Patch<OutputSphere>(
                 original: nameof(Sphere.AcceptToken),
-                prefix: typeof(ElementHiddenAutoPurger).GetMethodInvariant(nameof(AcceptToken)));
+                prefix: typeof(ElementAutoPurger).GetMethodInvariant(nameof(AcceptToken)));
         }
 
         static bool AcceptToken(Token token)
