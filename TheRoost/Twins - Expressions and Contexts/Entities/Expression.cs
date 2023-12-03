@@ -2,6 +2,7 @@
 using System.Linq;
 
 using SecretHistories.Spheres;
+using SecretHistories.UI;
 
 using NCalc;
 
@@ -68,6 +69,30 @@ namespace Roost.Twins.Entities
         public bool isSimpleNumber()
         {
             return references.Length == 0;
+        }
+
+
+    }
+}
+
+namespace Roost.Twins
+{
+    using Roost.Twins.Entities;
+
+    public static class ExpressionExtensions
+    {
+        public static bool Matches(this FucineExp<bool> expression, Token token)
+        {
+            if (expression.isUndefined)
+                return true;
+
+            //filtering happens only when we already reset the crossroads for the current context
+            Crossroads.MarkAllLocalTokens(token);
+            Crossroads.MarkLocalToken(token);
+            bool result = expression.value;
+            Crossroads.UnmarkAllLocalTokens();
+
+            return result;
         }
     }
 }

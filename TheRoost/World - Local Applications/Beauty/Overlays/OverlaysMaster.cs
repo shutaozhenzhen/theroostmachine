@@ -1,18 +1,21 @@
-﻿using Roost.Beauty;
-using Roost.Piebald;
-using Roost.World.Elements;
-using Roost.World.Recipes;
+﻿using System;
+using System.Collections.Generic;
+
+
 using SecretHistories;
 using SecretHistories.Abstract;
 using SecretHistories.Entities;
 using SecretHistories.Manifestations;
 using SecretHistories.UI;
-using System;
-using System.Collections.Generic;
-using TMPro;
+
 using UnityEngine;
-using UnityEngine.InputSystem.HID;
 using UnityEngine.UI;
+
+using Roost.Beauty;
+using Roost.Piebald;
+using Roost.World.Recipes;
+using Roost.Twins;
+
 using Random = UnityEngine.Random;
 
 namespace Roost.World.Beauty
@@ -167,7 +170,9 @@ namespace Roost.World.Beauty
 
                 // MatchesExpression also returns true if the expression.isUndefined, no need to check it here
                 //Birdsong.Sing(Birdsong.Incr(), $"Checking the expression...");
-                if (!token.MatchesExpression(overlay.Expression)) continue;
+                
+                if (!overlay.Expression.Matches(token)) 
+                    continue;
 
                 //Birdsong.Sing(Birdsong.Incr(), $"Valid expression. This overlay must be displayed.");
                 // Apply Overlay

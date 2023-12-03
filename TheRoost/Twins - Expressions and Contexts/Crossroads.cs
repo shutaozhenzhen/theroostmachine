@@ -172,6 +172,11 @@ namespace Roost.Twins
             allLocalTokens.Set(tokens);
         }
 
+        public static void MarkAllLocalTokens(Token token)
+        {
+            allLocalTokens.Set(token);
+        }
+
         public static void MarkLocalToken(Token token)
         {
             singleLocalToken.Set(token);
