@@ -44,8 +44,7 @@ namespace Roost.World.Beauty
 
         public static LegacyTheme GetCurrentTheme()
         {
-            Legacy legacy = Watchman.Get<Stable>().Protag().ActiveLegacy;
-            return legacy.RetrieveProperty<LegacyTheme>(THEME_PROPERTY);
+            return Watchman.Get<Stable>().Protag().ActiveLegacy.RetrieveProperty<LegacyTheme>(THEME_PROPERTY);
         }
 
         public static void ApplyThemeToUI()
@@ -101,9 +100,10 @@ namespace Roost.World.Beauty
         {
             // Compute the verb's style and apply it to the token
             // Get the unique VerbStyle, merge it with the base theme's verb style, or if it doesn't exist, with itself. If none exist, return.
-            VerbManifestation verb = __instance as VerbManifestation;
             VerbStyle style = GetComputedVerbStyle(manifestable.EntityId);
             if (style == null) return;
+
+            VerbManifestation verb = __instance as VerbManifestation;
 
             // For each property, if not null, apply it in the right way
             ReplaceSprite(verb.gameObject.FindInChildren("Token"), style?.BorderImage);
@@ -128,10 +128,11 @@ namespace Roost.World.Beauty
 
         public static void PatchSituationWindowOnSpawn(MonoBehaviour __instance, Situation newSituation)
         {
-            GameObject window = (__instance as SituationWindow).gameObject;
             VerbStyle verbStyle = GetComputedVerbStyle(newSituation.EntityId);
             WindowStyle style = verbStyle?.Window;
             if (style == null) return;
+
+            GameObject window = (__instance as SituationWindow).gameObject;
 
             ReplaceColor(window.FindInChildren("BG_Body", true), style._BodyColor);
             ReplaceSprite(window.FindInChildren("BG_Body", true), style.BodyImage);
