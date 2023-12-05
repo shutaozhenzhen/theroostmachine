@@ -69,22 +69,11 @@ namespace Roost.World
         {
             lastHoveredElementStack = __instance;
 
-            if (!(lastHoveredElementStack.Payload is ElementStack))
-                return;
-
             // Not clean, but we call the Meniscate accessibility window again for reasons.
             // (the reasons: we can't easily patch the right method so SetHoveredToken is called after the event fires up and the magnifying glass appears.
             // Because of that, we force it to appear again and update itself a second time right after the first event fired. In practice, this is unnoticeable.)
-            var manifestation = __instance.GetManifestation() as BasicManifestation;
-            var meniscate = Watchman.Get<Meniscate>();
-            if (meniscate != null) //eg we might have a face down card on the credits page - in the longer term, of course, this should get interfaced
-            {
-                var _flipHelper = new FlipHelper(manifestation);
-                if (_flipHelper.CurrentOrientation != FlipHelper.TargetOrientation.FaceDown)
-                    meniscate.SetHighlightedElement(__instance.PayloadEntityId, __instance.Payload.Quantity);
-                else
-                    meniscate.SetHighlightedElement(null);
-            }
+            if (__instance.GetManifestation() is CardManifestation manifestation)
+                manifestation.OnPointerEnter(null);
         }
 
         public static void UnsetHoveredToken(Token __instance)
