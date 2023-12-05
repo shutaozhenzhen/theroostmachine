@@ -107,7 +107,11 @@ namespace Roost.World.Beauty
             // Clear any potential remaining previous overlay
             ClearOverlays(___artwork.gameObject);
 
-            ApplyOverlaysToManifestation(RavensEye.lastClickedElementStack, ___artwork.gameObject);
+            if (ApplyOverlaysToManifestation(RavensEye.lastClickedElementStack, ___artwork.gameObject))
+            {
+                if (image.name == "_x")
+                    ___artwork.sprite = ResourcesManager.GetSpriteForElement("_0");
+            }
         }
 
         public static void ScheduleOverlayUpdate(ElementStack __instance)
@@ -130,12 +134,13 @@ namespace Roost.World.Beauty
         }
 
         // Optional second parameter, to work around the fact that when this is called, the token isn't always already holding the right manifestation in its gameObject ref
-        public static void ApplyOverlaysToManifestation(Token token, GameObject baseImageGO)
+        public static bool ApplyOverlaysToManifestation(Token token, GameObject baseImageGO)
         {
             Element element = Watchman.Get<Compendium>().GetEntityById<Element>(token.PayloadEntityId);
             List<OverlayEntity> overlays = element.RetrieveProperty<List<OverlayEntity>>(OVERLAYS_PROPERTY);
 
-            if (overlays == null || overlays.Count == 0 || element.Lifetime != 0) return;
+            if (overlays == null || overlays.Count == 0 || element.Lifetime != 0) 
+                return false;
 
             if (baseImageGO == null)
                 baseImageGO = GetImageGOBasedOnManifestationType(token.GetManifestation());
@@ -195,6 +200,8 @@ namespace Roost.World.Beauty
             // support them in the future, this won't come back to bite us.
             var decay = baseImageGO.FindInChildren("DecayView", true);
             if (decay != null) decay.transform.SetAsLastSibling();
+
+            return true;
         }
 
         private static GameObject GetImageGOBasedOnManifestationType(IManifestation manifestation)
