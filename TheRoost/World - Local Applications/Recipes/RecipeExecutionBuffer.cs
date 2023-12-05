@@ -69,7 +69,10 @@ namespace Roost.World.Recipes
             {
                 var toElement = transformations[token];
                 if (string.IsNullOrWhiteSpace(toElement))
+                {
                     token.Retire(vfxs.ContainsKey(token) ? vfxs[token] : RetirementVFX.None);
+                    vfxs.Remove(token);
+                }
                 else
                 {
                     ElementStack stack = token.Payload as ElementStack;
@@ -254,14 +257,9 @@ namespace Roost.World.Recipes
 
         public static void ScheduleVFX(Token token, RetirementVFX vfx)
         {
-            if (vfx == RetirementVFX.None) //default means "no vfx"
+            //default means "use whatever is already scheduled"
+            if (vfx == RetirementVFX.Default)
                 return;
-
-            if (vfx == RetirementVFX.Default) //none means "remove existing vfx"
-            {
-                vfxs.Remove(token);
-                return;
-            }
 
             vfxs[token] = vfx;
         }

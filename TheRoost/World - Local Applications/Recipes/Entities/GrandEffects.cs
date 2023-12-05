@@ -333,13 +333,7 @@ namespace Roost.World.Recipes.Entities
 
             foreach (TokenFilterSpec tokenFilterSpec in Decays)
                 foreach (Token token in tokenFilterSpec.GetTokens(tokens))
-                {
-                    RetirementVFX vfx = DecaysVFX != RetirementVFX.Default 
-                        ? DecaysVFX 
-                        : Watchman.Get<Compendium>().GetEntityById<Element>(token.PayloadEntityId).RetrieveProperty<RetirementVFX>("decayvfx");
-
-                    RecipeExecutionBuffer.ScheduleDecay(token, vfx);
-                }
+                    RecipeExecutionBuffer.ScheduleDecay(token, DecaysVFX);
 
             RecipeExecutionBuffer.ApplyTransformations();
         }
