@@ -224,7 +224,7 @@ namespace Roost.World.Recipes.Entities
                     RecipeExecutionBuffer.ScheduleQuantityChange(reactingToken, needChange, RetirementVFX.None);
                     break;
                 case MorphEffectsExtended.Spawn:
-                    RecipeExecutionBuffer.ScheduleSpawn(reactingToken.Sphere, this.Id, Level.value * catalystQuantity * reactingElementQuantity, VFX);
+                    RecipeExecutionBuffer.ScheduleCreations(reactingToken.Sphere, this.Id, Level.value * catalystQuantity * reactingElementQuantity, VFX);
                     break;
                 case MorphEffectsExtended.SetMutation:
                     RecipeExecutionBuffer.ScheduleMutation(reactingToken, this.Id, Level.value * catalystQuantity * reactingElementQuantity, false, VFX);
@@ -240,6 +240,7 @@ namespace Roost.World.Recipes.Entities
                 case MorphEffectsExtended.DeckDraw:
                     Legerdemain.Deal(this.Id, reactingToken.Sphere, Level.value * catalystQuantity * reactingElementQuantity, VFX);
                     break;
+
                 case MorphEffectsExtended.DeckShuffle:
                     RecipeExecutionBuffer.ScheduleDeckRenew(this.Id);
                     break;
@@ -340,7 +341,7 @@ namespace Roost.World.Recipes.Entities
                     return false;
 
                 case MorphEffectsExtended.Apply:
-                    RecipeExecutionBuffer.ApplyAllEffects();
+                    RecipeExecutionBuffer.ApplyGameEffects();
                     break;
 
                 case MorphEffectsExtended.Break:
@@ -392,8 +393,8 @@ namespace Roost.World.Recipes.Entities
         {
             var catalyst = new Dictionary<string, int>() { { ___input.text.Trim(), 1 } };
             GrandEffects.RunXTriggers(____elementDrydock.Tokens, catalyst);
-            RecipeExecutionBuffer.ApplyAllEffects();
-            RecipeExecutionBuffer.ApplyVFX();
+            RecipeExecutionBuffer.ApplyGameEffects();
+            RecipeExecutionBuffer.ApplyDecorativeEffects();
             return false;
         }
     }

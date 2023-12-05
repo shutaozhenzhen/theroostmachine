@@ -126,8 +126,8 @@ namespace SecretHistories.Spheres.Angels
 
                 GrandEffects.RunXTriggers(token, new Dictionary<string, int>() { { _trigger, 1 } });
 
-                RecipeExecutionBuffer.ApplyAllEffects();
-                RecipeExecutionBuffer.ApplyVFX();
+                RecipeExecutionBuffer.ApplyGameEffects();
+                RecipeExecutionBuffer.ApplyDecorativeEffects();
 
                 return true;
             }

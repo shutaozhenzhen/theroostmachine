@@ -24,24 +24,23 @@ namespace Roost.World.Recipes
         private static readonly Dictionary<Token, RetirementVFX> vfxs = new Dictionary<Token, RetirementVFX>();
         private static readonly HashSet<Token> overlayUpdates = new HashSet<Token>();
 
-        public static void ApplyAllEffects()
+        public static void ApplyGameEffects()
         {
             ApplyMutations();
             ApplyQuantityChanges();
             ApplyTransformations();
             ApplyCreations();
             ApplyMovements();
+        }
+
+        public static void ApplyDecorativeEffects()
+        {
+            ApplyVFX();
             ApplyOverlayUpdates();
         }
 
-        public static void ApplyDeckRenews()
-        {
-            foreach (string deckId in deckRenews)
-                Legerdemain.RenewDeck(deckId);
-
-            deckRenews.Clear();
-        }
-
+        ///////////////////////////////////////////////
+        #region GAMEPLAY EFFECTS
         public static void ApplyMutations()
         {
             foreach (KeyValuePair<MutationEffect, HashSet<IHasAspects>> mutation in mutations)
@@ -114,8 +113,39 @@ namespace Roost.World.Recipes
 
             movements.Clear();
         }
+        #endregion
 
-        //applied separately
+        ///////////////////////////////////////////////
+        #region DECORATIVE EFFECTS
+        public static void ApplyVFX()
+        {
+            foreach (Token token in vfxs.Keys)
+                if (token.Sphere.SupportsVFX())
+                    token.Remanifest(vfxs[token]);
+
+            vfxs.Clear();
+        }
+
+        public static void ApplyOverlayUpdates()
+        {
+            foreach (Token token in overlayUpdates)
+                if (token?.IsValid() == true)
+                    OverlaysMaster.ApplyOverlaysToManifestation(token);
+
+            overlayUpdates.Clear();
+        }
+        #endregion
+
+        ///////////////////////////////////////////////
+        #region EXOTIC EFFECTS
+        public static void ApplyDeckRenews()
+        {
+            foreach (string deckId in deckRenews)
+                Legerdemain.RenewDeck(deckId);
+
+            deckRenews.Clear();
+        }
+
         public static void ApplyRecipeInductions()
         {
             Character protag = Watchman.Get<Stable>().Protag();
@@ -134,58 +164,8 @@ namespace Roost.World.Recipes
 
             inductions.Clear();
         }
+        #endregion
 
-        public static void ApplyVFX()
-        {
-            foreach (Token token in vfxs.Keys)
-                if (token.Sphere.SupportsVFX())
-                    token.Remanifest(vfxs[token]);
-
-            vfxs.Clear();
-        }
-
-        public static void ApplyOverlayUpdates()
-        {
-            foreach (Token token in overlayUpdates)
-            {
-                if (token == null) continue;
-                OverlaysMaster.ApplyOverlaysToManifestation(token);
-            }
-            overlayUpdates.Clear();
-        }
-
-
-        public static void ScheduleDecay(Token token, RetirementVFX vfx)
-        {
-            Element element = Machine.GetEntity<Element>(token.PayloadEntityId);
-            ScheduleTransformation(token, element.DecayTo, vfx);
-        }
-
-        public static void ScheduleQuantityChange(Token token, int amount, RetirementVFX vfx)
-        {
-            if (quantityChanges.ContainsKey(token))
-                quantityChanges[token] += amount;
-            else
-                quantityChanges[token] = amount;
-
-            ScheduleVFX(token, vfx);
-        }
-
-        public static void ScheduleDeckRenew(string deckId)
-        {
-            deckRenews.Add(deckId);
-        }
-
-        public static void ScheduleUniqueMutation(Token token, string mutate, int level, bool additive, RetirementVFX vfx, string groupId)
-        {
-            if (!string.IsNullOrWhiteSpace(groupId))
-                foreach (MutationEffect mutation in mutations.Keys)
-                    if (mutation.uniqueGroupId == groupId)
-                        return;
-
-            ScheduleMutation(token.Payload, mutate, level, additive, groupId);
-            ScheduleVFX(token, vfx);
-        }
 
         public static void ScheduleMutation(Token token, string mutate, int level, bool additive, RetirementVFX vfx)
         {
@@ -219,6 +199,22 @@ namespace Roost.World.Recipes
             }
         }
 
+        public static void ScheduleQuantityChange(Token token, int amount, RetirementVFX vfx)
+        {
+            if (quantityChanges.ContainsKey(token))
+                quantityChanges[token] += amount;
+            else
+                quantityChanges[token] = amount;
+
+            ScheduleVFX(token, vfx);
+        }
+
+        public static void ScheduleDecay(Token token, RetirementVFX vfx)
+        {
+            Element element = Machine.GetEntity<Element>(token.PayloadEntityId);
+            ScheduleTransformation(token, element.DecayTo, vfx);
+        }
+
         public static void ScheduleTransformation(Token token, string transformTo, RetirementVFX vfx)
         {
             transformTo = Elegiast.Scribe.TryReplaceWithLever(transformTo);
@@ -233,7 +229,7 @@ namespace Roost.World.Recipes
             ScheduleVFX(token, vfx);
         }
 
-        public static void ScheduleSpawn(Sphere sphere, string elementId, int amount, RetirementVFX vfx)
+        public static void ScheduleCreations(Sphere sphere, string elementId, int amount, RetirementVFX vfx)
         {
             elementId = Elegiast.Scribe.TryReplaceWithLever(elementId);
 
@@ -256,13 +252,6 @@ namespace Roost.World.Recipes
             ScheduleVFX(token, vfx);
         }
 
-        public static void ScheduleRecipeInduction(Situation situation, LinkedRecipeDetails link)
-        {
-            if (inductions.ContainsKey(situation) == false)
-                inductions[situation] = new List<LinkedRecipeDetails>();
-            inductions[situation].Add(link);
-        }
-
         public static void ScheduleVFX(Token token, RetirementVFX vfx)
         {
             if (vfx == RetirementVFX.None) //default means "no vfx"
@@ -280,9 +269,20 @@ namespace Roost.World.Recipes
         public static void ScheduleOverlay(Token token)
         {
             if (!overlayUpdates.Contains(token))
-            {
                 overlayUpdates.Add(token);
-            }
+        }
+
+
+        public static void ScheduleDeckRenew(string deckId)
+        {
+            deckRenews.Add(deckId);
+        }
+
+        public static void ScheduleRecipeInduction(Situation situation, LinkedRecipeDetails link)
+        {
+            if (inductions.ContainsKey(situation) == false)
+                inductions[situation] = new List<LinkedRecipeDetails>();
+            inductions[situation].Add(link);
         }
 
         private struct MutationEffect

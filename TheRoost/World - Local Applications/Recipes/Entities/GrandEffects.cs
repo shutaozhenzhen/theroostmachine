@@ -54,7 +54,7 @@ namespace Roost.World.Recipes.Entities
 
             RunGrandEffects(targetSphere, true);
 
-            RecipeExecutionBuffer.ApplyVFX();
+            RecipeExecutionBuffer.ApplyDecorativeEffects();
             RecipeExecutionBuffer.ApplyRecipeInductions();
             Crossroads.ClearRedirectSpheres();
         }
@@ -65,7 +65,7 @@ namespace Roost.World.Recipes.Entities
             RunVerbXTriggers(situation);
             RunElementXTriggers(situation);
 
-            RecipeExecutionBuffer.ApplyVFX();
+            RecipeExecutionBuffer.ApplyDecorativeEffects();
             RecipeExecutionBuffer.ApplyRecipeInductions();
             Crossroads.ClearRedirectSpheres();
         }
@@ -175,7 +175,7 @@ namespace Roost.World.Recipes.Entities
 
             RunXTriggers(tokens, allCatalysts);
 
-            RecipeExecutionBuffer.ApplyAllEffects();
+            RecipeExecutionBuffer.ApplyGameEffects();
         }
 
 
@@ -188,7 +188,7 @@ namespace Roost.World.Recipes.Entities
             AspectsDictionary allCatalysts = situation.GetAspects(true);
             RunXTriggers(tokens, allCatalysts);
 
-            RecipeExecutionBuffer.ApplyAllEffects();
+            RecipeExecutionBuffer.ApplyGameEffects();
         }
 
         public void RunXPans(Sphere initialSphere)
@@ -212,7 +212,9 @@ namespace Roost.World.Recipes.Entities
             }
 
             Crossroads.MarkLocalSphere(initialSphere);
-            RecipeExecutionBuffer.ApplyAllEffects();
+
+            RecipeExecutionBuffer.ApplyGameEffects();
+            RecipeExecutionBuffer.ApplyDeckRenews();
         }
 
         /*
@@ -315,7 +317,7 @@ namespace Roost.World.Recipes.Entities
                         RecipeExecutionBuffer.ScheduleTransformation(token, string.Empty, DestroyVFX);
                 }
                 else
-                    RecipeExecutionBuffer.ScheduleSpawn(sphere, effect.targetElement, level, CreateVFX);
+                    RecipeExecutionBuffer.ScheduleCreations(sphere, effect.targetElement, level, CreateVFX);
             }
 
             RecipeExecutionBuffer.ApplyTransformations();
