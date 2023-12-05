@@ -24,7 +24,7 @@ namespace Roost.World.Recipes.Entities
         Destroy, Decay, //destructive forces
         LeverFuture, LeverPast, TimeSpend, TimeSet, Trigger, Redirect, //exotique
         Induce, Link, Move, //wot
-        Apply, Break, CustomOp //wotter
+        Apply, Break, Func //wotter
     }
 
     public class RefMorphDetails : AbstractEntity<RefMorphDetails>, IQuickSpecEntity
@@ -172,6 +172,14 @@ namespace Roost.World.Recipes.Entities
                     if (!xtriggers.ContainsKey(this.Id))
                         log.LogWarning($"FINAL CATALYST FOR A REDIRECTING XTRIGGER {this} ISN'T SET");
 
+                    break;
+
+                case MorphEffectsExtended.Func:
+                    if (!specialMorphEffects.ContainsKey(Id))
+                        Birdsong.TweetLoud($"Morph effect '{this}' has a custom effect '{Id}' but that effect isn't defined");
+
+                    if (specialOnPostImports.ContainsKey(Id))
+                        specialOnPostImports[Id].Invoke(this, log, compendium);
                     break;
 
                 //doesn't use Id
@@ -350,6 +358,10 @@ namespace Roost.World.Recipes.Entities
                     Crossroads.UnmarkSource();
                     return true;
 
+                case MorphEffectsExtended.Func:
+                    specialMorphEffects[Id].Invoke(reactingToken, reactingElementId, reactingElementQuantity, catalystQuantity, this);
+                    break;
+
                 case MorphEffectsExtended.Move:
                     var targetSpheres = ToPath.GetSpheresByPath();
                     if (targetSpheres.Count > 0)
@@ -397,5 +409,17 @@ namespace Roost.World.Recipes.Entities
             RecipeExecutionBuffer.ApplyDecorativeEffects();
             return false;
         }
+
+        public delegate void CustomMorphEffect(Token reactingToken, string reactingElementId, int reactingElementQuantity, int catalystQuantity, RefMorphDetails morphDetails);
+        public delegate void OnPostImportCustomOp(RefMorphDetails morphEffect, ContentImportLog log, Compendium compendium);
+        static Dictionary<string, CustomMorphEffect> specialMorphEffects = new Dictionary<string, CustomMorphEffect>();
+        static Dictionary<string, OnPostImportCustomOp> specialOnPostImports = new Dictionary<string, OnPostImportCustomOp>();
+        public static void AddSpecialEffect(string morphEffectName, CustomMorphEffect morphEffectAction, OnPostImportCustomOp onPostImport = null)
+        {
+            specialMorphEffects[morphEffectName] = morphEffectAction;
+            if (onPostImport != null)
+                specialOnPostImports[morphEffectName] = onPostImport;
+        }
+
     }
 }
