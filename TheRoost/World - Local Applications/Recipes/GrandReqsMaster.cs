@@ -23,7 +23,8 @@ namespace Roost.World.Recipes
                 original: typeof(Situation).GetMethodInvariant(nameof(Situation.GetAspects)),
                 prefix: typeof(GrandReqsMaster).GetMethodInvariant(nameof(MarkSituation)));
 
-            AtTimeOfPower.RecipeRequirementsCheck.Schedule<Recipe, AspectsInContext>(CheckGrandReqsForSituation);
+            Machine.Patch<Recipe>(nameof(Recipe.RequirementsSatisfiedBy),
+                postfix: typeof(GrandReqsMaster).GetMethodInvariant(nameof(CheckGrandReqsForSituation)));
         }
 
         //Situation.GetAspectsInContext()
@@ -37,14 +38,16 @@ namespace Roost.World.Recipes
             }
         }
 
-        private static bool CheckGrandReqsForSituation(Recipe __instance, AspectsInContext aspectsInContext)
+        private static void CheckGrandReqsForSituation(Recipe __instance, ref bool __result)
         {
+            if (__result == false)
+                return;
+
             Dictionary<FucineExp<int>, FucineExp<int>> grandreqs = __instance.RetrieveProperty(GRAND_REQS) as Dictionary<FucineExp<int>, FucineExp<int>>;
             if (grandreqs == null || grandreqs.Count == 0)
-                return true;
+                return;
 
-            bool result = CheckGrandReqs(grandreqs);
-            return result;
+            __result = CheckGrandReqs(grandreqs);
         }
 
         public static bool CheckGrandReqs(Dictionary<FucineExp<int>, FucineExp<int>> grandreqs)
