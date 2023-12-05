@@ -25,7 +25,7 @@ namespace Roost.Beauty
         // Id of the layer. If left undefined, the code will assign an incrementing Overlay_X layer id.
         // When the overlay applying process is executed, two overlays cannot use the same layer id. Once a layer id is used, next overlays using the
         // same id are skipped. You can use that to write sets of overlays switching between two visuals based on a condition.
-        [FucineValue(DefaultValue = "")]
+        [FucineValue(DefaultValue = null)]
         public string Layer { get; set; }
 
         // The "color". If Grayscale is false, it will tint the image. If set to true, it will tint and control the saturation of the image.

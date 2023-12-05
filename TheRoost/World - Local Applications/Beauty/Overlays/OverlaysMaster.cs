@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 
-
 using SecretHistories;
 using SecretHistories.Abstract;
 using SecretHistories.Entities;
@@ -16,8 +15,6 @@ using Roost.Beauty;
 using Roost.Piebald;
 using Roost.World.Recipes;
 using Roost.Twins;
-
-using Random = UnityEngine.Random;
 
 namespace Roost.World.Beauty
 {
@@ -116,12 +113,10 @@ namespace Roost.World.Beauty
         public static void ScheduleOverlayUpdate(ElementStack __instance)
         {
             Token token = __instance.GetToken();
+
             // On save load, the payload (ElementStack) isn't already tied to a Token, and we don't want to catch this case anyway.
-            if(token != null)
-            {
-                //Birdsong.Sing(Birdsong.Incr(), "SetMutation! Add this token to the buffered overlay updates...");
+            if (token != null)
                 RecipeExecutionBuffer.ScheduleOverlay(token);
-            }
         }
 
         public static void ApplyOverlaysOnStoredManifestation(IManifestable manifestable, Image ___aspectImage)
@@ -159,22 +154,21 @@ namespace Roost.World.Beauty
                 implicitLayerId++;
 
                 GameObject overlayLayer = baseImageGO.FindInChildren(layerName, true);
-                Image imageComp;
+
+                Image imageComp = overlayLayer?.GetComponent<Image>();
                 if (overlayLayer != null)
                 {
-                    if (alreadyAssignedLayers.Contains(overlayLayer)) continue;
-                    imageComp = overlayLayer.GetComponent<Image>();
+                    if (alreadyAssignedLayers.Contains(overlayLayer))
+                        continue;
+
                     if (imageComp != null)
                         overlayLayer.SetActive(false);
                 }
 
                 // MatchesExpression also returns true if the expression.isUndefined, no need to check it here
-                //Birdsong.Sing(Birdsong.Incr(), $"Checking the expression...");
-                
-                if (!overlay.Expression.Matches(token)) 
+                if (!overlay.Expression.Matches(token))
                     continue;
 
-                //Birdsong.Sing(Birdsong.Incr(), $"Valid expression. This overlay must be displayed.");
                 // Apply Overlay
                 if (overlayLayer == null)
                 {
@@ -195,7 +189,6 @@ namespace Roost.World.Beauty
 
                 imageComp.color = overlay._Color ?? Color.white;
                 alreadyAssignedLayers.Add(overlayLayer);
-                //Birdsong.Sing(Birdsong.Incr(), $"Applied sprite '{overlay.Image}' to the overlay layer '{layerName}'.");
             }
 
             // Bring back the decay timer to the front. Not important anyway because overlays do not support decaying cards, officially. But in case we want to
@@ -222,8 +215,8 @@ namespace Roost.World.Beauty
 
             Image image = layer.AddComponent<Image>();
             image.maskable = true;
-            
-            RectTransform rt = layer.GetComponent<RectTransform>();
+
+            RectTransform rt = layer.transform as RectTransform;
             rt.localEulerAngles = Vector3.zero;
             rt.localScale = Vector3.one;
 
