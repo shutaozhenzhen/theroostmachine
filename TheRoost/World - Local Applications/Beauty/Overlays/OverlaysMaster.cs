@@ -165,7 +165,8 @@ namespace Roost.World.Beauty
                 {
                     if (alreadyAssignedLayers.Contains(overlayLayer)) continue;
                     imageComp = overlayLayer.GetComponent<Image>();
-                    if(imageComp != null) imageComp.sprite = null;
+                    if (imageComp != null)
+                        overlayLayer.SetActive(false);
                 }
 
                 // MatchesExpression also returns true if the expression.isUndefined, no need to check it here
@@ -179,11 +180,10 @@ namespace Roost.World.Beauty
                 if (overlayLayer == null)
                 {
                     // Instantiate overlay GO
-                    //Birdsong.Sing(Birdsong.Incr(), $"This token doesn't have a '{layerName}' layer yet. Instantiating one...");
                     overlayLayer = InstantiateOverlayLayer(baseImageGO, layerName);
                 }
-                //else Birdsong.Sing(Birdsong.Incr(), $"This token already has a '{layerName}' layer.");
-
+                else
+                    overlayLayer.SetActive(true);
                 // Assign image
                 imageComp = overlayLayer.GetComponent<Image>();
                 imageComp.sprite = ResourcesManager.GetSpriteForElement(overlay.Image);
