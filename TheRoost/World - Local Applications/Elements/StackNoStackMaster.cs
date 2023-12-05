@@ -70,6 +70,7 @@ namespace Roost.World.Elements
             alreadyCalvingNoStack = true;
 
             bool shrouded = token.Sphere is SituationStorageSphere || token.Payload.IsShrouded;
+            bool evict = token.Sphere.IsCategory(SecretHistories.Enums.SphereCategory.World);
 
             while (token.Quantity > 1)
             {
@@ -77,6 +78,9 @@ namespace Roost.World.Elements
 
                 if (shrouded)
                     newToken.Payload.Shroud(true);
+
+                if (evict)
+                    newToken.Sphere.ProcessEvictedToken(newToken, Context.Unknown());
             }
 
             alreadyCalvingNoStack = false;
