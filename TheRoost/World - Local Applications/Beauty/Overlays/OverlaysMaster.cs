@@ -7,6 +7,7 @@ using SecretHistories.Abstract;
 using SecretHistories.Entities;
 using SecretHistories.Manifestations;
 using SecretHistories.UI;
+using SecretHistories.Meta;
 
 using UnityEngine;
 using UnityEngine.UI;
@@ -33,6 +34,25 @@ namespace Roost.World.Beauty
                 original: typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.SetMutation)),
                 prefix: typeof(OverlaysMaster).GetMethodInvariant(nameof(ScheduleOverlayUpdate))
             );
+
+            Machine.Patch(
+                original: typeof(ElementStack).GetMethodInvariant(nameof(ElementStack.SetQuantity)),
+                prefix: typeof(OverlaysMaster).GetMethodInvariant(nameof(ScheduleOverlayUpdate))
+            );
+
+            //some out-of-recipe cases where we want to manually apply scheduled overlay updates
+            Machine.Patch<ElementStack>(nameof(ElementStack.InteractWithIncoming),
+                postfix: typeof(RecipeExecutionBuffer).GetMethodInvariant(nameof(RecipeExecutionBuffer.ApplyOverlayUpdates)));
+
+            Machine.Patch<Token>(nameof(Token.CalveToken),
+                postfix: typeof(RecipeExecutionBuffer).GetMethodInvariant(nameof(RecipeExecutionBuffer.ApplyOverlayUpdates)));
+
+            Machine.Patch<ElementsMalleary>(nameof(ElementsMalleary.Mutate),
+                postfix: typeof(RecipeExecutionBuffer).GetMethodInvariant(nameof(RecipeExecutionBuffer.ApplyOverlayUpdates)));
+
+            Machine.Patch<ElementsMalleary>(nameof(ElementsMalleary.Unmutate),
+                postfix: typeof(RecipeExecutionBuffer).GetMethodInvariant(nameof(RecipeExecutionBuffer.ApplyOverlayUpdates)));
+
 
             // When a card is initialised (in the tabletop scene, this always only happen in ~/exterior), apply the overlays
             Machine.Patch(
