@@ -23,8 +23,8 @@ namespace Roost.World.Beauty
 {
     static class OverlaysMaster
     {
-        public static string OVERLAYS_PROPERTY = "overlays";
-
+        public const string OVERLAYS_PROPERTY = "overlays";
+        public const string OVERLAY_PREFIX = "Overlay_";
         internal static void Enact()
         {
             Machine.ClaimProperty<Element, List<OverlayEntity>>(OVERLAYS_PROPERTY);
@@ -83,11 +83,8 @@ namespace Roost.World.Beauty
         public static void ClearOverlays(GameObject imageGameObject)
         {
             foreach (Transform child in imageGameObject.transform)
-            {
-                if (child.gameObject.name.StartsWith("Overlay_"))
-                    GameObject.Destroy(child.gameObject);
-            }
-
+                if (child.gameObject.name.StartsWith(OVERLAY_PREFIX))
+                    child.gameObject.SetActive(false);
         }
 
         public static void UpdateMagnifyingGlassOverlays(Image ___artwork)
@@ -153,7 +150,12 @@ namespace Roost.World.Beauty
 
             foreach (OverlayEntity overlay in overlays)
             {
-                string layerName = overlay.Layer.Equals("") ? $"Overlay_{implicitLayerId}" : $"Overlay_{overlay.Layer}";
+                string layerName;
+                if (string.IsNullOrWhiteSpace(overlay.Layer))
+                    layerName = OVERLAY_PREFIX + implicitLayerId;
+                else
+                    layerName = OVERLAY_PREFIX + overlay.Layer;
+
                 implicitLayerId++;
 
                 GameObject overlayLayer = baseImageGO.FindInChildren(layerName, true);
