@@ -92,7 +92,7 @@ namespace Roost.World.Beauty
             // Clear any potential remaining previous overlay
             ClearOverlays(___artwork.gameObject);
 
-            ApplyOverlaysToManifestation(RavensEye.lastHoveredElementStack, baseImageGO: ___artwork.gameObject);
+            ApplyOverlaysToManifestation(RavensEye.lastHoveredElementStack, ___artwork.gameObject);
         }
 
         public static void UpdateDetailsWindowOverlays(AbstractDetailsWindow __instance, Sprite image, Image ___artwork)

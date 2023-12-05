@@ -49,7 +49,7 @@ namespace Roost.World.Beauty
 
             //refinements are set on creation
             Machine.Patch(
-                original: Machine.GetMethod<ElementStackCreationCommand>(nameof(ElementStackCreationCommand.Execute)), 
+                original: Machine.GetMethod<ElementStackCreationCommand>(nameof(ElementStackCreationCommand.Execute)),
                 prefix: typeof(ElementStackRefiner).GetMethodInvariant(nameof(UpdateRefinementsOnCreation)));
 
             //...updated on Element change
@@ -79,14 +79,8 @@ namespace Roost.World.Beauty
 
             //the refined icon and label are displayed correctly for Accessible Card Text
             Machine.Patch(
-                original: typeof(CardManifestation).GetMethodInvariant(nameof(CardManifestation.OnPointerEnter)),
-                prefix: typeof(ElementStackRefiner).GetMethodInvariant(nameof(StoreIconAndLabelForMagnifyingGlass)));
-
-            Machine.Patch(
                 original: typeof(ElementStackSimple).GetMethodInvariant(nameof(ElementStackSimple.Populate)),
                 postfix: typeof(ElementStackRefiner).GetMethodInvariant(nameof(SetIconAndLabelForMagnifyingGlass)));
-
-            AtTimeOfPower.NewGameSceneInit.Schedule(ResetIconAndLabelForElementStackSimple, PatchType.Prefix);
         }
 
         private static bool GetAppropriateSpriteForElementManifestation(IManifestable manifestable, ref Sprite __result)
@@ -268,23 +262,12 @@ namespace Roost.World.Beauty
                 return ResourcesManager.GetSpriteForElement(stack.Icon);
         }
 
-        static Sprite currentSprite = null;
-        static string currentLabel = null;
-        private static void StoreIconAndLabelForMagnifyingGlass(Image ___artwork, TextMeshProUGUI ___text)
+        private static void SetIconAndLabelForMagnifyingGlass(TextMeshProUGUI ___text)
         {
-            currentSprite = ___artwork.sprite;
-            currentLabel = ___text.text;
-        }
+            if (RavensEye.lastHoveredElementStack == null)
+                return;
 
-        private static void SetIconAndLabelForMagnifyingGlass(Image ___artwork, TextMeshProUGUI ___text)
-        {
-            //ElementStackSimple, as it turns out, is shared between the Meniscate and the legacy startin items preview;
-            //we don't want to modify that last one, so we set it to null once we reach 
-            if (currentSprite != null)
-            {
-                ___text.text = currentLabel;
-                ___artwork.sprite = currentSprite;
-            }
+            ___text.text = RavensEye.lastHoveredElementStack.Payload.Label;
         }
 
         //in come context, unrefined icon can leak through all precations and end up in resource manager
@@ -293,13 +276,6 @@ namespace Roost.World.Beauty
         {
             if (file.Contains("@"))
                 file = "_x";
-        }
-
-
-        private static void ResetIconAndLabelForElementStackSimple()
-        {
-            currentSprite = null;
-            currentLabel = null;
         }
     }
 }

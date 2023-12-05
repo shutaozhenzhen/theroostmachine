@@ -42,6 +42,8 @@ namespace Roost.World
                 original: typeof(Token).GetMethodInvariant(nameof(Token.OnPointerExit)),
                 prefix: typeof(RavensEye).GetMethodInvariant(nameof(UnsetHoveredToken))
             );
+
+            AtTimeOfPower.NewGameSceneInit.Schedule(ResetTrackingOnNewGame, PatchType.Prefix);
         }
 
 
@@ -89,6 +91,12 @@ namespace Roost.World
         {
             if (__instance.Payload.GetType() != typeof(ElementStack)) return;
             lastHoveredElementStack = null;
+        }
+
+        public static void ResetTrackingOnNewGame()
+        {
+            lastHoveredElementStack = null;
+            lastClickedElementStack = null;
         }
 
     }
