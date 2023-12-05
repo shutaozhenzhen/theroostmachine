@@ -139,7 +139,7 @@ namespace Roost.World.Beauty
             Element element = Watchman.Get<Compendium>().GetEntityById<Element>(token.PayloadEntityId);
             List<OverlayEntity> overlays = element.RetrieveProperty<List<OverlayEntity>>(OVERLAYS_PROPERTY);
 
-            if (overlays == null || overlays.Count == 0 || element.Lifetime != 0) 
+            if (overlays == null || overlays.Count == 0) 
                 return false;
 
             if (baseImageGO == null)
@@ -196,8 +196,7 @@ namespace Roost.World.Beauty
                 alreadyAssignedLayers.Add(overlayLayer);
             }
 
-            // Bring back the decay timer to the front. Not important anyway because overlays do not support decaying cards, officially. But in case we want to
-            // support them in the future, this won't come back to bite us.
+            // Bring back the decay timer to the front
             var decay = baseImageGO.FindInChildren("DecayView", true);
             if (decay != null) decay.transform.SetAsLastSibling();
 
