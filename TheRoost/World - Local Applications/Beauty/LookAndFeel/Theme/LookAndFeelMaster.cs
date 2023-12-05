@@ -19,7 +19,9 @@ namespace Roost.World.Beauty
 
         public static Color? HexToColor(string hexCode)
         {
-            if (hexCode == null) return null;
+            if (string.IsNullOrWhiteSpace(hexCode))
+                return null;
+
             ColorUtility.TryParseHtmlString(hexCode, out Color c);
             return c;
         }

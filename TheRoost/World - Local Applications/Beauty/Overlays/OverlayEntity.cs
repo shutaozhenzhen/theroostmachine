@@ -2,11 +2,7 @@
 using Roost.World.Beauty;
 using SecretHistories.Fucine;
 using SecretHistories.Fucine.DataImport;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 using UnityEngine;
 
 namespace Roost.Beauty
@@ -19,7 +15,7 @@ namespace Roost.Beauty
         public FucineExp<bool> Expression { get; set; }
 
         // The name of the image to display. Picked from the images/elements/ folder.
-        [FucineValue(DefaultValue = "")]
+        [FucineValue(DefaultValue = "_x")]
         public string Image { get; set; }
 
         // Id of the layer. If left undefined, the code will assign an incrementing Overlay_X layer id.
@@ -29,18 +25,25 @@ namespace Roost.Beauty
         public string Layer { get; set; }
 
         // The "color". If Grayscale is false, it will tint the image. If set to true, it will tint and control the saturation of the image.
-        [FucineValue(DefaultValue = "")]
+        [FucineValue(DefaultValue = null)]
         public string Color { get; set; }
-        public Color? _Color => LookAndFeelMaster.HexToColor(Color);
+
+        private Color? _color;
 
         // Controls the way color is applied (by picking a different material). Allows to desaturate the overlay image.
-        [FucineValue(DefaultValue =false)]
+        [FucineValue(DefaultValue = false)]
         public bool Grayscale { get; set; }
 
         public OverlayEntity(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
 
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium)
         {
+            _color = LookAndFeelMaster.HexToColor(Color);
+        }
+
+        public Color GetColor()
+        {
+            return _color ?? UnityEngine.Color.white;
         }
     }
 }

@@ -187,7 +187,7 @@ namespace Roost.World.Beauty
                 }
                 else imageComp.material = null;
 
-                imageComp.color = overlay._Color ?? Color.white;
+                imageComp.color = overlay.GetColor();
                 alreadyAssignedLayers.Add(overlayLayer);
             }
 
