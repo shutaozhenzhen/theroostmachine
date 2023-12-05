@@ -1,25 +1,24 @@
 ﻿using System;
+using System.Linq;
+using System.Collections.Generic;
 using NCalc;
 using UnityEngine;
 
 namespace Roost.Twins
 {
 
-    internal static class NCalcExtensions
+    public static class NCalcExtensions
     {
-        internal static void Extensions(string name, FunctionArgs functionArgs)
+        static Dictionary<string, Action<FunctionArgs>> extensions = new Dictionary<string, Action<FunctionArgs>>(StringComparer.InvariantCultureIgnoreCase);
+        public static void AddFunction(Action<FunctionArgs> func)
         {
-            if (name.Equals(nameof(Round), StringComparison.InvariantCultureIgnoreCase))
-            {
-                Round(functionArgs);
-                return;
-            }
+            extensions.Add(func.Method.Name, func);
+        }
 
-            if (name.Equals(nameof(Random), StringComparison.InvariantCultureIgnoreCase))
-            {
-                Random(functionArgs);
-                return;
-            }
+        public static void HandleNCalcExtensions(string name, FunctionArgs functionArgs)
+        {
+            if (extensions.ContainsKey(name))
+                extensions[name](functionArgs);
         }
 
         internal static void Round(FunctionArgs functionArgs)
@@ -62,9 +61,7 @@ namespace Roost.Twins
 
         public static bool ExpressionUsesExtensions(string expression)
         {
-            return 
-                expression.IndexOf(nameof(Random), StringComparison.InvariantCultureIgnoreCase) > -1
-             || expression.IndexOf(nameof(Round), StringComparison.InvariantCultureIgnoreCase) > -1;
+            return extensions.Keys.Any(expression.Contains);
         }
     }
 }

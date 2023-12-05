@@ -34,6 +34,9 @@ namespace Roost.Twins
                 prefix: typeof(Crossroads).GetMethodInvariant(nameof(IsSphereActiveInExecutingState)));
 
             AtTimeOfPower.TabletopSceneInit.Schedule(ResetCache, PatchType.Prefix);
+
+            NCalcExtensions.AddFunction(NCalcExtensions.Random);
+            NCalcExtensions.AddFunction(NCalcExtensions.Round);
         }
 
         static bool IsSphereActiveInExecutingState(Sphere s, ref bool __result)

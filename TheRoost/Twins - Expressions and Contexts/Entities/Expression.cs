@@ -32,7 +32,7 @@ namespace Roost.Twins.Entities
                 this.expression = new Expression(data, EvaluateOptions.BooleanCalculation | EvaluateOptions.IgnoreCase);
 
                 if (NCalcExtensions.ExpressionUsesExtensions(this.formula))
-                    this.expression.EvaluateFunction += NCalcExtensions.Extensions;
+                    this.expression.EvaluateFunction += NCalcExtensions.HandleNCalcExtensions;
             }
             catch (Exception ex)
             {
