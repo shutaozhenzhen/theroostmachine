@@ -56,13 +56,13 @@ namespace Roost.World.Beauty
             // When a card is initialised (in the tabletop scene, this always only happen in ~/exterior), apply the overlays
             Machine.Patch(
                 original: typeof(CardManifestation).GetMethodInvariant(nameof(CardManifestation.Initialise)),
-                postfix: typeof(OverlaysMaster).GetMethodInvariant(nameof(ApplyOverlaysOnInitialiseManifestation))
+                postfix: typeof(OverlaysMaster).GetMethodInvariant(nameof(ApplyOverlaysOnCardManifestation))
             );
 
             // When a stored manifestation is created (inside verbs), apply the overlays
             Machine.Patch(
                 original: typeof(StoredManifestation).GetMethodInvariant(nameof(StoredManifestation.Initialise)),
-                postfix: typeof(OverlaysMaster).GetMethodInvariant(nameof(ApplyOverlaysOnInitialiseManifestation))
+                postfix: typeof(OverlaysMaster).GetMethodInvariant(nameof(ApplyOverlaysOnStoredManifestation))
             );
 
             // When the details window displays the image of the card, apply the overlays to its image
@@ -113,7 +113,7 @@ namespace Roost.World.Beauty
             // Clear any potential remaining previous overlay
             ClearOverlays(___artwork.gameObject);
 
-            ApplyOverlaysToManifestation(RavensEye.lastClickedElementStack, baseImageGO: ___artwork.gameObject);
+            ApplyOverlaysToManifestation(RavensEye.lastClickedElementStack, ___artwork.gameObject);
         }
 
         public static void ScheduleOverlayUpdate(ElementStack __instance)
@@ -127,28 +127,27 @@ namespace Roost.World.Beauty
             }
         }
 
-        public static void ApplyOverlaysOnInitialiseManifestation(CardManifestation __instance, IManifestable manifestable)
+        public static void ApplyOverlaysOnStoredManifestation(IManifestable manifestable, Image ___aspectImage)
         {
-            //Birdsong.Sing(Birdsong.Incr(), $"CardManifestation initialisation of {manifestable.Id}, checking overlays...");
-            ApplyOverlaysToManifestation(manifestable.GetToken(), __instance.gameObject);
+            ApplyOverlaysToManifestation(manifestable.GetToken(), ___aspectImage.gameObject);
+        }
+
+        public static void ApplyOverlaysOnCardManifestation(IManifestable manifestable, Image ___artwork)
+        {
+            ApplyOverlaysToManifestation(manifestable.GetToken(), ___artwork.gameObject);
         }
 
         // Optional second parameter, to work around the fact that when this is called, the token isn't always already holding the right manifestation in its gameObject ref
-        public static void ApplyOverlaysToManifestation(Token token, GameObject manifestationGO = null, GameObject baseImageGO = null)
+        public static void ApplyOverlaysToManifestation(Token token, GameObject baseImageGO)
         {
             Element element = Watchman.Get<Compendium>().GetEntityById<Element>(token.PayloadEntityId);
             List<OverlayEntity> overlays = element.RetrieveProperty<List<OverlayEntity>>(OVERLAYS_PROPERTY);
 
             if (overlays == null || overlays.Count == 0 || element.Lifetime != 0) return;
 
-            manifestationGO = manifestationGO ?? token.gameObject;
-            baseImageGO = baseImageGO ?? GetImageGOBasedOnManifestationType(token, manifestationGO);
+            if (baseImageGO == null)
+                baseImageGO = GetImageGOBasedOnManifestationType(token.GetManifestation());
 
-            ApplyOverlaysToGO(token, baseImageGO, overlays);
-        }
-
-        public static void ApplyOverlaysToGO(Token token, GameObject baseImageGO, List<OverlayEntity> overlays)
-        { 
             int implicitLayerId = 1;
             HashSet<GameObject> alreadyAssignedLayers = new HashSet<GameObject>();
 
@@ -203,21 +202,13 @@ namespace Roost.World.Beauty
             if (decay != null) decay.transform.SetAsLastSibling();
         }
 
-        public static GameObject GetImageGOBasedOnManifestationType(Token token, GameObject manifestationGO)
+        private static GameObject GetImageGOBasedOnManifestationType(IManifestation manifestation)
         {
-            IManifestation manifestation = token.GetManifestation();
-            Type manifestationType = manifestation.GetType();
+            if (manifestation is CardManifestation card)
+                return card.gameObject.FindInChildren("Artwork", true);
+            else if (manifestation is StoredManifestation stored)
+                return stored.gameObject.FindInChildren("Icon", true);
 
-            if (manifestationType == typeof(CardManifestation))
-            {
-                //Birdsong.Sing(Birdsong.Incr(), $"This token is a card manifestation!");
-                return manifestationGO.FindInChildren("Artwork", true);
-            }
-            else if (manifestationType == typeof(StoredManifestation))
-            {
-                //Birdsong.Sing(Birdsong.Incr(), $"This token is a stored manifestation!");
-                return manifestationGO.FindInChildren("Icon", true);
-            }
             throw new NotImplementedException("When overlay layers are applied and a specific baseImageGO isn't provided, the code can only guess which gameObject to apply the layers to if it is a CardManifestation or a StoredManifestation");
         }
 

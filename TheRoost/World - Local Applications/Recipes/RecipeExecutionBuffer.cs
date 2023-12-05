@@ -130,7 +130,7 @@ namespace Roost.World.Recipes
         {
             foreach (Token token in overlayUpdates)
                 if (token?.IsValid() == true)
-                    OverlaysMaster.ApplyOverlaysToManifestation(token);
+                    OverlaysMaster.ApplyOverlaysToManifestation(token, null);
 
             overlayUpdates.Clear();
         }
