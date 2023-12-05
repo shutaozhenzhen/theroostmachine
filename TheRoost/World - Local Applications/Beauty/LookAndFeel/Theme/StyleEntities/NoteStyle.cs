@@ -20,20 +20,26 @@ namespace Roost.World.Beauty
         public NoteStyle(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
 
-        public NoteStyle OverrideWith(NoteStyle moreSpecificStyle)
+        public static NoteStyle OverrideWith(NoteStyle baseStyle, NoteStyle moreSpecificStyle)
         {
-            if (moreSpecificStyle == null) return this;
-            NoteStyle mergedStyle = this.MemberwiseClone() as NoteStyle;
+            if (baseStyle == null)
+                return moreSpecificStyle;
 
-            mergedStyle.BackgroundImage = moreSpecificStyle?.BackgroundImage ?? mergedStyle.BackgroundImage;
-            mergedStyle.Color = moreSpecificStyle?.Color ?? mergedStyle.Color;
-            mergedStyle.PreviousButton = (LookAndFeelMaster.GetCurrentTheme()?.SecondaryButtons ?? mergedStyle?.PreviousButton)
-                ?.OverrideWith(mergedStyle.PreviousButton)
-                ?.OverrideWith(moreSpecificStyle?.PreviousButton);
+            if (moreSpecificStyle == null) 
+                return baseStyle;
 
-            mergedStyle.NextButton = (LookAndFeelMaster.GetCurrentTheme()?.SecondaryButtons ?? mergedStyle?.NextButton)
-                ?.OverrideWith(mergedStyle.NextButton)
-                ?.OverrideWith(moreSpecificStyle?.NextButton);
+            NoteStyle mergedStyle = baseStyle.MemberwiseClone() as NoteStyle;
+
+            var theme = LookAndFeelMaster.GetCurrentTheme();
+
+            mergedStyle.BackgroundImage = moreSpecificStyle.BackgroundImage ?? mergedStyle.BackgroundImage;
+            mergedStyle.Color = moreSpecificStyle.Color ?? mergedStyle.Color;
+
+            mergedStyle.PreviousButton = ButtonStyle.OverrideWith(theme?.SecondaryButtons, mergedStyle.PreviousButton);
+            mergedStyle.PreviousButton = ButtonStyle.OverrideWith(mergedStyle.PreviousButton, moreSpecificStyle.PreviousButton);
+
+            mergedStyle.NextButton = ButtonStyle.OverrideWith(theme?.SecondaryButtons, mergedStyle.NextButton);
+            mergedStyle.NextButton = ButtonStyle.OverrideWith(mergedStyle.NextButton, moreSpecificStyle.NextButton);
 
             return mergedStyle;
         }

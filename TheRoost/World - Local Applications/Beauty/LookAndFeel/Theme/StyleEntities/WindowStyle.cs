@@ -33,29 +33,33 @@ namespace Roost.World.Beauty
         public WindowStyle(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
 
-        public WindowStyle OverrideWith(WindowStyle moreSpecificStyle)
+        public static WindowStyle OverrideWith(WindowStyle baseStyle, WindowStyle moreSpecificStyle)
         {
-            if (moreSpecificStyle == null) return this;
-            WindowStyle mergedStyle = this.MemberwiseClone() as WindowStyle;
+            if (baseStyle == null)
+                return moreSpecificStyle;
+
+            if (moreSpecificStyle == null) 
+                return baseStyle;
+
+            WindowStyle mergedStyle = baseStyle.MemberwiseClone() as WindowStyle;
 
             LegacyTheme theme = LookAndFeelMaster.GetCurrentTheme();
 
-            mergedStyle.BodyColor = theme?.BodyColor ?? moreSpecificStyle?.BodyColor ?? mergedStyle.BodyColor;
-            mergedStyle.HeaderColor = theme?.HeaderColor ?? moreSpecificStyle?.HeaderColor ?? mergedStyle.HeaderColor;
-            mergedStyle.SubFooterColor = theme?.HeaderColor ?? moreSpecificStyle?.SubFooterColor ?? mergedStyle.SubFooterColor;
-            mergedStyle.FooterColor = theme?.FooterColor ?? moreSpecificStyle?.FooterColor ?? mergedStyle.FooterColor;
-            mergedStyle.HeaderImage = theme?.HeaderImage ?? moreSpecificStyle?.HeaderImage ?? mergedStyle.HeaderImage;
-            mergedStyle.BodyImage = theme?.BodyImage ?? moreSpecificStyle?.BodyImage ?? mergedStyle.BodyImage;
-            mergedStyle.FooterImage = theme?.FooterImage ?? moreSpecificStyle?.FooterImage ?? mergedStyle.FooterImage;
+            mergedStyle.BodyColor = theme?.BodyColor ?? moreSpecificStyle.BodyColor ?? mergedStyle.BodyColor;
+            mergedStyle.HeaderColor = theme?.HeaderColor ?? moreSpecificStyle.HeaderColor ?? mergedStyle.HeaderColor;
+            mergedStyle.SubFooterColor = theme?.HeaderColor ?? moreSpecificStyle.SubFooterColor ?? mergedStyle.SubFooterColor;
+            mergedStyle.FooterColor = theme?.FooterColor ?? moreSpecificStyle.FooterColor ?? mergedStyle.FooterColor;
+            mergedStyle.HeaderImage = theme?.HeaderImage ?? moreSpecificStyle.HeaderImage ?? mergedStyle.HeaderImage;
+            mergedStyle.BodyImage = theme?.BodyImage ?? moreSpecificStyle.BodyImage ?? mergedStyle.BodyImage;
+            mergedStyle.FooterImage = theme?.FooterImage ?? moreSpecificStyle.FooterImage ?? mergedStyle.FooterImage;
 
-            mergedStyle.ActionButton = (theme?.ActionButtons ?? mergedStyle?.ActionButton)
-                ?.OverrideWith(mergedStyle.ActionButton)
-                ?.OverrideWith(moreSpecificStyle?.ActionButton);
+            mergedStyle.ActionButton = ButtonStyle.OverrideWith(theme?.ActionButtons, mergedStyle.ActionButton);
+            mergedStyle.ActionButton = ButtonStyle.OverrideWith(mergedStyle.ActionButton, moreSpecificStyle.ActionButton);
 
-            mergedStyle.CloseButton = (theme?.SecondaryButtons ?? mergedStyle?.CloseButton)
-                ?.OverrideWith(mergedStyle.CloseButton)
-                ?.OverrideWith(moreSpecificStyle?.CloseButton);
-            mergedStyle.Note = mergedStyle?.Note.OverrideWith(moreSpecificStyle?.Note);
+            mergedStyle.CloseButton = ButtonStyle.OverrideWith(theme?.SecondaryButtons, mergedStyle.CloseButton);
+            mergedStyle.CloseButton = ButtonStyle.OverrideWith(mergedStyle.ActionButton, moreSpecificStyle.CloseButton);
+
+            mergedStyle.Note = NoteStyle.OverrideWith(mergedStyle.Note, moreSpecificStyle.Note);
 
             return mergedStyle;
         }

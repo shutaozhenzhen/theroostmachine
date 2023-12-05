@@ -87,12 +87,9 @@ namespace Roost.World.Beauty
             if (baseVerbStyle == null && verbSpecificStyle == null && defaultStyle == null) 
                 return null;
 
-            /*
-            Birdsong.Sing("Verb id:", verbId);
-            Birdsong.Sing("Default verbstyle:", defaultStyle != null);
-            Birdsong.Sing("Base verbstyle:", baseVerbStyle != null);
-            Birdsong.Sing("Specific verbstyle:", verbSpecificStyle != null);*/
-            VerbStyle computedStyle = defaultStyle.OverrideWith(baseVerbStyle).OverrideWith(verbSpecificStyle);
+            VerbStyle computedStyle = VerbStyle.OverrideWith(defaultStyle, baseVerbStyle);
+            computedStyle = VerbStyle.OverrideWith(computedStyle, verbSpecificStyle);
+
             return computedStyle;
         }
 

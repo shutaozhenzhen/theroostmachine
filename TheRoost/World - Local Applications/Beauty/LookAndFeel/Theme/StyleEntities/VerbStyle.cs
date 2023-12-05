@@ -44,21 +44,26 @@ namespace Roost.World.Beauty
         public VerbStyle(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
 
-        public VerbStyle OverrideWith(VerbStyle moreSpecificStyle)
+        public static VerbStyle OverrideWith(VerbStyle baseStyle, VerbStyle overrideStyle)
         {
-            if (moreSpecificStyle == null) return this;
-            VerbStyle mergedStyle = this.MemberwiseClone() as VerbStyle;
+            if (baseStyle == null)
+                return overrideStyle;
 
-            mergedStyle.Window = mergedStyle?.Window?.OverrideWith(moreSpecificStyle?.Window) ?? moreSpecificStyle?.Window;
+            if (overrideStyle == null)
+                return baseStyle;
 
-            mergedStyle.BorderImage = moreSpecificStyle?.BorderImage ?? mergedStyle.BorderImage;
-            mergedStyle.WarmupColor = moreSpecificStyle?.WarmupColor ?? mergedStyle.WarmupColor;
-            mergedStyle.WarmupShadowColor = moreSpecificStyle?.WarmupShadowColor ?? mergedStyle.WarmupShadowColor;
-            mergedStyle.WarmupBadgeColor = moreSpecificStyle.WarmupBadgeColor ?? mergedStyle.WarmupBadgeColor;
+            VerbStyle mergedStyle = baseStyle.MemberwiseClone() as VerbStyle;
 
-            mergedStyle.DumpButton = moreSpecificStyle?.DumpButton ?? mergedStyle.DumpButton;
-            mergedStyle.DumpButtonColor = moreSpecificStyle?.DumpButtonColor ?? mergedStyle.DumpButtonColor;
-            mergedStyle.DumpButtonHoverColor = moreSpecificStyle?.DumpButtonHoverColor ?? mergedStyle.DumpButtonHoverColor;
+            mergedStyle.Window = WindowStyle.OverrideWith(mergedStyle.Window, overrideStyle.Window);
+
+            mergedStyle.BorderImage = overrideStyle.BorderImage ?? mergedStyle.BorderImage;
+            mergedStyle.WarmupColor = overrideStyle.WarmupColor ?? mergedStyle.WarmupColor;
+            mergedStyle.WarmupShadowColor = overrideStyle.WarmupShadowColor ?? mergedStyle.WarmupShadowColor;
+            mergedStyle.WarmupBadgeColor = overrideStyle.WarmupBadgeColor ?? mergedStyle.WarmupBadgeColor;
+
+            mergedStyle.DumpButton = overrideStyle.DumpButton ?? mergedStyle.DumpButton;
+            mergedStyle.DumpButtonColor = overrideStyle.DumpButtonColor ?? mergedStyle.DumpButtonColor;
+            mergedStyle.DumpButtonHoverColor = overrideStyle.DumpButtonHoverColor ?? mergedStyle.DumpButtonHoverColor;
 
             return mergedStyle;
         }

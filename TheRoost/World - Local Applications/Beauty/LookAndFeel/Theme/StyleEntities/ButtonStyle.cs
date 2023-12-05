@@ -29,17 +29,22 @@ namespace Roost.World.Beauty
         public ButtonStyle(EntityData importDataForEntity, ContentImportLog log) : base(importDataForEntity, log) { }
         protected override void OnPostImportForSpecificEntity(ContentImportLog log, Compendium populatedCompendium) { }
 
-        public ButtonStyle OverrideWith(ButtonStyle moreSpecificStyle)
+        public static ButtonStyle OverrideWith(ButtonStyle baseStyle, ButtonStyle moreSpecificStyle)
         {
-            if (moreSpecificStyle == null) return this;
-            ButtonStyle mergedStyle = this.MemberwiseClone() as ButtonStyle;
+            if (baseStyle == null)
+                return null;
 
-            mergedStyle.BackgroundImage = moreSpecificStyle?.BackgroundImage ?? mergedStyle.BackgroundImage;
-            mergedStyle.Color = moreSpecificStyle?.Color ?? mergedStyle.Color;
-            mergedStyle.HighlightedColor = moreSpecificStyle?.HighlightedColor ?? mergedStyle.HighlightedColor;
-            mergedStyle.PressedColor = moreSpecificStyle?.PressedColor ?? mergedStyle.PressedColor;
-            mergedStyle.SelectedColor = moreSpecificStyle?.SelectedColor ?? mergedStyle.SelectedColor;
-            mergedStyle.DisabledColor = moreSpecificStyle?.DisabledColor ?? mergedStyle.DisabledColor;
+            if (moreSpecificStyle == null) 
+                return baseStyle;
+
+            ButtonStyle mergedStyle = baseStyle.MemberwiseClone() as ButtonStyle;
+
+            mergedStyle.BackgroundImage = moreSpecificStyle.BackgroundImage ?? mergedStyle.BackgroundImage;
+            mergedStyle.Color = moreSpecificStyle.Color ?? mergedStyle.Color;
+            mergedStyle.HighlightedColor = moreSpecificStyle.HighlightedColor ?? mergedStyle.HighlightedColor;
+            mergedStyle.PressedColor = moreSpecificStyle.PressedColor ?? mergedStyle.PressedColor;
+            mergedStyle.SelectedColor = moreSpecificStyle.SelectedColor ?? mergedStyle.SelectedColor;
+            mergedStyle.DisabledColor = moreSpecificStyle.DisabledColor ?? mergedStyle.DisabledColor;
 
             return mergedStyle;
         }
