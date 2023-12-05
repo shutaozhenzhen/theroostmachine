@@ -243,37 +243,21 @@ namespace Roost.World.Beauty
 
         public static GameObject InstantiateOverlayLayer(GameObject baseImageGO, string layerName)
         {
-            // Duplicate the original image GO, then delete all the children and reset the sprite.
-            // I have no idea why this works so well, because nothing says it should, in theory. But it works perfectly.
-            GameObject layer = GameObject.Instantiate(baseImageGO, baseImageGO.transform, true);
-            layer.name = layerName;
-            layer.GetComponent<Image>().sprite = null;
-
-            List<GameObject> toDestroy = new List<GameObject>();
-            foreach (Transform child in layer.transform)
-            {
-                toDestroy.Add(child.gameObject);
-            }
-            foreach (GameObject child in toDestroy) GameObject.DestroyImmediate(child);
-
-            // This clean method never worked properly for all cases. Somehow, the "dirty" method above works.
-            /*
             GameObject layer = new GameObject(layerName);
             layer.transform.SetParent(baseImageGO.transform);
+            layer.name = layerName;
 
-            Image baseImage = baseImageGO.GetComponent<Image>();
             Image image = layer.AddComponent<Image>();
-            image.material = baseImage.material;
-            image.maskable = baseImage.maskable;
+            image.maskable = true;
             
             RectTransform rt = layer.GetComponent<RectTransform>();
+            rt.localEulerAngles = Vector3.zero;
+            rt.localScale = Vector3.one;
+
             rt.anchorMin = Vector2.zero;
             rt.anchorMax = Vector2.one;
             rt.sizeDelta = Vector2.zero;
-            rt.anchoredPosition = Vector2.zero;
-            //rt.pivot = new Vector2(0.5f, 0.5f);
-            //rt.transform.localPosition = Vector2.zero;
-            RectTransform baseRt = baseImageGO.GetComponent<RectTransform>();*/
+            rt.anchoredPosition3D = Vector3.zero;
 
             return layer;
         }
