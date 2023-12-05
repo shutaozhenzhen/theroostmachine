@@ -83,14 +83,12 @@ namespace Roost.World.Beauty
         // This works by searching for all the Overlay_X named game objects. All layers follow this naming convention.
         public static void ClearOverlays(GameObject imageGameObject)
         {
-            // You have to do it in two loops, otherwise calling DestroyImmediate on the content of the very list you're looping over
-            // leads to missed children
-            List<GameObject> toDestroy = new List<GameObject>();
             foreach (Transform child in imageGameObject.transform)
             {
-                if (child.gameObject.name.StartsWith("Overlay_")) toDestroy.Add(child.gameObject);
+                if (child.gameObject.name.StartsWith("Overlay_"))
+                    GameObject.Destroy(child.gameObject);
             }
-            foreach (GameObject child in toDestroy) GameObject.DestroyImmediate(child);
+
         }
 
 
