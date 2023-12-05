@@ -268,8 +268,7 @@ namespace Roost.World.Recipes
 
         public static void ScheduleOverlay(Token token)
         {
-            if (!overlayUpdates.Contains(token))
-                overlayUpdates.Add(token);
+            overlayUpdates.Add(token);
         }
 
 
