@@ -53,7 +53,6 @@ namespace Roost.World.Beauty
             Machine.Patch<ElementsMalleary>(nameof(ElementsMalleary.Unmutate),
                 postfix: typeof(RecipeExecutionBuffer).GetMethodInvariant(nameof(RecipeExecutionBuffer.ApplyOverlayUpdates)));
 
-
             // When a card is initialised (in the tabletop scene, this always only happen in ~/exterior), apply the overlays
             Machine.Patch(
                 original: typeof(CardManifestation).GetMethodInvariant(nameof(CardManifestation.Initialise)),
@@ -91,49 +90,30 @@ namespace Roost.World.Beauty
 
         }
 
-
         public static void UpdateMagnifyingGlassOverlays(Image ___artwork)
         {
-            
-            //Birdsong.Sing(Birdsong.Incr(), $"Updating magnifying glass for artwork GO {___artwork.gameObject.name}");
-            GameObject baseImageGO = ___artwork.gameObject;
+            if (RavensEye.lastHoveredElementStack == null)
+                return;
 
             // Clear any potential remaining previous overlay
-            ClearOverlays(baseImageGO);
+            ClearOverlays(___artwork.gameObject);
 
-            if (RavensEye.lastHoveredElementStack == null)
-            {
-                //Birdsong.Sing(Birdsong.Incr(), $"No hovered element. Aborting.");
-                return;
-            }
-            ApplyOverlaysToManifestation(RavensEye.lastHoveredElementStack, baseImageGO: baseImageGO);
+            ApplyOverlaysToManifestation(RavensEye.lastHoveredElementStack, baseImageGO: ___artwork.gameObject);
         }
 
-        public static void UpdateDetailsWindowOverlays(AbstractDetailsWindow __instance, Sprite image)
+        public static void UpdateDetailsWindowOverlays(AbstractDetailsWindow __instance, Sprite image, Image ___artwork)
         {
-            // We do this because we had to patch AbstractDetailsWindow, which is also a parent to the aspect detail window. That way, our code only affects
-            // the right window.
-            if (__instance.gameObject.name != "TokenDetailsWindow") return;
-            //Birdsong.Sing(Birdsong.Incr(), $"Displaying details of an element!");
-
-            Token token = RavensEye.lastClickedElementStack;
-
-            GameObject artworkGO = __instance.gameObject.FindInChildren("Artwork", true);
+            if (image == null
+                || RavensEye.lastClickedElementStack == null
+                // We do this because we had to patch AbstractDetailsWindow, which is also a parent to the aspect detail window. That way, our code only affects
+                // the right window.
+                || (__instance is TokenDetailsWindow) == false)
+                return;
 
             // Clear any potential remaining previous overlay
-            ClearOverlays(artworkGO);
+            ClearOverlays(___artwork.gameObject);
 
-            Image artwork = artworkGO.GetComponent<Image>();
-            GameObject artworkPin = __instance.gameObject.FindInChildren("ArtworkPin", true);
-            artwork.gameObject.SetActive(image != null);
-            artwork.sprite = image;
-            if (artworkPin != null)
-            {
-                artworkPin.gameObject.SetActive(image != null);
-                artwork.transform.localEulerAngles = new Vector3(0f, 0f, -5f + Random.value * 10f);
-            }
-
-            ApplyOverlaysToManifestation(token, baseImageGO: artwork.gameObject);
+            ApplyOverlaysToManifestation(RavensEye.lastClickedElementStack, baseImageGO: ___artwork.gameObject);
         }
 
         public static void ScheduleOverlayUpdate(ElementStack __instance)
